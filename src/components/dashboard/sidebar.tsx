@@ -2,18 +2,23 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES } from "@/lib/constants"
-import { Inbox, Star, Clock, Tag, CheckSquare, Plus, FolderKanban, Pin } from "lucide-react"
+import { Plus, FolderKanban, Folder } from "lucide-react"
+import { MdOutlineSpaceDashboard, MdSpaceDashboard } from "react-icons/md"
+import { BsPin, BsFillPinFill } from "react-icons/bs"
+import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
+import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
+import { FaRegStar, FaStar, FaRegCheckCircle, FaCheckCircle } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const cardItems = [
-  { name: "Gelen Kutusu", count: null, icon: Inbox, color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", activeColor: "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600", href: ROUTES.DASHBOARD },
-  { name: "Bugün", count: 1, icon: Star, color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700", activeColor: "bg-green-200 dark:bg-green-800/50 text-green-800 dark:text-green-200 border-green-300 dark:border-green-600", href: ROUTES.TODAY },
-  { name: "Zamanlanmış", count: 3, icon: Clock, color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700", activeColor: "bg-purple-200 dark:bg-purple-800/50 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-600", href: ROUTES.SCHEDULED },
-  { name: "Pano", count: 2, icon: Pin, color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700", activeColor: "bg-red-200 dark:bg-red-800/50 text-red-800 dark:text-red-200 border-red-300 dark:border-red-600", href: ROUTES.BOARD },
-  { name: "Etiketler", count: 2, icon: Tag, color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700", activeColor: "bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-600", href: ROUTES.TAGS },
-  { name: "Tamamlandı", count: 3, icon: CheckSquare, color: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700", activeColor: "bg-orange-200 dark:bg-orange-800/50 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-600", href: ROUTES.COMPLETED },
+  { name: "Dashboard", count: null, icon: MdOutlineSpaceDashboard, activeIcon: MdSpaceDashboard, color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", activeColor: "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600", href: ROUTES.DASHBOARD },
+  { name: "Bugün", count: 1, icon: FaRegStar, activeIcon: FaStar, color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700", activeColor: "bg-green-200 dark:bg-green-800/50 text-green-800 dark:text-green-200 border-green-300 dark:border-green-600", href: ROUTES.TODAY },
+  { name: "Zamanlanmış", count: 3, icon: RiCalendarScheduleLine, activeIcon: RiCalendarScheduleFill, color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700", activeColor: "bg-purple-200 dark:bg-purple-800/50 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-600", href: ROUTES.SCHEDULED },
+  { name: "Pano", count: 2, icon: BsPin, activeIcon: BsFillPinFill, color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700", activeColor: "bg-red-200 dark:bg-red-800/50 text-red-800 dark:text-red-200 border-red-300 dark:border-red-600", href: ROUTES.BOARD },
+  { name: "Etiketler", count: 2, icon: PiTagSimpleBold, activeIcon: PiTagSimpleFill, color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700", activeColor: "bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-600", href: ROUTES.TAGS },
+  { name: "Tamamlandı", count: 3, icon: FaRegCheckCircle, activeIcon: FaCheckCircle, color: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700", activeColor: "bg-orange-200 dark:bg-orange-800/50 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-600", href: ROUTES.COMPLETED },
 ]
 
 const projects = [
@@ -51,35 +56,38 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
               )}
             >
               <div className="flex items-center justify-between">
-                <item.icon className="h-5 w-5" />
+                {pathname === item.href ? (
+                  <item.activeIcon className="h-5 w-5" />
+                ) : (
+                  <item.icon className="h-5 w-5" />
+                )}
                 {item.count !== null && (
                   <span className="text-sm font-medium">{item.count}</span>
                 )}
               </div>
-              <div className="mt-2 text-sm font-medium">{item.name}</div>
+              <div className="mt-1 text-sm font-medium">{item.name}</div>
             </Link>
           ))}
         </div>
         
         <div className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <Button variant="outline" size="sm" className="text-sm font-medium">
-              Projeler
-            </Button>
+          <div className="flex items-center justify-between mb-3 px-2 border-b-1 pb-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Projeler</h3>
             <Plus className="h-4 w-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer" />
           </div>
           
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {projects.map((project) => (
               <Link
                 key={project.name}
                 href={project.href}
-                className="flex items-center justify-between p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
               >
-                <div className="flex items-center">
-                  <span className="text-sm">{project.name}</span>
+                <div className="flex items-center space-x-2">
+                  <Folder className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{project.count}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{project.count}</span>
               </Link>
             ))}
           </div>

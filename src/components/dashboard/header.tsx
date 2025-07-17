@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
 import { THEME } from "@/lib/constants"
-import { Moon, Sun, Settings, User, LogOut, Menu, FolderKanban } from "lucide-react"
+import { Moon, Sun, Settings, User, LogOut, Menu, FolderKanban, Search,PanelLeft } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +56,13 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
         </div>
         
         <div className="ml-auto flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
