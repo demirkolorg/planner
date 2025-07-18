@@ -1,0 +1,145 @@
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const { id } = await params
+    const project = await db.project.findFirst({
+      where: {
+        id,
+        userId: decoded.userId
+      },
+      include: {
+        _count: {
+          select: {
+            tasks: true
+          }
+        }
+      }
+    })
+
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
+    return NextResponse.json(project)
+  } catch (error) {
+    console.error("Error fetching project:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const { id } = await params
+    const body = await request.json()
+    const { name, emoji, color } = body
+
+    if (!name || !color) {
+      return NextResponse.json({ error: "Name and color are required" }, { status: 400 })
+    }
+
+    // Check if project exists and belongs to user
+    const existingProject = await db.project.findFirst({
+      where: {
+        id,
+        userId: decoded.userId
+      }
+    })
+
+    if (!existingProject) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
+    // Check if another project with same name exists for this user
+    const duplicateProject = await db.project.findFirst({
+      where: {
+        name,
+        userId: decoded.userId,
+        id: { not: id }
+      }
+    })
+
+    if (duplicateProject) {
+      return NextResponse.json({ error: "Project with this name already exists" }, { status: 409 })
+    }
+
+    const updatedProject = await db.project.update({
+      where: {
+        id
+      },
+      data: {
+        name,
+        emoji,
+        color
+      },
+      include: {
+        _count: {
+          select: {
+            tasks: true
+          }
+        }
+      }
+    })
+
+    return NextResponse.json(updatedProject)
+  } catch (error) {
+    console.error("Error updating project:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const { id } = await params
+    
+    // Check if project exists and belongs to user
+    const existingProject = await db.project.findFirst({
+      where: {
+        id,
+        userId: decoded.userId
+      }
+    })
+
+    if (!existingProject) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
+    await db.project.delete({
+      where: {
+        id
+      }
+    })
+
+    return NextResponse.json({ message: "Project deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting project:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { VALIDATION, MESSAGES } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
@@ -52,16 +53,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // JWT token oluştur
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET!,
+      { expiresIn: '7d' }
+    );
+
     // Başarılı login - şifreyi response'tan çıkar
     const { password: _, ...userWithoutPassword } = user;
 
-    return NextResponse.json(
+    // Cookie'ye token'ı kaydet
+    const response = NextResponse.json(
       { 
         message: MESSAGES.SUCCESS.LOGIN,
         user: userWithoutPassword
       },
       { status: 200 }
     );
+
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 // 7 gün
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Login hatası:', error);
