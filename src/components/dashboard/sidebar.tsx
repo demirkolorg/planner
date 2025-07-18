@@ -15,6 +15,7 @@ import { useState, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
+import { BRAND_COLOR } from "@/lib/constants"
 
 const cardItems = [
   { name: "Anasayfa", count: null, icon: MdOutlineSpaceDashboard, activeIcon: MdSpaceDashboard, color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700", activeColor: "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600", href: ROUTES.DASHBOARD },
@@ -65,7 +66,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       <div className="flex h-14 items-center px-4">
-        <FolderKanban className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mr-3" />
+        <FolderKanban className="h-6 w-6 mr-3" style={{ color: BRAND_COLOR }} />
         <h1 className="text-xl font-bold">Planner</h1>
       </div>
       

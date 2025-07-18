@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
-import { THEME } from "@/lib/constants"
-import { Moon, Sun, Settings, User, LogOut, Menu, FolderKanban, Search,PanelLeft } from "lucide-react"
+import { THEME, BRAND_COLOR } from "@/lib/constants"
+import { Moon, Sun, Settings, User, LogOut, Menu, FolderKanban, Search, PanelLeft, Plus } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
 
 interface DashboardHeaderProps {
   onToggleSidebar: () => void
@@ -23,6 +25,7 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
   const router = useRouter()
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -31,6 +34,11 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
 
   const toggleTheme = () => {
     setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK)
+  }
+
+  const handleCreateTask = (title: string, description: string, projectId: string) => {
+    console.log("Creating task:", { title, description, projectId })
+    // Task creation logic will be added later
   }
 
   return (
@@ -50,12 +58,20 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
               ? 'opacity-0 translate-x-4 pointer-events-none' 
               : 'opacity-100 translate-x-0'
           }`}>
-            <FolderKanban className="h-6 w-6 text-yellow-600 mr-3" />
+            <FolderKanban className="h-6 w-6 mr-3" style={{ color: BRAND_COLOR }} />
             <h1 className="text-xl font-bold">Planner</h1>
           </div>
         </div>
         
         <div className="ml-auto flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setIsTaskModalOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -105,6 +121,12 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
           </DropdownMenu>
         </div>
       </div>
+
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onSave={handleCreateTask}
+      />
     </header>
   )
 }

@@ -74,3 +74,6 @@ export const THEME = {
   DARK: 'dark',
   SYSTEM: 'system',
 } as const;
+
+// Brand Colors
+export const BRAND_COLOR = '#f59e0b';
