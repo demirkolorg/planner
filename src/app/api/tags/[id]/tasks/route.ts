@@ -27,11 +27,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Tag not found" }, { status: 404 })
     }
 
-    // Get tasks associated with this tag (user ownership is already guaranteed through tag ownership)
+    // Get tasks associated with this tag through TaskTag junction table
     const tasks = await db.task.findMany({
       where: {
-        tagId: id,
+        tags: {
+          some: {
+            tagId: id
+          }
+        },
         userId: decoded.userId
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true
+          }
+        },
+        project: true,
+        section: true
       },
       orderBy: {
         createdAt: 'desc'

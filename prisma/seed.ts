@@ -366,12 +366,29 @@ async function main() {
     if (existingTask) {
       console.log(`⚠️ Görev zaten mevcut: ${taskData.title} (kullanıcı 1)`)
     } else {
-      await prisma.task.create({
+      // Task oluştur
+      const task = await prisma.task.create({
         data: {
-          ...taskData,
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          projectId: taskData.projectId,
+          sectionId: taskData.sectionId,
           userId: user1.id,
+          completed: taskData.completed || false
         }
       })
+
+      // Tag ilişkisi oluştur (eğer task'ın tagId'si varsa)
+      if (taskData.tagId) {
+        await prisma.taskTag.create({
+          data: {
+            taskId: task.id,
+            tagId: taskData.tagId
+          }
+        })
+      }
+
       user1TasksCount++
       console.log(`✅ Görev oluşturuldu: ${taskData.title} (kullanıcı 1)`)
     }
@@ -391,12 +408,29 @@ async function main() {
     if (existingTask) {
       console.log(`⚠️ Görev zaten mevcut: ${taskData.title} (kullanıcı 2)`)
     } else {
-      await prisma.task.create({
+      // Task oluştur
+      const task = await prisma.task.create({
         data: {
-          ...taskData,
+          title: taskData.title,
+          description: taskData.description,
+          priority: taskData.priority,
+          projectId: taskData.projectId,
+          sectionId: taskData.sectionId,
           userId: user2.id,
+          completed: taskData.completed || false
         }
       })
+
+      // Tag ilişkisi oluştur (eğer task'ın tagId'si varsa)
+      if (taskData.tagId) {
+        await prisma.taskTag.create({
+          data: {
+            taskId: task.id,
+            tagId: taskData.tagId
+          }
+        })
+      }
+
       user2TasksCount++
       console.log(`✅ Görev oluşturuldu: ${taskData.title} (kullanıcı 2)`)
     }

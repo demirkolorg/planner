@@ -38,21 +38,22 @@ model Project {
 }
 
 model Task {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String?
-  completed   Boolean   @default(false)
-  priority    String    @default("NONE")
+  completed   Boolean    @default(false)
+  priority    String     @default("NONE")
+  dueDate     DateTime?
   projectId   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   sectionId   String?
-  section     Section?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  section     Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tagId       String?
-  tag         Tag?      @relation(fields: [tagId], references: [id], onDelete: SetNull)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        TaskTag[]
+  reminders   Reminder[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Section {
@@ -67,14 +68,35 @@ model Section {
 }
 
 model Tag {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   color     String
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks     Task[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     TaskTag[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   
   @@unique([name, userId])
+}
+
+model TaskTag {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([taskId, tagId])
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  datetime  DateTime
+  message   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,31 +9,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag, Bell, ChevronDown } from "lucide-react"
 import { BRAND_COLOR } from "@/lib/constants"
 import { useTagStore } from "@/store/tagStore"
+import { useTaskStore } from "@/store/taskStore"
+import { useProjectStore } from "@/store/projectStore"
 
-interface Project {
-  id: string
-  name: string
-  emoji?: string
-  color: string
-}
-
-interface Section {
-  id: string
-  name: string
-  projectId: string
-}
+import type { Project, Section, CreateTaskRequest } from "@/types/task"
 
 interface NewTaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (title: string, description: string, projectId: string, sectionId: string) => void
+  onSave?: (title: string, description: string, projectId: string, sectionId: string) => void
+  onTaskCreated?: (task?: any) => void
 }
 
-export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
+export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated }: NewTaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [projects, setProjects] = useState<Project[]>([])
-  const [sections, setSections] = useState<Section[]>([])
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [selectedSection, setSelectedSection] = useState<Section | null>(null)
   const [showProjectPicker, setShowProjectPicker] = useState(false)
@@ -60,8 +50,11 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   const [reminderMonth, setReminderMonth] = useState(6) // Temmuz
   const [reminderYear, setReminderYear] = useState(2025)
   const { tags, fetchTags, createTag } = useTagStore()
+  const { createTask } = useTaskStore()
+  const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [currentMonth, setCurrentMonth] = useState(6) // 0-11 (Temmuz = 6)
   const [currentYear, setCurrentYear] = useState(2025)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -92,47 +85,33 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
       setTimeInput("")
       setCurrentMonth(6) // Temmuz
       setCurrentYear(2025)
+      setIsSubmitting(false)
       fetchTags() // Fetch real tags data
       fetchProjects() // Fetch projects data
     }
-  }, [isOpen, fetchTags])
+  }, [isOpen, fetchTags, fetchProjects])
 
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects')
-      if (response.ok) {
-        const projectsData = await response.json()
-        setProjects(projectsData)
-        
-        // "Gelen Kutusu" projesini default olarak seç
-        const inboxProject = projectsData.find((p: Project) => p.name === "Gelen Kutusu")
-        if (inboxProject) {
-          setSelectedProject(inboxProject)
-          fetchSectionsForProject(inboxProject.id)
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error)
-    }
-  }
+  // Store'dan sections al
+  const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []
 
-  const fetchSectionsForProject = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/sections`)
-      if (response.ok) {
-        const sectionsData = await response.json()
-        setSections(sectionsData)
-        
-        // "Genel" bölümünü default olarak seç
-        const generalSection = sectionsData.find((s: Section) => s.name === "Genel")
-        if (generalSection) {
-          setSelectedSection(generalSection)
-        }
+  // İlk proje açıldığında default seçimleri yap
+  useEffect(() => {
+    if (isOpen && projects.length > 0 && !selectedProject) {
+      // "Gelen Kutusu" projesini default olarak seç
+      const inboxProject = projects.find((p: Project) => p.name === "Gelen Kutusu")
+      if (inboxProject) {
+        setSelectedProject(inboxProject)
+        fetchSections(inboxProject.id).then(() => {
+          const projectSections = getSectionsByProject(inboxProject.id)
+          // "Genel" bölümünü default olarak seç
+          const generalSection = projectSections.find((s: Section) => s.name === "Genel")
+          if (generalSection) {
+            setSelectedSection(generalSection)
+          }
+        })
       }
-    } catch (error) {
-      console.error("Failed to fetch sections:", error)
     }
-  }
+  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject])
 
   const handleDateSelect = (dateOption: string) => {
     if (dateOption === "Bugün") {
@@ -384,12 +363,19 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     }
   }
 
-  const handleProjectSelect = (project: Project) => {
+  const handleProjectSelect = async (project: Project) => {
     setSelectedProject(project)
     setShowProjectPicker(false)
     setProjectSearchInput("")
     // Proje seçilince o projenin bölümlerini getir ve "Genel"i seç
-    fetchSectionsForProject(project.id)
+    await fetchSections(project.id)
+    const projectSections = getSectionsByProject(project.id)
+    const generalSection = projectSections.find((s: Section) => s.name === "Genel")
+    if (generalSection) {
+      setSelectedSection(generalSection)
+    } else if (projectSections.length > 0) {
+      setSelectedSection(projectSections[0])
+    }
   }
 
   const handleSectionSelect = (section: Section) => {
@@ -410,10 +396,68 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     )
   }
 
-  const handleSave = () => {
-    if (title.trim() && selectedProject && selectedSection) {
-      onSave(title.trim(), description.trim(), selectedProject.id, selectedSection.id)
+  const handleSave = async () => {
+    if (!title.trim() || !selectedProject || !selectedSection) {
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Hatırlatıcı tarihlerini düzenle
+      const formattedReminders = reminders.map(reminder => {
+        // "19 Temmuz 2025 14:30" formatından Date string'e çevir
+        const parts = reminder.split(' ')
+        if (parts.length >= 4) {
+          const day = parts[0]
+          const monthName = parts[1]
+          const year = parts[2]
+          const time = parts[3]
+          
+          const monthMap: Record<string, string> = {
+            'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
+            'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
+            'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+          }
+          
+          const month = monthMap[monthName] || '01'
+          const dateStr = `${year}-${month}-${day.padStart(2, '0')}`
+          return `${dateStr}T${time}:00.000Z`
+        }
+        return reminder
+      })
+
+      const taskData: CreateTaskRequest = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        projectId: selectedProject.id,
+        sectionId: selectedSection.id,
+        priority: selectedPriority,
+        dueDate: selectedDate || undefined,
+        dueTime: selectedTime || undefined,
+        tags: selectedTags,
+        reminders: formattedReminders
+      }
+
+      // TaskStore'u kullanarak görev oluştur
+      const newTask = await createTask(taskData)
+      console.log('Task created successfully:', newTask)
+
+      // Önce modal'ı kapat
       onClose()
+      
+      // Sonra callback'leri çağır
+      if (onSave) {
+        onSave(title.trim(), description.trim(), selectedProject.id, selectedSection.id)
+      }
+      if (onTaskCreated) {
+        onTaskCreated(newTask)
+      }
+    } catch (error) {
+      console.error('Error creating task:', error)
+      // TODO: Kullanıcıya hata mesajı göster
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -427,17 +471,15 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">🎯  Görev Ekle</h2>
+          <DialogTitle className="text-lg font-semibold">🎯  Görev Ekle</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
+            className="absolute right-4 top-4"
           >
             <X className="h-4 w-4" />
           </Button>
-        </div>
 
         {/* Content */}
         <div className="space-y-4">
@@ -1103,9 +1145,9 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
             </div>
             <Button
               onClick={handleSave}
-              disabled={!title.trim() || !selectedProject || !selectedSection}
+              disabled={!title.trim() || !selectedProject || !selectedSection || isSubmitting}
             >
-              Görev Ekle
+              {isSubmitting ? "Ekleniyor..." : "Görev Ekle"}
             </Button>
           </div>
         </div>

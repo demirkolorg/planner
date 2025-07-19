@@ -25,7 +25,10 @@
       "Bash(bun x shadcn@latest add:*)",
       "Bash(pkill:*)",
       "Bash(kill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(tsx scripts/migrate-existing-data.ts:*)",
+      "Bash(bunx tsx:*)"
     ],
     "deny": []
   }

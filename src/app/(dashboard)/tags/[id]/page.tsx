@@ -6,6 +6,7 @@ import { PiTagSimpleFill } from "react-icons/pi"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useTaskStore } from "@/store/taskStore"
 
 interface Tag {
   id: string
@@ -17,23 +18,17 @@ interface Tag {
   }
 }
 
-interface Task {
-  id: string
-  title: string
-  description: string | null
-  completed: boolean
-  priority: "LOW" | "MEDIUM" | "HIGH"
-  createdAt: string
-  updatedAt: string
-}
 
 export default function TagDetailPage() {
   const params = useParams()
   const tagId = params.id as string
   const [tag, setTag] = useState<Tag | null>(null)
-  const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { fetchTasksByTag, getTasksByTag } = useTaskStore()
+
+  // TaskStore'dan tag görevlerini al
+  const tasks = getTasksByTag(tagId)
 
   useEffect(() => {
     const fetchTagAndTasks = async () => {
@@ -46,15 +41,8 @@ export default function TagDetailPage() {
         const tagData = await tagResponse.json()
         setTag(tagData)
 
-        // Tag ile ilişkili görevleri al
-        const tasksResponse = await fetch(`/api/tags/${tagId}/tasks`)
-        if (!tasksResponse.ok) {
-          const errorData = await tasksResponse.json()
-          console.error('Tasks fetch error:', errorData)
-          throw new Error(`Görevler yüklenemedi: ${errorData.error || 'Bilinmeyen hata'}`)
-        }
-        const tasksData = await tasksResponse.json()
-        setTasks(tasksData)
+        // TaskStore'dan görevleri al
+        await fetchTasksByTag(tagId)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Bir hata oluştu')
       } finally {
@@ -63,7 +51,7 @@ export default function TagDetailPage() {
     }
 
     fetchTagAndTasks()
-  }, [tagId])
+  }, [tagId, fetchTasksByTag])
 
   if (isLoading) {
     return (

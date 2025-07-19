@@ -6,19 +6,17 @@ import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock, FolderClo
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
+import { useTaskStore } from "@/store/taskStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewSectionModal } from "@/components/modals/new-section-modal"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-interface Project {
-  id: string
-  name: string
-  emoji?: string
-  color: string
-  notes?: string | null
-  userId: string
+import type { Project as ProjectType, Section as SectionType } from "@/types/task"
+
+interface Project extends Omit<ProjectType, 'createdAt' | 'updatedAt'> {
   createdAt: string
   updatedAt: string
   _count: {
@@ -26,79 +24,52 @@ interface Project {
   }
 }
 
-interface Task {
-  id: string
-  title: string
-  description: string | null
-  completed: boolean
-  priority: "LOW" | "MEDIUM" | "HIGH"
-  projectId: string
-  sectionId: string | null
-  userId: string
-  tagId: string | null
-  createdAt: string
-  updatedAt: string
-}
 
-interface Section {
-  id: string
-  name: string
-  projectId: string
-  order: number
-  createdAt: string
-  updatedAt: string
-  _count: {
-    tasks: number
-  }
-}
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.id as string
   const [project, setProject] = useState<Project | null>(null)
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [sections, setSections] = useState<Section[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false)
-  const { updateProject, deleteProject } = useProjectStore()
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection } = useProjectStore()
+  const { fetchTasksByProject, createTask, getTasksByProject, getTasksBySection } = useTaskStore()
+
+  const fetchProjectData = async () => {
+    try {
+      // Proje bilgilerini al
+      const projectResponse = await fetch(`/api/projects/${projectId}`)
+      if (!projectResponse.ok) {
+        throw new Error('Proje bulunamadı')
+      }
+      const projectData = await projectResponse.json()
+      setProject(projectData)
+
+      // ProjectStore'dan section'ları al
+      await fetchSections(projectId)
+
+      // TaskStore'dan görevleri al
+      await fetchTasksByProject(projectId)
+
+      setIsLoading(false)
+    } catch (error) {
+      console.error('Proje verileri alınırken hata oluştu:', error)
+      setError(error instanceof Error ? error.message : 'Bilinmeyen hata')
+      setIsLoading(false)
+    }
+  }
+
+  // TaskStore'dan proje görevlerini al
+  const tasks = getTasksByProject(projectId)
+  // ProjectStore'dan proje section'larını al
+  const sections = getSectionsByProject(projectId)
 
   useEffect(() => {
-    const fetchProjectData = async () => {
-      try {
-        // Proje bilgilerini al
-        const projectResponse = await fetch(`/api/projects/${projectId}`)
-        if (!projectResponse.ok) {
-          throw new Error('Proje bulunamadı')
-        }
-        const projectData = await projectResponse.json()
-        setProject(projectData)
-
-        // Proje ile ilişkili görevleri al
-        const tasksResponse = await fetch(`/api/projects/${projectId}/tasks`)
-        if (!tasksResponse.ok) {
-          throw new Error('Görevler yüklenemedi')
-        }
-        const tasksData = await tasksResponse.json()
-        setTasks(tasksData)
-
-        // Proje ile ilişkili bölümleri al
-        const sectionsResponse = await fetch(`/api/projects/${projectId}/sections`)
-        if (!sectionsResponse.ok) {
-          throw new Error('Bölümler yüklenemedi')
-        }
-        const sectionsData = await sectionsResponse.json()
-        setSections(sectionsData)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Bir hata oluştu')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchProjectData()
   }, [projectId])
 
@@ -119,20 +90,7 @@ export default function ProjectDetailPage() {
 
   const handleCreateSection = async (name: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/sections`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Bölüm oluşturulamadı')
-      }
-
-      const newSection = await response.json()
-      setSections(prev => [...prev, newSection])
+      await createSection(projectId, name)
     } catch (error) {
       console.error("Failed to create section:", error)
     }
@@ -245,7 +203,7 @@ export default function ProjectDetailPage() {
       ) : (
         <Accordion type="multiple" className="w-full space-y-4">
           {sections.map((section) => {
-            const sectionTasks = tasks.filter(task => task.sectionId === section.id)
+            const sectionTasks = getTasksBySection(section.id)
             
             return (
               <AccordionItem key={section.id} value={section.id} className="border rounded-lg bg-card">
@@ -270,7 +228,10 @@ export default function ProjectDetailPage() {
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-64">
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation()
+                          setIsTaskModalOpen(true)
+                        }}>
                           <Plus className="h-4 w-4" />
                           Görev Ekle
                         </DropdownMenuItem>
@@ -398,6 +359,19 @@ export default function ProjectDetailPage() {
         isOpen={isSectionModalOpen}
         onClose={() => setIsSectionModalOpen(false)}
         onSave={handleCreateSection}
+      />
+
+      {/* Görev Ekleme Modal'ı */}
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onTaskCreated={async (newTask) => {
+          if (!newTask) {
+            // Fallback: Tüm verileri yenile
+            await fetchProjectData()
+          }
+          // TaskStore otomatik olarak tüm UI'ı güncelleyecek
+        }}
       />
     </div>
   )

@@ -32,6 +32,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       where: {
         projectId: id
       },
+      include: {
+        tags: {
+          include: {
+            tag: true
+          }
+        },
+        reminders: true,
+        section: true
+      },
       orderBy: {
         createdAt: 'desc'
       }

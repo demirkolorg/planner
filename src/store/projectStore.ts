@@ -4,7 +4,20 @@ interface Project {
   id: string
   name: string
   emoji?: string
+  notes?: string
   userId: string
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    tasks: number
+  }
+}
+
+interface Section {
+  id: string
+  name: string
+  projectId: string
+  order: number
   createdAt: string
   updatedAt: string
   _count?: {
@@ -14,19 +27,32 @@ interface Project {
 
 interface ProjectStore {
   projects: Project[]
+  sections: Section[]
   isLoading: boolean
   error: string | null
   
-  // Actions
+  // Project Actions
   fetchProjects: () => Promise<void>
   createProject: (name: string, emoji: string) => Promise<void>
   updateProject: (id: string, name: string, emoji: string) => Promise<void>
   deleteProject: (id: string) => Promise<void>
+  
+  // Section Actions  
+  fetchSections: (projectId: string) => Promise<Section[]>
+  createSection: (projectId: string, name: string) => Promise<void>
+  updateSection: (id: string, name: string) => Promise<void>
+  deleteSection: (id: string) => Promise<void>
+  getSectionsByProject: (projectId: string) => Section[]
+  
+  // Utility
+  incrementProjectTaskCount: (projectId: string) => void
+  decrementProjectTaskCount: (projectId: string) => void
   clearError: () => void
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   projects: [],
+  sections: [],
   isLoading: false,
   error: null,
 
@@ -120,6 +146,144 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       set({ error: error instanceof Error ? error.message : 'An error occurred' })
       throw error
     }
+  },
+
+  incrementProjectTaskCount: (projectId: string) => {
+    set(state => ({
+      projects: state.projects.map(project => 
+        project.id === projectId 
+          ? { 
+              ...project, 
+              _count: { 
+                tasks: (project._count?.tasks || 0) + 1 
+              } 
+            }
+          : project
+      )
+    }))
+  },
+
+  decrementProjectTaskCount: (projectId: string) => {
+    set(state => ({
+      projects: state.projects.map(project => 
+        project.id === projectId 
+          ? { 
+              ...project, 
+              _count: { 
+                tasks: Math.max((project._count?.tasks || 0) - 1, 0) 
+              } 
+            }
+          : project
+      )
+    }))
+  },
+
+  // Section Actions
+  fetchSections: async (projectId: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/projects/${projectId}/sections`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch sections')
+      }
+      const sections = await response.json()
+      
+      // Update sections in store (merge with existing sections from other projects)
+      set(state => ({
+        sections: [
+          ...state.sections.filter(section => section.projectId !== projectId),
+          ...sections
+        ]
+      }))
+      
+      return sections
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  createSection: async (projectId: string, name: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/projects/${projectId}/sections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create section')
+      }
+      
+      const newSection = await response.json()
+      set(state => ({
+        sections: [...state.sections, newSection]
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  updateSection: async (id: string, name: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/sections/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update section')
+      }
+      
+      const updatedSection = await response.json()
+      set(state => ({
+        sections: state.sections.map(section => 
+          section.id === id ? { ...section, ...updatedSection } : section
+        )
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  deleteSection: async (id: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/sections/${id}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete section')
+      }
+      
+      set(state => ({
+        sections: state.sections.filter(section => section.id !== id)
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  getSectionsByProject: (projectId: string) => {
+    return get().sections.filter(section => section.projectId === projectId)
   },
 
   clearError: () => set({ error: null })

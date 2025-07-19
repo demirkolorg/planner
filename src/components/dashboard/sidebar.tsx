@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
+import { useTaskStore } from "@/store/taskStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { BRAND_COLOR } from "@/lib/constants"
 
@@ -36,6 +37,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
+  const { getTasksByProject } = useTaskStore()
 
   useEffect(() => {
     fetchProjects()
@@ -111,23 +113,28 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
           </div>
           
           <div className="space-y-1">
-            {projects.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.id}`}
-                className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
-              >
-                <div className="flex items-center space-x-2">
-                  {project.emoji ? (
-                    <span className="text-sm">{project.emoji}</span>
-                  ) : (
-                    <div className="w-3 h-3 rounded-full bg-primary" />
-                  )}
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{project._count?.tasks || 0}</span>
-              </Link>
-            ))}
+            {projects.map((project) => {
+              // TaskStore'dan gerçek görev sayısını al
+              const taskCount = getTasksByProject(project.id).length
+              
+              return (
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                >
+                  <div className="flex items-center space-x-2">
+                    {project.emoji ? (
+                      <span className="text-sm">{project.emoji}</span>
+                    ) : (
+                      <div className="w-3 h-3 rounded-full bg-primary" />
+                    )}
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{taskCount}</span>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </div>
