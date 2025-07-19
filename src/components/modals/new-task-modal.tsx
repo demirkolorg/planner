@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search } from "lucide-react"
+import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag } from "lucide-react"
 import { BRAND_COLOR } from "@/lib/constants"
 import { useTagStore } from "@/store/tagStore"
 
@@ -29,6 +29,8 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [tagSearchInput, setTagSearchInput] = useState("")
+  const [showPriorityPicker, setShowPriorityPicker] = useState(false)
+  const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
   const { tags, fetchTags, createTag } = useTagStore()
   const [currentMonth, setCurrentMonth] = useState(6) // 0-11 (Temmuz = 6)
   const [currentYear, setCurrentYear] = useState(2025)
@@ -45,6 +47,8 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
       setShowTagPicker(false)
       setSelectedTags([])
       setTagSearchInput("")
+      setShowPriorityPicker(false)
+      setSelectedPriority("Yok")
       setSelectedDate(null)
       setSelectedTime(null)
       setTimeInput("")
@@ -189,6 +193,24 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   const getTagColor = (tagName: string) => {
     const tag = tags.find(t => t.name === tagName)
     return tag?.color ? `bg-[${tag.color}]` : "bg-blue-500"
+  }
+
+  const priorities = [
+    { name: "Kritik", color: "#ef4444", emoji: "🔴" },
+    { name: "Yüksek", color: "#f97316", emoji: "🟠" },
+    { name: "Orta", color: "#3b82f6", emoji: "🔵" },
+    { name: "Düşük", color: "#8b5cf6", emoji: "🟣" },
+    { name: "Yok", color: "#9ca3af", emoji: "⚪️" }
+  ]
+
+  const handlePrioritySelect = (priority: string) => {
+    setSelectedPriority(priority)
+    setShowPriorityPicker(false)
+  }
+
+  const getPriorityColor = () => {
+    const priority = priorities.find(p => p.name === selectedPriority)
+    return priority?.color || "#9ca3af"
   }
 
   const handleSave = () => {
@@ -456,52 +478,53 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
 
             </div>
 
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowTagPicker(!showTagPicker)}
-              >
-                <Tag className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowTagPicker(!showTagPicker)}
+                >
+                  <Tag className="h-4 w-4" />
+                </Button>
 
                 {/* Tag Picker Dropdown */}
                 {showTagPicker && (
-                  <div className="absolute top-full right-0 mt-1 w-80 bg-background border rounded-lg shadow-lg z-50 p-4">
+                  <div className="absolute top-full right-0 mt-1 w-72 bg-background border rounded-lg shadow-lg z-50 p-3">
                     {/* Search Input */}
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <div className="relative mb-3">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                       <Input
                         value={tagSearchInput}
                         onChange={(e) => setTagSearchInput(e.target.value)}
                         onKeyPress={handleTagKeyPress}
                         placeholder="Ara veya Oluştur"
-                        className="pl-10"
+                        className="pl-8 h-8 text-xs"
                       />
                     </div>
 
                     {/* Tag List */}
-                    <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                    <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
                       {getFilteredTags().map((tag) => (
                         <div
                           key={tag.id}
-                          className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
+                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
                           onClick={() => handleTagToggle(tag.name)}
                         >
-                          <div className={`w-4 h-4 rounded border-2 ${
+                          <div className={`w-3 h-3 rounded border ${
                             selectedTags.includes(tag.name) 
                               ? 'bg-purple-600 border-purple-600' 
                               : 'border-gray-400'
                           } flex items-center justify-center`}>
                             {selectedTags.includes(tag.name) && (
-                              <Check className="h-3 w-3 text-white" />
+                              <Check className="h-2 w-2 text-white" />
                             )}
                           </div>
                           <div 
-                            className="w-3 h-3 rounded-full" 
+                            className="w-2 h-2 rounded-full" 
                             style={{ backgroundColor: tag.color }}
                           ></div>
-                          <span className="text-sm">{tag.name}</span>
+                          <span className="text-xs">{tag.name}</span>
                         </div>
                       ))}
 
@@ -510,11 +533,11 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
                         tag.name.toLowerCase() === tagSearchInput.toLowerCase()
                       ) && (
                         <div
-                          className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
+                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
                           onClick={handleCreateTag}
                         >
-                          <Plus className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Create '{tagSearchInput}'</span>
+                          <Plus className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs">Create '{tagSearchInput}'</span>
                         </div>
                       )}
                     </div>
@@ -524,19 +547,51 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
                       <Button
                         variant="ghost"
                         onClick={handleTagClear}
-                        className="flex-1"
+                        className="flex-1 h-7 text-xs"
+                        size="sm"
                       >
                         Temizle
                       </Button>
                       <Button
                         onClick={handleTagConfirm}
-                        className="flex-1"
+                        className="flex-1 h-7 text-xs"
+                        size="sm"
                       >
                         Tamamlandı
                       </Button>
                     </div>
                   </div>
                 )}
+              </div>
+              
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPriorityPicker(!showPriorityPicker)}
+                  style={{ color: getPriorityColor() }}
+                >
+                  <Flag className="h-4 w-4" />
+                </Button>
+
+                {/* Priority Picker Dropdown */}
+                {showPriorityPicker && (
+                  <div className="absolute top-full right-0 mt-1 w-40 bg-background border rounded-lg shadow-lg z-50 p-1">
+                    <div>
+                      {priorities.map((priority) => (
+                        <div
+                          key={priority.name}
+                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
+                          onClick={() => handlePrioritySelect(priority.name)}
+                        >
+                          <span className="text-sm">{priority.emoji}</span>
+                          <span className="text-xs">{priority.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
