@@ -38,22 +38,27 @@ model Project {
 }
 
 model Task {
-  id          String     @id @default(cuid())
-  title       String
-  description String?
-  completed   Boolean    @default(false)
-  priority    String     @default("NONE")
-  dueDate     DateTime?
-  projectId   String
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sectionId   String?
-  section     Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags        TaskTag[]
-  reminders   Reminder[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  completed    Boolean      @default(false)
+  priority     String       @default("NONE")
+  dueDate      DateTime?
+  isPinned     Boolean      @default(false)
+  parentTaskId String?
+  parentTask   Task?        @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subTasks     Task[]       @relation("SubTasks")
+  projectId    String
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sectionId    String?
+  section      Section?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags         TaskTag[]
+  reminders    Reminder[]
+  attachments  Attachment[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }
 
 model Section {
@@ -97,6 +102,18 @@ model Reminder {
   datetime  DateTime
   message   String?
   isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileType  String   // "image", "text", "markdown", etc.
+  fileUrl   String
+  fileSize  Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

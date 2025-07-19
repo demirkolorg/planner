@@ -22,6 +22,7 @@ interface CreateTaskRequest {
   dueTime?: string
   tags?: string[]  // Tag name'leri
   reminders?: string[]  // DateTime string'leri
+  parentTaskId?: string  // Alt görev için parent task ID'si
 }
 
 export async function POST(request: NextRequest) {
@@ -45,7 +46,8 @@ export async function POST(request: NextRequest) {
       dueDate,
       dueTime,
       tags = [],
-      reminders = []
+      reminders = [],
+      parentTaskId
     } = body
 
     if (!title || !projectId || !sectionId) {
@@ -110,7 +112,8 @@ export async function POST(request: NextRequest) {
           dueDate: parsedDueDate,
           projectId,
           sectionId,
-          userId: decoded.userId
+          userId: decoded.userId,
+          parentTaskId
         }
       })
 
@@ -160,7 +163,19 @@ export async function POST(request: NextRequest) {
               tag: true
             }
           },
-          reminders: true
+          reminders: true,
+          attachments: true,
+          subTasks: {
+            include: {
+              tags: {
+                include: {
+                  tag: true
+                }
+              },
+              reminders: true,
+              attachments: true
+            }
+          }
         }
       })
     })
@@ -196,7 +211,19 @@ export async function GET(request: NextRequest) {
             tag: true
           }
         },
-        reminders: true
+        reminders: true,
+        attachments: true,
+        subTasks: {
+          include: {
+            tags: {
+              include: {
+                tag: true
+              }
+            },
+            reminders: true,
+            attachments: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'

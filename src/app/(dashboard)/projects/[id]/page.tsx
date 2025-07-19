@@ -13,6 +13,8 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Switch } from "@/components/ui/switch"
+import { TaskCard } from "@/components/task/task-card"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
 
@@ -37,8 +39,27 @@ export default function ProjectDetailPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalContext, setTaskModalContext] = useState<{
+    project?: { id: string; name: string; emoji?: string }
+    section?: { id: string; name: string; projectId: string }
+  }>({})
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection } = useProjectStore()
-  const { fetchTasksByProject, createTask, getTasksByProject, getTasksBySection } = useTaskStore()
+  const { 
+    fetchTasksByProject, 
+    createTask, 
+    getTasksByProject, 
+    getTasksBySection,
+    toggleTaskComplete,
+    updateTask,
+    deleteTask,
+    toggleTaskPin,
+    addSubTask,
+    uploadAttachment,
+    showCompletedTasks,
+    toggleShowCompletedTasks,
+    getCompletedTasksCount,
+    getPendingTasksCount
+  } = useTaskStore()
 
   const fetchProjectData = async () => {
     try {
@@ -140,12 +161,28 @@ export default function ProjectDetailPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold">{project.name}</h1>
-            <p className="text-muted-foreground">
-              {project._count.tasks} görev
-            </p>
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <span className="flex items-center space-x-1 text-green-600 dark:text-green-400">
+                <Check className="h-3 w-3" />
+                <span>{getCompletedTasksCount(projectId)} tamamlandı</span>
+              </span>
+              <span className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                <Clock className="h-3 w-3" />
+                <span>{getPendingTasksCount(projectId)} bekleyen</span>
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-2 ml-auto">
+          {/* Tamamlanan görevleri göster toggle */}
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-muted-foreground">Tamamlananlar</span>
+            <Switch
+              checked={showCompletedTasks}
+              onCheckedChange={toggleShowCompletedTasks}
+            />
+          </div>
+          
           <Button 
             variant="outline" 
             size="sm"
@@ -230,6 +267,10 @@ export default function ProjectDetailPage() {
                       <DropdownMenuContent align="end" className="w-64">
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation()
+                          setTaskModalContext({
+                            project: { id: project.id, name: project.name, emoji: project.emoji },
+                            section: { id: section.id, name: section.name, projectId: project.id }
+                          })
                           setIsTaskModalOpen(true)
                         }}>
                           <Plus className="h-4 w-4" />
@@ -273,51 +314,50 @@ export default function ProjectDetailPage() {
                   {sectionTasks.length === 0 ? (
                     <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                       <p className="text-muted-foreground mb-2">Bu bölümde henüz görev yok</p>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setTaskModalContext({
+                            project: { id: project.id, name: project.name, emoji: project.emoji },
+                            section: { id: section.id, name: section.name, projectId: project.id }
+                          })
+                          setIsTaskModalOpen(true)
+                        }}
+                      >
                         İlk Görevi Ekle
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {sectionTasks.map((task) => (
-                        <div
+                        <TaskCard
                           key={task.id}
-                          className="p-4 border rounded-lg bg-background hover:shadow-sm transition-shadow"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium">{task.title}</h4>
-                            <div className="flex items-center space-x-2">
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  task.priority === "HIGH"
-                                    ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                                    : task.priority === "MEDIUM"
-                                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
-                                    : "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                                }`}
-                              >
-                                {task.priority === "HIGH" ? "Yüksek" : task.priority === "MEDIUM" ? "Orta" : "Düşük"}
-                              </span>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  task.completed
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                                }`}
-                              >
-                                {task.completed ? "Tamamlandı" : "Devam Ediyor"}
-                              </span>
-                            </div>
-                          </div>
-                          {task.description && (
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {task.description}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            Oluşturulma: {new Date(task.createdAt).toLocaleDateString('tr-TR')}
-                          </p>
-                        </div>
+                          task={task}
+                          onToggleComplete={toggleTaskComplete}
+                          onUpdate={updateTask}
+                          onDelete={deleteTask}
+                          onPin={toggleTaskPin}
+                          onAddSubTask={(parentTaskId) => {
+                            // TODO: Alt görev ekleme modal'ını aç
+                            console.log('Add sub-task for:', parentTaskId)
+                          }}
+                          onAddAttachment={(taskId, file) => {
+                            uploadAttachment(taskId, file)
+                          }}
+                          onUpdateTags={(taskId, tags) => {
+                            // TODO: Tag güncelleme dropdown'ını aç
+                            console.log('Update tags for:', taskId, tags)
+                          }}
+                          onUpdatePriority={(taskId, priority) => {
+                            // TODO: Priority güncelleme dropdown'ını aç
+                            console.log('Update priority for:', taskId, priority)
+                          }}
+                          onUpdateReminders={(taskId, reminders) => {
+                            // TODO: Reminder güncelleme dropdown'ını aç
+                            console.log('Update reminders for:', taskId, reminders)
+                          }}
+                        />
                       ))}
                     </div>
                   )}
@@ -364,7 +404,10 @@ export default function ProjectDetailPage() {
       {/* Görev Ekleme Modal'ı */}
       <NewTaskModal
         isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
+        onClose={() => {
+          setIsTaskModalOpen(false)
+          setTaskModalContext({})
+        }}
         onTaskCreated={async (newTask) => {
           if (!newTask) {
             // Fallback: Tüm verileri yenile
@@ -372,6 +415,8 @@ export default function ProjectDetailPage() {
           }
           // TaskStore otomatik olarak tüm UI'ı güncelleyecek
         }}
+        defaultProject={taskModalContext.project}
+        defaultSection={taskModalContext.section}
       />
     </div>
   )

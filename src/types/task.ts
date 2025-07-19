@@ -7,6 +7,10 @@ export interface Task {
   completed: boolean
   priority: string
   dueDate?: Date
+  isPinned: boolean
+  parentTaskId?: string
+  parentTask?: Task
+  subTasks?: Task[]
   projectId: string
   project?: Project
   sectionId?: string
@@ -15,6 +19,7 @@ export interface Task {
   user?: User
   tags?: TaskTag[]
   reminders?: Reminder[]
+  attachments?: Attachment[]
   createdAt: Date
   updatedAt: Date
 }
@@ -34,6 +39,18 @@ export interface Reminder {
   datetime: Date
   message?: string
   isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Attachment {
+  id: string
+  taskId: string
+  task?: Task
+  fileName: string
+  fileType: string
+  fileUrl: string
+  fileSize?: number
   createdAt: Date
   updatedAt: Date
 }

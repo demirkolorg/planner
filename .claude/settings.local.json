@@ -28,7 +28,8 @@
       "Bash(curl:*)",
       "Bash(cat:*)",
       "Bash(tsx scripts/migrate-existing-data.ts:*)",
-      "Bash(bunx tsx:*)"
+      "Bash(bunx tsx:*)",
+      "Bash(bunx tsc:*)"
     ],
     "deny": []
   }

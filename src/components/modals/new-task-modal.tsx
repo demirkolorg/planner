@@ -19,9 +19,19 @@ interface NewTaskModalProps {
   onClose: () => void
   onSave?: (title: string, description: string, projectId: string, sectionId: string) => void
   onTaskCreated?: (task?: any) => void
+  defaultProject?: {
+    id: string
+    name: string
+    emoji?: string
+  }
+  defaultSection?: {
+    id: string
+    name: string
+    projectId: string
+  }
 }
 
-export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated }: NewTaskModalProps) {
+export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection }: NewTaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -94,24 +104,40 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated }: NewTask
   // Store'dan sections al
   const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []
 
-  // İlk proje açıldığında default seçimleri yap
+  // Default proje ve bölüm seçimleri
   useEffect(() => {
-    if (isOpen && projects.length > 0 && !selectedProject) {
-      // "Gelen Kutusu" projesini default olarak seç
-      const inboxProject = projects.find((p: Project) => p.name === "Gelen Kutusu")
-      if (inboxProject) {
-        setSelectedProject(inboxProject)
-        fetchSections(inboxProject.id).then(() => {
-          const projectSections = getSectionsByProject(inboxProject.id)
-          // "Genel" bölümünü default olarak seç
-          const generalSection = projectSections.find((s: Section) => s.name === "Genel")
-          if (generalSection) {
-            setSelectedSection(generalSection)
-          }
-        })
+    if (isOpen) {
+      // Eğer default değerler verilmişse bunları kullan
+      if (defaultProject && projects.find(p => p.id === defaultProject.id)) {
+        setSelectedProject(defaultProject as Project)
+        
+        if (defaultSection) {
+          // Sections yüklenmesini bekle
+          const timer = setTimeout(() => {
+            const foundSection = getSectionsByProject(defaultProject.id).find(s => s.id === defaultSection.id)
+            if (foundSection) {
+              setSelectedSection(foundSection)
+            }
+          }, 100)
+          return () => clearTimeout(timer)
+        }
+      } else if (projects.length > 0 && !selectedProject) {
+        // Fallback: varsayılan seçimler - "Gelen Kutusu" projesini default olarak seç
+        const inboxProject = projects.find((p: Project) => p.name === "Gelen Kutusu")
+        if (inboxProject) {
+          setSelectedProject(inboxProject)
+          fetchSections(inboxProject.id).then(() => {
+            const projectSections = getSectionsByProject(inboxProject.id)
+            // "Genel" bölümünü default olarak seç
+            const generalSection = projectSections.find((s: Section) => s.name === "Genel")
+            if (generalSection) {
+              setSelectedSection(generalSection)
+            }
+          })
+        }
       }
     }
-  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject])
+  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection])
 
   const handleDateSelect = (dateOption: string) => {
     if (dateOption === "Bugün") {
