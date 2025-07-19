@@ -8,6 +8,7 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
   dueDate?: string
   isPinned: boolean
   parentTaskId?: string
+  level?: number
   tags?: Array<{
     id: string
     taskId: string
@@ -289,15 +290,33 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       (showCompletedTasks || !task.completed)
     )
     
-    // Ana görevleri ve alt görevleri sıralı şekilde döndür
+    // Recursive function to get all sub-tasks at any level
+    const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
+      const directSubTasks = filteredTasks.filter(task => task.parentTaskId === parentId)
+      const result: TaskWithRelations[] = []
+      
+      directSubTasks.forEach(subTask => {
+        // Add current sub-task with level information
+        const taskWithLevel = { ...subTask, level }
+        result.push(taskWithLevel)
+        
+        // Recursively add its sub-tasks
+        const nestedSubTasks = getAllSubTasksRecursive(subTask.id, level + 1)
+        result.push(...nestedSubTasks)
+      })
+      
+      return result
+    }
+    
+    // Ana görevleri ve tüm alt görevleri hierarchical sırayla döndür
     const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
     const result: TaskWithRelations[] = []
     
     mainTasks.forEach(mainTask => {
-      result.push(mainTask)
-      // Bu ana görevin alt görevlerini ekle
-      const subTasks = filteredTasks.filter(task => task.parentTaskId === mainTask.id)
-      result.push(...subTasks)
+      result.push({ ...mainTask, level: 0 })
+      // Bu ana görevin tüm alt görevlerini recursive şekilde ekle
+      const allSubTasks = getAllSubTasksRecursive(mainTask.id)
+      result.push(...allSubTasks)
     })
     
     return result
@@ -319,15 +338,33 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       (showCompletedTasks || !task.completed)
     )
     
-    // Ana görevleri ve alt görevleri sıralı şekilde döndür
+    // Recursive function to get all sub-tasks at any level
+    const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
+      const directSubTasks = filteredTasks.filter(task => task.parentTaskId === parentId)
+      const result: TaskWithRelations[] = []
+      
+      directSubTasks.forEach(subTask => {
+        // Add current sub-task with level information
+        const taskWithLevel = { ...subTask, level }
+        result.push(taskWithLevel)
+        
+        // Recursively add its sub-tasks
+        const nestedSubTasks = getAllSubTasksRecursive(subTask.id, level + 1)
+        result.push(...nestedSubTasks)
+      })
+      
+      return result
+    }
+    
+    // Ana görevleri ve tüm alt görevleri hierarchical sırayla döndür
     const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
     const result: TaskWithRelations[] = []
     
     mainTasks.forEach(mainTask => {
-      result.push(mainTask)
-      // Bu ana görevin alt görevlerini ekle
-      const subTasks = filteredTasks.filter(task => task.parentTaskId === mainTask.id)
-      result.push(...subTasks)
+      result.push({ ...mainTask, level: 0 })
+      // Bu ana görevin tüm alt görevlerini recursive şekilde ekle
+      const allSubTasks = getAllSubTasksRecursive(mainTask.id)
+      result.push(...allSubTasks)
     })
     
     return result
@@ -342,7 +379,24 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   getSubTasks: (parentTaskId: string) => {
-    return get().tasks.filter(task => task.parentTaskId === parentTaskId)
+    const { tasks } = get()
+    
+    // Recursive function to get all sub-tasks at any level
+    const getAllSubTasksRecursive = (parentId: string): TaskWithRelations[] => {
+      const directSubTasks = tasks.filter(task => task.parentTaskId === parentId)
+      const result: TaskWithRelations[] = []
+      
+      directSubTasks.forEach(subTask => {
+        result.push(subTask)
+        // Recursively add its sub-tasks
+        const nestedSubTasks = getAllSubTasksRecursive(subTask.id)
+        result.push(...nestedSubTasks)
+      })
+      
+      return result
+    }
+    
+    return getAllSubTasksRecursive(parentTaskId)
   },
 
   getTaskById: (taskId: string) => {

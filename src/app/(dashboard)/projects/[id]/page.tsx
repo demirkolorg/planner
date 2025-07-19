@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock, FolderClosed, Check, Archive, Trash } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -14,6 +14,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
 import { TaskCard } from "@/components/task/task-card"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
@@ -45,6 +46,9 @@ export default function ProjectDetailPage() {
     parentTaskId?: string
     parentTaskTitle?: string
   }>({})
+  const [openSections, setOpenSections] = useState<string[]>([])
+  const [isEditingNotes, setIsEditingNotes] = useState(false)
+  const [notesValue, setNotesValue] = useState("")
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
@@ -120,6 +124,64 @@ export default function ProjectDetailPage() {
     } catch (error) {
       console.error("Failed to create section:", error)
     }
+  }
+
+  // Debounce hook
+  const useDebounce = (callback: Function, delay: number) => {
+    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
+
+    const debouncedCallback = useCallback((...args: any[]) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
+      const newTimer = setTimeout(() => {
+        callback(...args)
+      }, delay)
+      setDebounceTimer(newTimer)
+    }, [callback, delay, debounceTimer])
+
+    return debouncedCallback
+  }
+
+  const updateNotes = async (notes: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: project?.name,
+          emoji: project?.emoji,
+          notes: notes.trim() || null
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update notes')
+      }
+      
+      const updatedProject = await response.json()
+      setProject(updatedProject)
+    } catch (error) {
+      console.error("Failed to update notes:", error)
+    }
+  }
+
+  const debouncedUpdateNotes = useDebounce(updateNotes, 1000) // 1 saniye debounce
+
+  const handleNotesChange = (value: string) => {
+    setNotesValue(value)
+    debouncedUpdateNotes(value)
+  }
+
+  const handleStartEditingNotes = () => {
+    setNotesValue(project?.notes || "")
+    setIsEditingNotes(true)
+  }
+
+  const handleBlurNotes = () => {
+    setIsEditingNotes(false)
   }
 
   if (isLoading) {
@@ -216,10 +278,25 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Proje Notları */}
-      {project.notes && (
-        <div className="bg-card border rounded-lg p-4">
-          <h3 className="text-lg font-semibold mb-2">Proje Notları</h3>
-          <p className="text-muted-foreground whitespace-pre-wrap">{project.notes}</p>
+      {isEditingNotes ? (
+        <Input
+          value={notesValue}
+          onChange={(e) => handleNotesChange(e.target.value)}
+          onBlur={handleBlurNotes}
+          placeholder="Projeyle ilgili not girin..."
+          className="text-sm"
+          autoFocus
+        />
+      ) : (
+        <div 
+          className="min-h-[32px] cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center"
+          onClick={handleStartEditingNotes}
+        >
+          {project.notes ? (
+            <p className="flex-1">{project.notes}</p>
+          ) : (
+            <p className="italic flex-1">Projeyle ilgili not girin...</p>
+          )}
         </div>
       )}
 
@@ -243,25 +320,30 @@ export default function ProjectDetailPage() {
           </Button>
         </div>
       ) : (
-        <Accordion type="multiple" className="w-full space-y-4">
+        <Accordion type="multiple" className="w-full space-y-2" value={openSections} onValueChange={setOpenSections}>
           {sections.map((section) => {
             const sectionTasks = getTasksBySection(section.id)
+            const isOpen = openSections.includes(section.id)
             
             return (
-              <AccordionItem key={section.id} value={section.id} className="border rounded-lg bg-card">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <AccordionItem key={section.id} value={section.id} className="border-none">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent/50 rounded-lg transition-colors">
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-primary rounded-full"></div>
-                      <h3 className="text-lg font-semibold">{section.name}</h3>
-                      <span className="text-sm text-muted-foreground">
-                        ({sectionTasks.length} görev)
+                      {isOpen ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <h3 className="text-sm font-medium">{section.name}</h3>
+                      <span className="text-xs text-muted-foreground">
+                        {sectionTasks.length}
                       </span>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <div 
-                          className="p-2 border rounded-md hover:bg-accent cursor-pointer inline-flex items-center justify-center"
+                          className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
                           onClick={(e) => {
                             e.stopPropagation()
                           }}
@@ -315,7 +397,7 @@ export default function ProjectDetailPage() {
                     </DropdownMenu>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4">
+                <AccordionContent className="px-4 pb-3">
                   {sectionTasks.length === 0 ? (
                     <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                       <p className="text-muted-foreground mb-2">Bu bölümde henüz görev yok</p>
@@ -334,7 +416,7 @@ export default function ProjectDetailPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {sectionTasks.map((task) => (
                         <TaskCard
                           key={task.id}

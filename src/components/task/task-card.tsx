@@ -22,6 +22,7 @@ interface TaskWithRelations {
   userId: string
   createdAt: string
   updatedAt: string
+  level?: number
   tags?: Array<{
     id: string
     taskId: string
@@ -103,14 +104,15 @@ export function TaskCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const { getSubTasks } = useTaskStore()
 
-  // Alt görevleri al
+  // Alt görevleri al (tüm seviyedeki)
   const subTasks = getSubTasks(task.id)
   const hasUncompletedSubTasks = subTasks.some(subTask => !subTask.completed)
-  const isMainTaskCheckboxDisabled = !task.parentTaskId && hasUncompletedSubTasks
+  // Herhangi bir görev (ana veya alt) tamamlanmamış alt görevleri varsa tamamlanamaz
+  const isTaskCheckboxDisabled = hasUncompletedSubTasks
 
   const handleToggleComplete = () => {
-    // Üst görevse ve tamamlanmamış alt görevleri varsa tamamlanamaz
-    if (isMainTaskCheckboxDisabled) return
+    // Tamamlanmamış alt görevleri varsa tamamlanamaz
+    if (isTaskCheckboxDisabled) return
     onToggleComplete?.(task.id)
   }
 
@@ -129,24 +131,40 @@ export function TaskCard({
   const priorityColor = PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.NONE
   const checkboxColor = PRIORITY_CHECKBOX_COLORS[task.priority as keyof typeof PRIORITY_CHECKBOX_COLORS] || PRIORITY_CHECKBOX_COLORS.NONE
 
+  // Level bazlı margin hesapla
+  const getMarginByLevel = (level?: number) => {
+    switch (level) {
+      case 1: return "ml-6"
+      case 2: return "ml-12"
+      case 3: return "ml-18"
+      case 4: return "ml-24"
+      default: return ""
+    }
+  }
+
   return (
     <div className={cn(
       "rounded-lg bg-card transition-all duration-200",
       priorityColor,
-      task.parentTaskId && "ml-6", // Alt görev girintisi
+      task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
       className
     )}>
       {/* Header - Always Visible */}
       <div 
-        className="flex items-center p-2 cursor-pointer hover:bg-accent/50"
+        className={cn(
+          "flex items-center p-2 cursor-pointer transition-colors",
+          isExpanded 
+            ? "bg-accent/30 hover:bg-accent/50 rounded-t-lg" 
+            : "hover:bg-accent/50 rounded-lg"
+        )}
         onClick={handleToggleExpanded}
       >
         <Checkbox
           checked={task.completed}
           onCheckedChange={handleToggleComplete}
-          className={cn("mr-2", checkboxColor, isMainTaskCheckboxDisabled && "opacity-50 cursor-not-allowed")}
+          className={cn("mr-2", checkboxColor, isTaskCheckboxDisabled && "opacity-50 cursor-default")}
           onClick={(e) => e.stopPropagation()}
-          disabled={isMainTaskCheckboxDisabled}
+          disabled={isTaskCheckboxDisabled}
         />
         
         <div className="flex-1 min-w-0">
@@ -175,7 +193,7 @@ export function TaskCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t px-4 pb-4">
+        <div className="px-4 pb-4">
           {/* Description */}
           {task.description && (
             <div className="mt-3 mb-4">
@@ -211,7 +229,7 @@ export function TaskCard({
                 {task.attachments.map((attachment) => (
                   <div
                     key={attachment.id}
-                    className="text-xs bg-muted px-2 py-1 rounded border"
+                    className="text-xs bg-muted px-2 py-1 rounded"
                   >
                     {attachment.fileName}
                   </div>
@@ -222,7 +240,7 @@ export function TaskCard({
 
 
           {/* Footer with Date and Actions */}
-          <div className="flex items-center justify-between mt-4 pt-3 border-t">
+          <div className="flex items-center justify-between mt-4 pt-3">
             {/* Left side - Date */}
             <div className="text-xs text-muted-foreground">
               {task.dueDate ? (

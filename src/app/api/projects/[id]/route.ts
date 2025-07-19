@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     const body = await request.json()
-    const { name, emoji } = body
+    const { name, emoji, notes } = body
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
@@ -88,7 +88,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       },
       data: {
         name,
-        emoji
+        emoji,
+        notes
       },
       include: {
         _count: {
