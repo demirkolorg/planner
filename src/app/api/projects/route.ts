@@ -67,23 +67,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Project with this name already exists" }, { status: 409 })
     }
 
-    const project = await db.project.create({
-      data: {
-        name,
-        emoji,
-        color,
-        userId: decoded.userId
-      },
-      include: {
-        _count: {
-          select: {
-            tasks: true
+    const result = await db.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          name,
+          emoji,
+          color,
+          userId: decoded.userId
+        },
+        include: {
+          _count: {
+            select: {
+              tasks: true
+            }
           }
         }
-      }
+      })
+
+      await tx.section.create({
+        data: {
+          name: "Genel",
+          projectId: project.id,
+          order: 0
+        }
+      })
+
+      return project
     })
 
-    return NextResponse.json(project, { status: 201 })
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
     console.error("Error creating project:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

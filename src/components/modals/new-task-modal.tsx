@@ -5,7 +5,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag, Bell } from "lucide-react"
 import { BRAND_COLOR } from "@/lib/constants"
 import { useTagStore } from "@/store/tagStore"
 
@@ -31,6 +32,13 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   const [tagSearchInput, setTagSearchInput] = useState("")
   const [showPriorityPicker, setShowPriorityPicker] = useState(false)
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
+  const [showReminderPicker, setShowReminderPicker] = useState(false)
+  const [reminders, setReminders] = useState<string[]>([])
+  const [showReminderCalendar, setShowReminderCalendar] = useState(false)
+  const [reminderDate, setReminderDate] = useState<string | null>(null)
+  const [reminderTime, setReminderTime] = useState<string>("")
+  const [reminderMonth, setReminderMonth] = useState(6) // Temmuz
+  const [reminderYear, setReminderYear] = useState(2025)
   const { tags, fetchTags, createTag } = useTagStore()
   const [currentMonth, setCurrentMonth] = useState(6) // 0-11 (Temmuz = 6)
   const [currentYear, setCurrentYear] = useState(2025)
@@ -49,6 +57,13 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
       setTagSearchInput("")
       setShowPriorityPicker(false)
       setSelectedPriority("Yok")
+      setShowReminderPicker(false)
+      setReminders([])
+      setShowReminderCalendar(false)
+      setReminderDate(null)
+      setReminderTime("")
+      setReminderMonth(6)
+      setReminderYear(2025)
       setSelectedDate(null)
       setSelectedTime(null)
       setTimeInput("")
@@ -59,7 +74,23 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   }, [isOpen, fetchTags])
 
   const handleDateSelect = (dateOption: string) => {
-    setSelectedDate(dateOption)
+    if (dateOption === "Bugün") {
+      const today = new Date()
+      const formattedDate = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`
+      setSelectedDate(formattedDate)
+    } else if (dateOption === "Yarın") {
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const formattedDate = `${tomorrow.getDate().toString().padStart(2, '0')}.${(tomorrow.getMonth() + 1).toString().padStart(2, '0')}.${tomorrow.getFullYear()}`
+      setSelectedDate(formattedDate)
+    } else if (dateOption === "Sonraki hafta") {
+      const nextWeek = new Date()
+      nextWeek.setDate(nextWeek.getDate() + 7)
+      const formattedDate = `${nextWeek.getDate().toString().padStart(2, '0')}.${(nextWeek.getMonth() + 1).toString().padStart(2, '0')}.${nextWeek.getFullYear()}`
+      setSelectedDate(formattedDate)
+    } else {
+      setSelectedDate(dateOption)
+    }
     setShowDatePicker(false)
     setShowCalendar(false)
   }
@@ -69,11 +100,8 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   }
 
   const handleCalendarDateSelect = (day: number) => {
-    const monthNames = [
-      "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-      "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
-    ]
-    setSelectedDate(`${day} ${monthNames[currentMonth]} ${currentYear}`)
+    const formattedDate = `${day.toString().padStart(2, '0')}.${(currentMonth + 1).toString().padStart(2, '0')}.${currentYear}`
+    setSelectedDate(formattedDate)
     setShowDatePicker(false)
     setShowCalendar(false)
   }
@@ -112,7 +140,9 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     if (timeInput.trim()) {
       // Eğer tarih seçilmemişse bugünün tarihini seç
       if (!selectedDate) {
-        setSelectedDate("Bugün")
+        const today = new Date()
+        const formattedDate = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`
+        setSelectedDate(formattedDate)
       }
       setSelectedTime(timeInput.trim())
       setShowTimeInput(false)
@@ -134,6 +164,38 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     setTimeInput(currentTime)
     setShowTimeInput(true)
+  }
+
+  const formatTimeInput = (value: string) => {
+    // Sadece sayıları al
+    const numbers = value.replace(/\D/g, '')
+    
+    // Maksimum 4 karakter
+    const truncated = numbers.slice(0, 4)
+    
+    // Maskeleme uygula
+    if (truncated.length >= 3) {
+      return `${truncated.slice(0, 2)}:${truncated.slice(2)}`
+    } else if (truncated.length >= 1) {
+      return truncated
+    }
+    return ''
+  }
+
+  const formatReminderTimeInput = (value: string) => {
+    // Sadece sayıları al
+    const numbers = value.replace(/\D/g, '')
+    
+    // Maksimum 4 karakter
+    const truncated = numbers.slice(0, 4)
+    
+    // Maskeleme uygula
+    if (truncated.length >= 3) {
+      return `${truncated.slice(0, 2)}:${truncated.slice(2)}`
+    } else if (truncated.length >= 1) {
+      return truncated
+    }
+    return ''
   }
 
   const getDisplayDateTime = () => {
@@ -213,6 +275,54 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     return priority?.color || "#9ca3af"
   }
 
+  const handleAddReminder = () => {
+    setShowReminderCalendar(true)
+    // Şu anki saati default olarak koy
+    const now = new Date()
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    setReminderTime(currentTime)
+  }
+
+  const handleRemoveReminder = (index: number) => {
+    setReminders(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleReminderPreviousMonth = () => {
+    if (reminderMonth === 0) {
+      setReminderMonth(11)
+      setReminderYear(reminderYear - 1)
+    } else {
+      setReminderMonth(reminderMonth - 1)
+    }
+  }
+
+  const handleReminderNextMonth = () => {
+    if (reminderMonth === 11) {
+      setReminderMonth(0)
+      setReminderYear(reminderYear + 1)
+    } else {
+      setReminderMonth(reminderMonth + 1)
+    }
+  }
+
+  const handleReminderDateSelect = (day: number) => {
+    const monthNames = [
+      "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+      "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+    ]
+    setReminderDate(`${day} ${monthNames[reminderMonth]} ${reminderYear}`)
+  }
+
+  const handleConfirmReminder = () => {
+    if (reminderDate && reminderTime) {
+      const reminderText = `${reminderDate} ${reminderTime}`
+      setReminders(prev => [...prev, reminderText])
+      setShowReminderCalendar(false)
+      setReminderDate(null)
+      setReminderTime("")
+    }
+  }
+
   const handleSave = () => {
     if (title.trim()) {
       onSave(title.trim(), description.trim(), "temp-project-id")
@@ -227,8 +337,9 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg top-[20%] translate-y-0">
+    <TooltipProvider>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-lg top-[20%] translate-y-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">🎯  Görev Ekle</h2>
@@ -289,21 +400,6 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
           {/* Action Buttons */}
           <div className="flex items-center justify-between">
             <div className="relative group flex items-center">
-              {(selectedDate || selectedTime) && (
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedDate(null)
-                    setSelectedTime(null)
-                    setShowDatePicker(false)
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -312,6 +408,28 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
                 <Calendar className="h-4 w-4 mr-2" />
                 {getDisplayDateTime()}
               </Button>
+              {(selectedDate || selectedTime) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedDate(null)
+                        setSelectedTime(null)
+                        setShowDatePicker(false)
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Tarih/Saati Temizle</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               
               {/* Date Picker Dropdown */}
               {showDatePicker && !showCalendar && (
@@ -369,9 +487,10 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
                         <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                           <Input
                             value={timeInput}
-                            onChange={(e) => setTimeInput(e.target.value)}
-                            placeholder="15:55"
+                            onChange={(e) => setTimeInput(formatTimeInput(e.target.value))}
+                            placeholder="__:__"
                             className="w-16 h-6 text-xs text-center"
+                            maxLength={5}
                           />
                           <Button
                             variant="ghost"
@@ -480,13 +599,20 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
 
             <div className="flex items-center space-x-2">
               <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowTagPicker(!showTagPicker)}
-                >
-                  <Tag className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowTagPicker(!showTagPicker)}
+                    >
+                      <Tag className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Etiketler</p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {/* Tag Picker Dropdown */}
                 {showTagPicker && (
@@ -565,14 +691,21 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
               </div>
               
               <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowPriorityPicker(!showPriorityPicker)}
-                  style={{ color: getPriorityColor() }}
-                >
-                  <Flag className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowPriorityPicker(!showPriorityPicker)}
+                      style={{ color: getPriorityColor() }}
+                    >
+                      <Flag className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Öncelik</p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {/* Priority Picker Dropdown */}
                 {showPriorityPicker && (
@@ -589,6 +722,177 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowReminderPicker(!showReminderPicker)}
+                      className="relative"
+                    >
+                      <Bell className="h-4 w-4" />
+                      {reminders.length > 0 && (
+                        <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Hatırlatıcılar</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                {/* Reminder Picker Dropdown */}
+                {showReminderPicker && !showReminderCalendar && (
+                  <div className="absolute top-full right-0 mt-1 w-64 bg-background border rounded-lg shadow-lg z-50 p-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium">Hatırlatıcılar</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleAddReminder}
+                        className="h-6 w-6"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {reminders.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Hatırlatıcılar listeniz burada görünecek. '+' düğmesine tıklayarak bir tane ekleyin
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 mb-3">
+                        {reminders.map((reminder, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-muted/30 rounded-md"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs">{reminder}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveReminder(index)}
+                              className="h-5 w-5"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Action Button */}
+                    <div className="mt-3 pt-2 border-t">
+                      <Button
+                        onClick={() => setShowReminderPicker(false)}
+                        className="w-full h-7 text-xs"
+                        size="sm"
+                      >
+                        Tamamlandı
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Reminder Calendar Dropdown */}
+                {showReminderCalendar && (
+                  <div className="absolute top-full right-0 mt-1 w-80 bg-background border rounded-lg shadow-lg z-50 p-4">
+                    {/* Calendar Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowReminderCalendar(false)}
+                        className="h-8 w-8"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium">{getMonthName(reminderMonth)} {reminderYear}</span>
+                        <div className="flex space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={handleReminderPreviousMonth}
+                          >
+                            <ChevronLeft className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={handleReminderNextMonth}
+                          >
+                            <ChevronRight className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="w-8"></div>
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="space-y-2 mb-4">
+                      {/* Days of week */}
+                      <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground text-center">
+                        <div>Pzt</div>
+                        <div>Sal</div>
+                        <div>Çşb</div>
+                        <div>Per</div>
+                        <div>Cum</div>
+                        <div>Cts</div>
+                        <div>Pzr</div>
+                      </div>
+
+                      {/* Calendar dates */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: getDaysInMonth(reminderMonth, reminderYear) }, (_, i) => i + 1).map((day) => (
+                          <Button
+                            key={day}
+                            variant={reminderDate?.includes(`${day} `) ? "default" : "ghost"}
+                            size="sm"
+                            className="h-8 w-8 text-xs"
+                            onClick={() => handleReminderDateSelect(day)}
+                          >
+                            {day}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Time Input */}
+                    <div className="mb-4">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={reminderTime}
+                          onChange={(e) => setReminderTime(formatReminderTimeInput(e.target.value))}
+                          placeholder="__:__"
+                          className="flex-1 text-center"
+                          maxLength={5}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <Button
+                      onClick={handleConfirmReminder}
+                      disabled={!reminderDate || !reminderTime}
+                      className="w-full"
+                      style={{ backgroundColor: "#8b5cf6" }}
+                    >
+                      Hatırlatıcı Ekle
+                    </Button>
                   </div>
                 )}
               </div>
@@ -617,7 +921,8 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   )
 }
