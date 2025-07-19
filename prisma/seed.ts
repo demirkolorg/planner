@@ -6,33 +6,36 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Veritabanı seed işlemi başlatılıyor...')
 
-  // Demo kullanıcı oluştur
-  const hashedPassword = await bcrypt.hash('demo123', 12)
-  const hashedPassword2 = await bcrypt.hash('demirkol@planner.com', 12)
+  // Kullanıcı 1: abdullah@planner.com
+  const hashedPassword1 = await bcrypt.hash('abdullah@planner.com', 12)
   
-  const demoUser = await prisma.user.upsert({
-    where: { email: 'demo@example.com' },
+  const user1 = await prisma.user.upsert({
+    where: { email: 'abdullah@planner.com' },
     update: {},
     create: {
-      email: 'demo@example.com',
-      firstName: 'Demo',
+      email: 'abdullah@planner.com',
+      firstName: 'Abdullah',
       lastName: 'Kullanıcı',
-      password: hashedPassword,
+      password: hashedPassword1,
     },
   })
-  const otherUser = await prisma.user.upsert({
+
+  // Kullanıcı 2: demirkol@planner.com
+  const hashedPassword2 = await bcrypt.hash('demirkol@planner.com', 12)
+  
+  const user2 = await prisma.user.upsert({
     where: { email: 'demirkol@planner.com' },
     update: {},
     create: {
       email: 'demirkol@planner.com',
-      firstName: 'Abdullah',
-      lastName: 'Demirkol',
+      firstName: 'Demirkol',
+      lastName: 'Kullanıcı',
       password: hashedPassword2,
     },
   })
-  console.log('✅ Demo kullanıcı oluşturuldu:', demoUser.email)
+  console.log('✅ Kullanıcılar oluşturuldu:', user1.email, user2.email)
 
-  // Demo kullanıcı için etiketler oluştur
+  // Kullanıcı 1 için etiketler oluştur
   const tagData = [
     { name: 'Acil', color: '#ef4444' },
     { name: 'İş', color: '#3b82f6' },
@@ -41,62 +44,61 @@ async function main() {
     { name: 'Sağlık', color: '#8b5cf6' }
   ]
 
-  const demoTags = []
+  const user1Tags = []
   for (const tagInfo of tagData) {
     const existingTag = await prisma.tag.findFirst({
       where: {
         name: tagInfo.name,
-        userId: demoUser.id
+        userId: user1.id
       }
     })
 
     if (existingTag) {
-      console.log(`⚠️ Etiket zaten mevcut: ${tagInfo.name} (demo kullanıcı)`)
-      demoTags.push(existingTag)
+      console.log(`⚠️ Etiket zaten mevcut: ${tagInfo.name} (kullanıcı 1)`)
+      user1Tags.push(existingTag)
     } else {
       const tag = await prisma.tag.create({
         data: {
           name: tagInfo.name,
           color: tagInfo.color,
-          userId: demoUser.id
+          userId: user1.id
         }
       })
-      console.log(`✅ Etiket oluşturuldu: ${tagInfo.name} (demo kullanıcı)`)
-      demoTags.push(tag)
+      console.log(`✅ Etiket oluşturuldu: ${tagInfo.name} (kullanıcı 1)`)
+      user1Tags.push(tag)
     }
   }
 
-  // Diğer kullanıcı için etiketler oluştur
-  const otherTags = []
+  // Kullanıcı 2 için etiketler oluştur
+  const user2Tags = []
   for (const tagInfo of tagData) {
     const existingTag = await prisma.tag.findFirst({
       where: {
         name: tagInfo.name,
-        userId: otherUser.id
+        userId: user2.id
       }
     })
 
     if (existingTag) {
-      console.log(`⚠️ Etiket zaten mevcut: ${tagInfo.name} (other kullanıcı)`)
-      otherTags.push(existingTag)
+      console.log(`⚠️ Etiket zaten mevcut: ${tagInfo.name} (kullanıcı 2)`)
+      user2Tags.push(existingTag)
     } else {
       const tag = await prisma.tag.create({
         data: {
           name: tagInfo.name,
           color: tagInfo.color,
-          userId: otherUser.id
+          userId: user2.id
         }
       })
-      console.log(`✅ Etiket oluşturuldu: ${tagInfo.name} (other kullanıcı)`)
-      otherTags.push(tag)
+      console.log(`✅ Etiket oluşturuldu: ${tagInfo.name} (kullanıcı 2)`)
+      user2Tags.push(tag)
     }
   }
 
-  const tags = demoTags // Görevlerde demo kullanıcının tag'larını kullanacağız
-  console.log('✅ Toplam etiket oluşturuldu:', demoTags.length + otherTags.length)
+  console.log('✅ Toplam etiket oluşturuldu:', user1Tags.length + user2Tags.length)
 
-  // Demo kullanıcı için projeler oluştur  
-  const projectData = [
+  // Kullanıcı 1 için projeler oluştur  
+  const user1ProjectData = [
     {
       name: 'Gelen Kutusu',
       emoji: '📥',
@@ -116,41 +118,35 @@ async function main() {
       name: 'Fitness Programı',
       emoji: '🏋️',
       notes: 'Günlük egzersiz ve beslenme takibi'
-    },
-    {
-      name: 'Kitap Okuma',
-      emoji: '📚',
-      notes: '2024 yılı okuma hedefleri'
     }
   ]
 
-  const demoProjects = []
-  for (const projectInfo of projectData) {
-    // Proje zaten var mı kontrol et
+  const user1Projects = []
+  for (const projectInfo of user1ProjectData) {
     const existingProject = await prisma.project.findFirst({
       where: {
         name: projectInfo.name,
-        userId: demoUser.id,
+        userId: user1.id,
       }
     })
 
     let project
     if (existingProject) {
-      console.log(`⚠️ Proje zaten mevcut: ${projectInfo.name} (demo kullanıcı)`)
+      console.log(`⚠️ Proje zaten mevcut: ${projectInfo.name} (kullanıcı 1)`)
       project = existingProject
     } else {
       project = await prisma.project.create({
         data: {
           ...projectInfo,
-          userId: demoUser.id,
+          userId: user1.id,
         }
       })
-      console.log(`✅ Proje oluşturuldu: ${project.name} (demo kullanıcı)`)
+      console.log(`✅ Proje oluşturuldu: ${project.name} (kullanıcı 1)`)
     }
 
-    demoProjects.push(project)
+    user1Projects.push(project)
 
-    // Her proje için varsayılan "Genel" bölümü oluştur (eğer yoksa)
+    // Her proje için varsayılan "Genel" bölümü oluştur
     const existingSection = await prisma.section.findFirst({
       where: {
         name: 'Genel',
@@ -166,42 +162,43 @@ async function main() {
           order: 0,
         }
       })
-      console.log(`✅ Genel bölümü oluşturuldu: ${project.name} (demo kullanıcı)`)
+      console.log(`✅ Genel bölümü oluşturuldu: ${project.name} (kullanıcı 1)`)
     } else {
-      console.log(`⚠️ Genel bölümü zaten mevcut: ${project.name} (demo kullanıcı)`)
+      console.log(`⚠️ Genel bölümü zaten mevcut: ${project.name} (kullanıcı 1)`)
     }
   }
 
-  // Diğer kullanıcı için basit projeler oluştur
-  const otherProjects = []
-  const simpleProjectData = [
+  // Kullanıcı 2 için projeler oluştur
+  const user2ProjectData = [
     { name: 'Gelen Kutusu', emoji: '📥', notes: 'İkinci kullanıcının gelen kutusu' },
-    { name: 'Kişisel Projeler', emoji: '👤', notes: 'Kişisel işler ve hobiler' }
+    { name: 'Kişisel Projeler', emoji: '👤', notes: 'Kişisel işler ve hobiler' },
+    { name: 'Yazılım Geliştirme', emoji: '⚡', notes: 'Kodlama ve yazılım projeleri' }
   ]
 
-  for (const projectInfo of simpleProjectData) {
+  const user2Projects = []
+  for (const projectInfo of user2ProjectData) {
     const existingProject = await prisma.project.findFirst({
       where: {
         name: projectInfo.name,
-        userId: otherUser.id,
+        userId: user2.id,
       }
     })
 
     let project
     if (existingProject) {
-      console.log(`⚠️ Proje zaten mevcut: ${projectInfo.name} (other kullanıcı)`)
+      console.log(`⚠️ Proje zaten mevcut: ${projectInfo.name} (kullanıcı 2)`)
       project = existingProject
     } else {
       project = await prisma.project.create({
         data: {
           ...projectInfo,
-          userId: otherUser.id,
+          userId: user2.id,
         }
       })
-      console.log(`✅ Proje oluşturuldu: ${project.name} (other kullanıcı)`)
+      console.log(`✅ Proje oluşturuldu: ${project.name} (kullanıcı 2)`)
     }
 
-    otherProjects.push(project)
+    user2Projects.push(project)
 
     // Genel bölümü oluştur
     const existingSection = await prisma.section.findFirst({
@@ -219,63 +216,52 @@ async function main() {
           order: 0,
         }
       })
-      console.log(`✅ Genel bölümü oluşturuldu: ${project.name} (other kullanıcı)`)
+      console.log(`✅ Genel bölümü oluşturuldu: ${project.name} (kullanıcı 2)`)
     }
   }
 
-  const createdProjects = demoProjects // Task'larda demo kullanıcının projelerini kullanacağız
+  // Kullanıcı 1 için görevler oluştur
+  const [user1GelenKutusu, user1EvIsleri, user1WebSitesi, user1Fitness] = user1Projects
 
-  // Örnek görevler oluştur
-  const [gelenKutusu, evIsleri, webSitesi, fitness, kitap] = createdProjects
-
-  // Gelen kutusu bölümünü al
-  const gelenKutusuSection = await prisma.section.findFirst({
-    where: { projectId: gelenKutusu.id }
-  })
-
-  const evIsleriSection = await prisma.section.findFirst({
-    where: { projectId: evIsleri.id }
-  })
-
-  const webSitesiSection = await prisma.section.findFirst({
-    where: { projectId: webSitesi.id }
-  })
-
-  // Web sitesi projesi için ek bölümler
+  // Web sitesi projesi için ek bölümler (kullanıcı 1)
   await prisma.section.createMany({
     data: [
-      { name: 'Tasarım', projectId: webSitesi.id, order: 1 },
-      { name: 'Geliştirme', projectId: webSitesi.id, order: 2 },
-      { name: 'Test', projectId: webSitesi.id, order: 3 },
-    ]
+      { name: 'Tasarım', projectId: user1WebSitesi.id, order: 1 },
+      { name: 'Geliştirme', projectId: user1WebSitesi.id, order: 2 },
+      { name: 'Test', projectId: user1WebSitesi.id, order: 3 },
+    ],
+    skipDuplicates: true
   })
 
-  const tasarimSection = await prisma.section.findFirst({
-    where: { projectId: webSitesi.id, name: 'Tasarım' }
+  // Kullanıcı 2 için ek bölümler
+  const [user2GelenKutusu, user2Kisisel, user2Yazilim] = user2Projects
+  
+  await prisma.section.createMany({
+    data: [
+      { name: 'Frontend', projectId: user2Yazilim.id, order: 1 },
+      { name: 'Backend', projectId: user2Yazilim.id, order: 2 },
+    ],
+    skipDuplicates: true
   })
 
-  const gelistirmeSection = await prisma.section.findFirst({
-    where: { projectId: webSitesi.id, name: 'Geliştirme' }
-  })
-
-  // Örnek görevler
-  const tasks = [
+  // Kullanıcı 1 için görevler
+  const user1Tasks = [
     // Gelen Kutusu
     {
       title: 'E-posta kutusunu temizle',
       description: 'Gereksiz e-postaları sil ve önemli olanları klasörle',
       priority: 'MEDIUM',
-      projectId: gelenKutusu.id,
-      sectionId: gelenKutusuSection?.id,
-      tagId: tags[1].id, // İş
+      projectId: user1GelenKutusu.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1GelenKutusu.id, name: 'Genel' } }))?.id,
+      tagId: user1Tags[1].id, // İş
     },
     {
       title: 'Pazartesi toplantısına hazırlan',
       description: 'Sunum materyallerini gözden geçir',
       priority: 'HIGH',
-      projectId: gelenKutusu.id,
-      sectionId: gelenKutusuSection?.id,
-      tagId: tags[0].id, // Acil
+      projectId: user1GelenKutusu.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1GelenKutusu.id, name: 'Genel' } }))?.id,
+      tagId: user1Tags[0].id, // Acil
     },
     
     // Ev İşleri
@@ -283,53 +269,36 @@ async function main() {
       title: 'Bulaşık makinasını çalıştır',
       description: null,
       priority: 'LOW',
-      projectId: evIsleri.id,
-      sectionId: evIsleriSection?.id,
-      tagId: tags[2].id, // Kişisel
+      projectId: user1EvIsleri.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1EvIsleri.id, name: 'Genel' } }))?.id,
+      tagId: user1Tags[2].id, // Kişisel
       completed: true,
     },
     {
       title: 'Haftalık market alışverişi',
       description: 'Süt, ekmek, meyve, sebze',
       priority: 'MEDIUM',
-      projectId: evIsleri.id,
-      sectionId: evIsleriSection?.id,
-      tagId: tags[3].id, // Alışveriş
-    },
-    {
-      title: 'Oturma odasını temizle',
-      description: 'Elektrikli süpürge ve silme',
-      priority: 'LOW',
-      projectId: evIsleri.id,
-      sectionId: evIsleriSection?.id,
-      tagId: tags[2].id, // Kişisel
+      projectId: user1EvIsleri.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1EvIsleri.id, name: 'Genel' } }))?.id,
+      tagId: user1Tags[3].id, // Alışveriş
     },
 
-    // Web Sitesi Projesi
+    // Web Sitesi
     {
       title: 'Ana sayfa mockup tasarımı',
       description: 'Figma\'da ana sayfa wireframe ve mockup oluştur',
       priority: 'HIGH',
-      projectId: webSitesi.id,
-      sectionId: tasarimSection?.id,
-      tagId: tags[1].id, // İş
-    },
-    {
-      title: 'Renk paleti belirleme',
-      description: 'Marka kimliğine uygun renk paleti seç',
-      priority: 'MEDIUM',
-      projectId: webSitesi.id,
-      sectionId: tasarimSection?.id,
-      tagId: tags[1].id, // İş
-      completed: true,
+      projectId: user1WebSitesi.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1WebSitesi.id, name: 'Tasarım' } }))?.id,
+      tagId: user1Tags[1].id, // İş
     },
     {
       title: 'React projesi kurulumu',
       description: 'Next.js ve Tailwind CSS ile proje başlat',
       priority: 'HIGH',
-      projectId: webSitesi.id,
-      sectionId: gelistirmeSection?.id,
-      tagId: tags[1].id, // İş
+      projectId: user1WebSitesi.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1WebSitesi.id, name: 'Geliştirme' } }))?.id,
+      tagId: user1Tags[1].id, // İş
     },
 
     // Fitness
@@ -337,56 +306,103 @@ async function main() {
       title: 'Pazartesi: Üst vücut antrenmanı',
       description: '45 dakika ağırlık antrenmanı',
       priority: 'MEDIUM',
-      projectId: fitness.id,
-      sectionId: await prisma.section.findFirst({ where: { projectId: fitness.id } }).then(s => s?.id),
-      tagId: tags[4].id, // Sağlık
-    },
-    {
-      title: 'Haftalık kilo takibi',
-      description: 'Pazartesi sabahı tartı',
-      priority: 'LOW',
-      projectId: fitness.id,
-      sectionId: await prisma.section.findFirst({ where: { projectId: fitness.id } }).then(s => s?.id),
-      tagId: tags[4].id, // Sağlık
-    },
-
-    // Kitap Okuma
-    {
-      title: 'Atomic Habits - Bölüm 3',
-      description: 'Habit stacking konusunu oku',
-      priority: 'LOW',
-      projectId: kitap.id,
-      sectionId: await prisma.section.findFirst({ where: { projectId: kitap.id } }).then(s => s?.id),
-      tagId: tags[2].id, // Kişisel
+      projectId: user1Fitness.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user1Fitness.id, name: 'Genel' } }))?.id,
+      tagId: user1Tags[4].id, // Sağlık
     },
   ]
 
-  let createdTasksCount = 0
-  for (const taskData of tasks) {
-    // Görev zaten var mı kontrol et
+  // Kullanıcı 2 için görevler
+  const user2Tasks = [
+    // Gelen Kutusu
+    {
+      title: 'Portfolio sitesini güncelle',
+      description: 'Yeni projeleri ekle ve CV\'yi güncelle',
+      priority: 'HIGH',
+      projectId: user2GelenKutusu.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user2GelenKutusu.id, name: 'Genel' } }))?.id,
+      tagId: user2Tags[1].id, // İş
+    },
+    {
+      title: 'Doktor randevusu al',
+      description: 'Yıllık check-up için randevu',
+      priority: 'MEDIUM',
+      projectId: user2Kisisel.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user2Kisisel.id, name: 'Genel' } }))?.id,
+      tagId: user2Tags[4].id, // Sağlık
+    },
+
+    // Yazılım Geliştirme
+    {
+      title: 'React Native uygulama başlat',
+      description: 'Expo ile mobil uygulama geliştirme',
+      priority: 'HIGH',
+      projectId: user2Yazilim.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user2Yazilim.id, name: 'Frontend' } }))?.id,
+      tagId: user2Tags[1].id, // İş
+    },
+    {
+      title: 'API endpoints tasarla',
+      description: 'REST API yapısını belirle',
+      priority: 'MEDIUM',
+      projectId: user2Yazilim.id,
+      sectionId: (await prisma.section.findFirst({ where: { projectId: user2Yazilim.id, name: 'Backend' } }))?.id,
+      tagId: user2Tags[1].id, // İş
+      completed: true,
+    },
+  ]
+
+  // Kullanıcı 1 görevlerini oluştur
+  let user1TasksCount = 0
+  for (const taskData of user1Tasks) {
     const existingTask = await prisma.task.findFirst({
       where: {
         title: taskData.title,
         projectId: taskData.projectId,
-        userId: demoUser.id,
+        userId: user1.id,
       }
     })
 
     if (existingTask) {
-      console.log(`⚠️ Görev zaten mevcut: ${taskData.title}`)
+      console.log(`⚠️ Görev zaten mevcut: ${taskData.title} (kullanıcı 1)`)
     } else {
       await prisma.task.create({
         data: {
           ...taskData,
-          userId: demoUser.id,
+          userId: user1.id,
         }
       })
-      createdTasksCount++
-      console.log(`✅ Görev oluşturuldu: ${taskData.title}`)
+      user1TasksCount++
+      console.log(`✅ Görev oluşturuldu: ${taskData.title} (kullanıcı 1)`)
     }
   }
 
-  console.log(`✅ ${createdTasksCount} yeni görev oluşturuldu`)
+  // Kullanıcı 2 görevlerini oluştur
+  let user2TasksCount = 0
+  for (const taskData of user2Tasks) {
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        title: taskData.title,
+        projectId: taskData.projectId,
+        userId: user2.id,
+      }
+    })
+
+    if (existingTask) {
+      console.log(`⚠️ Görev zaten mevcut: ${taskData.title} (kullanıcı 2)`)
+    } else {
+      await prisma.task.create({
+        data: {
+          ...taskData,
+          userId: user2.id,
+        }
+      })
+      user2TasksCount++
+      console.log(`✅ Görev oluşturuldu: ${taskData.title} (kullanıcı 2)`)
+    }
+  }
+
+  console.log(`✅ Toplam ${user1TasksCount + user2TasksCount} yeni görev oluşturuldu`)
   console.log('🎉 Seed işlemi tamamlandı!')
 }
 
