@@ -23,7 +23,9 @@
       "Bash(sudo mkdir:*)",
       "Bash(cp:*)",
       "Bash(bun x shadcn@latest add:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

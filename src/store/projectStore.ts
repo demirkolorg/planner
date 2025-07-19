@@ -4,7 +4,6 @@ interface Project {
   id: string
   name: string
   emoji?: string
-  color: string
   userId: string
   createdAt: string
   updatedAt: string
@@ -20,8 +19,8 @@ interface ProjectStore {
   
   // Actions
   fetchProjects: () => Promise<void>
-  createProject: (name: string, emoji: string, color: string) => Promise<void>
-  updateProject: (id: string, name: string, emoji: string, color: string) => Promise<void>
+  createProject: (name: string, emoji: string) => Promise<void>
+  updateProject: (id: string, name: string, emoji: string) => Promise<void>
   deleteProject: (id: string) => Promise<void>
   clearError: () => void
 }
@@ -48,7 +47,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  createProject: async (name: string, emoji: string, color: string) => {
+  createProject: async (name: string, emoji: string) => {
     set({ error: null })
     try {
       const response = await fetch('/api/projects', {
@@ -56,7 +55,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, emoji, color }),
+        body: JSON.stringify({ name, emoji }),
       })
       
       if (!response.ok) {
@@ -74,7 +73,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  updateProject: async (id: string, name: string, emoji: string, color: string) => {
+  updateProject: async (id: string, name: string, emoji: string) => {
     set({ error: null })
     try {
       const response = await fetch(`/api/projects/${id}`, {
@@ -82,7 +81,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, emoji, color }),
+        body: JSON.stringify({ name, emoji }),
       })
       
       if (!response.ok) {

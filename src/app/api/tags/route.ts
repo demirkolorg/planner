@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
 
 export async function GET(request: NextRequest) {
   try {
-    // For now, we'll get all tags without user filtering
-    // In production, you'd want to implement proper auth middleware
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    
     const tags = await db.tag.findMany({
+      where: {
+        userId: decoded.userId
+      },
       include: {
         _count: {
           select: {
@@ -27,6 +39,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const body = await request.json()
     const { name, color } = body
 
@@ -34,10 +54,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Name and color are required" }, { status: 400 })
     }
 
-    // Check if tag with same name already exists
+    // Check if tag with same name already exists for this user
     const existingTag = await db.tag.findFirst({
       where: {
-        name
+        name,
+        userId: decoded.userId
       }
     })
 
@@ -48,7 +69,15 @@ export async function POST(request: NextRequest) {
     const tag = await db.tag.create({
       data: {
         name,
-        color
+        color,
+        userId: decoded.userId
+      },
+      include: {
+        _count: {
+          select: {
+            tasks: true
+          }
+        }
       }
     })
 

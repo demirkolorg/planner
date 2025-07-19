@@ -6,20 +6,40 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag, Bell } from "lucide-react"
+import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag, Bell, ChevronDown } from "lucide-react"
 import { BRAND_COLOR } from "@/lib/constants"
 import { useTagStore } from "@/store/tagStore"
+
+interface Project {
+  id: string
+  name: string
+  emoji?: string
+  color: string
+}
+
+interface Section {
+  id: string
+  name: string
+  projectId: string
+}
 
 interface NewTaskModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (title: string, description: string, projectId: string) => void
+  onSave: (title: string, description: string, projectId: string, sectionId: string) => void
 }
 
 export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [selectedProject, setSelectedProject] = useState("Proje 1")
+  const [projects, setProjects] = useState<Project[]>([])
+  const [sections, setSections] = useState<Section[]>([])
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [selectedSection, setSelectedSection] = useState<Section | null>(null)
+  const [showProjectPicker, setShowProjectPicker] = useState(false)
+  const [showSectionPicker, setShowSectionPicker] = useState(false)
+  const [projectSearchInput, setProjectSearchInput] = useState("")
+  const [sectionSearchInput, setSectionSearchInput] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
@@ -47,7 +67,10 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     if (isOpen) {
       setTitle("")
       setDescription("")
-      setSelectedProject("Proje 1")
+      setProjectSearchInput("")
+      setSectionSearchInput("")
+      setShowProjectPicker(false)
+      setShowSectionPicker(false)
       setShowDatePicker(false)
       setShowCalendar(false)
       setShowTimePicker(false)
@@ -70,8 +93,46 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
       setCurrentMonth(6) // Temmuz
       setCurrentYear(2025)
       fetchTags() // Fetch real tags data
+      fetchProjects() // Fetch projects data
     }
   }, [isOpen, fetchTags])
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects')
+      if (response.ok) {
+        const projectsData = await response.json()
+        setProjects(projectsData)
+        
+        // "Gelen Kutusu" projesini default olarak seç
+        const inboxProject = projectsData.find((p: Project) => p.name === "Gelen Kutusu")
+        if (inboxProject) {
+          setSelectedProject(inboxProject)
+          fetchSectionsForProject(inboxProject.id)
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch projects:", error)
+    }
+  }
+
+  const fetchSectionsForProject = async (projectId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/sections`)
+      if (response.ok) {
+        const sectionsData = await response.json()
+        setSections(sectionsData)
+        
+        // "Genel" bölümünü default olarak seç
+        const generalSection = sectionsData.find((s: Section) => s.name === "Genel")
+        if (generalSection) {
+          setSelectedSection(generalSection)
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch sections:", error)
+    }
+  }
 
   const handleDateSelect = (dateOption: string) => {
     if (dateOption === "Bugün") {
@@ -323,9 +384,35 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     }
   }
 
+  const handleProjectSelect = (project: Project) => {
+    setSelectedProject(project)
+    setShowProjectPicker(false)
+    setProjectSearchInput("")
+    // Proje seçilince o projenin bölümlerini getir ve "Genel"i seç
+    fetchSectionsForProject(project.id)
+  }
+
+  const handleSectionSelect = (section: Section) => {
+    setSelectedSection(section)
+    setShowSectionPicker(false)
+    setSectionSearchInput("")
+  }
+
+  const getFilteredProjects = () => {
+    return projects.filter(project => 
+      project.name.toLowerCase().includes(projectSearchInput.toLowerCase())
+    )
+  }
+
+  const getFilteredSections = () => {
+    return sections.filter(section => 
+      section.name.toLowerCase().includes(sectionSearchInput.toLowerCase())
+    )
+  }
+
   const handleSave = () => {
-    if (title.trim()) {
-      onSave(title.trim(), description.trim(), "temp-project-id")
+    if (title.trim() && selectedProject && selectedSection) {
+      onSave(title.trim(), description.trim(), selectedProject.id, selectedSection.id)
       onClose()
     }
   }
@@ -339,7 +426,7 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-lg top-[20%] translate-y-0">
+        <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">🎯  Görev Ekle</h2>
@@ -899,25 +986,126 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
             </div>
           </div>
 
-          {/* Project Selection and Save Button */}
+          {/* Project and Section Selection */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-              <span>{selectedProject}</span>
+              {/* Project Selection */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowProjectPicker(!showProjectPicker)}
+                  className="flex items-center space-x-2"
+                >
+                  {selectedProject ? (
+                    <span className="truncate max-w-[200px]">
+                      {selectedProject.emoji} {selectedProject.name.length > 20 ? selectedProject.name.substring(0, 20) + '...' : selectedProject.name}
+                    </span>
+                  ) : (
+                    <span>Proje Seç</span>
+                  )}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+
+                {/* Project Picker Dropdown */}
+                {showProjectPicker && (
+                  <div className="absolute top-full left-0 mt-1 w-80 bg-background border rounded-lg shadow-lg z-50 p-3">
+                    {/* Search Input */}
+                    <div className="relative mb-3">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                      <Input
+                        value={projectSearchInput}
+                        onChange={(e) => setProjectSearchInput(e.target.value)}
+                        placeholder="Proje ara..."
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+
+                    {/* Project List */}
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {/* Gelen Kutusu önce göster */}
+                      {projects.filter(p => p.name === "Gelen Kutusu").map((project) => (
+                        <div
+                          key={project.id}
+                          className="flex items-center px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
+                          onClick={() => handleProjectSelect(project)}
+                        >
+                          <span className="text-sm">{project.emoji} {project.name}</span>
+                        </div>
+                      ))}
+                      
+                      {/* Diğer projeler */}
+                      {getFilteredProjects().filter(p => p.name !== "Gelen Kutusu").map((project) => (
+                        <div
+                          key={project.id}
+                          className="flex items-center px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
+                          onClick={() => handleProjectSelect(project)}
+                        >
+                          <span className="text-sm">{project.emoji} {project.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <span>→</span>
-              <span>Bölüm Yok</span>
-              <Button
-                variant="ghost"
-                size="sm"
-              >
-                <Copy className="h-3 w-3" />
-              </Button>
+
+              {/* Section Selection */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSectionPicker(!showSectionPicker)}
+                  className="flex items-center space-x-2"
+                  disabled={!selectedProject}
+                >
+                  {selectedSection ? (
+                    <span className="truncate max-w-[150px]">
+                      {selectedSection.name.length > 15 ? selectedSection.name.substring(0, 15) + '...' : selectedSection.name}
+                    </span>
+                  ) : (
+                    <span>Bölüm Seç</span>
+                  )}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+
+                {/* Section Picker Dropdown */}
+                {showSectionPicker && selectedProject && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-background border rounded-lg shadow-lg z-50 p-3">
+                    {/* Search Input */}
+                    <div className="relative mb-3">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                      <Input
+                        value={sectionSearchInput}
+                        onChange={(e) => setSectionSearchInput(e.target.value)}
+                        placeholder="Bölüm ara..."
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+
+                    {/* Section List */}
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {getFilteredSections().map((section) => (
+                        <div
+                          key={section.id}
+                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
+                          onClick={() => handleSectionSelect(section)}
+                        >
+                          <span className="text-sm">{section.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
             </div>
             <Button
               onClick={handleSave}
-              disabled={!title.trim()}
+              disabled={!title.trim() || !selectedProject || !selectedSection}
             >
-              Yapılacak Ekle
+              Görev Ekle
             </Button>
           </div>
         </div>

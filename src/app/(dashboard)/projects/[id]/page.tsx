@@ -102,11 +102,11 @@ export default function ProjectDetailPage() {
     fetchProjectData()
   }, [projectId])
 
-  const handleUpdateProject = async (name: string, emoji: string, color: string) => {
+  const handleUpdateProject = async (name: string, emoji: string) => {
     try {
-      await updateProject(projectId, name, emoji, color)
+      await updateProject(projectId, name, emoji)
       // Proje bilgilerini güncelle
-      setProject(prev => prev ? { ...prev, name, emoji, color } : null)
+      setProject(prev => prev ? { ...prev, name, emoji } : null)
     } catch (error) {
       console.error("Failed to update project:", error)
     }
@@ -173,14 +173,11 @@ export default function ProjectDetailPage() {
           </Link>
         </Button>
         <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-lg" style={{ backgroundColor: project.color + '20' }}>
+          <div className="p-3 rounded-lg bg-primary/10">
             {project.emoji ? (
               <span className="text-2xl">{project.emoji}</span>
             ) : (
-              <div 
-                className="w-8 h-8 rounded-full" 
-                style={{ backgroundColor: project.color }}
-              />
+              <div className="w-8 h-8 rounded-full bg-primary" />
             )}
           </div>
           <div>
@@ -230,14 +227,11 @@ export default function ProjectDetailPage() {
       {/* Bölümler ve Görevler */}
       {sections.length === 0 ? (
         <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <div className="p-3 rounded-lg mx-auto mb-4 w-fit" style={{ backgroundColor: project.color + '20' }}>
+          <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
             {project.emoji ? (
               <span className="text-3xl">{project.emoji}</span>
             ) : (
-              <div 
-                className="w-12 h-12 rounded-full" 
-                style={{ backgroundColor: project.color }}
-              />
+              <div className="w-12 h-12 rounded-full bg-primary" />
             )}
           </div>
           <h3 className="text-lg font-semibold mb-2">Bu projede henüz bölüm yok</h3>
@@ -383,7 +377,6 @@ export default function ProjectDetailPage() {
             id: project.id,
             name: project.name,
             emoji: project.emoji || "",
-            color: project.color
           }}
         />
       )}

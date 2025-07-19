@@ -9,7 +9,11 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
     "prisma": "bun run prisma:generate && bun run prisma:migrate && bun run dev"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
@@ -47,6 +51,7 @@
     "eslint-config-next": "15.4.1",
     "prisma": "^6.12.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"
   }

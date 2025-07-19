@@ -49,10 +49,10 @@ export async function POST(request: NextRequest) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     
     const body = await request.json()
-    const { name, emoji, color } = body
+    const { name, emoji } = body
 
-    if (!name || !color) {
-      return NextResponse.json({ error: "Name and color are required" }, { status: 400 })
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
     // Check if project with same name already exists for this user
@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
         data: {
           name,
           emoji,
-          color,
           userId: decoded.userId
         },
         include: {

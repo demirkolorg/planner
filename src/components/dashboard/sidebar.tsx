@@ -42,9 +42,9 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
     fetchTags()
   }, [fetchProjects, fetchTags])
 
-  const handleCreateProject = async (name: string, emoji: string, color: string) => {
+  const handleCreateProject = async (name: string, emoji: string) => {
     try {
-      await createProject(name, emoji, color)
+      await createProject(name, emoji)
     } catch (error) {
       console.error("Failed to create project:", error)
     }
@@ -121,10 +121,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
                   {project.emoji ? (
                     <span className="text-sm">{project.emoji}</span>
                   ) : (
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: project.color }}
-                    />
+                    <div className="w-3 h-3 rounded-full bg-primary" />
                   )}
                   <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
                 </div>

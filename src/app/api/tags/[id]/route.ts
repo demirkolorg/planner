@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
-    const tag = await db.tag.findUnique({
+    
+    const tag = await db.tag.findFirst({
       where: {
-        id
+        id,
+        userId: decoded.userId
       },
       include: {
         _count: {
@@ -30,6 +42,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     const body = await request.json()
     const { name, color } = body
@@ -38,10 +58,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Name and color are required" }, { status: 400 })
     }
 
-    // Check if tag exists
-    const existingTag = await db.tag.findUnique({
+    // Check if tag exists and belongs to user
+    const existingTag = await db.tag.findFirst({
       where: {
-        id
+        id,
+        userId: decoded.userId
       }
     })
 
@@ -49,10 +70,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Tag not found" }, { status: 404 })
     }
 
-    // Check if another tag with same name exists
+    // Check if another tag with same name exists for this user
     const duplicateTag = await db.tag.findFirst({
       where: {
         name,
+        userId: decoded.userId,
         id: { not: id }
       }
     })
@@ -68,6 +90,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       data: {
         name,
         color
+      },
+      include: {
+        _count: {
+          select: {
+            tasks: true
+          }
+        }
       }
     })
 
@@ -80,11 +109,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
-    // Check if tag exists
-    const existingTag = await db.tag.findUnique({
+    
+    // Check if tag exists and belongs to user
+    const existingTag = await db.tag.findFirst({
       where: {
-        id
+        id,
+        userId: decoded.userId
       }
     })
 

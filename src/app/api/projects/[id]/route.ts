@@ -51,10 +51,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     const body = await request.json()
-    const { name, emoji, color } = body
+    const { name, emoji } = body
 
-    if (!name || !color) {
-      return NextResponse.json({ error: "Name and color are required" }, { status: 400 })
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
     // Check if project exists and belongs to user
@@ -88,8 +88,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       },
       data: {
         name,
-        emoji,
-        color
+        emoji
       },
       include: {
         _count: {

@@ -43,23 +43,47 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await db.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        password: hashedPassword,
-      },
+    // Kullanıcı ve default proje/bölüm oluşturma işlemini transaction ile yapıyoruz
+    const result = await db.$transaction(async (tx) => {
+      // Kullanıcıyı oluştur
+      const user = await tx.user.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          password: hashedPassword,
+        },
+      });
+
+      // Default "Gelen Kutusu" projesini oluştur
+      const defaultProject = await tx.project.create({
+        data: {
+          name: "Gelen Kutusu",
+          emoji: "📥",
+          userId: user.id,
+        },
+      });
+
+      // Default "Genel" bölümünü oluştur
+      await tx.section.create({
+        data: {
+          name: "Genel",
+          projectId: defaultProject.id,
+          order: 0,
+        },
+      });
+
+      return user;
     });
 
     return NextResponse.json(
       { 
         message: MESSAGES.SUCCESS.REGISTER,
         user: { 
-          id: user.id, 
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email 
+          id: result.id, 
+          firstName: result.firstName,
+          lastName: result.lastName,
+          email: result.email 
         }
       },
       { status: 201 }

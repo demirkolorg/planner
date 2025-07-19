@@ -15,6 +15,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { API_ROUTES, ROUTES, VALIDATION, MESSAGES } from "@/lib/constants"
+import { Loader2 } from "lucide-react"
 
 export function LoginForm({
   className,
@@ -157,7 +158,14 @@ export function LoginForm({
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Giriş Yapılıyor...
+                    </>
+                  ) : (
+                    'Giriş Yap'
+                  )}
                 </Button>
                 <Button variant="outline" className="w-full" type="button" disabled={isSubmitting}>
                   Google ile Giriş Yap
