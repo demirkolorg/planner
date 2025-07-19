@@ -5,8 +5,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft } from "lucide-react"
+import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search } from "lucide-react"
 import { BRAND_COLOR } from "@/lib/constants"
+import { useTagStore } from "@/store/tagStore"
 
 interface NewTaskModalProps {
   isOpen: boolean
@@ -25,6 +26,10 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [timeInput, setTimeInput] = useState("")
   const [showTimeInput, setShowTimeInput] = useState(false)
+  const [showTagPicker, setShowTagPicker] = useState(false)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [tagSearchInput, setTagSearchInput] = useState("")
+  const { tags, fetchTags, createTag } = useTagStore()
   const [currentMonth, setCurrentMonth] = useState(6) // 0-11 (Temmuz = 6)
   const [currentYear, setCurrentYear] = useState(2025)
 
@@ -37,13 +42,17 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
       setShowCalendar(false)
       setShowTimePicker(false)
       setShowTimeInput(false)
+      setShowTagPicker(false)
+      setSelectedTags([])
+      setTagSearchInput("")
       setSelectedDate(null)
       setSelectedTime(null)
       setTimeInput("")
       setCurrentMonth(6) // Temmuz
       setCurrentYear(2025)
+      fetchTags() // Fetch real tags data
     }
-  }, [isOpen])
+  }, [isOpen, fetchTags])
 
   const handleDateSelect = (dateOption: string) => {
     setSelectedDate(dateOption)
@@ -134,6 +143,54 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
     return "Zamanla"
   }
 
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    )
+  }
+
+  const handleCreateTag = async () => {
+    if (tagSearchInput.trim() && !tags.find(tag => tag.name.toLowerCase() === tagSearchInput.trim().toLowerCase())) {
+      const newTag = tagSearchInput.trim()
+      try {
+        // Create tag in backend and add to store
+        await createTag(newTag, "#3b82f6") // Default blue color
+        setSelectedTags(prev => [...prev, newTag])
+        setTagSearchInput("")
+      } catch (error) {
+        console.error("Failed to create tag:", error)
+      }
+    }
+  }
+
+  const handleTagKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateTag()
+    }
+  }
+
+  const handleTagConfirm = () => {
+    setShowTagPicker(false)
+  }
+
+  const handleTagClear = () => {
+    setSelectedTags([])
+    setShowTagPicker(false)
+  }
+
+  const getFilteredTags = () => {
+    return tags.filter(tag => 
+      tag.name.toLowerCase().includes(tagSearchInput.toLowerCase())
+    )
+  }
+
+  const getTagColor = (tagName: string) => {
+    const tag = tags.find(t => t.name === tagName)
+    return tag?.color ? `bg-[${tag.color}]` : "bg-blue-500"
+  }
+
   const handleSave = () => {
     if (title.trim()) {
       onSave(title.trim(), description.trim(), "temp-project-id")
@@ -149,7 +206,7 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg top-[20%] translate-y-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">🎯  Görev Ekle</h2>
@@ -185,8 +242,30 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
             />
           </div>
 
+          {/* Selected Tags */}
+          {selectedTags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedTags.map((tagName) => {
+                const tag = tags.find(t => t.name === tagName)
+                const tagColor = tag?.color || "#3b82f6"
+                return (
+                  <div
+                    key={tagName}
+                    className="px-2 py-1 rounded-md text-xs flex items-center gap-1"
+                    style={{ 
+                      backgroundColor: `${tagColor}30`,
+                      color: tagColor
+                    }}
+                  >
+                    <span>{tagName}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between">
             <div className="relative group flex items-center">
               {(selectedDate || selectedTime) && (
                 <Button
@@ -376,13 +455,89 @@ export function NewTaskModal({ isOpen, onClose, onSave }: NewTaskModalProps) {
               )}
 
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Kopyala
-            </Button>
+
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowTagPicker(!showTagPicker)}
+              >
+                <Tag className="h-4 w-4" />
+              </Button>
+
+                {/* Tag Picker Dropdown */}
+                {showTagPicker && (
+                  <div className="absolute top-full right-0 mt-1 w-80 bg-background border rounded-lg shadow-lg z-50 p-4">
+                    {/* Search Input */}
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={tagSearchInput}
+                        onChange={(e) => setTagSearchInput(e.target.value)}
+                        onKeyPress={handleTagKeyPress}
+                        placeholder="Ara veya Oluştur"
+                        className="pl-10"
+                      />
+                    </div>
+
+                    {/* Tag List */}
+                    <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                      {getFilteredTags().map((tag) => (
+                        <div
+                          key={tag.id}
+                          className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
+                          onClick={() => handleTagToggle(tag.name)}
+                        >
+                          <div className={`w-4 h-4 rounded border-2 ${
+                            selectedTags.includes(tag.name) 
+                              ? 'bg-purple-600 border-purple-600' 
+                              : 'border-gray-400'
+                          } flex items-center justify-center`}>
+                            {selectedTags.includes(tag.name) && (
+                              <Check className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: tag.color }}
+                          ></div>
+                          <span className="text-sm">{tag.name}</span>
+                        </div>
+                      ))}
+
+                      {/* Create New Tag */}
+                      {tagSearchInput && !tags.some(tag => 
+                        tag.name.toLowerCase() === tagSearchInput.toLowerCase()
+                      ) && (
+                        <div
+                          className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
+                          onClick={handleCreateTag}
+                        >
+                          <Plus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Create '{tagSearchInput}'</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        onClick={handleTagClear}
+                        className="flex-1"
+                      >
+                        Temizle
+                      </Button>
+                      <Button
+                        onClick={handleTagConfirm}
+                        className="flex-1"
+                      >
+                        Tamamlandı
+                      </Button>
+                    </div>
+                  </div>
+                )}
+            </div>
           </div>
 
           {/* Project Selection and Save Button */}
