@@ -37,7 +37,6 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
   }
 
   const handleCreateTask = (title: string, description: string, projectId: string) => {
-    console.log("Creating task:", { title, description, projectId })
     // Task creation logic will be added later
   }
 

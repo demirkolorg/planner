@@ -42,6 +42,8 @@ export default function ProjectDetailPage() {
   const [taskModalContext, setTaskModalContext] = useState<{
     project?: { id: string; name: string; emoji?: string }
     section?: { id: string; name: string; projectId: string }
+    parentTaskId?: string
+    parentTaskTitle?: string
   }>({})
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection } = useProjectStore()
   const { 
@@ -55,6 +57,9 @@ export default function ProjectDetailPage() {
     toggleTaskPin,
     addSubTask,
     uploadAttachment,
+    deleteAttachment,
+    updateTaskTags,
+    updateTaskReminders,
     showCompletedTasks,
     toggleShowCompletedTasks,
     getCompletedTasksCount,
@@ -339,23 +344,41 @@ export default function ProjectDetailPage() {
                           onDelete={deleteTask}
                           onPin={toggleTaskPin}
                           onAddSubTask={(parentTaskId) => {
-                            // TODO: Alt görev ekleme modal'ını aç
-                            console.log('Add sub-task for:', parentTaskId)
+                            const parentTask = task
+                            setTaskModalContext({
+                              project: { id: project.id, name: project.name, emoji: project.emoji },
+                              section: { id: section.id, name: section.name, projectId: project.id },
+                              parentTaskId: parentTaskId,
+                              parentTaskTitle: parentTask.title
+                            })
+                            setIsTaskModalOpen(true)
                           }}
                           onAddAttachment={(taskId, file) => {
                             uploadAttachment(taskId, file)
                           }}
-                          onUpdateTags={(taskId, tags) => {
-                            // TODO: Tag güncelleme dropdown'ını aç
-                            console.log('Update tags for:', taskId, tags)
+                          onDeleteAttachment={(attachmentId) => {
+                            deleteAttachment(attachmentId)
                           }}
-                          onUpdatePriority={(taskId, priority) => {
-                            // TODO: Priority güncelleme dropdown'ını aç
-                            console.log('Update priority for:', taskId, priority)
+                          onUpdateTags={async (taskId, tagIds) => {
+                            try {
+                              await updateTaskTags(taskId, tagIds)
+                            } catch (error) {
+                              console.error('Failed to update tags:', error)
+                            }
                           }}
-                          onUpdateReminders={(taskId, reminders) => {
-                            // TODO: Reminder güncelleme dropdown'ını aç
-                            console.log('Update reminders for:', taskId, reminders)
+                          onUpdatePriority={async (taskId, priority) => {
+                            try {
+                              await updateTask(taskId, { priority })
+                            } catch (error) {
+                              console.error('Failed to update priority:', error)
+                            }
+                          }}
+                          onUpdateReminders={async (taskId, reminders) => {
+                            try {
+                              await updateTaskReminders(taskId, reminders)
+                            } catch (error) {
+                              console.error('Failed to update reminders:', error)
+                            }
                           }}
                         />
                       ))}
@@ -417,6 +440,8 @@ export default function ProjectDetailPage() {
         }}
         defaultProject={taskModalContext.project}
         defaultSection={taskModalContext.section}
+        parentTaskId={taskModalContext.parentTaskId}
+        parentTaskTitle={taskModalContext.parentTaskTitle}
       />
     </div>
   )

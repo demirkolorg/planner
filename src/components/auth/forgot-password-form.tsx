@@ -46,7 +46,6 @@ export function ForgotPasswordForm({
     
     try {
       // Şifre sıfırlama isteği gönder
-      console.log('Password reset request for:', email)
       await new Promise(resolve => setTimeout(resolve, 1000))
       setIsSubmitted(true)
     } catch (error) {

@@ -5,6 +5,7 @@ import { ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useTaskStore } from "@/store/taskStore"
 import type { Task } from "@/types/task"
 
 interface TaskWithRelations {
@@ -64,6 +65,7 @@ interface TaskCardProps {
   onPin?: (taskId: string) => void
   onAddSubTask?: (parentTaskId: string) => void
   onAddAttachment?: (taskId: string, file: File) => void
+  onDeleteAttachment?: (attachmentId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
@@ -92,14 +94,23 @@ export function TaskCard({
   onPin,
   onAddSubTask,
   onAddAttachment,
+  onDeleteAttachment,
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
   className
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const { getSubTasks } = useTaskStore()
+
+  // Alt görevleri al
+  const subTasks = getSubTasks(task.id)
+  const hasUncompletedSubTasks = subTasks.some(subTask => !subTask.completed)
+  const isMainTaskCheckboxDisabled = !task.parentTaskId && hasUncompletedSubTasks
 
   const handleToggleComplete = () => {
+    // Üst görevse ve tamamlanmamış alt görevleri varsa tamamlanamaz
+    if (isMainTaskCheckboxDisabled) return
     onToggleComplete?.(task.id)
   }
 
@@ -122,6 +133,7 @@ export function TaskCard({
     <div className={cn(
       "rounded-lg bg-card transition-all duration-200",
       priorityColor,
+      task.parentTaskId && "ml-6", // Alt görev girintisi
       className
     )}>
       {/* Header - Always Visible */}
@@ -132,8 +144,9 @@ export function TaskCard({
         <Checkbox
           checked={task.completed}
           onCheckedChange={handleToggleComplete}
-          className={cn("mr-2", checkboxColor)}
+          className={cn("mr-2", checkboxColor, isMainTaskCheckboxDisabled && "opacity-50 cursor-not-allowed")}
           onClick={(e) => e.stopPropagation()}
+          disabled={isMainTaskCheckboxDisabled}
         />
         
         <div className="flex-1 min-w-0">
@@ -146,13 +159,6 @@ export function TaskCard({
         </div>
 
         <div className="flex items-center ml-1 space-x-1">
-          {/* Sub-task count indicator */}
-          {task.subTasks && task.subTasks.length > 0 && (
-            <span className="text-xs bg-muted px-1 py-0.5 rounded text-[10px]">
-              {task.subTasks.length}
-            </span>
-          )}
-          
           {/* Pin indicator */}
           {task.isPinned && (
             <span className="text-xs">📌</span>
@@ -214,27 +220,6 @@ export function TaskCard({
             </div>
           )}
 
-          {/* Sub-tasks */}
-          {task.subTasks && task.subTasks.length > 0 && (
-            <div className="mb-3">
-              <div className="text-xs text-muted-foreground mb-2">Alt Görevler ({task.subTasks.length})</div>
-              <div className="space-y-1">
-                {task.subTasks.map((subTask) => (
-                  <div key={subTask.id} className="flex items-center text-sm">
-                    <Checkbox
-                      checked={subTask.completed}
-                      className="mr-2"
-                    />
-                    <span className={cn(
-                      subTask.completed && "line-through text-muted-foreground"
-                    )}>
-                      {subTask.title}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Footer with Date and Actions */}
           <div className="flex items-center justify-between mt-4 pt-3 border-t">
@@ -252,6 +237,7 @@ export function TaskCard({
               task={task}
               onAddSubTask={onAddSubTask}
               onAddAttachment={onAddAttachment}
+              onDeleteAttachment={onDeleteAttachment}
               onUpdateTags={onUpdateTags}
               onUpdatePriority={onUpdatePriority}
               onUpdateReminders={onUpdateReminders}

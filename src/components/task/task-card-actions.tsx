@@ -20,6 +20,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { TagSelector } from "./tag-selector"
+import { PrioritySelector } from "./priority-selector"
+import { ReminderSelector } from "./reminder-selector"
+import { FileUploadDropdown } from "./file-upload-dropdown"
 import type { Task } from "@/types/task"
 
 interface TaskCardActionsProps {
@@ -54,10 +58,15 @@ interface TaskCardActionsProps {
     }>
   }
   onAddSubTask?: (taskId: string) => void
-  onAddAttachment?: (taskId: string) => void
-  onUpdateTags?: (taskId: string, tags: string[]) => void
+  onAddAttachment?: (taskId: string, file: File) => void
+  onDeleteAttachment?: (attachmentId: string) => void
+  onUpdateTags?: (taskId: string, tagIds: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
-  onUpdateReminders?: (taskId: string, reminders: string[]) => void
+  onUpdateReminders?: (taskId: string, reminders: Array<{
+    datetime: Date
+    message?: string
+    isActive?: boolean
+  }>) => void
   onPin?: (taskId: string) => void
   onDelete?: (taskId: string) => void
 }
@@ -66,6 +75,7 @@ export function TaskCardActions({
   task,
   onAddSubTask,
   onAddAttachment,
+  onDeleteAttachment,
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
@@ -79,27 +89,28 @@ export function TaskCardActions({
     onAddSubTask?.(task.id)
   }
 
-  const handleAddAttachment = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onAddAttachment?.(task.id)
+  const handleAddAttachment = (file: File) => {
+    onAddAttachment?.(task.id, file)
   }
 
-  const handleUpdateTags = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    // TODO: Open tag selection dropdown
-    onUpdateTags?.(task.id, [])
+  const handleDeleteAttachment = (attachmentId: string) => {
+    onDeleteAttachment?.(attachmentId)
   }
 
-  const handleUpdatePriority = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    // TODO: Open priority selection dropdown
-    onUpdatePriority?.(task.id, task.priority)
+  const handleUpdateTags = (tagIds: string[]) => {
+    onUpdateTags?.(task.id, tagIds)
   }
 
-  const handleUpdateReminders = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    // TODO: Open reminder selection dropdown
-    onUpdateReminders?.(task.id, [])
+  const handleUpdatePriority = (priority: string) => {
+    onUpdatePriority?.(task.id, priority)
+  }
+
+  const handleUpdateReminders = (reminders: Array<{
+    datetime: Date
+    message?: string
+    isActive?: boolean
+  }>) => {
+    onUpdateReminders?.(task.id, reminders)
   }
 
   const handlePin = (e: React.MouseEvent) => {
@@ -131,73 +142,94 @@ export function TaskCardActions({
           </TooltipContent>
         </Tooltip>
 
-        {/* Add Attachment */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleAddAttachment}
-            >
-              <Paperclip className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Dosya ekle</p>
-          </TooltipContent>
-        </Tooltip>
+        {/* File Upload */}
+        <FileUploadDropdown
+          taskAttachments={task.attachments}
+          onAddAttachment={handleAddAttachment}
+          onDeleteAttachment={handleDeleteAttachment}
+          trigger={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                >
+                  <Paperclip className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Dosya ekle</p>
+              </TooltipContent>
+            </Tooltip>
+          }
+        />
 
-        {/* Add/Edit Tags */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleUpdateTags}
-            >
-              <Tag className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Etiket ekle</p>
-          </TooltipContent>
-        </Tooltip>
+        {/* Tag Selector */}
+        <TagSelector
+          taskTags={task.tags}
+          onUpdateTags={handleUpdateTags}
+          trigger={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                >
+                  <Tag className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Etiket ekle</p>
+              </TooltipContent>
+            </Tooltip>
+          }
+        />
 
-        {/* Update Priority */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleUpdatePriority}
-            >
-              <Flag className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Öncelik belirle</p>
-          </TooltipContent>
-        </Tooltip>
+        {/* Priority Selector */}
+        <PrioritySelector
+          currentPriority={task.priority}
+          onUpdatePriority={handleUpdatePriority}
+          trigger={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                >
+                  <Flag className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Öncelik belirle</p>
+              </TooltipContent>
+            </Tooltip>
+          }
+        />
 
-        {/* Add/Edit Reminders */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleUpdateReminders}
-            >
-              <Bell className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Hatırlatıcı ekle</p>
-          </TooltipContent>
-        </Tooltip>
+        {/* Reminder Selector */}
+        <ReminderSelector
+          taskReminders={task.reminders}
+          onUpdateReminders={handleUpdateReminders}
+          trigger={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                >
+                  <Bell className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Hatırlatıcı ekle</p>
+              </TooltipContent>
+            </Tooltip>
+          }
+        />
 
         {/* Pin/Unpin */}
         <Tooltip>

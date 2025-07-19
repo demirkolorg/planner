@@ -69,6 +69,12 @@ interface TaskStore {
   addSubTask: (parentTaskId: string, taskData: CreateTaskRequest) => Promise<void>
   uploadAttachment: (taskId: string, file: File) => Promise<void>
   deleteAttachment: (attachmentId: string) => Promise<void>
+  updateTaskTags: (taskId: string, tagIds: string[]) => Promise<void>
+  updateTaskReminders: (taskId: string, reminders: Array<{
+    datetime: Date
+    message?: string
+    isActive?: boolean
+  }>) => Promise<void>
   
   // Utility methods
   getTasksByProject: (projectId: string) => TaskWithRelations[]
@@ -76,6 +82,7 @@ interface TaskStore {
   getTasksBySection: (sectionId: string) => TaskWithRelations[]
   getPinnedTasks: () => TaskWithRelations[]
   getSubTasks: (parentTaskId: string) => TaskWithRelations[]
+  getTaskById: (taskId: string) => TaskWithRelations | undefined
   getCompletedTasksCount: (projectId: string) => number
   getPendingTasksCount: (projectId: string) => number
   toggleShowCompletedTasks: () => void
@@ -108,17 +115,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   fetchTasksByProject: async (projectId: string) => {
     set({ error: null })
     try {
-      console.log('🚀 Fetching tasks for project:', projectId)
       const response = await fetch(`/api/projects/${projectId}/tasks`)
-      console.log('📡 Response status:', response.status)
       
       if (!response.ok) {
-        const errorData = await response.text()
-        console.log('❌ Error response:', errorData)
         throw new Error('Failed to fetch project tasks')
       }
       const tasks = await response.json()
-      console.log('✅ Fetched tasks:', tasks.length)
       
       // Update store with new tasks (merge with existing tasks from other projects)
       set(state => ({
@@ -130,7 +132,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       return tasks
     } catch (error) {
-      console.error('❌ TaskStore fetchTasksByProject error:', error)
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
       set({ error: errorMessage })
       throw error
@@ -283,11 +284,23 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   // Utility methods
   getTasksByProject: (projectId: string) => {
     const { tasks, showCompletedTasks } = get()
-    return tasks.filter(task => 
+    const filteredTasks = tasks.filter(task => 
       task.projectId === projectId && 
-      !task.parentTaskId && 
       (showCompletedTasks || !task.completed)
     )
+    
+    // Ana görevleri ve alt görevleri sıralı şekilde döndür
+    const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
+    const result: TaskWithRelations[] = []
+    
+    mainTasks.forEach(mainTask => {
+      result.push(mainTask)
+      // Bu ana görevin alt görevlerini ekle
+      const subTasks = filteredTasks.filter(task => task.parentTaskId === mainTask.id)
+      result.push(...subTasks)
+    })
+    
+    return result
   },
 
   getTasksByTag: (tagId: string) => {
@@ -301,11 +314,23 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   getTasksBySection: (sectionId: string) => {
     const { tasks, showCompletedTasks } = get()
-    return tasks.filter(task => 
+    const filteredTasks = tasks.filter(task => 
       task.sectionId === sectionId && 
-      !task.parentTaskId &&
       (showCompletedTasks || !task.completed)
     )
+    
+    // Ana görevleri ve alt görevleri sıralı şekilde döndür
+    const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
+    const result: TaskWithRelations[] = []
+    
+    mainTasks.forEach(mainTask => {
+      result.push(mainTask)
+      // Bu ana görevin alt görevlerini ekle
+      const subTasks = filteredTasks.filter(task => task.parentTaskId === mainTask.id)
+      result.push(...subTasks)
+    })
+    
+    return result
   },
 
   getPinnedTasks: () => {
@@ -320,10 +345,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     return get().tasks.filter(task => task.parentTaskId === parentTaskId)
   },
 
+  getTaskById: (taskId: string) => {
+    return get().tasks.find(task => task.id === taskId)
+  },
+
   getCompletedTasksCount: (projectId: string) => {
     return get().tasks.filter(task => 
       task.projectId === projectId && 
-      !task.parentTaskId && 
       task.completed
     ).length
   },
@@ -331,7 +359,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   getPendingTasksCount: (projectId: string) => {
     return get().tasks.filter(task => 
       task.projectId === projectId && 
-      !task.parentTaskId && 
       !task.completed
     ).length
   },
@@ -455,6 +482,72 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           ...task,
           attachments: task.attachments?.filter(att => att.id !== attachmentId) || []
         }))
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  updateTaskTags: async (taskId: string, tagIds: string[]) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/tags`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tagIds }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update task tags')
+      }
+      
+      const updatedTask = await response.json()
+      
+      // Update task in store
+      set(state => ({
+        tasks: state.tasks.map(task => 
+          task.id === taskId ? { ...task, ...updatedTask } : task
+        )
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  updateTaskReminders: async (taskId: string, reminders: Array<{
+    datetime: Date
+    message?: string
+    isActive?: boolean
+  }>) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/reminders`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reminders }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update task reminders')
+      }
+      
+      const updatedTask = await response.json()
+      
+      // Update task in store
+      set(state => ({
+        tasks: state.tasks.map(task => 
+          task.id === taskId ? { ...task, ...updatedTask } : task
+        )
       }))
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'

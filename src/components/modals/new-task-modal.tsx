@@ -29,9 +29,11 @@ interface NewTaskModalProps {
     name: string
     projectId: string
   }
+  parentTaskId?: string
+  parentTaskTitle?: string
 }
 
-export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection }: NewTaskModalProps) {
+export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection, parentTaskId, parentTaskTitle }: NewTaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -60,7 +62,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [reminderMonth, setReminderMonth] = useState(6) // Temmuz
   const [reminderYear, setReminderYear] = useState(2025)
   const { tags, fetchTags, createTag } = useTagStore()
-  const { createTask } = useTaskStore()
+  const { createTask, getTaskById } = useTaskStore()
   const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [currentMonth, setCurrentMonth] = useState(6) // 0-11 (Temmuz = 6)
   const [currentYear, setCurrentYear] = useState(2025)
@@ -107,8 +109,24 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   // Default proje ve bölüm seçimleri
   useEffect(() => {
     if (isOpen) {
+      // Eğer parent task ID'si verilmişse, parent task'ın proje/bölüm bilgilerini kullan
+      if (parentTaskId) {
+        const parentTask = getTaskById(parentTaskId)
+        if (parentTask) {
+          const parentProject = projects.find(p => p.id === parentTask.projectId)
+          if (parentProject) {
+            setSelectedProject(parentProject)
+            fetchSections(parentProject.id).then(() => {
+              const parentSection = getSectionsByProject(parentProject.id).find(s => s.id === parentTask.sectionId)
+              if (parentSection) {
+                setSelectedSection(parentSection)
+              }
+            })
+          }
+        }
+      }
       // Eğer default değerler verilmişse bunları kullan
-      if (defaultProject && projects.find(p => p.id === defaultProject.id)) {
+      else if (defaultProject && projects.find(p => p.id === defaultProject.id)) {
         setSelectedProject(defaultProject as Project)
         
         if (defaultSection) {
@@ -137,7 +155,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         }
       }
     }
-  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection])
+  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection, parentTaskId, getTaskById])
 
   const handleDateSelect = (dateOption: string) => {
     if (dateOption === "Bugün") {
@@ -462,12 +480,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         dueDate: selectedDate || undefined,
         dueTime: selectedTime || undefined,
         tags: selectedTags,
-        reminders: formattedReminders
+        reminders: formattedReminders,
+        ...(parentTaskId && { parentTaskId })
       }
 
       // TaskStore'u kullanarak görev oluştur
       const newTask = await createTask(taskData)
-      console.log('Task created successfully:', newTask)
 
       // Önce modal'ı kapat
       onClose()
@@ -497,7 +515,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
-          <DialogTitle className="text-lg font-semibold">🎯  Görev Ekle</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            {parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : '🎯 Görev Ekle'}
+          </DialogTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -1062,18 +1082,19 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowProjectPicker(!showProjectPicker)}
+                  onClick={() => !parentTaskId && setShowProjectPicker(!showProjectPicker)}
                   className="flex items-center space-x-2"
+                  disabled={!!parentTaskId}
                 >
-                  {selectedProject ? (
-                    <span className="truncate max-w-[200px]">
-                      {selectedProject.emoji} {selectedProject.name.length > 20 ? selectedProject.name.substring(0, 20) + '...' : selectedProject.name}
-                    </span>
-                  ) : (
-                    <span>Proje Seç</span>
-                  )}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
+                {selectedProject ? (
+                  <span className="truncate max-w-[200px]">
+                    {selectedProject.emoji} {selectedProject.name.length > 20 ? selectedProject.name.substring(0, 20) + '...' : selectedProject.name}
+                  </span>
+                ) : (
+                  <span>Proje Seç</span>
+                )}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
 
                 {/* Project Picker Dropdown */}
                 {showProjectPicker && (
@@ -1124,9 +1145,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowSectionPicker(!showSectionPicker)}
+                  onClick={() => !parentTaskId && setShowSectionPicker(!showSectionPicker)}
                   className="flex items-center space-x-2"
-                  disabled={!selectedProject}
+                  disabled={!selectedProject || !!parentTaskId}
                 >
                   {selectedSection ? (
                     <span className="truncate max-w-[150px]">
@@ -1173,7 +1194,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
               onClick={handleSave}
               disabled={!title.trim() || !selectedProject || !selectedSection || isSubmitting}
             >
-              {isSubmitting ? "Ekleniyor..." : "Görev Ekle"}
+              {isSubmitting ? "Ekleniyor..." : (parentTaskId ? "Alt Görev Ekle" : "Görev Ekle")}
             </Button>
           </div>
         </div>

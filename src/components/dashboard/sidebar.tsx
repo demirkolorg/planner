@@ -37,7 +37,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getTasksByProject } = useTaskStore()
+  const { getTasksByProject, getPinnedTasks } = useTaskStore()
 
   useEffect(() => {
     fetchProjects()
@@ -55,6 +55,8 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   // Dinamik sayıları hesapla
   const getDynamicCount = (itemName: string) => {
     switch (itemName) {
+      case "Pano":
+        return getPinnedTasks().length
       case "Etiketler":
         return tags.length
       default:

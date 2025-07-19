@@ -89,7 +89,6 @@ export function LoginForm({
 
       // Başarılı giriş - kullanıcı bilgilerini Zustand store'a kaydet ve ana sayfaya yönlendir
       login(data.user)
-      console.log('Login successful:', data.user)
       router.push(ROUTES.HOME)
       setIsSubmitting(false)
     } catch (error) {

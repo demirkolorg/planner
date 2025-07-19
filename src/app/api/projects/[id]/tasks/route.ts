@@ -5,20 +5,15 @@ import jwt from "jsonwebtoken"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    console.log('📝 Project tasks API called')
-    
     const cookieStore = await cookies()
     const token = cookieStore.get("token")?.value
     
     if (!token) {
-      console.log('❌ No token found')
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
-    
-    console.log('🔍 Looking for project:', id, 'for user:', decoded.userId)
     
     // Check if project exists and belongs to user
     const project = await db.project.findFirst({
@@ -29,17 +24,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!project) {
-      console.log('❌ Project not found:', id)
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
-    
-    console.log('✅ Project found:', project.name)
 
-    // Get tasks associated with this project (only parent tasks, sub-tasks will be included via subTasks relation)
+    // Get all tasks associated with this project (both parent and sub-tasks)
     const tasks = await db.task.findMany({
       where: {
-        projectId: id,
-        parentTaskId: null  // Only get parent tasks
+        projectId: id
       },
       include: {
         tags: {
@@ -49,17 +40,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
         reminders: true,
         attachments: true,
-        subTasks: {
-          include: {
-            tags: {
-              include: {
-                tag: true
-              }
-            },
-            reminders: true,
-            attachments: true
-          }
-        },
         section: true
       },
       orderBy: {
@@ -67,7 +47,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     })
 
-    console.log('📋 Found tasks:', tasks.length)
     return NextResponse.json(tasks)
   } catch (error) {
     console.error("❌ Error fetching tasks for project:", error)
