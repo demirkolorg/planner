@@ -60,8 +60,6 @@ export default function ProjectDetailPage() {
     deleteTask,
     toggleTaskPin,
     addSubTask,
-    uploadAttachment,
-    deleteAttachment,
     updateTaskTags,
     updateTaskReminders,
     showCompletedTasks,
@@ -434,12 +432,6 @@ export default function ProjectDetailPage() {
                               parentTaskTitle: parentTask.title
                             })
                             setIsTaskModalOpen(true)
-                          }}
-                          onAddAttachment={(taskId, file) => {
-                            uploadAttachment(taskId, file)
-                          }}
-                          onDeleteAttachment={(attachmentId) => {
-                            deleteAttachment(attachmentId)
                           }}
                           onUpdateTags={async (taskId, tagIds) => {
                             try {

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { 
   Plus, 
-  Paperclip, 
   Tag, 
   Flag, 
   Bell, 
@@ -23,7 +22,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
 import { ReminderSelector } from "./reminder-selector"
-import { FileUploadDropdown } from "./file-upload-dropdown"
 import type { Task } from "@/types/task"
 
 interface TaskCardActionsProps {
@@ -48,18 +46,8 @@ interface TaskCardActionsProps {
       message?: string
       isActive: boolean
     }>
-    attachments?: Array<{
-      id: string
-      taskId: string
-      fileName: string
-      fileType: string
-      fileUrl: string
-      fileSize?: number
-    }>
   }
   onAddSubTask?: (taskId: string) => void
-  onAddAttachment?: (taskId: string, file: File) => void
-  onDeleteAttachment?: (attachmentId: string) => void
   onUpdateTags?: (taskId: string, tagIds: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: Array<{
@@ -74,8 +62,6 @@ interface TaskCardActionsProps {
 export function TaskCardActions({
   task,
   onAddSubTask,
-  onAddAttachment,
-  onDeleteAttachment,
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
@@ -89,13 +75,6 @@ export function TaskCardActions({
     onAddSubTask?.(task.id)
   }
 
-  const handleAddAttachment = (file: File) => {
-    onAddAttachment?.(task.id, file)
-  }
-
-  const handleDeleteAttachment = (attachmentId: string) => {
-    onDeleteAttachment?.(attachmentId)
-  }
 
   const handleUpdateTags = (tagIds: string[]) => {
     onUpdateTags?.(task.id, tagIds)
@@ -142,28 +121,6 @@ export function TaskCardActions({
           </TooltipContent>
         </Tooltip>
 
-        {/* File Upload */}
-        <FileUploadDropdown
-          taskAttachments={task.attachments}
-          onAddAttachment={handleAddAttachment}
-          onDeleteAttachment={handleDeleteAttachment}
-          trigger={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                >
-                  <Paperclip className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Dosya ekle</p>
-              </TooltipContent>
-            </Tooltip>
-          }
-        />
 
         {/* Tag Selector */}
         <TagSelector
@@ -237,7 +194,7 @@ export function TaskCardActions({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-7 w-7 ${task.isPinned ? 'text-orange-600' : ''}`}
+              className={`h-7 w-7  ${task.isPinned ? 'text-red-500' : 'text-white'}`}
               onClick={handlePin}
             >
               <Pin className="h-3 w-3" />

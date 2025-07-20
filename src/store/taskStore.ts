@@ -29,14 +29,6 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
     message?: string
     isActive: boolean
   }>
-  attachments?: Array<{
-    id: string
-    taskId: string
-    fileName: string
-    fileType: string
-    fileUrl: string
-    fileSize?: number
-  }>
   subTasks?: TaskWithRelations[]
   project?: {
     id: string
@@ -68,8 +60,6 @@ interface TaskStore {
   // New task features
   toggleTaskPin: (taskId: string) => Promise<void>
   addSubTask: (parentTaskId: string, taskData: CreateTaskRequest) => Promise<void>
-  uploadAttachment: (taskId: string, file: File) => Promise<void>
-  deleteAttachment: (attachmentId: string) => Promise<void>
   updateTaskTags: (taskId: string, tagIds: string[]) => Promise<void>
   updateTaskReminders: (taskId: string, reminders: Array<{
     datetime: Date
@@ -480,69 +470,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  uploadAttachment: async (taskId: string, file: File) => {
-    set({ error: null })
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      
-      const response = await fetch(`/api/tasks/${taskId}/attachments`, {
-        method: 'POST',
-        body: formData,
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to upload attachment')
-      }
-      
-      const newAttachment = await response.json()
-      
-      // Update task with new attachment
-      set(state => ({
-        tasks: state.tasks.map(task => 
-          task.id === taskId 
-            ? { 
-                ...task, 
-                attachments: [...(task.attachments || []), newAttachment] 
-              }
-            : task
-        )
-      }))
-      
-      return newAttachment
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
-      throw error
-    }
-  },
-
-  deleteAttachment: async (attachmentId: string) => {
-    set({ error: null })
-    try {
-      const response = await fetch(`/api/attachments/${attachmentId}`, {
-        method: 'DELETE',
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to delete attachment')
-      }
-      
-      // Remove attachment from all tasks
-      set(state => ({
-        tasks: state.tasks.map(task => ({
-          ...task,
-          attachments: task.attachments?.filter(att => att.id !== attachmentId) || []
-        }))
-      }))
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
-      throw error
-    }
-  },
 
   updateTaskTags: async (taskId: string, tagIds: string[]) => {
     set({ error: null })

@@ -164,7 +164,6 @@ export async function POST(request: NextRequest) {
             }
           },
           reminders: true,
-          attachments: true,
           subTasks: {
             include: {
               tags: {
@@ -173,7 +172,6 @@ export async function POST(request: NextRequest) {
                 }
               },
               reminders: true,
-              attachments: true
             }
           }
         }
@@ -212,7 +210,6 @@ export async function GET(request: NextRequest) {
           }
         },
         reminders: true,
-        attachments: true,
         subTasks: {
           include: {
             tags: {
@@ -221,7 +218,6 @@ export async function GET(request: NextRequest) {
               }
             },
             reminders: true,
-            attachments: true
           }
         }
       },

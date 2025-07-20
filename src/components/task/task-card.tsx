@@ -40,14 +40,6 @@ interface TaskWithRelations {
     message?: string
     isActive: boolean
   }>
-  attachments?: Array<{
-    id: string
-    taskId: string
-    fileName: string
-    fileType: string
-    fileUrl: string
-    fileSize?: number
-  }>
   subTasks?: Array<{
     id: string
     title: string
@@ -65,8 +57,6 @@ interface TaskCardProps {
   onDelete?: (taskId: string) => void
   onPin?: (taskId: string) => void
   onAddSubTask?: (parentTaskId: string) => void
-  onAddAttachment?: (taskId: string, file: File) => void
-  onDeleteAttachment?: (attachmentId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
@@ -94,8 +84,6 @@ export function TaskCard({
   onDelete,
   onPin,
   onAddSubTask,
-  onAddAttachment,
-  onDeleteAttachment,
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
@@ -126,6 +114,30 @@ export function TaskCard({
       day: 'numeric',
       month: 'short'
     })
+  }
+
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return null
+    const date = new Date(dateString)
+    const dateStr = date.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'short'
+    })
+    
+    // Eğer saat 00:00 ise sadece tarihi göster
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    
+    if (hours === 0 && minutes === 0) {
+      return dateStr
+    }
+    
+    const timeStr = date.toLocaleTimeString('tr-TR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    
+    return `${dateStr} ${timeStr}`
   }
 
   const priorityColor = PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.NONE
@@ -166,6 +178,13 @@ export function TaskCard({
           onClick={(e) => e.stopPropagation()}
           disabled={isTaskCheckboxDisabled}
         />
+        
+        {/* Due date - only when collapsed */}
+        {!isExpanded && task.dueDate && (
+          <div className="text-xs text-muted-foreground px-2">
+            {formatDateTime(task.dueDate)}
+          </div>
+        )}
         
         <div className="flex-1 min-w-0">
           <h4 className={cn(
@@ -221,22 +240,6 @@ export function TaskCard({
             </div>
           )}
 
-          {/* Attachments */}
-          {task.attachments && task.attachments.length > 0 && (
-            <div className="mb-3">
-              <div className="text-xs text-muted-foreground mb-2">Ekler ({task.attachments.length})</div>
-              <div className="flex flex-wrap gap-2">
-                {task.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="text-xs bg-muted px-2 py-1 rounded"
-                  >
-                    {attachment.fileName}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
 
           {/* Footer with Date and Actions */}
@@ -244,7 +247,7 @@ export function TaskCard({
             {/* Left side - Date */}
             <div className="text-xs text-muted-foreground">
               {task.dueDate ? (
-                <span>📅 {formatDate(task.dueDate)}</span>
+                <span>📅 {formatDateTime(task.dueDate)}</span>
               ) : (
                 <span>Oluşturulma: {formatDate(task.createdAt)}</span>
               )}
@@ -254,8 +257,6 @@ export function TaskCard({
             <TaskCardActions
               task={task}
               onAddSubTask={onAddSubTask}
-              onAddAttachment={onAddAttachment}
-              onDeleteAttachment={onDeleteAttachment}
               onUpdateTags={onUpdateTags}
               onUpdatePriority={onUpdatePriority}
               onUpdateReminders={onUpdateReminders}

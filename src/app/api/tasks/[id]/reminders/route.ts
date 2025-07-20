@@ -66,7 +66,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           }
         },
         reminders: true,
-        attachments: true,
         subTasks: {
           include: {
             tags: {
@@ -75,7 +74,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               }
             },
             reminders: true,
-            attachments: true
           }
         },
         section: true,

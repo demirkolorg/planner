@@ -39,7 +39,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           }
         },
         reminders: true,
-        attachments: true,
         section: true
       },
       orderBy: {
