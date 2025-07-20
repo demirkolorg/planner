@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
+import { useTaskStore } from "@/store/taskStore"
 import { ROUTES } from "@/lib/constants"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
@@ -13,21 +14,25 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { isAuthenticated } = useAuthStore()
+  const { fetchTasks } = useTaskStore()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     // Zustand persist hydration'ı bekle
-    const timer = setTimeout(() => {
-      setIsLoading(false)
+    const timer = setTimeout(async () => {
       if (!isAuthenticated) {
         router.push(ROUTES.LOGIN)
+      } else {
+        // Kullanıcı giriş yapmışsa görevleri yükle
+        await fetchTasks()
       }
+      setIsLoading(false)
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router, fetchTasks])
 
   if (isLoading) {
     return (

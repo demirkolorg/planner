@@ -44,7 +44,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           }
         },
         project: true,
-        section: true
+        section: true,
+        subTasks: {
+          include: {
+            tags: {
+              include: {
+                tag: true
+              }
+            },
+            reminders: true,
+            subTasks: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true
+                  }
+                },
+                reminders: true
+              }
+            }
+          }
+        },
+        reminders: true
       },
       orderBy: {
         createdAt: 'desc'

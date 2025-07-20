@@ -76,6 +76,8 @@ interface TaskStore {
   getTaskById: (taskId: string) => TaskWithRelations | undefined
   getCompletedTasksCount: (projectId: string) => number
   getPendingTasksCount: (projectId: string) => number
+  getCompletedTasksCountByTag: (tagId: string) => number
+  getPendingTasksCountByTag: (tagId: string) => number
   toggleShowCompletedTasks: () => void
   clearError: () => void
 }
@@ -314,11 +316,44 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   getTasksByTag: (tagId: string) => {
     const { tasks, showCompletedTasks } = get()
-    return tasks.filter(task => 
+    const filteredTasks = tasks.filter(task => 
       task.tags?.some(tagRel => tagRel.tagId === tagId) && 
-      !task.parentTaskId &&
       (showCompletedTasks || !task.completed)
     )
+    
+    // Recursive function to get all sub-tasks at any level
+    const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
+      const directSubTasks = tasks.filter(task => 
+        task.parentTaskId === parentId && 
+        (showCompletedTasks || !task.completed)
+      )
+      const result: TaskWithRelations[] = []
+      
+      directSubTasks.forEach(subTask => {
+        // Add current sub-task with level information
+        const taskWithLevel = { ...subTask, level }
+        result.push(taskWithLevel)
+        
+        // Recursively add its sub-tasks
+        const nestedSubTasks = getAllSubTasksRecursive(subTask.id, level + 1)
+        result.push(...nestedSubTasks)
+      })
+      
+      return result
+    }
+    
+    // Ana görevleri ve tüm alt görevleri hierarchical sırayla döndür
+    const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
+    const result: TaskWithRelations[] = []
+    
+    mainTasks.forEach(mainTask => {
+      result.push({ ...mainTask, level: 0 })
+      // Bu ana görevin tüm alt görevlerini recursive şekilde ekle
+      const allSubTasks = getAllSubTasksRecursive(mainTask.id)
+      result.push(...allSubTasks)
+    })
+    
+    return result
   },
 
   getTasksBySection: (sectionId: string) => {
@@ -403,6 +438,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   getPendingTasksCount: (projectId: string) => {
     return get().tasks.filter(task => 
       task.projectId === projectId && 
+      !task.completed
+    ).length
+  },
+
+  getCompletedTasksCountByTag: (tagId: string) => {
+    return get().tasks.filter(task => 
+      task.tags?.some(tagRel => tagRel.tagId === tagId) && 
+      task.completed
+    ).length
+  },
+
+  getPendingTasksCountByTag: (tagId: string) => {
+    return get().tasks.filter(task => 
+      task.tags?.some(tagRel => tagRel.tagId === tagId) && 
       !task.completed
     ).length
   },

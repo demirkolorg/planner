@@ -37,12 +37,13 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getTasksByProject, getPinnedTasks } = useTaskStore()
+  const { getTasksByProject, getPinnedTasks, fetchTasks, tasks } = useTaskStore()
 
   useEffect(() => {
     fetchProjects()
     fetchTags()
-  }, [fetchProjects, fetchTags])
+    fetchTasks() // Tüm görevleri yükle
+  }, [fetchProjects, fetchTags, fetchTasks])
 
   const handleCreateProject = async (name: string, emoji: string) => {
     try {
@@ -117,7 +118,11 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
           <div className="space-y-1">
             {projects.map((project) => {
               // TaskStore'dan gerçek görev sayısını al
-              const taskCount = getTasksByProject(project.id).length
+              const taskStoreCount = getTasksByProject(project.id).length
+              // API'den gelen sayı
+              const apiCount = project._count?.tasks || 0
+              // Eğer taskStore'da görevler yüklendiyse onu kullan, yoksa API'den gelen sayıyı kullan
+              const displayCount = tasks.length > 0 ? taskStoreCount : apiCount
               
               return (
                 <Link
@@ -133,7 +138,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
                     )}
                     <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{taskCount}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{displayCount}</span>
                 </Link>
               )
             })}

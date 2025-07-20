@@ -1,12 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { PiTagSimpleFill } from "react-icons/pi"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Clock, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useTaskStore } from "@/store/taskStore"
+import { useTagStore } from "@/store/tagStore"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { NewTagModal } from "@/components/modals/new-tag-modal"
+import { TaskCard } from "@/components/task/task-card"
+import { Switch } from "@/components/ui/switch"
 
 interface Tag {
   id: string
@@ -21,14 +26,31 @@ interface Tag {
 
 export default function TagDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const tagId = params.id as string
   const [tag, setTag] = useState<Tag | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { fetchTasksByTag, getTasksByTag } = useTaskStore()
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const { 
+    fetchTasksByTag, 
+    getTasksByTag,
+    toggleTaskComplete,
+    updateTask,
+    deleteTask,
+    toggleTaskPin,
+    updateTaskTags,
+    updateTaskReminders,
+    showCompletedTasks,
+    toggleShowCompletedTasks,
+    getCompletedTasksCountByTag,
+    getPendingTasksCountByTag
+  } = useTaskStore()
+  const { updateTag, deleteTag } = useTagStore()
 
-  // TaskStore'dan tag görevlerini al
-  const tasks = getTasksByTag(tagId)
+  // TaskStore'dan tag görevlerini al - sadece üst seviye görevleri göster
+  const tasks = getTasksByTag(tagId).filter(task => !task.parentTaskId)
 
   useEffect(() => {
     const fetchTagAndTasks = async () => {
@@ -96,10 +118,45 @@ export default function TagDetailPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold">{tag.name}</h1>
-            <p className="text-muted-foreground">
-              {tag._count?.tasks || 0} görev
-            </p>
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <span className="flex items-center space-x-1 text-green-600 dark:text-green-400">
+                <Check className="h-3 w-3" />
+                <span>{getCompletedTasksCountByTag(tagId)} tamamlandı</span>
+              </span>
+              <span className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                <Clock className="h-3 w-3" />
+                <span>{getPendingTasksCountByTag(tagId)} bekleyen</span>
+              </span>
+            </div>
           </div>
+        </div>
+        <div className="flex items-center space-x-2 ml-auto">
+          {/* Tamamlanan görevleri göster toggle */}
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-muted-foreground">Tamamlananlar</span>
+            <Switch
+              checked={showCompletedTasks}
+              onCheckedChange={toggleShowCompletedTasks}
+            />
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsEditModalOpen(true)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Düzenle
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-red-600 hover:text-red-700"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Sil
+          </Button>
         </div>
       </div>
 
@@ -112,54 +169,80 @@ export default function TagDetailPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">
-            İlişkili Görevler ({tasks.length})
-          </h2>
-          <div className="space-y-3">
-            {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-4 border rounded-lg bg-card hover:shadow-sm transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium">{task.title}</h3>
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        task.priority === "HIGH"
-                          ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                          : task.priority === "MEDIUM"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
-                          : "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                      }`}
-                    >
-                      {task.priority === "HIGH" ? "Yüksek" : task.priority === "MEDIUM" ? "Orta" : "Düşük"}
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        task.completed
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                      }`}
-                    >
-                      {task.completed ? "Tamamlandı" : "Devam Ediyor"}
-                    </span>
-                  </div>
-                </div>
-                {task.description && (
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {task.description}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Oluşturulma: {new Date(task.createdAt).toLocaleDateString('tr-TR')}
-                </p>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-2">
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onToggleComplete={toggleTaskComplete}
+              onUpdate={updateTask}
+              onDelete={deleteTask}
+              onPin={toggleTaskPin}
+              onAddSubTask={(parentTaskId) => {
+                // Etiket sayfasında alt görev ekleme özelliği şu anda yok
+                console.log('Alt görev ekleme:', parentTaskId)
+              }}
+              onUpdateTags={async (taskId, tagIds) => {
+                try {
+                  await updateTaskTags(taskId, tagIds)
+                } catch (error) {
+                  console.error('Failed to update tags:', error)
+                }
+              }}
+              onUpdatePriority={async (taskId, priority) => {
+                try {
+                  await updateTask(taskId, { priority })
+                } catch (error) {
+                  console.error('Failed to update priority:', error)
+                }
+              }}
+              onUpdateReminders={async (taskId, reminders) => {
+                try {
+                  await updateTaskReminders(taskId, reminders)
+                } catch (error) {
+                  console.error('Failed to update reminders:', error)
+                }
+              }}
+            />
+          ))}
         </div>
       )}
+      {/* Düzenleme Modal'ı */}
+      {tag && (
+        <NewTagModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={async (name, color) => {
+            try {
+              await updateTag(tagId, name, color)
+              // Tag bilgilerini güncelle
+              setTag(prev => prev ? { ...prev, name, color } : null)
+            } catch (error) {
+              console.error("Failed to update tag:", error)
+            }
+          }}
+          editingTag={{
+            id: tag.id,
+            name: tag.name,
+            color: tag.color
+          }}
+        />
+      )}
+
+      {/* Silme Onay Dialog'u */}
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={async () => {
+          await deleteTag(tagId)
+          router.push("/tags") // Etiketler sayfasına yönlendir
+        }}
+        title="Etiketi Sil"
+        message={`"${tag?.name}" etiketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve etiket tüm görevlerden kaldırılacak.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+      />
     </div>
   )
 }
