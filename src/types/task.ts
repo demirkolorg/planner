@@ -97,10 +97,10 @@ export interface CreateTaskRequest {
   projectId: string
   sectionId: string
   priority?: string
-  dueDate?: string  // Format: "DD.MM.YYYY"
-  dueTime?: string  // Format: "HH:MM"
+  dueDate?: string  // ISO date string
   tags?: string[]   // Tag names
   reminders?: string[] // DateTime strings
+  parentTaskId?: string // For sub-tasks
 }
 
 export interface CreateTaskResponse extends Task {

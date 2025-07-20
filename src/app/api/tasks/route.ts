@@ -18,8 +18,7 @@ interface CreateTaskRequest {
   projectId: string
   sectionId: string
   priority?: string
-  dueDate?: string
-  dueTime?: string
+  dueDate?: string  // ISO date string
   tags?: string[]  // Tag name'leri
   reminders?: string[]  // DateTime string'leri
   parentTaskId?: string  // Alt görev için parent task ID'si
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
       sectionId, 
       priority = "Yok",
       dueDate,
-      dueTime,
       tags = [],
       reminders = [],
       parentTaskId
@@ -80,24 +78,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Section not found" }, { status: 404 })
     }
 
-    // Due date oluştur (eğer tarih ve saat varsa)
+    // Due date oluştur (ISO string'den)
     let parsedDueDate: Date | undefined
     if (dueDate) {
-      if (dueTime) {
-        // Format: "19.07.2025 14:30" 
-        const [day, month, year] = dueDate.split('.')
-        const [hour, minute] = dueTime.split(':')
-        parsedDueDate = new Date(
-          parseInt(year), 
-          parseInt(month) - 1, 
-          parseInt(day),
-          parseInt(hour),
-          parseInt(minute)
-        )
-      } else {
-        // Sadece tarih, saat 00:00
-        const [day, month, year] = dueDate.split('.')
-        parsedDueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      try {
+        parsedDueDate = new Date(dueDate)
+        // Check if date is valid
+        if (isNaN(parsedDueDate.getTime())) {
+          parsedDueDate = undefined
+        }
+      } catch (error) {
+        console.error('Invalid dueDate format:', error)
+        parsedDueDate = undefined
       }
     }
 

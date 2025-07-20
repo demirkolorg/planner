@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useTaskStore } from "@/store/taskStore"
+import { DateTimePicker } from "../shared/date-time-picker"
 import type { Task } from "@/types/task"
 
 interface TaskWithRelations {
@@ -90,6 +91,8 @@ export function TaskCard({
   className
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isEditingDate, setIsEditingDate] = useState(false)
+  const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
   const { getSubTasks } = useTaskStore()
 
   // Alt görevleri al (tüm seviyedeki)
@@ -106,6 +109,35 @@ export function TaskCard({
 
   const handleToggleExpanded = () => {
     setIsExpanded(!isExpanded)
+  }
+
+  const handleDateClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    // Click pozisyonunu hesapla
+    const rect = e.currentTarget.getBoundingClientRect()
+    setEditorPosition({
+      x: rect.left,
+      y: rect.bottom + 4 // 4px margin
+    })
+    
+    setIsEditingDate(true)
+  }
+
+  const handleDateSave = async (dateTime: string | null) => {
+    try {
+      // dueDate alanını Date object olarak gönder
+      const updateData = dateTime ? { dueDate: new Date(dateTime) } : { dueDate: null }
+      await onUpdate?.(task.id, updateData)
+      setIsEditingDate(false)
+    } catch (error) {
+      console.error('Failed to update date:', error)
+      setIsEditingDate(false) // Hata durumunda da edit modunu kapat
+    }
+  }
+
+  const handleDateCancel = () => {
+    setIsEditingDate(false)
   }
 
   const formatDate = (dateString?: string) => {
@@ -180,10 +212,22 @@ export function TaskCard({
         />
         
         {/* Due date - only when collapsed */}
-        {!isExpanded && task.dueDate && (
-          <div className="text-xs text-muted-foreground px-2">
+        {!isExpanded && !isEditingDate && task.dueDate && (
+          <div 
+            className="text-xs text-muted-foreground px-2"
+          >
             {formatDateTime(task.dueDate)}
           </div>
+        )}
+
+        {/* Date Time Picker - for both collapsed and expanded views */}
+        {isEditingDate && (
+          <DateTimePicker
+            initialDateTime={task.dueDate}
+            onSave={handleDateSave}
+            onCancel={handleDateCancel}
+            position={editorPosition}
+          />
         )}
         
         <div className="flex-1 min-w-0">
@@ -247,7 +291,12 @@ export function TaskCard({
             {/* Left side - Date */}
             <div className="text-xs text-muted-foreground">
               {task.dueDate ? (
-                <span>📅 {formatDateTime(task.dueDate)}</span>
+                <span 
+                  className="cursor-pointer hover:text-foreground transition-colors"
+                  onClick={handleDateClick}
+                >
+                  📅 {formatDateTime(task.dueDate)}
+                </span>
               ) : (
                 <span>Oluşturulma: {formatDate(task.createdAt)}</span>
               )}
