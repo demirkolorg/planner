@@ -22,6 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
 import { ReminderSelector } from "./reminder-selector"
+import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import type { Task } from "@/types/task"
 
 interface TaskCardActionsProps {
@@ -71,6 +72,21 @@ export function TaskCardActions({
   isFirstInSection = false
 }: TaskCardActionsProps) {
   const [showMoreActions, setShowMoreActions] = useState(false)
+
+  const getPriorityColorHex = () => {
+    // İngilizce priority değerlerini Türkçe'ye eşleştir
+    const priorityMapping: Record<string, string> = {
+      'HIGH': 'Yüksek',
+      'MEDIUM': 'Orta',
+      'LOW': 'Düşük',
+      'NONE': 'Yok',
+      'CRITICAL': 'Kritik'
+    }
+    
+    const mappedPriority = priorityMapping[task.priority] || task.priority
+    const priority = PRIORITIES.find(p => p.name === mappedPriority)
+    return priority?.color || PRIORITY_COLORS.YOK
+  }
 
   const handleAddSubTask = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -135,9 +151,14 @@ export function TaskCardActions({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 relative"
                 >
                   <Tag className="h-3 w-3" />
+                  {task.tags && task.tags.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
+                      {task.tags.length}
+                    </span>
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -157,9 +178,13 @@ export function TaskCardActions({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 relative"
                 >
                   <Flag className="h-3 w-3" />
+                  <div 
+                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-background"
+                    style={{ backgroundColor: getPriorityColorHex() }}
+                  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -180,9 +205,14 @@ export function TaskCardActions({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 relative"
                 >
                   <Bell className="h-3 w-3" />
+                  {task.reminders && task.reminders.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
+                      {task.reminders.length}
+                    </span>
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

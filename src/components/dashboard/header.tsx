@@ -64,12 +64,13 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
         
         <div className="ml-auto flex items-center space-x-4">
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
+            variant="default"
+            size="sm"
+            className="px-3 py-2"
             onClick={() => setIsTaskModalOpen(true)}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
+            Görev Ekle
           </Button>
           <Button
             variant="ghost"
