@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
@@ -329,6 +329,32 @@ export function TaskCard({
                 </TooltipContent>
               </Tooltip>
             )}
+            {/* Reminders Icon and Count */}
+            {task.reminders && task.reminders.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Bell className="h-4 w-4" />
+                    <span className="text-xs">{task.reminders.length}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="space-y-1">
+                    <p className="font-medium">Hatırlatıcılar:</p>
+                    {task.reminders.map((reminder, index) => (
+                      <p key={index} className="text-xs">
+                        {new Date(reminder.datetime).toLocaleString('tr-TR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
             {/* Priority Flag */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -427,12 +453,19 @@ export function TaskCard({
               {/* Date */}
               <div>
                 {task.dueDate ? (
-                  <span 
-                    className="cursor-pointer hover:text-foreground transition-colors"
-                    onClick={handleDateClick}
-                  >
-                    📅 {formatDateTime(task.dueDate)}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span 
+                        className="cursor-pointer hover:text-foreground transition-colors"
+                        onClick={handleDateClick}
+                      >
+                        📅 {formatDateTime(task.dueDate)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Bitiş Tarihi</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ) : (
                   <span>Oluşturulma: {formatDate(task.createdAt)}</span>
                 )}
@@ -441,13 +474,20 @@ export function TaskCard({
               {/* Reminders */}
               {task.reminders && task.reminders.length > 0 && (
                 <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-1">
-                    <span>🔔</span>
-                    <span>{task.reminders.length}</span>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center space-x-1 cursor-default">
+                        <span>🔔</span>
+                        <span>{task.reminders.length}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hatırlatıcılar</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <div className="flex flex-wrap gap-1">
                     {task.reminders.map((reminder, index) => (
-                      <span key={index} className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded">
+                      <span key={index} className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded cursor-default">
                         {new Date(reminder.datetime).toLocaleString('tr-TR', {
                           day: 'numeric',
                           month: 'short',
