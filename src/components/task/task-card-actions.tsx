@@ -173,6 +173,7 @@ export function TaskCardActions({
         <ReminderSelector
           taskReminders={task.reminders}
           onUpdateReminders={handleUpdateReminders}
+          dropdownPosition={isFirstInSection ? 'bottom' : 'top'}
           trigger={
             <Tooltip>
               <TooltipTrigger asChild>
