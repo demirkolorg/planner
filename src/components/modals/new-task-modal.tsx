@@ -290,14 +290,36 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     
     setIsAILoading(true)
     try {
+      // Mevcut etiket isimlerini al
+      const availableTagNames = tags.map(tag => tag.name)
+      
       const suggestion = await generateTaskSuggestion(
         aiPrompt,
         selectedProject?.name,
-        selectedSection?.name
+        selectedSection?.name,
+        availableTagNames
       )
       
       setTitle(suggestion.title)
       setDescription(suggestion.description)
+      
+      // Rastgele seçilen özellikleri uygula
+      if (suggestion.priority) {
+        setSelectedPriority(suggestion.priority)
+      }
+      
+      if (suggestion.tags && suggestion.tags.length > 0) {
+        setSelectedTags(suggestion.tags)
+      }
+      
+      if (suggestion.dueDate) {
+        setSelectedDateTime(suggestion.dueDate)
+      }
+      
+      if (suggestion.reminders && suggestion.reminders.length > 0) {
+        setReminders(suggestion.reminders)
+      }
+      
       setAiPrompt("yap")
       setShowAIHelper(true)
     } catch (error) {
