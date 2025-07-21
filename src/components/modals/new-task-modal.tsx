@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Clock, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Bell, ChevronDown } from "lucide-react"
+import { X, Calendar, Clock, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Bell, ChevronDown, Sparkles, Wand2 } from "lucide-react"
+import { generateTaskSuggestion, improveBrief } from "@/lib/ai"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 import { TagPicker } from "@/components/ui/tag-picker"
@@ -54,6 +55,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const { createTask, getTaskById } = useTaskStore()
   const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAILoading, setIsAILoading] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState("yap")
+  const [showAIHelper, setShowAIHelper] = useState(true)
 
   useEffect(() => {
     if (isOpen) {
@@ -69,6 +73,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setReminders([])
       setSelectedDateTime(null)
       setIsSubmitting(false)
+      setIsAILoading(false)
+      setAiPrompt("yap")
+      setShowAIHelper(true)
       fetchTags() // Fetch real tags data
       fetchProjects() // Fetch projects data
     }
@@ -277,6 +284,43 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }
   }
 
+  // AI yardımcı fonksiyonları
+  const handleAIGenerate = async () => {
+    if (!aiPrompt.trim()) return
+    
+    setIsAILoading(true)
+    try {
+      const suggestion = await generateTaskSuggestion(
+        aiPrompt,
+        selectedProject?.name,
+        selectedSection?.name
+      )
+      
+      setTitle(suggestion.title)
+      setDescription(suggestion.description)
+      setAiPrompt("yap")
+      setShowAIHelper(true)
+    } catch (error) {
+      console.error('AI görev oluşturma hatası:', error)
+    } finally {
+      setIsAILoading(false)
+    }
+  }
+
+  const handleImproveBrief = async () => {
+    if (!description.trim()) return
+    
+    setIsAILoading(true)
+    try {
+      const improvedDescription = await improveBrief(description)
+      setDescription(improvedDescription)
+    } catch (error) {
+      console.error('AI açıklama geliştirme hatası:', error)
+    } finally {
+      setIsAILoading(false)
+    }
+  }
+
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -295,6 +339,59 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
         {/* Content */}
         <div className="space-y-4">
+          {/* AI Helper */}
+          <div className="border rounded-lg p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                  AI Yardımcı
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAIHelper(!showAIHelper)}
+                className="h-6 px-2"
+              >
+                {showAIHelper ? "Gizle" : "Göster"}
+              </Button>
+            </div>
+            
+            {showAIHelper && (
+              <div className="space-y-2">
+                <div className="flex space-x-2">
+                  <Input
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="Görevle ilgili ne yapmak istiyorsun? (örn: 'blog yazısı yaz', 'toplantı planla')"
+                    className="flex-1 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleAIGenerate()
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleAIGenerate}
+                    disabled={!aiPrompt.trim() || isAILoading}
+                    size="sm"
+                    className="px-3"
+                  >
+                    {isAILoading ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  AI size uygun bir görev başlığı ve açıklama önerecek
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Title Input */}
           <div>
             <Input
@@ -307,13 +404,35 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           </div>
 
           {/* Description Input */}
-          <div>
+          <div className="relative">
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Açıklama ekle..."
               onKeyDown={handleKeyDown}
             />
+            {description.trim() && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleImproveBrief}
+                    disabled={isAILoading}
+                    className="absolute top-2 right-2 h-6 w-6 p-0"
+                  >
+                    {isAILoading ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>AI ile açıklamayı geliştir</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           {/* Selected Tags */}
