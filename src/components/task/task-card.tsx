@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, ChevronDown } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
+import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
-import type { Task } from "@/types/task"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface TaskWithRelations {
   id: string
@@ -63,19 +64,7 @@ interface TaskCardProps {
   className?: string
 }
 
-const PRIORITY_COLORS = {
-  HIGH: "bg-red-50 dark:bg-red-900/10",
-  MEDIUM: "bg-yellow-50 dark:bg-yellow-900/10", 
-  LOW: "bg-blue-50 dark:bg-blue-900/10",
-  NONE: "bg-gray-50 dark:bg-gray-900/10"
-}
 
-const PRIORITY_CHECKBOX_COLORS = {
-  HIGH: "border-red-500 data-[state=checked]:bg-red-500",
-  MEDIUM: "border-yellow-500 data-[state=checked]:bg-yellow-500",
-  LOW: "border-blue-500 data-[state=checked]:bg-blue-500", 
-  NONE: "border-gray-400 data-[state=checked]:bg-gray-500"
-}
 
 export function TaskCard({
   task,
@@ -94,6 +83,13 @@ export function TaskCard({
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
 
   const handleToggleComplete = () => {
+    // Ana görevde tamamlanmamış alt görevler varsa tamamlanamaz
+    if (task.subTasks && task.subTasks.length > 0) {
+      const hasIncompleteSubTasks = task.subTasks.some(subTask => !subTask.completed)
+      if (hasIncompleteSubTasks && !task.completed) {
+        return // Tamamlanamaz
+      }
+    }
     onToggleComplete?.(task.id)
   }
 
@@ -162,8 +158,22 @@ export function TaskCard({
     return `${dateStr} ${timeStr}`
   }
 
-  const priorityColor = PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.NONE
-  const checkboxColor = PRIORITY_CHECKBOX_COLORS[task.priority as keyof typeof PRIORITY_CHECKBOX_COLORS] || PRIORITY_CHECKBOX_COLORS.NONE
+
+  const getPriorityColorHex = () => {
+    // İngilizce priority değerlerini Türkçe'ye eşleştir
+    const priorityMapping: Record<string, string> = {
+      'HIGH': 'Yüksek',
+      'MEDIUM': 'Orta', 
+      'LOW': 'Düşük',
+      'NONE': 'Yok',
+      'CRITICAL': 'Kritik'
+    }
+    
+    const mappedPriority = priorityMapping[task.priority] || task.priority
+    const priority = PRIORITIES.find(p => p.name === mappedPriority)
+    return priority?.color || PRIORITY_COLORS.YOK
+  }
+
 
   // Level bazlı margin hesapla
   const getMarginByLevel = (level?: number) => {
@@ -177,28 +187,75 @@ export function TaskCard({
   }
 
   return (
-    <div className={cn(
-      "rounded-lg bg-card transition-all duration-200",
-      priorityColor,
-      task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
-      className
-    )}>
+    <TooltipProvider>
+      <div className={cn(
+        "rounded-lg  transition-all duration-200",
+        task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
+        isExpanded 
+            ? "bg-secondary rounded-t-lg" 
+            : "hover:bg-secondary rounded-lg",
+        className
+      )}>
       {/* Header - Always Visible */}
       <div 
         className={cn(
           "flex items-center p-2 cursor-pointer transition-colors",
           isExpanded 
-            ? "bg-accent/30 hover:bg-accent/50 rounded-t-lg" 
+            ? "bg-accent/10 hover:bg-accent/50 rounded-t-lg" 
             : "hover:bg-accent/50 rounded-lg"
         )}
         onClick={handleToggleExpanded}
       >
-        <Checkbox
-          checked={task.completed}
-          onCheckedChange={handleToggleComplete}
-          className={cn("mr-2", checkboxColor)}
-          onClick={(e) => e.stopPropagation()}
-        />
+        <div className="mr-2 relative">
+          {(() => {
+            // Tamamlanmamış alt görevler varsa disable yap
+            const hasIncompleteSubTasks = task.subTasks && task.subTasks.length > 0 
+              ? task.subTasks.some(subTask => !subTask.completed) 
+              : false
+            const isDisabled = hasIncompleteSubTasks && !task.completed
+
+            return (
+              <>
+                <Checkbox
+                  checked={task.completed}
+                  onCheckedChange={isDisabled ? undefined : handleToggleComplete}
+                  disabled={isDisabled}
+                  className="peer opacity-0 absolute"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div 
+                  className={cn(
+                    "w-5 h-5 border-2 rounded-md flex items-center justify-center",
+                    "peer-checked:text-white transition-colors",
+                    task.completed && "text-white",
+                    isDisabled 
+                      ? "cursor-not-allowed opacity-50" 
+                      : "cursor-pointer"
+                  )}
+                  style={{
+                    borderColor: getPriorityColorHex() || '#ef4444', // fallback kırmızı
+                    backgroundColor: task.completed ? (getPriorityColorHex() || '#ef4444') : 'transparent'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!isDisabled) {
+                      handleToggleComplete()
+                    }
+                  }}
+                >
+                  {task.completed && (
+                    <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="m11.4669 3.72684c.2683.264.2683.69.0000.95265l-6.5000 6.5c-.2641.264-.6914.264-.9555.000l-3.0000-3.0c-.2634-.264-.2634-.691.0000-.955.2635-.264.6905-.264.9540.000l2.5220 2.523 6.0220-6.023c.264-.264.691-.264.955.000z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+                </div>
+              </>
+            )
+          })()}
+        </div>
         
         {/* Due date - only when collapsed */}
         {!isExpanded && !isEditingDate && task.dueDate && (
@@ -221,25 +278,110 @@ export function TaskCard({
         
         <div className="flex-1 min-w-0">
           <h4 className={cn(
-            "font-medium text-xs truncate",
+            "font-medium text-xs truncate flex items-center gap-3",
             task.completed && "line-through text-muted-foreground"
           )}>
-            {task.title}
+            <span className="flex-1 min-w-0 truncate">{task.title}</span>
+            {/* SubTasks Icon and Count */}
+            {task.subTasks && task.subTasks.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <List className="h-4 w-4" />
+                    <span className="text-xs">
+                      {task.subTasks.filter(sub => sub.completed).length}/{task.subTasks.length}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {task.subTasks.filter(sub => sub.completed).length}/{task.subTasks.length} Tamamlanan Alt Görev
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {/* Tags Icon and Count */}
+            {task.tags && task.tags.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Tag className="h-4 w-4" />
+                    <span className="text-xs">{task.tags.length}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex flex-wrap gap-1">
+                    {task.tags.map((taskTag) => (
+                      <span
+                        key={taskTag.id}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: taskTag.tag.color + '20',
+                          color: taskTag.tag.color,
+                        }}
+                      >
+                        {taskTag.tag.name}
+                      </span>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {/* Priority Flag */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Flag 
+                  className="h-4 w-4 flex-shrink-0" 
+                  style={{ color: getPriorityColorHex() }}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <span
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                  style={{
+                    backgroundColor: getPriorityColorHex() + '20',
+                    color: getPriorityColorHex(),
+                  }}
+                >
+                  {(() => {
+                    const priorityMapping: Record<string, string> = {
+                      'HIGH': 'Yüksek',
+                      'MEDIUM': 'Orta', 
+                      'LOW': 'Düşük',
+                      'NONE': 'Yok',
+                      'CRITICAL': 'Kritik'
+                    }
+                    return priorityMapping[task.priority] || task.priority
+                  })()}
+                </span>
+              </TooltipContent>
+            </Tooltip>
           </h4>
         </div>
 
-        <div className="flex items-center ml-1 space-x-1">
+        <div className="flex items-center ml-2 space-x-2">
 
           {/* Pin indicator */}
           {task.isPinned && (
-            <span className="text-xs">📌</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center text-muted-foreground">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.146.146A.5.5 0 0 1 4.5 0h7a.5.5 0 0 1 .5.5c0 .68-.342 1.174-.646 1.479-.126.125-.25.224-.354.298v4.431l.078.048c.203.127.476.314.751.555C12.36 7.775 13 8.527 13 9.5a.5.5 0 0 1-.5.5h-4v4.5c0 .276-.224 1.5-.5 1.5s-.5-1.224-.5-1.5V10h-4a.5.5 0 0 1-.5-.5c0-.973.64-1.725 1.17-2.189A5.927 5.927 0 0 1 5 6.708V2.277a2.77 2.77 0 0 1-.354-.298C4.342 1.674 4 1.179 4 .5a.5.5 0 0 1 .146-.354z"/>
+                  </svg>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Sabitlenmiş</p>
+              </TooltipContent>
+            </Tooltip>
           )}
 
           {/* Expand/Collapse Icon */}
           {isExpanded ? (
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
       </div>
@@ -305,6 +447,7 @@ export function TaskCard({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }

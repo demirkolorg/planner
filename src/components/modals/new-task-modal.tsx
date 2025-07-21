@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Clock, Copy, Star, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Flag, Bell, ChevronDown } from "lucide-react"
+import { X, Calendar, Clock, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Bell, ChevronDown } from "lucide-react"
 import { DateTimePicker } from "../shared/date-time-picker"
-import { BRAND_COLOR } from "@/lib/constants"
+import { PriorityPicker } from "@/components/ui/priority-picker"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -48,7 +48,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [tagSearchInput, setTagSearchInput] = useState("")
-  const [showPriorityPicker, setShowPriorityPicker] = useState(false)
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
   const [showReminderPicker, setShowReminderPicker] = useState(false)
   const [reminders, setReminders] = useState<string[]>([])
@@ -74,7 +73,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setShowTagPicker(false)
       setSelectedTags([])
       setTagSearchInput("")
-      setShowPriorityPicker(false)
       setSelectedPriority("Yok")
       setShowReminderPicker(false)
       setReminders([])
@@ -238,27 +236,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     )
   }
 
-  const getTagColor = (tagName: string) => {
-    const tag = tags.find(t => t.name === tagName)
-    return tag?.color ? `bg-[${tag.color}]` : "bg-blue-500"
-  }
-
-  const priorities = [
-    { name: "Kritik", color: "#ef4444", emoji: "🔴" },
-    { name: "Yüksek", color: "#f97316", emoji: "🟠" },
-    { name: "Orta", color: "#3b82f6", emoji: "🔵" },
-    { name: "Düşük", color: "#8b5cf6", emoji: "🟣" },
-    { name: "Yok", color: "#9ca3af", emoji: "⚪️" }
-  ]
 
   const handlePrioritySelect = (priority: string) => {
     setSelectedPriority(priority)
-    setShowPriorityPicker(false)
-  }
-
-  const getPriorityColor = () => {
-    const priority = priorities.find(p => p.name === selectedPriority)
-    return priority?.color || "#9ca3af"
   }
 
   const handleAddReminder = () => {
@@ -613,41 +593,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 )}
               </div>
               
-              <div className="relative">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowPriorityPicker(!showPriorityPicker)}
-                      style={{ color: getPriorityColor() }}
-                    >
-                      <Flag className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Öncelik</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Priority Picker Dropdown */}
-                {showPriorityPicker && (
-                  <div className="absolute top-full right-0 mt-1 w-40 bg-background border rounded-lg shadow-lg z-50 p-1">
-                    <div>
-                      {priorities.map((priority) => (
-                        <div
-                          key={priority.name}
-                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
-                          onClick={() => handlePrioritySelect(priority.name)}
-                        >
-                          <span className="text-sm">{priority.emoji}</span>
-                          <span className="text-xs">{priority.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <PriorityPicker
+                selectedPriority={selectedPriority}
+                onPrioritySelect={handlePrioritySelect}
+              />
               
               <div className="relative">
                 <Tooltip>

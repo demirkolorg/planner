@@ -258,6 +258,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     
     await state.updateTask(id, { completed: willBeCompleted })
     
+    // Alt görev durumu değiştiğinde, parent task'ın subTasks array'ini güncelle
+    if (task.parentTaskId) {
+      set(prevState => ({
+        tasks: prevState.tasks.map(t => {
+          if (t.id === task.parentTaskId) {
+            // Parent task'ın subTasks array'ini güncelle
+            const updatedSubTasks = t.subTasks?.map(subTask => 
+              subTask.id === id ? { ...subTask, completed: willBeCompleted } : subTask
+            ) || []
+            return { ...t, subTasks: updatedSubTasks }
+          }
+          return t
+        })
+      }))
+    }
+    
     // Show toast notification when task is completed
     if (willBeCompleted) {
       useToastStore.getState().addToast({

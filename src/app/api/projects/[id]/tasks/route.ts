@@ -39,7 +39,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           }
         },
         reminders: true,
-        section: true
+        section: true,
+        subTasks: {
+          include: {
+            tags: {
+              include: {
+                tag: true
+              }
+            },
+            reminders: true,
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'

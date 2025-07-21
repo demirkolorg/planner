@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -100,6 +100,16 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     fetchProjectData()
   }, [projectId])
+
+  // Section ID'lerini memoize et
+  const sectionIds = useMemo(() => sections.map(s => s.id), [sections])
+  
+  // Sections yüklendiğinde tümünü otomatik aç (sadece bir kez)
+  useEffect(() => {
+    if (sectionIds.length > 0 && openSections.length === 0) {
+      setOpenSections(sectionIds)
+    }
+  }, [sectionIds.length]) // sadece length değişimini takip et
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -238,40 +248,44 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-2 ml-auto">
-          {/* Tamamlanan görevleri göster toggle */}
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-muted-foreground">Tamamlananlar</span>
-            <Switch
-              checked={showCompletedTasks}
-              onCheckedChange={toggleShowCompletedTasks}
-            />
-          </div>
-          
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsSectionModalOpen(true)}
-          >
-            Bölüm Ekle
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsEditModalOpen(true)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Düzenle
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-red-600 hover:text-red-700"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Sil
-          </Button>
+        <div className="flex items-center ml-auto">
+          {/* Actions Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                İşlemler
+                <MoreVertical className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => setIsSectionModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Bölüm Ekle
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Projeyi Düzenle
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleShowCompletedTasks}>
+                {showCompletedTasks ? (
+                  <EyeOff className="h-4 w-4 mr-2" />
+                ) : (
+                  <Eye className="h-4 w-4 mr-2" />
+                )}
+                {showCompletedTasks ? 'Tamamlananları Gizle' : 'Tamamlananları Göster'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-red-600 focus:text-red-600 dark:text-red-400"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Projeyi Sil
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

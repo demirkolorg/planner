@@ -3,6 +3,15 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 
+// Öncelik mapping (Türkçe → İngilizce)
+const PRIORITY_MAP: Record<string, string> = {
+  "Kritik": "CRITICAL",
+  "Yüksek": "HIGH", 
+  "Orta": "MEDIUM",
+  "Düşük": "LOW",
+  "Yok": "NONE"
+}
+
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const cookieStore = await cookies()
@@ -28,11 +37,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
+    // Priority mapping uygula eğer priority güncellenmişse
+    const updateData = { ...body }
+    if (updateData.priority && PRIORITY_MAP[updateData.priority]) {
+      updateData.priority = PRIORITY_MAP[updateData.priority]
+    }
+
     // Update task
     const updatedTask = await db.task.update({
       where: { id },
       data: {
-        ...body,
+        ...updateData,
         updatedAt: new Date()
       },
       include: {

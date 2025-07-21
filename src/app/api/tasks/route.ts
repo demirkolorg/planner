@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
-  "Kritik": "HIGH",
+  "Kritik": "CRITICAL",
   "Yüksek": "HIGH", 
   "Orta": "MEDIUM",
   "Düşük": "LOW",
