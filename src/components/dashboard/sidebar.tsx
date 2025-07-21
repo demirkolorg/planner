@@ -68,7 +68,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
 
   return (
     <div className={cn(
-      "flex h-full w-80 flex-col bg-muted/20 transition-transform duration-300 ease-in-out fixed left-0 top-0 p-2 z-10",
+      "flex h-full w-80 flex-col bg-sidebar transition-transform duration-300 ease-in-out fixed left-0 top-0 p-2 z-10",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       <div className="flex h-14 items-center px-4">

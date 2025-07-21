@@ -339,9 +339,9 @@ export default function ProjectDetailPage() {
             
             return (
               <AccordionItem key={section.id} value={section.id} className="border-none overflow-visible">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent/50 rounded-lg transition-colors">
+                <div className="px-4 py-0 hover:bg-accent/50 rounded-lg transition-colors">
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center space-x-3">
+                    <AccordionTrigger className="flex items-center space-x-3 flex-1 hover:no-underline">
                       {isOpen ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
@@ -351,64 +351,71 @@ export default function ProjectDetailPage() {
                       <span className="text-xs text-muted-foreground">
                         {sectionTasks.length}
                       </span>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <div 
-                          className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                          }}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-64">
-                        <DropdownMenuItem onClick={(e) => {
+                    </AccordionTrigger>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(e) => {
                           e.stopPropagation()
                           setTaskModalContext({
                             project: { id: project.id, name: project.name, emoji: project.emoji },
                             section: { id: section.id, name: section.name, projectId: project.id }
                           })
                           setIsTaskModalOpen(true)
-                        }}>
-                          <Plus className="h-4 w-4" />
-                          Görev Ekle
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                          <Settings className="h-4 w-4" />
-                          Bölümü Düzenle
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                          <Clock className="h-4 w-4" />
-                          Bölümü Taşı
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                          <FolderClosed className="h-4 w-4" />
-                          Bölüm Sıralamasını Yönet
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                          <FolderClosed className="h-4 w-4" />
-                          Çoğalt
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                          <Check className="h-4 w-4" />
-                          Tamamlanan Görevleri Göster
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                          <Archive className="h-4 w-4" />
-                          Arşivle
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={(e) => e.stopPropagation()}>
-                          <Trash className="h-4 w-4" />
-                          Bölümü Sil
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Görev
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div 
+                            className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                            }}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64">
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <Settings className="h-4 w-4" />
+                            Bölümü Düzenle
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <Clock className="h-4 w-4" />
+                            Bölümü Taşı
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <FolderClosed className="h-4 w-4" />
+                            Bölüm Sıralamasını Yönet
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <FolderClosed className="h-4 w-4" />
+                            Çoğalt
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <Check className="h-4 w-4" />
+                            Tamamlanan Görevleri Göster
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                            <Archive className="h-4 w-4" />
+                            Arşivle
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem variant="destructive" onClick={(e) => e.stopPropagation()}>
+                            <Trash className="h-4 w-4" />
+                            Bölümü Sil
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </AccordionTrigger>
+                </div>
                 <AccordionContent className="px-4 pb-3 overflow-visible">
                   {sectionTasks.length === 0 ? (
                     <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
