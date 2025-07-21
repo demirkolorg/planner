@@ -316,10 +316,31 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   getTasksByTag: (tagId: string) => {
     const { tasks, showCompletedTasks } = get()
-    const filteredTasks = tasks.filter(task => 
+    
+    // Bu tag'a sahip TÜM görevleri bul (ana + alt görevler)
+    const allTasksWithTag = tasks.filter(task => 
       task.tags?.some(tagRel => tagRel.tagId === tagId) && 
       (showCompletedTasks || !task.completed)
     )
+    
+    // Ana görevleri ve alt görevleri ayır
+    const mainTasksWithTag = allTasksWithTag.filter(task => !task.parentTaskId)
+    const subTasksWithTag = allTasksWithTag.filter(task => task.parentTaskId)
+    
+    // Helper function to find the root parent of a task
+    const findRootParent = (taskId: string): TaskWithRelations | null => {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task) return null
+      if (!task.parentTaskId) return task
+      return findRootParent(task.parentTaskId)
+    }
+    
+    // Helper function to calculate task level from root
+    const calculateLevel = (taskId: string): number => {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task || !task.parentTaskId) return 0
+      return 1 + calculateLevel(task.parentTaskId)
+    }
     
     // Recursive function to get all sub-tasks at any level
     const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
@@ -342,15 +363,42 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return result
     }
     
-    // Ana görevleri ve tüm alt görevleri hierarchical sırayla döndür
-    const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
     const result: TaskWithRelations[] = []
+    const processedTasks = new Set<string>()
     
-    mainTasks.forEach(mainTask => {
-      result.push({ ...mainTask, level: 0 })
-      // Bu ana görevin tüm alt görevlerini recursive şekilde ekle
-      const allSubTasks = getAllSubTasksRecursive(mainTask.id)
-      result.push(...allSubTasks)
+    // 1. Önce ana görevleri işle (tag'a sahip olanlar)
+    mainTasksWithTag.forEach(mainTask => {
+      if (!processedTasks.has(mainTask.id)) {
+        result.push({ ...mainTask, level: 0 })
+        processedTasks.add(mainTask.id)
+        
+        // Bu ana görevin tüm alt görevlerini ekle
+        const allSubTasks = getAllSubTasksRecursive(mainTask.id)
+        allSubTasks.forEach(subTask => {
+          processedTasks.add(subTask.id)
+        })
+        result.push(...allSubTasks)
+      }
+    })
+    
+    // 2. Sonra tag'a sahip alt görevleri işle (henüz eklenmemişlerse)
+    subTasksWithTag.forEach(subTask => {
+      if (!processedTasks.has(subTask.id)) {
+        // Bu alt görevin root parent'ını bul
+        const rootParent = findRootParent(subTask.id)
+        if (rootParent && !processedTasks.has(rootParent.id)) {
+          // Root parent'ı ekle
+          result.push({ ...rootParent, level: 0 })
+          processedTasks.add(rootParent.id)
+          
+          // Root parent'ın tüm alt görevlerini ekle
+          const allSubTasks = getAllSubTasksRecursive(rootParent.id)
+          allSubTasks.forEach(subTask => {
+            processedTasks.add(subTask.id)
+          })
+          result.push(...allSubTasks)
+        }
+      }
     })
     
     return result
@@ -443,17 +491,125 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   getCompletedTasksCountByTag: (tagId: string) => {
-    return get().tasks.filter(task => 
-      task.tags?.some(tagRel => tagRel.tagId === tagId) && 
-      task.completed
-    ).length
+    const { tasks } = get()
+    
+    // Bu tag'a sahip TÜM görevleri bul (ana + alt görevler)
+    const allTasksWithTag = tasks.filter(task => 
+      task.tags?.some(tagRel => tagRel.tagId === tagId)
+    )
+    
+    const processedTasks = new Set<string>()
+    let totalCount = 0
+    
+    // Helper function to find the root parent of a task
+    const findRootParent = (taskId: string): string | null => {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task) return null
+      if (!task.parentTaskId) return task.id
+      return findRootParent(task.parentTaskId)
+    }
+    
+    // Recursive function to count all sub-tasks
+    const countAllSubTasks = (parentId: string): number => {
+      const directSubTasks = tasks.filter(task => task.parentTaskId === parentId)
+      let count = 0
+      
+      directSubTasks.forEach(subTask => {
+        if (subTask.completed) count++
+        processedTasks.add(subTask.id)
+        // Recursively count its sub-tasks
+        count += countAllSubTasks(subTask.id)
+      })
+      
+      return count
+    }
+    
+    // Ana görevleri işle
+    allTasksWithTag.filter(task => !task.parentTaskId).forEach(mainTask => {
+      if (!processedTasks.has(mainTask.id)) {
+        if (mainTask.completed) totalCount++
+        processedTasks.add(mainTask.id)
+        totalCount += countAllSubTasks(mainTask.id)
+      }
+    })
+    
+    // Alt görevleri işle (henüz işlenmemişlerse)
+    allTasksWithTag.filter(task => task.parentTaskId).forEach(subTask => {
+      if (!processedTasks.has(subTask.id)) {
+        const rootParentId = findRootParent(subTask.id)
+        if (rootParentId && !processedTasks.has(rootParentId)) {
+          const rootParent = tasks.find(t => t.id === rootParentId)
+          if (rootParent) {
+            if (rootParent.completed) totalCount++
+            processedTasks.add(rootParent.id)
+            totalCount += countAllSubTasks(rootParent.id)
+          }
+        }
+      }
+    })
+    
+    return totalCount
   },
 
   getPendingTasksCountByTag: (tagId: string) => {
-    return get().tasks.filter(task => 
-      task.tags?.some(tagRel => tagRel.tagId === tagId) && 
-      !task.completed
-    ).length
+    const { tasks } = get()
+    
+    // Bu tag'a sahip TÜM görevleri bul (ana + alt görevler)
+    const allTasksWithTag = tasks.filter(task => 
+      task.tags?.some(tagRel => tagRel.tagId === tagId)
+    )
+    
+    const processedTasks = new Set<string>()
+    let totalCount = 0
+    
+    // Helper function to find the root parent of a task
+    const findRootParent = (taskId: string): string | null => {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task) return null
+      if (!task.parentTaskId) return task.id
+      return findRootParent(task.parentTaskId)
+    }
+    
+    // Recursive function to count all sub-tasks
+    const countAllSubTasks = (parentId: string): number => {
+      const directSubTasks = tasks.filter(task => task.parentTaskId === parentId)
+      let count = 0
+      
+      directSubTasks.forEach(subTask => {
+        if (!subTask.completed) count++
+        processedTasks.add(subTask.id)
+        // Recursively count its sub-tasks
+        count += countAllSubTasks(subTask.id)
+      })
+      
+      return count
+    }
+    
+    // Ana görevleri işle
+    allTasksWithTag.filter(task => !task.parentTaskId).forEach(mainTask => {
+      if (!processedTasks.has(mainTask.id)) {
+        if (!mainTask.completed) totalCount++
+        processedTasks.add(mainTask.id)
+        totalCount += countAllSubTasks(mainTask.id)
+      }
+    })
+    
+    // Alt görevleri işle (henüz işlenmemişlerse)
+    allTasksWithTag.filter(task => task.parentTaskId).forEach(subTask => {
+      if (!processedTasks.has(subTask.id)) {
+        const rootParentId = findRootParent(subTask.id)
+        if (rootParentId && !processedTasks.has(rootParentId)) {
+          const rootParent = tasks.find(t => t.id === rootParentId)
+          if (rootParent) {
+            if (!rootParent.completed) totalCount++
+            processedTasks.add(rootParent.id)
+            totalCount += countAllSubTasks(rootParent.id)
+          }
+        }
+      }
+    })
+    
+    return totalCount
   },
 
   toggleTaskPin: async (taskId: string) => {

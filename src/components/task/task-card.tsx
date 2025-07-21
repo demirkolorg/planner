@@ -5,7 +5,6 @@ import { ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useTaskStore } from "@/store/taskStore"
 import { DateTimePicker } from "../shared/date-time-picker"
 import type { Task } from "@/types/task"
 
@@ -93,17 +92,8 @@ export function TaskCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
-  const { getSubTasks } = useTaskStore()
-
-  // Alt görevleri al (tüm seviyedeki)
-  const subTasks = getSubTasks(task.id)
-  const hasUncompletedSubTasks = subTasks.some(subTask => !subTask.completed)
-  // Herhangi bir görev (ana veya alt) tamamlanmamış alt görevleri varsa tamamlanamaz
-  const isTaskCheckboxDisabled = hasUncompletedSubTasks
 
   const handleToggleComplete = () => {
-    // Tamamlanmamış alt görevleri varsa tamamlanamaz
-    if (isTaskCheckboxDisabled) return
     onToggleComplete?.(task.id)
   }
 
@@ -206,9 +196,8 @@ export function TaskCard({
         <Checkbox
           checked={task.completed}
           onCheckedChange={handleToggleComplete}
-          className={cn("mr-2", checkboxColor, isTaskCheckboxDisabled && "opacity-50 cursor-default")}
+          className={cn("mr-2", checkboxColor)}
           onClick={(e) => e.stopPropagation()}
-          disabled={isTaskCheckboxDisabled}
         />
         
         {/* Due date - only when collapsed */}
@@ -240,6 +229,7 @@ export function TaskCard({
         </div>
 
         <div className="flex items-center ml-1 space-x-1">
+
           {/* Pin indicator */}
           {task.isPinned && (
             <span className="text-xs">📌</span>
@@ -254,6 +244,7 @@ export function TaskCard({
         </div>
       </div>
 
+
       {/* Expanded Content */}
       {isExpanded && (
         <div className="px-4 pb-4">
@@ -265,6 +256,7 @@ export function TaskCard({
               </p>
             </div>
           )}
+
 
           {/* Tags */}
           {task.tags && task.tags.length > 0 && (
@@ -283,8 +275,6 @@ export function TaskCard({
               ))}
             </div>
           )}
-
-
 
           {/* Footer with Date and Actions */}
           <div className="flex items-center justify-between mt-4 pt-3">

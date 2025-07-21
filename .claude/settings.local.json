@@ -29,7 +29,8 @@
       "Bash(cat:*)",
       "Bash(tsx scripts/migrate-existing-data.ts:*)",
       "Bash(bunx tsx:*)",
-      "Bash(bunx tsc:*)"
+      "Bash(bunx tsc:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES } from "@/lib/constants"
-import { Plus, FolderKanban, Folder } from "lucide-react"
+import { Plus, FolderKanban, Folder, TestTube, TestTube2 } from "lucide-react"
 import { MdOutlineSpaceDashboard, MdSpaceDashboard } from "react-icons/md"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
@@ -25,6 +25,7 @@ const cardItems = [
   { name: "Pano", count: 2, icon: BsPin, activeIcon: BsFillPinFill, color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700", activeColor: "bg-red-200 dark:bg-red-800/50 text-red-800 dark:text-red-200 border-red-300 dark:border-red-600", href: ROUTES.BOARD },
   { name: "Etiketler", count: 2, icon: PiTagSimpleBold, activeIcon: PiTagSimpleFill, color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700", activeColor: "bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-600", href: ROUTES.TAGS },
   { name: "Tamamlandı", count: 3, icon: FaRegCheckCircle, activeIcon: FaCheckCircle, color: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700", activeColor: "bg-orange-200 dark:bg-orange-800/50 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-600", href: ROUTES.COMPLETED },
+  { name: "Kart Testi", count: null, icon: TestTube, activeIcon: TestTube2, color: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700", activeColor: "bg-cyan-200 dark:bg-cyan-800/50 text-cyan-800 dark:text-cyan-200 border-cyan-300 dark:border-cyan-600", href: ROUTES.TASKS },
 ]
 
 

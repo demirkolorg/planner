@@ -49,8 +49,8 @@ export default function TagDetailPage() {
   } = useTaskStore()
   const { updateTag, deleteTag } = useTagStore()
 
-  // TaskStore'dan tag görevlerini al - sadece üst seviye görevleri göster
-  const tasks = getTasksByTag(tagId).filter(task => !task.parentTaskId)
+  // TaskStore'dan tag görevlerini al - tüm görevleri hierarchical sırayla göster
+  const tasks = getTasksByTag(tagId)
 
   useEffect(() => {
     const fetchTagAndTasks = async () => {
