@@ -71,8 +71,8 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
       "flex h-full w-80 flex-col bg-sidebar transition-transform duration-300 ease-in-out fixed left-0 top-0 p-2 z-10",
       isOpen ? "translate-x-0" : "-translate-x-full"
     )}>
-      <div className="flex h-14 items-center px-4">
-        <FolderKanban className="h-6 w-6 mr-3" style={{ color: BRAND_COLOR }} />
+      <div className="flex h-14 items-center px-4 text-primary">
+        <FolderKanban className="h-6 w-6 mr-3"  />
         <h1 className="text-xl font-bold">Planner</h1>
       </div>
       
