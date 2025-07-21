@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { X, Calendar, Clock, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Bell, ChevronDown } from "lucide-react"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
+import { TagPicker } from "@/components/ui/tag-picker"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -45,9 +46,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [sectionSearchInput, setSectionSearchInput] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedDateTime, setSelectedDateTime] = useState<string | null>(null)
-  const [showTagPicker, setShowTagPicker] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [tagSearchInput, setTagSearchInput] = useState("")
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
   const [showReminderPicker, setShowReminderPicker] = useState(false)
   const [reminders, setReminders] = useState<string[]>([])
@@ -70,9 +69,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setShowProjectPicker(false)
       setShowSectionPicker(false)
       setShowDatePicker(false)
-      setShowTagPicker(false)
       setSelectedTags([])
-      setTagSearchInput("")
       setSelectedPriority("Yok")
       setShowReminderPicker(false)
       setReminders([])
@@ -193,47 +190,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     return "Zamanla"
   }
 
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    )
-  }
-
-  const handleCreateTag = async () => {
-    if (tagSearchInput.trim() && !tags.find(tag => tag.name.toLowerCase() === tagSearchInput.trim().toLowerCase())) {
-      const newTag = tagSearchInput.trim()
-      try {
-        // Create tag in backend and add to store
-        await createTag(newTag, "#3b82f6") // Default blue color
-        setSelectedTags(prev => [...prev, newTag])
-        setTagSearchInput("")
-      } catch (error) {
-        console.error("Failed to create tag:", error)
-      }
-    }
-  }
-
-  const handleTagKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCreateTag()
-    }
-  }
-
-  const handleTagConfirm = () => {
-    setShowTagPicker(false)
-  }
-
-  const handleTagClear = () => {
-    setSelectedTags([])
-    setShowTagPicker(false)
-  }
-
-  const getFilteredTags = () => {
-    return tags.filter(tag => 
-      tag.name.toLowerCase().includes(tagSearchInput.toLowerCase())
-    )
+  const handleTagsChange = (newTags: string[]) => {
+    setSelectedTags(newTags)
   }
 
 
@@ -320,6 +278,18 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     return sections.filter(section => 
       section.name.toLowerCase().includes(sectionSearchInput.toLowerCase())
     )
+  }
+
+  const getMonthName = (monthIndex: number) => {
+    const monthNames = [
+      "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+      "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+    ]
+    return monthNames[monthIndex]
+  }
+
+  const getDaysInMonth = (month: number, year: number) => {
+    return new Date(year, month + 1, 0).getDate()
   }
 
   const handleSave = async () => {
@@ -501,97 +471,17 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             </div>
 
             <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowTagPicker(!showTagPicker)}
-                    >
-                      <Tag className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Etiketler</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Tag Picker Dropdown */}
-                {showTagPicker && (
-                  <div className="absolute top-full right-0 mt-1 w-72 bg-background border rounded-lg shadow-lg z-50 p-3">
-                    {/* Search Input */}
-                    <div className="relative mb-3">
-                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                      <Input
-                        value={tagSearchInput}
-                        onChange={(e) => setTagSearchInput(e.target.value)}
-                        onKeyPress={handleTagKeyPress}
-                        placeholder="Ara veya Oluştur"
-                        className="pl-8 h-8 text-xs"
-                      />
-                    </div>
-
-                    {/* Tag List */}
-                    <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
-                      {getFilteredTags().map((tag) => (
-                        <div
-                          key={tag.id}
-                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
-                          onClick={() => handleTagToggle(tag.name)}
-                        >
-                          <div className={`w-3 h-3 rounded border ${
-                            selectedTags.includes(tag.name) 
-                              ? 'bg-purple-600 border-purple-600' 
-                              : 'border-gray-400'
-                          } flex items-center justify-center`}>
-                            {selectedTags.includes(tag.name) && (
-                              <Check className="h-2 w-2 text-white" />
-                            )}
-                          </div>
-                          <div 
-                            className="w-2 h-2 rounded-full" 
-                            style={{ backgroundColor: tag.color }}
-                          ></div>
-                          <span className="text-xs">{tag.name}</span>
-                        </div>
-                      ))}
-
-                      {/* Create New Tag */}
-                      {tagSearchInput && !tags.some(tag => 
-                        tag.name.toLowerCase() === tagSearchInput.toLowerCase()
-                      ) && (
-                        <div
-                          className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
-                          onClick={handleCreateTag}
-                        >
-                          <Plus className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs">Create '{tagSearchInput}'</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        onClick={handleTagClear}
-                        className="flex-1 h-7 text-xs"
-                        size="sm"
-                      >
-                        Temizle
-                      </Button>
-                      <Button
-                        onClick={handleTagConfirm}
-                        className="flex-1 h-7 text-xs"
-                        size="sm"
-                      >
-                        Tamamlandı
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TagPicker
+                    selectedTags={selectedTags}
+                    onTagsChange={handleTagsChange}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Etiketler</p>
+                </TooltipContent>
+              </Tooltip>
               
               <PriorityPicker
                 selectedPriority={selectedPriority}

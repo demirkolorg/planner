@@ -9,10 +9,12 @@ import { PRIORITIES } from "@/lib/constants/priority"
 interface PriorityPickerProps {
   selectedPriority: string
   onPrioritySelect: (priority: string) => void
+  trigger?: React.ReactNode
   className?: string
+  dropdownPosition?: 'top' | 'bottom'
 }
 
-export const PriorityPicker = ({ selectedPriority, onPrioritySelect, className }: PriorityPickerProps) => {
+export const PriorityPicker = ({ selectedPriority, onPrioritySelect, trigger, className, dropdownPosition = 'bottom' }: PriorityPickerProps) => {
   const [showPicker, setShowPicker] = useState(false)
 
   const getPriorityColor = () => {
@@ -27,25 +29,38 @@ export const PriorityPicker = ({ selectedPriority, onPrioritySelect, className }
 
   return (
     <div className={`relative ${className}`}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowPicker(!showPicker)}
-            style={{ color: getPriorityColor() }}
-          >
-            <Flag className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Öncelik</p>
-        </TooltipContent>
-      </Tooltip>
+      {trigger ? (
+        <div onClick={() => setShowPicker(!showPicker)}>
+          {trigger}
+        </div>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowPicker(!showPicker)}
+              style={{ color: getPriorityColor() }}
+            >
+              <Flag className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Öncelik</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {/* Priority Picker Dropdown */}
       {showPicker && (
-        <div className="absolute top-full right-0 mt-1 w-40 bg-background border rounded-lg shadow-lg z-50 p-1">
+        <div 
+          className={`absolute right-0 w-40 bg-background border rounded-lg shadow-lg p-1 ${
+            dropdownPosition === 'top' 
+              ? 'bottom-full mb-1' 
+              : 'top-full mt-1'
+          }`}
+          style={{ zIndex: 10000 }}
+        >
           <div>
             {PRIORITIES.map((priority) => (
               <div

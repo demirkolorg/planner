@@ -332,13 +332,13 @@ export default function ProjectDetailPage() {
           </Button>
         </div>
       ) : (
-        <Accordion type="multiple" className="w-full space-y-2" value={openSections} onValueChange={setOpenSections}>
+        <Accordion type="multiple" className="w-full space-y-2 overflow-visible" value={openSections} onValueChange={setOpenSections}>
           {sections.map((section) => {
             const sectionTasks = getTasksBySection(section.id)
             const isOpen = openSections.includes(section.id)
             
             return (
-              <AccordionItem key={section.id} value={section.id} className="border-none">
+              <AccordionItem key={section.id} value={section.id} className="border-none overflow-visible">
                 <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent/50 rounded-lg transition-colors">
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center space-x-3">
@@ -409,7 +409,7 @@ export default function ProjectDetailPage() {
                     </DropdownMenu>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-3">
+                <AccordionContent className="px-4 pb-3 overflow-visible">
                   {sectionTasks.length === 0 ? (
                     <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                       <p className="text-muted-foreground mb-2">Bu bölümde henüz görev yok</p>
@@ -429,10 +429,11 @@ export default function ProjectDetailPage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {sectionTasks.map((task) => (
+                      {sectionTasks.map((task, index) => (
                         <TaskCard
                           key={task.id}
                           task={task}
+                          isFirstInSection={index === 0}
                           onToggleComplete={toggleTaskComplete}
                           onUpdate={updateTask}
                           onDelete={deleteTask}

@@ -57,6 +57,7 @@ interface TaskCardActionsProps {
   }>) => void
   onPin?: (taskId: string) => void
   onDelete?: (taskId: string) => void
+  isFirstInSection?: boolean
 }
 
 export function TaskCardActions({
@@ -66,7 +67,8 @@ export function TaskCardActions({
   onUpdatePriority,
   onUpdateReminders,
   onPin,
-  onDelete
+  onDelete,
+  isFirstInSection = false
 }: TaskCardActionsProps) {
   const [showMoreActions, setShowMoreActions] = useState(false)
 
@@ -126,6 +128,7 @@ export function TaskCardActions({
         <TagSelector
           taskTags={task.tags}
           onUpdateTags={handleUpdateTags}
+          dropdownPosition={isFirstInSection ? 'bottom' : 'top'}
           trigger={
             <Tooltip>
               <TooltipTrigger asChild>

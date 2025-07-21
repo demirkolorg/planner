@@ -1,15 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { Check, Flag } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { PRIORITIES } from "@/lib/constants/priority"
+import { PriorityPicker } from "@/components/ui/priority-picker"
 
 interface PrioritySelectorProps {
   currentPriority: string
@@ -17,49 +8,38 @@ interface PrioritySelectorProps {
   trigger?: React.ReactNode
 }
 
-
 export function PrioritySelector({ currentPriority, onUpdatePriority, trigger }: PrioritySelectorProps) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const handlePrioritySelect = (priority: string) => {
-    onUpdatePriority?.(priority)
-    setIsOpen(false)
+  // İngilizce priority değerlerini Türkçe'ye çevir
+  const priorityMapping: Record<string, string> = {
+    'HIGH': 'Yüksek',
+    'MEDIUM': 'Orta', 
+    'LOW': 'Düşük',
+    'NONE': 'Yok',
+    'CRITICAL': 'Kritik'
+  }
+  
+  // Türkçe priority değerlerini İngilizce'ye çevir
+  const reversePriorityMapping: Record<string, string> = {
+    'Yüksek': 'HIGH',
+    'Orta': 'MEDIUM', 
+    'Düşük': 'LOW',
+    'Yok': 'NONE',
+    'Kritik': 'CRITICAL'
   }
 
-  const currentPriorityData = PRIORITIES.find(p => p.name === currentPriority) || PRIORITIES[4]
+  const currentPriorityTurkish = priorityMapping[currentPriority] || currentPriority
+
+  const handlePrioritySelect = (turkishPriority: string) => {
+    const englishPriority = reversePriorityMapping[turkishPriority] || turkishPriority
+    onUpdatePriority?.(englishPriority)
+  }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" style={{ color: currentPriorityData.color }}>
-            <Flag className="h-4 w-4 mr-2" />
-            {currentPriorityData.name}
-          </Button>
-        )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48" align="end">
-        <div className="p-1">
-          {PRIORITIES.map((priority) => (
-            <DropdownMenuItem
-              key={priority.name}
-              className="flex items-center justify-between cursor-pointer"
-              onClick={() => handlePrioritySelect(priority.name)}
-            >
-              <div className="flex items-center">
-                <Flag 
-                  className="h-4 w-4 mr-2"
-                  style={{ color: priority.color }}
-                />
-                <span>{priority.name}</span>
-              </div>
-              {currentPriority === priority.name && (
-                <Check className="h-4 w-4 text-primary" />
-              )}
-            </DropdownMenuItem>
-          ))}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <PriorityPicker
+      selectedPriority={currentPriorityTurkish}
+      onPrioritySelect={handlePrioritySelect}
+      trigger={trigger}
+      dropdownPosition="top"
+    />
   )
 }

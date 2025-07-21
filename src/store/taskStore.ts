@@ -283,6 +283,24 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           onClick: async () => {
             // Use get() again to access current state and updateTask method
             await get().updateTask(id, { completed: false })
+            
+            // Geri alma işleminde de parent task'ın subTasks array'ini güncelle
+            const currentState = get()
+            const taskToUndo = currentState.tasks.find(t => t.id === id)
+            if (taskToUndo?.parentTaskId) {
+              set(prevState => ({
+                tasks: prevState.tasks.map(t => {
+                  if (t.id === taskToUndo.parentTaskId) {
+                    // Parent task'ın subTasks array'ini güncelle
+                    const updatedSubTasks = t.subTasks?.map(subTask => 
+                      subTask.id === id ? { ...subTask, completed: false } : subTask
+                    ) || []
+                    return { ...t, subTasks: updatedSubTasks }
+                  }
+                  return t
+                })
+              }))
+            }
           }
         },
         duration: 6000 // 6 seconds to give time for undo

@@ -62,6 +62,7 @@ interface TaskCardProps {
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
   className?: string
+  isFirstInSection?: boolean
 }
 
 
@@ -76,7 +77,8 @@ export function TaskCard({
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
-  className
+  className,
+  isFirstInSection = false
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
@@ -420,17 +422,42 @@ export function TaskCard({
 
           {/* Footer with Date and Actions */}
           <div className="flex items-center justify-between mt-4 pt-3">
-            {/* Left side - Date */}
-            <div className="text-xs text-muted-foreground">
-              {task.dueDate ? (
-                <span 
-                  className="cursor-pointer hover:text-foreground transition-colors"
-                  onClick={handleDateClick}
-                >
-                  📅 {formatDateTime(task.dueDate)}
-                </span>
-              ) : (
-                <span>Oluşturulma: {formatDate(task.createdAt)}</span>
+            {/* Left side - Date and Reminders */}
+            <div className="text-xs text-muted-foreground flex items-center space-x-3">
+              {/* Date */}
+              <div>
+                {task.dueDate ? (
+                  <span 
+                    className="cursor-pointer hover:text-foreground transition-colors"
+                    onClick={handleDateClick}
+                  >
+                    📅 {formatDateTime(task.dueDate)}
+                  </span>
+                ) : (
+                  <span>Oluşturulma: {formatDate(task.createdAt)}</span>
+                )}
+              </div>
+
+              {/* Reminders */}
+              {task.reminders && task.reminders.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
+                    <span>🔔</span>
+                    <span>{task.reminders.length}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {task.reminders.map((reminder, index) => (
+                      <span key={index} className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded">
+                        {new Date(reminder.datetime).toLocaleString('tr-TR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -443,6 +470,7 @@ export function TaskCard({
               onUpdateReminders={onUpdateReminders}
               onPin={onPin}
               onDelete={onDelete}
+              isFirstInSection={isFirstInSection}
             />
           </div>
         </div>
