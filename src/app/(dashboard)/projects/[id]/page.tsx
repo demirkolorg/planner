@@ -10,6 +10,7 @@ import { useTaskStore } from "@/store/taskStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewSectionModal } from "@/components/modals/new-section-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { MoveSectionModal } from "@/components/modals/move-section-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -53,7 +54,9 @@ export default function ProjectDetailPage() {
   const [editingSectionName, setEditingSectionName] = useState("")
   const [isSectionDeleteDialogOpen, setIsSectionDeleteDialogOpen] = useState(false)
   const [sectionToDelete, setSectionToDelete] = useState<SectionType | null>(null)
-  const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection } = useProjectStore()
+  const [isSectionMoveModalOpen, setIsSectionMoveModalOpen] = useState(false)
+  const [sectionToMove, setSectionToMove] = useState<SectionType | null>(null)
+  const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
     createTask, 
@@ -69,7 +72,9 @@ export default function ProjectDetailPage() {
     showCompletedTasks,
     toggleShowCompletedTasks,
     getCompletedTasksCount,
-    getPendingTasksCount
+    getPendingTasksCount,
+    getOverdueTasksByProject,
+    getOverdueTasksCountByProject
   } = useTaskStore()
 
   const fetchProjectData = async () => {
@@ -155,6 +160,22 @@ export default function ProjectDetailPage() {
       setSectionToDelete(null)
     } catch (error) {
       console.error("Failed to delete section:", error)
+    }
+  }
+
+  const handleMoveSection = async (targetProjectId: string) => {
+    if (!sectionToMove) return
+    
+    try {
+      await moveSection(sectionToMove.id, targetProjectId)
+      setIsSectionMoveModalOpen(false)
+      setSectionToMove(null)
+      // Refresh current project sections
+      await fetchSections(projectId)
+      // Refresh tasks as well since they moved with the section
+      await fetchTasksByProject(projectId)
+    } catch (error) {
+      console.error("Failed to move section:", error)
     }
   }
 
@@ -273,6 +294,12 @@ export default function ProjectDetailPage() {
                   <Clock className="h-3 w-3 text-blue-600" />
                   <span>{getPendingTasksCount(projectId)}</span>
                 </div>
+                {getOverdueTasksCountByProject(projectId) > 0 && (
+                  <div className="flex items-center space-x-1">
+                    <div className="h-3 w-3 rounded-full bg-red-500" />
+                    <span className="text-red-600 font-medium">{getOverdueTasksCountByProject(projectId)} gecikme</span>
+                  </div>
+                )}
                 <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary rounded-full transition-all"
@@ -370,6 +397,48 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
+      {/* Süresi Geçmiş Görevler */}
+      {getOverdueTasksByProject(projectId).length > 0 && (
+        <div className="border-l-4 border-red-500 bg-red-50 dark:bg-red-950/20 rounded-r-lg p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="h-4 w-4 rounded-full bg-red-500" />
+              <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">
+                Süresi Geçmiş Görevler ({getOverdueTasksCountByProject(projectId)})
+              </h3>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {getOverdueTasksByProject(projectId).map((task) => (
+              <div key={task.id} className="bg-white dark:bg-gray-900 rounded-md p-2 shadow-sm border border-red-200 dark:border-red-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-red-700 dark:text-red-300">{task.title}</span>
+                  <div className="flex items-center space-x-2">
+                    {task.dueDate && (
+                      <span className="text-xs text-red-600 dark:text-red-400">
+                        {new Date(task.dueDate).toLocaleDateString('tr-TR')}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => {
+                        const section = sections.find(s => s.id === task.sectionId)
+                        setTaskModalContext({
+                          project: { id: project.id, name: project.name, emoji: project.emoji },
+                          section: section ? { id: section.id, name: section.name, projectId: project.id } : undefined
+                        })
+                        setIsTaskModalOpen(true)
+                      }}
+                      className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 underline"
+                    >
+                      Düzenle
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bölümler ve Görevler */}
       {sections.length === 0 ? (
@@ -444,6 +513,23 @@ export default function ProjectDetailPage() {
                           }}>
                             <Edit className="h-4 w-4 mr-2" />
                             Bölümü Düzenle
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            setSectionToMove(section)
+                            setIsSectionMoveModalOpen(true)
+                          }}>
+                            <div className="h-4 w-4 mr-2 flex items-center justify-center">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="5 9 2 12 5 15"></polyline>
+                                <polyline points="9 5 12 2 15 5"></polyline>
+                                <polyline points="15 19 12 22 9 19"></polyline>
+                                <polyline points="19 9 22 12 19 15"></polyline>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <line x1="12" y1="2" x2="12" y2="22"></line>
+                              </svg>
+                            </div>
+                            Bölümü Taşı
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
@@ -617,6 +703,18 @@ export default function ProjectDetailPage() {
         defaultSection={taskModalContext.section}
         parentTaskId={taskModalContext.parentTaskId}
         parentTaskTitle={taskModalContext.parentTaskTitle}
+      />
+
+      {/* Bölüm Taşıma Modal'ı */}
+      <MoveSectionModal
+        isOpen={isSectionMoveModalOpen}
+        onClose={() => {
+          setIsSectionMoveModalOpen(false)
+          setSectionToMove(null)
+        }}
+        onMove={handleMoveSection}
+        section={sectionToMove}
+        currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
       />
     </div>
   )

@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { getTaskDateStatus, getDueDateMessage, getDateStatusColor } from "@/lib/date-utils"
 
 interface TaskWithRelations {
   id: string
@@ -214,14 +215,22 @@ export function TaskCard({
     }
   }
 
+  // Date status hesapla
+  const dateStatus = getTaskDateStatus(task.dueDate)
+  const dueDateMessage = getDueDateMessage(dateStatus)
+
   return (
     <TooltipProvider>
       <div className={cn(
-        "rounded-lg  transition-all duration-200",
+        "rounded-lg transition-all duration-200",
         task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
         isExpanded
           ? "bg-secondary rounded-t-lg"
           : "hover:bg-secondary rounded-lg",
+        // Overdue styling
+        dateStatus.isOverdue && !task.completed && "ring-2 ring-red-500/50 bg-red-50 dark:bg-red-950/20",
+        dateStatus.isDueToday && !task.completed && "ring-2 ring-orange-500/50 bg-orange-50 dark:bg-orange-950/20",
+        dateStatus.isDueTomorrow && !task.completed && "ring-1 ring-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20",
         className
       )}>
         {/* Header - Always Visible */}
@@ -308,16 +317,35 @@ export function TaskCard({
               task.completed && "line-through text-muted-foreground"
             )}>
               <span className="flex-1 min-w-0 truncate">{task.title}</span>
-              {/* Due Date Icon */}
+              {/* Due Date Icon with Overdue Warning */}
               {task.dueDate && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
+                    <div className="flex items-center space-x-1">
+                      {dateStatus.isOverdue && !task.completed ? (
+                        <AlertTriangle 
+                          className="h-4 w-4" 
+                          style={{ color: getDateStatusColor(dateStatus.status) }}
+                        />
+                      ) : (
+                        <Calendar 
+                          className="h-4 w-4" 
+                          style={{ color: getDateStatusColor(dateStatus.status) }}
+                        />
+                      )}
+                      {dueDateMessage && (
+                        <span 
+                          className="text-xs font-medium"
+                          style={{ color: getDateStatusColor(dateStatus.status) }}
+                        >
+                          {dueDateMessage}
+                        </span>
+                      )}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Son tarih: {formatDateTime(task.dueDate)}</p>
+                    {dueDateMessage && <p className="font-medium">{dueDateMessage}</p>}
                   </TooltipContent>
                 </Tooltip>
               )}

@@ -42,6 +42,7 @@ interface ProjectStore {
   createSection: (projectId: string, name: string) => Promise<void>
   updateSection: (id: string, name: string) => Promise<void>
   deleteSection: (id: string) => Promise<void>
+  moveSection: (sectionId: string, targetProjectId: string) => Promise<void>
   getSectionsByProject: (projectId: string) => Section[]
   
   // Utility
@@ -274,6 +275,35 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       
       set(state => ({
         sections: state.sections.filter(section => section.id !== id)
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  moveSection: async (sectionId: string, targetProjectId: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/sections/${sectionId}/move`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ targetProjectId }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to move section')
+      }
+      
+      const updatedSection = await response.json()
+      set(state => ({
+        sections: state.sections.map(section => 
+          section.id === sectionId ? { ...section, projectId: targetProjectId } : section
+        )
       }))
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'

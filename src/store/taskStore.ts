@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Task, CreateTaskRequest, CreateTaskResponse } from '@/types/task'
 import { useToastStore } from './toastStore'
+import { getTaskDateStatus } from '@/lib/date-utils'
 
 interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueDate' | 'tags'> {
   createdAt: string
@@ -80,6 +81,15 @@ interface TaskStore {
   getPendingTasksCountByTag: (tagId: string) => number
   toggleShowCompletedTasks: () => void
   clearError: () => void
+  
+  // Overdue and date-based filtering
+  getOverdueTasks: () => TaskWithRelations[]
+  getOverdueTasksByProject: (projectId: string) => TaskWithRelations[]
+  getTasksDueToday: () => TaskWithRelations[]
+  getTasksDueTomorrow: () => TaskWithRelations[]
+  getTasksDueSoon: () => TaskWithRelations[]
+  getOverdueTasksCount: () => number
+  getOverdueTasksCountByProject: (projectId: string) => number
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
@@ -870,5 +880,59 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set(state => ({ showCompletedTasks: !state.showCompletedTasks }))
   },
 
-  clearError: () => set({ error: null })
+  clearError: () => set({ error: null }),
+
+  // Overdue and date-based filtering methods
+  getOverdueTasks: () => {
+    const { tasks } = get()
+    return tasks.filter(task => {
+      if (task.completed || !task.dueDate) return false
+      const dateStatus = getTaskDateStatus(task.dueDate)
+      return dateStatus.isOverdue
+    })
+  },
+
+  getOverdueTasksByProject: (projectId: string) => {
+    const { tasks } = get()
+    return tasks.filter(task => {
+      if (task.completed || !task.dueDate || task.projectId !== projectId) return false
+      const dateStatus = getTaskDateStatus(task.dueDate)
+      return dateStatus.isOverdue
+    })
+  },
+
+  getTasksDueToday: () => {
+    const { tasks } = get()
+    return tasks.filter(task => {
+      if (task.completed || !task.dueDate) return false
+      const dateStatus = getTaskDateStatus(task.dueDate)
+      return dateStatus.isDueToday
+    })
+  },
+
+  getTasksDueTomorrow: () => {
+    const { tasks } = get()
+    return tasks.filter(task => {
+      if (task.completed || !task.dueDate) return false
+      const dateStatus = getTaskDateStatus(task.dueDate)
+      return dateStatus.isDueTomorrow
+    })
+  },
+
+  getTasksDueSoon: () => {
+    const { tasks } = get()
+    return tasks.filter(task => {
+      if (task.completed || !task.dueDate) return false
+      const dateStatus = getTaskDateStatus(task.dueDate)
+      return dateStatus.status === 'due-soon'
+    })
+  },
+
+  getOverdueTasksCount: () => {
+    return get().getOverdueTasks().length
+  },
+
+  getOverdueTasksCountByProject: (projectId: string) => {
+    return get().getOverdueTasksByProject(projectId).length
+  }
 }))
