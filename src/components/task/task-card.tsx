@@ -219,6 +219,22 @@ export function TaskCard({
   const dateStatus = getTaskDateStatus(task.dueDate)
   const dueDateMessage = getDueDateMessage(dateStatus)
 
+  // Gradient background helper
+  const getDateAlertGradient = () => {
+    if (task.completed) return ""
+    
+    if (dateStatus.isOverdue) {
+      return "bg-gradient-to-r from-transparent to-red-100 dark:to-red-950/30"
+    }
+    if (dateStatus.isDueToday) {
+      return "bg-gradient-to-r from-transparent to-orange-100 dark:to-orange-950/30"
+    }
+    if (dateStatus.isDueTomorrow) {
+      return "bg-gradient-to-r from-transparent to-yellow-100 dark:to-yellow-950/30"
+    }
+    return ""
+  }
+
   return (
     <TooltipProvider>
       <div className={cn(
@@ -227,10 +243,8 @@ export function TaskCard({
         isExpanded
           ? "bg-secondary rounded-t-lg"
           : "hover:bg-secondary rounded-lg",
-        // Overdue styling
-        dateStatus.isOverdue && !task.completed && "ring-1 ring-red-500/50 bg-red-50 dark:bg-red-950/20",
-        dateStatus.isDueToday && !task.completed && "ring-1 ring-orange-500/50 bg-orange-50 dark:bg-orange-950/20",
-        dateStatus.isDueTomorrow && !task.completed && "ring-1 ring-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20",
+        // Date alert gradient (only when collapsed)
+        !isExpanded && getDateAlertGradient(),
         className
       )}>
         {/* Header - Always Visible */}
@@ -470,7 +484,10 @@ export function TaskCard({
 
         {/* Expanded Content */}
         {isExpanded && (
-          <div className="px-4 pb-4">
+          <div className={cn(
+            "px-4 pb-4",
+            getDateAlertGradient()
+          )}>
             {/* Description */}
             {task.description && (
               <div className="mt-3 mb-4">
