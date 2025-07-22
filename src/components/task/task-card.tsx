@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Bell } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
@@ -287,6 +287,19 @@ export function TaskCard({
               task.completed && "line-through text-muted-foreground"
             )}>
               <span className="flex-1 min-w-0 truncate">{task.title}</span>
+              {/* Due Date Icon */}
+              {task.dueDate && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Son tarih: {formatDateTime(task.dueDate)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {/* SubTasks Icon and Count */}
               {task.subTasks && task.subTasks.length > 0 && (
                 <Tooltip>
@@ -378,7 +391,6 @@ export function TaskCard({
           </div>
 
           <div className="flex items-center ml-2 space-x-2">
-
             {/* Pin indicator */}
             {task.isPinned && (
               <Tooltip>

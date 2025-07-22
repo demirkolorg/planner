@@ -182,10 +182,35 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       const newTask = await response.json() as CreateTaskResponse
       
-      // Add new task to store
-      set(state => ({
-        tasks: [newTask, ...state.tasks]
-      }))
+      // Add new task to store and update parent task if this is a subtask
+      set(state => {
+        let updatedTasks = [newTask, ...state.tasks]
+        
+        // Eğer bu bir alt görevse, parent task'ın subTasks array'ini güncelle
+        if (newTask.parentTaskId) {
+          updatedTasks = updatedTasks.map(task => {
+            if (task.id === newTask.parentTaskId) {
+              return {
+                ...task,
+                subTasks: [
+                  ...(task.subTasks || []),
+                  {
+                    id: newTask.id,
+                    title: newTask.title,
+                    completed: newTask.completed,
+                    priority: newTask.priority,
+                    createdAt: newTask.createdAt,
+                    updatedAt: newTask.updatedAt
+                  }
+                ]
+              }
+            }
+            return task
+          })
+        }
+        
+        return { tasks: updatedTasks }
+      })
       
       return newTask
     } catch (error) {
@@ -238,10 +263,28 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         throw new Error(errorData.error || 'Failed to delete task')
       }
       
-      // Remove task from store
-      set(state => ({
-        tasks: state.tasks.filter(task => task.id !== id)
-      }))
+      // Remove task from store and update parent task if this was a subtask
+      set(state => {
+        const taskToDelete = state.tasks.find(t => t.id === id)
+        const filteredTasks = state.tasks.filter(task => task.id !== id)
+        
+        // Eğer silinen görev bir alt görevse, parent task'ın subTasks array'ini güncelle
+        if (taskToDelete?.parentTaskId) {
+          return {
+            tasks: filteredTasks.map(task => {
+              if (task.id === taskToDelete.parentTaskId) {
+                return {
+                  ...task,
+                  subTasks: (task.subTasks || []).filter(subTask => subTask.id !== id)
+                }
+              }
+              return task
+            })
+          }
+        }
+        
+        return { tasks: filteredTasks }
+      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
       set({ error: errorMessage })
