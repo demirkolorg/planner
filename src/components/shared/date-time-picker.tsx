@@ -415,23 +415,29 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
             />
             
             {/* Time picker toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-between"
-              onClick={!showTimeInput ? (e) => {
-                e.stopPropagation()
-                handleTimeButtonClick()
-              } : undefined}
-            >
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>Zaman</span>
-              </div>
-              {!showTimeInput ? (
+            {!showTimeInput ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleTimeButtonClick()
+                }}
+              >
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span>Zaman</span>
+                </div>
                 <Plus className="h-4 w-4" />
-              ) : (
-                <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+              </Button>
+            ) : (
+              <div className="flex items-center justify-between w-full px-3 py-2 border rounded-md bg-background">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Zaman</span>
+                </div>
+                <div className="flex items-center space-x-2">
                   <Input
                     value={timeInput}
                     onChange={(e) => setTimeInput(formatTimeInput(e.target.value))}
@@ -439,20 +445,18 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                     className="w-16 h-6 text-xs text-center"
                     maxLength={5}
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
+                  <button
+                    className="inline-flex items-center justify-center h-6 w-6 rounded-md hover:bg-accent transition-colors"
                     onClick={(e) => {
                       e.stopPropagation()
                       handleTimeClear()
                     }}
                   >
                     <X className="h-4 w-4" />
-                  </Button>
+                  </button>
                 </div>
-              )}
-            </Button>
+              </div>
+            )}
 
             {/* Time confirmation buttons */}
             {showTimeInput && (

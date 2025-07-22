@@ -295,8 +295,11 @@ export default function ProjectDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => {
+              // İlk bölümü default section olarak seç
+              const firstSection = sections.length > 0 ? sections[0] : undefined
               setTaskModalContext({
-                project: { id: project.id, name: project.name, emoji: project.emoji }
+                project: { id: project.id, name: project.name, emoji: project.emoji },
+                section: firstSection ? { id: firstSection.id, name: firstSection.name, projectId: project.id } : undefined
               })
               setIsTaskModalOpen(true)
             }}
@@ -408,10 +411,8 @@ export default function ProjectDetailPage() {
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
+                      <div 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 text-xs font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation()
                           setTaskModalContext({
@@ -423,7 +424,7 @@ export default function ProjectDetailPage() {
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Görev
-                      </Button>
+                      </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <div 
