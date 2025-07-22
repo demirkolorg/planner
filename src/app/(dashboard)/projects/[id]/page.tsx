@@ -12,6 +12,7 @@ import { NewSectionModal } from "@/components/modals/new-section-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveSectionModal } from "@/components/modals/move-section-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
@@ -57,6 +58,8 @@ export default function ProjectDetailPage() {
   const [sectionToDelete, setSectionToDelete] = useState<SectionType | null>(null)
   const [isSectionMoveModalOpen, setIsSectionMoveModalOpen] = useState(false)
   const [sectionToMove, setSectionToMove] = useState<SectionType | null>(null)
+  const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
@@ -182,6 +185,16 @@ export default function ProjectDetailPage() {
       await fetchTasksByProject(projectId)
     } catch (error) {
       console.error("Failed to move section:", error)
+    }
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId)
+      setIsTaskDeleteDialogOpen(false)
+      setTaskToDelete(null)
+    } catch (error) {
+      console.error("Failed to delete task:", error)
     }
   }
 
@@ -601,7 +614,18 @@ export default function ProjectDetailPage() {
                       tasks={sectionTasks}
                       onToggleComplete={toggleTaskComplete}
                       onUpdate={updateTask}
-                      onDelete={deleteTask}
+                      onDelete={(taskId) => {
+                        const taskToDelete = sectionTasks.find(t => t.id === taskId)
+                        if (taskToDelete) {
+                          const subTaskCount = taskToDelete.subTasks?.length || 0
+                          setTaskToDelete({ 
+                            id: taskId, 
+                            title: taskToDelete.title,
+                            subTaskCount: subTaskCount
+                          })
+                          setIsTaskDeleteDialogOpen(true)
+                        }
+                      }}
                       onPin={toggleTaskPin}
                       onAddSubTask={(parentTaskId) => {
                         const parentTask = sectionTasks.find(t => t.id === parentTaskId)
@@ -713,6 +737,22 @@ export default function ProjectDetailPage() {
         confirmText="Sil"
         cancelText="İptal"
         variant="destructive"
+      />
+
+      {/* Görev Silme Onay Dialog'u */}
+      <TaskDeleteDialog
+        isOpen={isTaskDeleteDialogOpen}
+        onClose={() => {
+          setIsTaskDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onConfirm={() => {
+          if (taskToDelete) {
+            handleDeleteTask(taskToDelete.id)
+          }
+        }}
+        taskTitle={taskToDelete?.title || ""}
+        subTaskCount={taskToDelete?.subTaskCount || 0}
       />
 
       {/* Görev Ekleme Modal'ı */}
