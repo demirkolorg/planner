@@ -49,7 +49,11 @@ export default function ProjectDetailPage() {
   const [openSections, setOpenSections] = useState<string[]>([])
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notesValue, setNotesValue] = useState("")
-  const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection } = useProjectStore()
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
+  const [editingSectionName, setEditingSectionName] = useState("")
+  const [isSectionDeleteDialogOpen, setIsSectionDeleteDialogOpen] = useState(false)
+  const [sectionToDelete, setSectionToDelete] = useState<SectionType | null>(null)
+  const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
     createTask, 
@@ -131,6 +135,26 @@ export default function ProjectDetailPage() {
       await createSection(projectId, name)
     } catch (error) {
       console.error("Failed to create section:", error)
+    }
+  }
+
+  const handleUpdateSection = async (sectionId: string, name: string) => {
+    try {
+      await updateSection(sectionId, name)
+      setEditingSectionId(null)
+      setEditingSectionName("")
+    } catch (error) {
+      console.error("Failed to update section:", error)
+    }
+  }
+
+  const handleDeleteSection = async (sectionId: string) => {
+    try {
+      await deleteSection(sectionId)
+      setIsSectionDeleteDialogOpen(false)
+      setSectionToDelete(null)
+    } catch (error) {
+      console.error("Failed to delete section:", error)
     }
   }
 
@@ -219,37 +243,68 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-lg bg-primary/10">
-            {project.emoji ? (
-              <span className="text-2xl">{project.emoji}</span>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-primary" />
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">{project.name}</h1>
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-              <span className="flex items-center space-x-1 text-green-600 dark:text-green-400">
-                <Check className="h-3 w-3" />
-                <span>{getCompletedTasksCount(projectId)} tamamlandı</span>
-              </span>
-              <span className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
-                <Clock className="h-3 w-3" />
-                <span>{getPendingTasksCount(projectId)} bekleyen</span>
-              </span>
+    <div className="space-y-4">
+      {/* Compact Project Header */}
+      <div className="flex items-center justify-between">
+        {/* Left: Navigation & Project Info */}
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              {project.emoji ? (
+                <span className="text-xl">{project.emoji}</span>
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-primary" />
+              )}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">{project.name}</h1>
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <div className="flex items-center space-x-1">
+                  <Check className="h-3 w-3 text-green-600" />
+                  <span>{getCompletedTasksCount(projectId)}</span>
+                </div>
+                <div className="flex items-center space-x-1">  
+                  <Clock className="h-3 w-3 text-blue-600" />
+                  <span>{getPendingTasksCount(projectId)}</span>
+                </div>
+                <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ 
+                      width: `${((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100}%` 
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-medium">
+                  {Math.round(((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100)}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center ml-auto">
-          {/* Actions Dropdown Menu */}
+
+        {/* Right: Actions */}
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setTaskModalContext({
+                project: { id: project.id, name: project.name, emoji: project.emoji }
+              })
+              setIsTaskModalOpen(true)
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Görev
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -380,35 +435,25 @@ export default function ProjectDetailPage() {
                             <MoreVertical className="h-4 w-4" />
                           </div>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-64">
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Settings className="h-4 w-4" />
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingSectionId(section.id)
+                            setEditingSectionName(section.name)
+                          }}>
+                            <Edit className="h-4 w-4 mr-2" />
                             Bölümü Düzenle
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Clock className="h-4 w-4" />
-                            Bölümü Taşı
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <FolderClosed className="h-4 w-4" />
-                            Bölüm Sıralamasını Yönet
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <FolderClosed className="h-4 w-4" />
-                            Çoğalt
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Check className="h-4 w-4" />
-                            Tamamlanan Görevleri Göster
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Archive className="h-4 w-4" />
-                            Arşivle
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem variant="destructive" onClick={(e) => e.stopPropagation()}>
-                            <Trash className="h-4 w-4" />
+                          <DropdownMenuItem 
+                            variant="destructive" 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSectionToDelete(section)
+                              setIsSectionDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
                             Bölümü Sil
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -516,11 +561,41 @@ export default function ProjectDetailPage() {
         variant="destructive"
       />
 
-      {/* Bölüm Ekleme Modal'ı */}
+      {/* Bölüm Ekleme/Düzenleme Modal'ı */}
       <NewSectionModal
-        isOpen={isSectionModalOpen}
-        onClose={() => setIsSectionModalOpen(false)}
-        onSave={handleCreateSection}
+        isOpen={isSectionModalOpen || !!editingSectionId}
+        onClose={() => {
+          setIsSectionModalOpen(false)
+          setEditingSectionId(null)
+          setEditingSectionName("")
+        }}
+        onSave={(name) => {
+          if (editingSectionId) {
+            handleUpdateSection(editingSectionId, name)
+          } else {
+            handleCreateSection(name)
+          }
+        }}
+        editingSection={editingSectionId ? { id: editingSectionId, name: editingSectionName } : null}
+      />
+
+      {/* Bölüm Silme Onay Dialog'u */}
+      <ConfirmationDialog
+        isOpen={isSectionDeleteDialogOpen}
+        onClose={() => {
+          setIsSectionDeleteDialogOpen(false)
+          setSectionToDelete(null)
+        }}
+        onConfirm={() => {
+          if (sectionToDelete) {
+            handleDeleteSection(sectionToDelete.id)
+          }
+        }}
+        title="Bölümü Sil"
+        message={`"${sectionToDelete?.name}" bölümünü silmek istediğinizden emin misiniz? Bu bölümdeki tüm görevler de silinecek.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
       />
 
       {/* Görev Ekleme Modal'ı */}
