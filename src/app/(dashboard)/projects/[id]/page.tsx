@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
+import { TaskCard } from "@/components/task/task-card"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
 
@@ -116,9 +117,14 @@ export default function ProjectDetailPage() {
   // Sections yüklendiğinde tümünü otomatik aç (sadece bir kez)
   useEffect(() => {
     if (sectionIds.length > 0 && openSections.length === 0) {
-      setOpenSections(sectionIds)
+      const sectionsToOpen = [...sectionIds]
+      // Süresi geçmiş görevler varsa onu da aç
+      if (getOverdueTasksCountByProject(projectId) > 0) {
+        sectionsToOpen.push('overdue-tasks')
+      }
+      setOpenSections(sectionsToOpen)
     }
-  }, [sectionIds.length]) // sadece length değişimini takip et
+  }, [sectionIds.length, getOverdueTasksCountByProject, projectId]) // sadece length değişimini takip et
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -397,51 +403,8 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {/* Süresi Geçmiş Görevler */}
-      {getOverdueTasksByProject(projectId).length > 0 && (
-        <div className="border-l-4 border-red-500 bg-red-50 dark:bg-red-950/20 rounded-r-lg p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <div className="h-4 w-4 rounded-full bg-red-500" />
-              <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">
-                Süresi Geçmiş Görevler ({getOverdueTasksCountByProject(projectId)})
-              </h3>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {getOverdueTasksByProject(projectId).map((task) => (
-              <div key={task.id} className="bg-white dark:bg-gray-900 rounded-md p-2 shadow-sm border border-red-200 dark:border-red-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-red-700 dark:text-red-300">{task.title}</span>
-                  <div className="flex items-center space-x-2">
-                    {task.dueDate && (
-                      <span className="text-xs text-red-600 dark:text-red-400">
-                        {new Date(task.dueDate).toLocaleDateString('tr-TR')}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => {
-                        const section = sections.find(s => s.id === task.sectionId)
-                        setTaskModalContext({
-                          project: { id: project.id, name: project.name, emoji: project.emoji },
-                          section: section ? { id: section.id, name: section.name, projectId: project.id } : undefined
-                        })
-                        setIsTaskModalOpen(true)
-                      }}
-                      className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 underline"
-                    >
-                      Düzenle
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Bölümler ve Görevler */}
-      {sections.length === 0 ? (
+      {sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 ? (
         <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
             {project.emoji ? (
@@ -460,6 +423,73 @@ export default function ProjectDetailPage() {
         </div>
       ) : (
         <Accordion type="multiple" className="w-full space-y-2 overflow-visible" value={openSections} onValueChange={setOpenSections}>
+          {/* Süresi Geçmiş Görevler Accordion */}
+          {getOverdueTasksByProject(projectId).length > 0 && (
+            <AccordionItem key="overdue-tasks" value="overdue-tasks" className="border-none overflow-visible">
+              <AccordionTrigger className="px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg border-b border-red-200 dark:border-red-800 mb-1 transition-colors hover:no-underline w-full bg-red-50 dark:bg-red-950/20">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <ChevronDown className="h-4 w-4 text-red-600" />
+                    <h3 className="text-sm font-medium text-red-700 dark:text-red-400">Süresi Geçmiş Görevler</h3>
+                    <span className="text-xs text-red-600 dark:text-red-500">
+                      {getOverdueTasksByProject(projectId).length}
+                    </span>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pt-1 pb-3 overflow-visible">
+                <HierarchicalTaskList
+                  tasks={getOverdueTasksByProject(projectId)}
+                  onToggleComplete={toggleTaskComplete}
+                  onUpdate={updateTask}
+                  onDelete={deleteTask}
+                  onPin={toggleTaskPin}
+                  onAddSubTask={(parentTaskId) => {
+                    const parentTask = getOverdueTasksByProject(projectId).find(t => t.id === parentTaskId)
+                    const section = sections.find(s => s.id === parentTask?.sectionId)
+                    setTaskModalContext({
+                      project: { id: project.id, name: project.name, emoji: project.emoji },
+                      section: section ? { id: section.id, name: section.name, projectId: project.id } : undefined,
+                      parentTaskId: parentTaskId,
+                      parentTaskTitle: parentTask?.title
+                    })
+                    setIsTaskModalOpen(true)
+                  }}
+                  onUpdateTags={async (taskId, tagIds) => {
+                    try {
+                      await updateTaskTags(taskId, tagIds)
+                    } catch (error) {
+                      console.error('Failed to update tags:', error)
+                    }
+                  }}
+                  onUpdatePriority={async (taskId, priority) => {
+                    try {
+                      await updateTask(taskId, { priority })
+                    } catch (error) {
+                      console.error('Failed to update priority:', error)
+                    }
+                  }}
+                  onUpdateReminders={async (taskId, reminders) => {
+                    try {
+                      await updateTaskReminders(taskId, reminders)
+                    } catch (error) {
+                      console.error('Failed to update reminders:', error)
+                    }
+                  }}
+                  showTreeConnectors={true}
+                  enableDragAndDrop={true}
+                  onMoveTask={async (taskId, newParentId) => {
+                    try {
+                      await updateTask(taskId, { parentTaskId: newParentId })
+                    } catch (error) {
+                      console.error('Failed to move task:', error)
+                    }
+                  }}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          )}
+          
           {sections.map((section) => {
             const sectionTasks = getTasksBySection(section.id)
             const isOpen = openSections.includes(section.id)

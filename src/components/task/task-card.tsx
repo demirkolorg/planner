@@ -228,8 +228,8 @@ export function TaskCard({
           ? "bg-secondary rounded-t-lg"
           : "hover:bg-secondary rounded-lg",
         // Overdue styling
-        dateStatus.isOverdue && !task.completed && "ring-2 ring-red-500/50 bg-red-50 dark:bg-red-950/20",
-        dateStatus.isDueToday && !task.completed && "ring-2 ring-orange-500/50 bg-orange-50 dark:bg-orange-950/20",
+        dateStatus.isOverdue && !task.completed && "ring-1 ring-red-500/50 bg-red-50 dark:bg-red-950/20",
+        dateStatus.isDueToday && !task.completed && "ring-1 ring-orange-500/50 bg-orange-50 dark:bg-orange-950/20",
         dateStatus.isDueTomorrow && !task.completed && "ring-1 ring-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20",
         className
       )}>
