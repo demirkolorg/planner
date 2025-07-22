@@ -107,7 +107,21 @@ export async function generateTaskSuggestion(
     }
 
     // JSON parse et
-    const result = JSON.parse(content)
+    let result
+    try {
+      // AI yanıtından JSON'u çıkarmaya çalış
+      const jsonMatch = content.match(/\{[^{}]*\}/)
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0])
+      } else {
+        // JSON bulunamazsa fallback
+        result = { title: prompt, description: `${prompt} ile ilgili görev` }
+      }
+    } catch (parseError) {
+      console.error('JSON parse hatası:', parseError)
+      // Parse edilemezse fallback
+      result = { title: prompt, description: `${prompt} ile ilgili görev` }
+    }
     
     // Rastgele ekstra özellikler oluştur
     const randomPriority = getRandomPriority()

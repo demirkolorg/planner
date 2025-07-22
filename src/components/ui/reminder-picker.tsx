@@ -83,6 +83,15 @@ export function ReminderPicker({
 
   const handleConfirmReminder = () => {
     if (reminderDate && reminderTime) {
+      // Geçmiş tarih kontrolü
+      const reminderDateTime = new Date(`${reminderDate} ${reminderTime}`)
+      const now = new Date()
+      
+      if (reminderDateTime < now) {
+        alert('Geçmiş tarih/saat seçilemez. Lütfen gelecek bir tarih ve saat seçin.')
+        return
+      }
+      
       const reminderText = `${reminderDate} ${reminderTime}`
       const newReminders = [...selectedReminders, reminderText]
       onRemindersChange(newReminders)
@@ -243,17 +252,28 @@ export function ReminderPicker({
 
               {/* Calendar dates */}
               <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: getDaysInMonth(reminderMonth, reminderYear) }, (_, i) => i + 1).map((day) => (
-                  <Button
-                    key={day}
-                    variant={reminderDate?.includes(`${day} `) ? "default" : "ghost"}
-                    size="sm"
-                    className="h-8 w-8 text-xs"
-                    onClick={() => handleReminderDateSelect(day)}
-                  >
-                    {day}
-                  </Button>
-                ))}
+                {Array.from({ length: getDaysInMonth(reminderMonth, reminderYear) }, (_, i) => i + 1).map((day) => {
+                  const today = new Date()
+                  const currentDate = new Date(reminderYear, reminderMonth, day)
+                  const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                  
+                  return (
+                    <Button
+                      key={day}
+                      variant={reminderDate?.startsWith(`${day} `) ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-8 w-8 text-xs ${isPastDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isPastDate}
+                      onClick={() => {
+                        if (!isPastDate) {
+                          handleReminderDateSelect(day)
+                        }
+                      }}
+                    >
+                      {day}
+                    </Button>
+                  )
+                })}
               </div>
             </div>
 

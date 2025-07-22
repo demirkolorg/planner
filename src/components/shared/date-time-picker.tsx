@@ -101,6 +101,14 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
         throw new Error('Invalid date')
       }
 
+      // Geçmiş tarih kontrolü
+      const today = new Date()
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      if (date < todayStart) {
+        alert('Geçmiş tarih seçilemez. Lütfen bugünden sonra bir tarih seçin.')
+        return
+      }
+
       // ISO string olarak gönder
       onSave(date.toISOString())
     } catch (error) {
@@ -384,20 +392,29 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
 
               {/* Calendar dates */}
               <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: getDaysInMonth(currentMonth, currentYear) }, (_, i) => i + 1).map((day) => (
-                  <Button
-                    key={day}
-                    variant={selectedDate?.startsWith(`${day.toString().padStart(2, '0')}.${(currentMonth + 1).toString().padStart(2, '0')}`) ? "default" : "ghost"}
-                    size="sm"
-                    className="h-8 w-8 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleCalendarDateSelect(day)
-                    }}
-                  >
-                    {day}
-                  </Button>
-                ))}
+                {Array.from({ length: getDaysInMonth(currentMonth, currentYear) }, (_, i) => i + 1).map((day) => {
+                  const today = new Date()
+                  const currentDate = new Date(currentYear, currentMonth, day)
+                  const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                  
+                  return (
+                    <Button
+                      key={day}
+                      variant={selectedDate?.startsWith(`${day.toString().padStart(2, '0')}.${(currentMonth + 1).toString().padStart(2, '0')}`) ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-8 w-8 text-xs ${isPastDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isPastDate}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!isPastDate) {
+                          handleCalendarDateSelect(day)
+                        }
+                      }}
+                    >
+                      {day}
+                    </Button>
+                  )
+                })}
               </div>
             </div>
           </div>
