@@ -23,6 +23,15 @@ export interface Task {
   updatedAt: Date
 }
 
+// Hiyerarşik task gösterimi için genişletilmiş tip
+export interface TaskWithHierarchy extends Task {
+  level: number
+  children?: TaskWithHierarchy[]
+  isExpanded?: boolean
+  hasChildren?: boolean
+  isLast?: boolean
+}
+
 export interface TaskTag {
   id: string
   taskId: string

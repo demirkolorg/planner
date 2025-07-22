@@ -10,7 +10,7 @@ import { useTaskStore } from "@/store/taskStore"
 import { useTagStore } from "@/store/tagStore"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { NewTagModal } from "@/components/modals/new-tag-modal"
-import { TaskCard } from "@/components/task/task-card"
+import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { Switch } from "@/components/ui/switch"
 
 interface Tag {
@@ -169,43 +169,39 @@ export default function TagDetailPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onToggleComplete={toggleTaskComplete}
-              onUpdate={updateTask}
-              onDelete={deleteTask}
-              onPin={toggleTaskPin}
-              onAddSubTask={(parentTaskId) => {
-                // Etiket sayfasında alt görev ekleme özelliği şu anda yok
-                console.log('Alt görev ekleme:', parentTaskId)
-              }}
-              onUpdateTags={async (taskId, tagIds) => {
-                try {
-                  await updateTaskTags(taskId, tagIds)
-                } catch (error) {
-                  console.error('Failed to update tags:', error)
-                }
-              }}
-              onUpdatePriority={async (taskId, priority) => {
-                try {
-                  await updateTask(taskId, { priority })
-                } catch (error) {
-                  console.error('Failed to update priority:', error)
-                }
-              }}
-              onUpdateReminders={async (taskId, reminders) => {
-                try {
-                  await updateTaskReminders(taskId, reminders)
-                } catch (error) {
-                  console.error('Failed to update reminders:', error)
-                }
-              }}
-            />
-          ))}
-        </div>
+        <HierarchicalTaskList
+          tasks={tasks}
+          onToggleComplete={toggleTaskComplete}
+          onUpdate={updateTask}
+          onDelete={deleteTask}
+          onPin={toggleTaskPin}
+          onAddSubTask={(parentTaskId) => {
+            // Etiket sayfasında alt görev ekleme özelliği şu anda yok
+            console.log('Alt görev ekleme:', parentTaskId)
+          }}
+          onUpdateTags={async (taskId, tagIds) => {
+            try {
+              await updateTaskTags(taskId, tagIds)
+            } catch (error) {
+              console.error('Failed to update tags:', error)
+            }
+          }}
+          onUpdatePriority={async (taskId, priority) => {
+            try {
+              await updateTask(taskId, { priority })
+            } catch (error) {
+              console.error('Failed to update priority:', error)
+            }
+          }}
+          onUpdateReminders={async (taskId, reminders) => {
+            try {
+              await updateTaskReminders(taskId, reminders)
+            } catch (error) {
+              console.error('Failed to update reminders:', error)
+            }
+          }}
+          showTreeConnectors={true}
+        />
       )}
       {/* Düzenleme Modal'ı */}
       {tag && (

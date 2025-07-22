@@ -63,6 +63,10 @@ interface TaskCardProps {
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
   className?: string
   isFirstInSection?: boolean
+  // Hiyerarşik görünüm için yeni props
+  isExpanded?: boolean
+  hasChildren?: boolean
+  onToggleExpanded?: () => void
 }
 
 
@@ -78,12 +82,22 @@ export function TaskCard({
   onUpdatePriority,
   onUpdateReminders,
   className,
-  isFirstInSection = false
+  isFirstInSection = false,
+  // Hiyerarşik görünüm props
+  isExpanded: externalIsExpanded,
+  hasChildren: externalHasChildren,
+  onToggleExpanded: externalOnToggleExpanded
 }: TaskCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  // İç expansion state (eski davranış için fallback)
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
 
+  // External prop'lar varsa onları kullan, yoksa internal state'i kullan
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
+  const hasChildren = externalHasChildren !== undefined ? externalHasChildren : (task.subTasks && task.subTasks.length > 0)
+  
+  
   const handleToggleComplete = () => {
     // Ana görevde tamamlanmamış alt görevler varsa tamamlanamaz
     if (task.subTasks && task.subTasks.length > 0) {
@@ -96,7 +110,19 @@ export function TaskCard({
   }
 
   const handleToggleExpanded = () => {
-    setIsExpanded(!isExpanded)
+    console.log('TaskCard handleToggleExpanded called', { 
+      hasChildren, 
+      externalOnToggleExpanded: !!externalOnToggleExpanded 
+    })
+    if (externalOnToggleExpanded) {
+      // Hiyerarşik modda external handler kullan - children olsun ya da olmasın çağır
+      externalOnToggleExpanded()
+    } else {
+      // Eski mod - internal state (sadece children varsa expand/collapse)
+      if (hasChildren) {
+        setInternalIsExpanded(!internalIsExpanded)
+      }
+    }
   }
 
   const handleDateClick = (e: React.MouseEvent) => {
@@ -209,7 +235,10 @@ export function TaskCard({
           style={{
             backgroundColor: isExpanded ? (getPriorityColorHex() + '1A' || '#3b82f6' + '1A') : 'transparent'
           }}
-          onClick={handleToggleExpanded}
+          onClick={(e) => {
+            console.log('TaskCard header clicked', { hasChildren })
+            handleToggleExpanded()
+          }}
         >
           <div className="mr-2 relative">
             {(() => {
@@ -262,14 +291,6 @@ export function TaskCard({
             })()}
           </div>
 
-          {/* Due date - only when collapsed */}
-          {!isExpanded && !isEditingDate && task.dueDate && (
-            <div
-              className="text-xs text-muted-foreground px-2"
-            >
-              {formatDateTime(task.dueDate)}
-            </div>
-          )}
 
           {/* Date Time Picker - for both collapsed and expanded views */}
           {isEditingDate && (
@@ -407,11 +428,13 @@ export function TaskCard({
               </Tooltip>
             )}
 
-            {/* Expand/Collapse Icon */}
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            {/* Expand/Collapse Icon - sadece children varsa göster */}
+            {hasChildren && (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )
             )}
           </div>
         </div>

@@ -299,7 +299,54 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     
     const willBeCompleted = !task.completed
     
+    // Eğer parent task complete edilmeye çalışılıyorsa, tüm children'ların durumunu kontrol et
+    if (willBeCompleted) {
+      const children = state.tasks.filter(t => t.parentTaskId === id)
+      if (children.length > 0) {
+        const hasIncompleteChildren = children.some(child => !child.completed)
+        if (hasIncompleteChildren) {
+          useToastStore.getState().addToast({
+            message: "Önce alt görevleri tamamlayın",
+            type: "warning"
+          })
+          return
+        }
+      }
+    }
+    
+    // Task'ı güncelle
     await state.updateTask(id, { completed: willBeCompleted })
+    
+    // Eğer task complete ediliyor ve children varsa, onları da complete et
+    if (willBeCompleted) {
+      const children = state.tasks.filter(t => t.parentTaskId === id)
+      for (const child of children) {
+        if (!child.completed) {
+          await state.updateTask(child.id, { completed: true })
+        }
+      }
+    }
+    
+    // Eğer child task complete ediliyor ve parent varsa, parent durumunu kontrol et
+    if (willBeCompleted && task.parentTaskId) {
+      const siblings = state.tasks.filter(t => t.parentTaskId === task.parentTaskId)
+      const allSiblingsCompleted = siblings.every(sibling => 
+        sibling.id === id ? true : sibling.completed
+      )
+      
+      // Tüm siblings complete ise parent'ı da complete et
+      if (allSiblingsCompleted) {
+        await state.updateTask(task.parentTaskId, { completed: true })
+      }
+    }
+    
+    // Eğer child task incomplete ediliyor ve parent complete ise, parent'ı da incomplete et
+    if (!willBeCompleted && task.parentTaskId) {
+      const parent = state.tasks.find(t => t.id === task.parentTaskId)
+      if (parent?.completed) {
+        await state.updateTask(task.parentTaskId, { completed: false })
+      }
+    }
     
     // Alt görev durumu değiştiğinde, parent task'ın subTasks array'ini güncelle
     if (task.parentTaskId) {

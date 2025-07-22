@@ -15,7 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
-import { TaskCard } from "@/components/task/task-card"
+import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
 
@@ -135,10 +135,10 @@ export default function ProjectDetailPage() {
   }
 
   // Debounce hook
-  const useDebounce = (callback: Function, delay: number) => {
+  const useDebounce = (callback: (...args: unknown[]) => void, delay: number) => {
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
-    const debouncedCallback = useCallback((...args: any[]) => {
+    const debouncedCallback = useCallback((...args: unknown[]) => {
       if (debounceTimer) {
         clearTimeout(debounceTimer)
       }
@@ -339,9 +339,9 @@ export default function ProjectDetailPage() {
             
             return (
               <AccordionItem key={section.id} value={section.id} className="border-none overflow-visible">
-                <div className="px-4 py-0 hover:bg-accent/50 rounded-lg transition-colors">
+                <AccordionTrigger className="px-4 py-2 hover:bg-accent/50 rounded-lg border-b-1 mb-1 transition-colors hover:no-underline w-full">
                   <div className="flex items-center justify-between w-full">
-                    <AccordionTrigger className="flex items-center space-x-3 flex-1 hover:no-underline">
+                    <div className="flex items-center space-x-3 flex-1">
                       {isOpen ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
@@ -351,7 +351,7 @@ export default function ProjectDetailPage() {
                       <span className="text-xs text-muted-foreground">
                         {sectionTasks.length}
                       </span>
-                    </AccordionTrigger>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <Button
                         variant="outline"
@@ -415,7 +415,7 @@ export default function ProjectDetailPage() {
                       </DropdownMenu>
                     </div>
                   </div>
-                </div>
+                </AccordionTrigger>
                 <AccordionContent className="px-4 pb-3 overflow-visible">
                   {sectionTasks.length === 0 ? (
                     <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
@@ -435,50 +435,53 @@ export default function ProjectDetailPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {sectionTasks.map((task, index) => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          isFirstInSection={index === 0}
-                          onToggleComplete={toggleTaskComplete}
-                          onUpdate={updateTask}
-                          onDelete={deleteTask}
-                          onPin={toggleTaskPin}
-                          onAddSubTask={(parentTaskId) => {
-                            const parentTask = task
-                            setTaskModalContext({
-                              project: { id: project.id, name: project.name, emoji: project.emoji },
-                              section: { id: section.id, name: section.name, projectId: project.id },
-                              parentTaskId: parentTaskId,
-                              parentTaskTitle: parentTask.title
-                            })
-                            setIsTaskModalOpen(true)
-                          }}
-                          onUpdateTags={async (taskId, tagIds) => {
-                            try {
-                              await updateTaskTags(taskId, tagIds)
-                            } catch (error) {
-                              console.error('Failed to update tags:', error)
-                            }
-                          }}
-                          onUpdatePriority={async (taskId, priority) => {
-                            try {
-                              await updateTask(taskId, { priority })
-                            } catch (error) {
-                              console.error('Failed to update priority:', error)
-                            }
-                          }}
-                          onUpdateReminders={async (taskId, reminders) => {
-                            try {
-                              await updateTaskReminders(taskId, reminders)
-                            } catch (error) {
-                              console.error('Failed to update reminders:', error)
-                            }
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <HierarchicalTaskList
+                      tasks={sectionTasks}
+                      onToggleComplete={toggleTaskComplete}
+                      onUpdate={updateTask}
+                      onDelete={deleteTask}
+                      onPin={toggleTaskPin}
+                      onAddSubTask={(parentTaskId) => {
+                        const parentTask = sectionTasks.find(t => t.id === parentTaskId)
+                        setTaskModalContext({
+                          project: { id: project.id, name: project.name, emoji: project.emoji },
+                          section: { id: section.id, name: section.name, projectId: project.id },
+                          parentTaskId: parentTaskId,
+                          parentTaskTitle: parentTask?.title
+                        })
+                        setIsTaskModalOpen(true)
+                      }}
+                      onUpdateTags={async (taskId, tagIds) => {
+                        try {
+                          await updateTaskTags(taskId, tagIds)
+                        } catch (error) {
+                          console.error('Failed to update tags:', error)
+                        }
+                      }}
+                      onUpdatePriority={async (taskId, priority) => {
+                        try {
+                          await updateTask(taskId, { priority })
+                        } catch (error) {
+                          console.error('Failed to update priority:', error)
+                        }
+                      }}
+                      onUpdateReminders={async (taskId, reminders) => {
+                        try {
+                          await updateTaskReminders(taskId, reminders)
+                        } catch (error) {
+                          console.error('Failed to update reminders:', error)
+                        }
+                      }}
+                      showTreeConnectors={true}
+                      enableDragAndDrop={true}
+                      onMoveTask={async (taskId, newParentId) => {
+                        try {
+                          await updateTask(taskId, { parentTaskId: newParentId })
+                        } catch (error) {
+                          console.error('Failed to move task:', error)
+                        }
+                      }}
+                    />
                   )}
                 </AccordionContent>
               </AccordionItem>
