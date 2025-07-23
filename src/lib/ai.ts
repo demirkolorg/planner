@@ -40,7 +40,6 @@ const getRandomDueDate = (parentTaskDueDate?: Date | null): string | null => {
       : parentTaskDueDate
     
     maxDate = parentEndOfDay
-    console.log('AI: Parent task due date detected:', parentTaskDueDate, 'Max date for AI suggestion:', maxDate)
   } else {
     // Parent task yoksa normal mantık (14 gün)
     maxDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)

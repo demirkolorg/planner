@@ -80,6 +80,7 @@ interface TaskStore {
   getTaskById: (taskId: string) => TaskWithRelations | undefined
   getCompletedTasksCount: (projectId: string) => number
   getPendingTasksCount: (projectId: string) => number
+  getProjectCompletionPercentage: (projectId: string) => number
   getCompletedTasksCountByTag: (tagId: string) => number
   getPendingTasksCountByTag: (tagId: string) => number
   toggleShowCompletedTasks: () => void
@@ -1094,5 +1095,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   getOverdueTasksCountByProject: (projectId: string) => {
     return get().getOverdueTasksByProject(projectId).length
+  },
+
+  getProjectCompletionPercentage: (projectId: string) => {
+    const { tasks } = get()
+    
+    // Projeye ait tüm görevleri al (ana görevler ve alt görevler dahil)
+    const projectTasks = tasks.filter(task => task.projectId === projectId)
+    
+    if (projectTasks.length === 0) return 0
+    
+    // Tamamlanan görev sayısını hesapla
+    const completedTasks = projectTasks.filter(task => task.completed)
+    
+    // Yüzde hesapla
+    const percentage = Math.round((completedTasks.length / projectTasks.length) * 100)
+    
+    return percentage
   }
 }))

@@ -157,7 +157,7 @@ export function TagPicker({ selectedTags, onTagsChange, trigger, className, drop
                 onClick={handleCreateTag}
               >
                 <Plus className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs">Create '{tagSearchInput}'</span>
+                <span className="text-xs">Create &apos;{tagSearchInput}&apos;</span>
               </div>
             )}
           </div>

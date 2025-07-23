@@ -261,8 +261,6 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
       setSelectedTime(timeInput.trim())
       setShowTimeInput(false)
       setIsTimeConfirmLoading(false)
-      
-      console.log('Time confirmed:', timeInput.trim(), 'Date:', selectedDate)
     }
   }
 

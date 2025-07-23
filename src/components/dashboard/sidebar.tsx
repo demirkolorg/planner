@@ -26,15 +26,64 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { CircularProgress } from "@/components/ui/circular-progress"
 import { useRouter } from "next/navigation"
 
 const cardItems = [
-  { name: "Anasayfa", count: null, icon: MdOutlineSpaceDashboard, activeIcon: MdSpaceDashboard, color: "bg-slate-800 text-slate-300 border-slate-700", activeColor: "bg-slate-700 text-slate-200 border-slate-600", href: ROUTES.DASHBOARD },
-  { name: "Bugün", count: 1, icon: FaRegStar, activeIcon: FaStar, color: "bg-green-900/30 text-green-300 border-green-700", activeColor: "bg-green-800/50 text-green-200 border-green-600", href: ROUTES.TODAY },
-  { name: "Zamanlanmış", count: 3, icon: RiCalendarScheduleLine, activeIcon: RiCalendarScheduleFill, color: "bg-purple-900/30 text-purple-300 border-purple-700", activeColor: "bg-purple-800/50 text-purple-200 border-purple-600", href: ROUTES.SCHEDULED },
-  { name: "Pano", count: 2, icon: BsPin, activeIcon: BsFillPinFill, color: "bg-red-900/30 text-red-300 border-red-700", activeColor: "bg-red-800/50 text-red-200 border-red-600", href: ROUTES.BOARD },
-  { name: "Etiketler", count: 2, icon: PiTagSimpleBold, activeIcon: PiTagSimpleFill, color: "bg-amber-900/30 text-amber-300 border-amber-700", activeColor: "bg-amber-800/50 text-amber-200 border-amber-600", href: ROUTES.TAGS },
-  { name: "Tamamlandı", count: 3, icon: FaRegCheckCircle, activeIcon: FaCheckCircle, color: "bg-orange-900/30 text-orange-300 border-orange-700", activeColor: "bg-orange-800/50 text-orange-200 border-orange-600", href: ROUTES.COMPLETED },
+  { 
+    name: "Anasayfa", 
+    count: null, 
+    icon: MdOutlineSpaceDashboard, 
+    activeIcon: MdSpaceDashboard, 
+    color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700", 
+    activeColor: "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-400 dark:border-slate-600", 
+    href: ROUTES.DASHBOARD 
+  },
+  { 
+    name: "Bugün", 
+    count: 1, 
+    icon: FaRegStar, 
+    activeIcon: FaStar, 
+    color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700", 
+    activeColor: "bg-green-200 dark:bg-green-800/50 text-green-800 dark:text-green-200 border-green-400 dark:border-green-600", 
+    href: ROUTES.TODAY 
+  },
+  { 
+    name: "Zamanlanmış", 
+    count: 3, 
+    icon: RiCalendarScheduleLine, 
+    activeIcon: RiCalendarScheduleFill, 
+    color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700", 
+    activeColor: "bg-purple-200 dark:bg-purple-800/50 text-purple-800 dark:text-purple-200 border-purple-400 dark:border-purple-600", 
+    href: ROUTES.SCHEDULED 
+  },
+  { 
+    name: "Pano", 
+    count: 2, 
+    icon: BsPin, 
+    activeIcon: BsFillPinFill, 
+    color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700", 
+    activeColor: "bg-red-200 dark:bg-red-800/50 text-red-800 dark:text-red-200 border-red-400 dark:border-red-600", 
+    href: ROUTES.BOARD 
+  },
+  { 
+    name: "Etiketler", 
+    count: 2, 
+    icon: PiTagSimpleBold, 
+    activeIcon: PiTagSimpleFill, 
+    color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700", 
+    activeColor: "bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-400 dark:border-amber-600", 
+    href: ROUTES.TAGS 
+  },
+  { 
+    name: "Tamamlandı", 
+    count: 3, 
+    icon: FaRegCheckCircle, 
+    activeIcon: FaCheckCircle, 
+    color: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700", 
+    activeColor: "bg-orange-200 dark:bg-orange-800/50 text-orange-800 dark:text-orange-200 border-orange-400 dark:border-orange-600", 
+    href: ROUTES.COMPLETED 
+  },
 ]
 
 
@@ -50,7 +99,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks } = useTaskStore()
+  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
 
@@ -134,6 +183,19 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       
       {isOpen && (
         <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Add Task Button */}
+          <div className="px-4 pt-2 pb-3">
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full px-3 py-2"
+              onClick={() => setIsTaskModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Görev Ekle
+            </Button>
+          </div>
+
           {/* Navigation Cards */}
           <div className="p-4 pb-2">
             <div className="grid grid-cols-2 gap-3">
@@ -169,7 +231,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           
           {/* Projects Section */}
           <div className="px-4 pb-2">
-            <div className="flex items-center justify-between mb-3 px-2 border-b-1 border-gray-600 dark:border-gray-600  pb-2 text-primary">
+            <div className="flex items-center justify-between mb-3 px-2 border-b border-gray-300 dark:border-gray-600 pb-2 text-primary">
               <h3 className="text-sm font-medium ">Projeler</h3>
               <Plus 
                 className="h-4 w-4 cursor-pointer" 
@@ -189,11 +251,13 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 // Eğer taskStore'da görevler yüklendiyse pending sayısını kullan, yoksa API'den gelen sayıyı kullan
                 const displayCount = tasks.length > 0 ? pendingCount : apiCount
                 
+                const completionPercentage = getProjectCompletionPercentage(project.id)
+                
                 return (
                   <Link
                     key={project.id}
                     href={`/projects/${project.id}`}
-                    className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-800 transition-colors group"
+                    className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                   >
                     <div className="flex items-center space-x-2">
                       {project.emoji ? (
@@ -201,9 +265,25 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                       ) : (
                         <div className="w-3 h-3 rounded-full bg-primary" />
                       )}
-                      <span className="text-sm text-gray-300">{project.name}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
                     </div>
-                    <span className="text-xs text-gray-400 font-medium">{displayCount}</span>
+                    <div className="flex items-center space-x-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <CircularProgress 
+                              percentage={completionPercentage} 
+                              size={16} 
+                              strokeWidth={2} 
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p>%{completionPercentage} tamamlandı</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{displayCount}</span>
+                    </div>
                   </Link>
                 )
               })}
@@ -215,6 +295,25 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       {/* Collapsed Navigation Icons */}
       {!isOpen && (
         <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Add Task Button - Collapsed - At Top */}
+          <div className="p-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="w-full h-9"
+                  onClick={() => setIsTaskModalOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Görev Ekle</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
           {/* Navigation Icons */}
           <div className="p-2 space-y-2">
             {cardItems.map((item) => (
@@ -242,51 +341,45 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           </div>
 
           {/* Divider */}
-          <div className="mx-2 border-t border-sidebar-border" />
+          <div className="mx-2 border-t border-gray-200 dark:border-sidebar-border" />
 
           {/* Collapsed Projects */}
           <div className="flex-1 p-2 space-y-2 overflow-y-auto">
-            {sortedProjects.map((project) => (
-              <Tooltip key={project.id}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className={cn(
-                      "flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-accent",
-                      pathname === `/projects/${project.id}` ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {project.emoji ? (
-                      <span className="text-lg">{project.emoji}</span>
-                    ) : (
-                      <div className="w-4 h-4 rounded-full bg-primary" />
-                    )}
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>{project.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
+            {sortedProjects.map((project) => {
+              const completionPercentage = getProjectCompletionPercentage(project.id)
+              
+              return (
+                <Tooltip key={project.id}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className={cn(
+                        "flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-accent",
+                        pathname === `/projects/${project.id}` ? "bg-gray-200 dark:bg-accent text-gray-800 dark:text-accent-foreground" : "text-gray-600 dark:text-muted-foreground hover:text-gray-800 dark:hover:text-foreground"
+                      )}
+                    >
+                      {project.emoji ? (
+                        <span className="text-lg">{project.emoji}</span>
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-primary" />
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{project.name}</p>
+                    <p className="text-xs text-muted-foreground">%{completionPercentage} tamamlandı</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
           </div>
         </div>
       )}
       
       {/* Bottom Actions Section */}
-      <div className="p-2 border-t border-sidebar-border space-y-2">
+      <div className="p-2 space-y-2">
         {isOpen ? (
           <>
-            {/* Add Task Button - Full width when expanded */}
-            <Button
-              variant="default"
-              size="sm"
-              className="w-full px-3 py-2"
-              onClick={() => setIsTaskModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Görev Ekle
-            </Button>
-            
             {/* Action Buttons Row */}
             <div className="flex items-center justify-between">
               <Button
@@ -342,22 +435,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         ) : (
           /* Collapsed state - vertical icon stack */
           <div className="flex flex-col items-center space-y-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setIsTaskModalOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Görev Ekle</p>
-              </TooltipContent>
-            </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
