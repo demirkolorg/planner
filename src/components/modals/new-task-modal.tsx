@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Clock, ChevronRight, Plus, ChevronLeft, Tag, Check, Search, Bell, ChevronDown, Sparkles, Wand2 } from "lucide-react"
+import { X, Calendar, Search, ChevronDown, Sparkles, Wand2 } from "lucide-react"
 import { generateTaskSuggestion, improveBrief } from "@/lib/ai"
+import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 import { TagPicker } from "@/components/ui/tag-picker"
@@ -58,6 +59,15 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [isAILoading, setIsAILoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("yap")
   const [showAIHelper, setShowAIHelper] = useState(true)
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    title: "",
+    message: ""
+  })
 
   useEffect(() => {
     if (isOpen) {
@@ -136,6 +146,38 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection, parentTaskId, getTaskById])
 
   const handleDateTimeSave = (dateTime: string | null) => {
+    // Parent task validasyonu
+    if (parentTaskId && dateTime) {
+      const parentTask = getTaskById(parentTaskId)
+      if (parentTask?.dueDate) {
+        const parentDueDate = new Date(parentTask.dueDate)
+        const selectedDate = new Date(dateTime)
+        
+        // Eğer parent task'ın saati 00:00 ise, gün sonuna kadar (23:59) izin ver
+        const parentTaskEndOfDay = parentDueDate.getHours() === 0 && parentDueDate.getMinutes() === 0
+          ? new Date(parentDueDate.getFullYear(), parentDueDate.getMonth(), parentDueDate.getDate(), 23, 59, 59)
+          : parentDueDate
+        
+        if (selectedDate > parentTaskEndOfDay) {
+          const parentDueDateWithTime = parentDueDate.getHours() === 0 && parentDueDate.getMinutes() === 0
+            ? parentDueDate.toLocaleDateString('tr-TR')
+            : `${parentDueDate.toLocaleDateString('tr-TR')} ${parentDueDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
+          
+          const selectedDateDisplay = new Date(dateTime).toLocaleDateString('tr-TR') + 
+            (new Date(dateTime).getHours() !== 0 || new Date(dateTime).getMinutes() !== 0 
+              ? ` ${new Date(dateTime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}` 
+              : '')
+          
+          setAlertConfig({
+            isOpen: true,
+            title: "Tarih Sınırı Aşıldı",
+            message: `Alt görevin bitiş tarihi (${selectedDateDisplay}), üst görevin bitiş tarihinden (${parentDueDateWithTime}) sonra olamaz.`
+          })
+          return
+        }
+      }
+    }
+    
     setSelectedDateTime(dateTime)
     setShowDatePicker(false)
   }
@@ -517,6 +559,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     onSave={handleDateTimeSave}
                     onCancel={handleDateTimeCancel}
                     isModal={true}
+                    parentTaskDueDate={parentTaskId ? (() => {
+                      const parentTask = getTaskById(parentTaskId)
+                      return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
+                    })() : null}
                   />
                 </div>
               )}
@@ -546,6 +592,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   <ReminderPicker
                     selectedReminders={reminders}
                     onRemindersChange={setReminders}
+                    parentTaskDueDate={parentTaskId ? (() => {
+                      const parentTask = getTaskById(parentTaskId)
+                      return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
+                    })() : null}
                   />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -681,6 +731,13 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         </div>
         </DialogContent>
       </Dialog>
+      
+      <ValidationAlert
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ isOpen: false, title: "", message: "" })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </TooltipProvider>
   )
 }

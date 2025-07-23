@@ -3,21 +3,24 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { X, Plus, ChevronLeft, ChevronRight, Clock, Bell } from "lucide-react"
+import { ValidationAlert } from "@/components/ui/validation-alert"
 
 interface ReminderPickerProps {
   selectedReminders: string[]
   onRemindersChange: (reminders: string[]) => void
   trigger?: React.ReactNode
   dropdownPosition?: 'top' | 'bottom'
+  parentTaskDueDate?: Date | null
 }
 
 export function ReminderPicker({
   selectedReminders,
   onRemindersChange,
   trigger,
-  dropdownPosition = 'bottom'
+  dropdownPosition = 'bottom',
+  parentTaskDueDate
 }: ReminderPickerProps) {
   const [showReminderPicker, setShowReminderPicker] = useState(false)
   const [showReminderCalendar, setShowReminderCalendar] = useState(false)
@@ -25,6 +28,15 @@ export function ReminderPicker({
   const [reminderTime, setReminderTime] = useState<string>("")
   const [reminderMonth, setReminderMonth] = useState(6) // Temmuz
   const [reminderYear, setReminderYear] = useState(2025)
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    title: "",
+    message: ""
+  })
 
   const formatReminderTimeInput = (value: string) => {
     // Sadece sayıları al
@@ -83,13 +95,55 @@ export function ReminderPicker({
 
   const handleConfirmReminder = () => {
     if (reminderDate && reminderTime) {
-      // Geçmiş tarih kontrolü
-      const reminderDateTime = new Date(`${reminderDate} ${reminderTime}`)
-      const now = new Date()
-      
-      if (reminderDateTime < now) {
-        alert('Geçmiş tarih/saat seçilemez. Lütfen gelecek bir tarih ve saat seçin.')
-        return
+      // Türkçe tarih formatını parse et
+      const parts = reminderDate.split(' ')
+      if (parts.length === 3) {
+        const day = parseInt(parts[0])
+        const monthName = parts[1]
+        const year = parseInt(parts[2])
+        const [hours, minutes] = reminderTime.split(':').map(Number)
+        
+        const monthMap: Record<string, number> = {
+          'Ocak': 0, 'Şubat': 1, 'Mart': 2, 'Nisan': 3,
+          'Mayıs': 4, 'Haziran': 5, 'Temmuz': 6, 'Ağustos': 7,
+          'Eylül': 8, 'Ekim': 9, 'Kasım': 10, 'Aralık': 11
+        }
+        
+        const monthIndex = monthMap[monthName]
+        if (monthIndex !== undefined) {
+          const reminderDateTime = new Date(year, monthIndex, day, hours, minutes)
+          const now = new Date()
+          
+          if (reminderDateTime < now) {
+            setAlertConfig({
+              isOpen: true,
+              title: "Geçersiz Tarih",
+              message: "Geçmiş tarih/saat seçilemez. Lütfen gelecek bir tarih ve saat seçin."
+            })
+            return
+          }
+          
+          // Parent task bitiş tarihi kontrolü
+          if (parentTaskDueDate) {
+            // Eğer parent task'ın saati 00:00 ise, gün sonuna kadar (23:59) izin ver
+            const parentTaskEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+              ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+              : parentTaskDueDate
+            
+            if (reminderDateTime > parentTaskEndOfDay) {
+              const parentDueDateWithTime = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+                ? parentTaskDueDate.toLocaleDateString('tr-TR')
+                : `${parentTaskDueDate.toLocaleDateString('tr-TR')} ${parentTaskDueDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
+              
+              setAlertConfig({
+                isOpen: true,
+                title: "Tarih Sınırı Aşıldı",
+                message: `Hatırlatıcı tarihi (${reminderDate} ${reminderTime}), üst görevin bitiş tarihinden (${parentDueDateWithTime}) sonra olamaz.`
+              })
+              return
+            }
+          }
+        }
       }
       
       const reminderText = `${reminderDate} ${reminderTime}`
@@ -158,7 +212,7 @@ export function ReminderPicker({
             {selectedReminders.length === 0 ? (
               <div className="text-center py-4">
                 <p className="text-xs text-muted-foreground mb-2">
-                  Hatırlatıcılar listeniz burada görünecek. '+' düğmesine tıklayarak bir tane ekleyin
+                  Hatırlatıcılar listeniz burada görünecek. &apos;+&apos; düğmesine tıklayarak bir tane ekleyin
                 </p>
               </div>
             ) : (
@@ -303,6 +357,13 @@ export function ReminderPicker({
           </div>
         )}
       </div>
+      
+      <ValidationAlert
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ isOpen: false, title: "", message: "" })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </TooltipProvider>
   )
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Calendar, Clock, X, Star, ChevronRight, ChevronLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ValidationAlert } from "@/components/ui/validation-alert"
 
 interface DateTimePickerProps {
   initialDateTime?: string
@@ -11,9 +12,10 @@ interface DateTimePickerProps {
   onCancel: () => void
   position?: { x: number; y: number }
   isModal?: boolean // Modal kullanımı için
+  parentTaskDueDate?: Date | null
 }
 
-export function DateTimePicker({ initialDateTime, onSave, onCancel, position, isModal = false }: DateTimePickerProps) {
+export function DateTimePicker({ initialDateTime, onSave, onCancel, position, isModal = false, parentTaskDueDate }: DateTimePickerProps) {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
   const [timeInput, setTimeInput] = useState("")
@@ -22,6 +24,15 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
   const [currentMonth, setCurrentMonth] = useState(6) // 0-11 (Temmuz = 6)
   const [currentYear, setCurrentYear] = useState(2025)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    title: "",
+    message: ""
+  })
 
   useEffect(() => {
     if (initialDateTime) {
@@ -105,15 +116,47 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
       const today = new Date()
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
       if (date < todayStart) {
-        alert('Geçmiş tarih seçilemez. Lütfen bugünden sonra bir tarih seçin.')
+        setAlertConfig({
+          isOpen: true,
+          title: "Geçersiz Tarih",
+          message: "Geçmiş tarih seçilemez. Lütfen bugünden sonra bir tarih seçin."
+        })
         return
+      }
+
+      // Parent task bitiş tarihi kontrolü
+      if (parentTaskDueDate) {
+        // Eğer parent task'ın saati 00:00 ise, gün sonuna kadar (23:59) izin ver
+        const parentTaskEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+          ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+          : parentTaskDueDate
+        
+        if (date > parentTaskEndOfDay) {
+          const parentDueDateWithTime = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+            ? parentTaskDueDate.toLocaleDateString('tr-TR')
+            : `${parentTaskDueDate.toLocaleDateString('tr-TR')} ${parentTaskDueDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
+          
+          const selectedDateDisplay = selectedTime 
+            ? `${selectedDate} ${selectedTime}`
+            : selectedDate
+          
+          setAlertConfig({
+            isOpen: true,
+            title: "Tarih Sınırı Aşıldı",
+            message: `Alt görevin bitiş tarihi (${selectedDateDisplay}), üst görevin bitiş tarihinden (${parentDueDateWithTime}) sonra olamaz.`
+          })
+          return
+        }
       }
 
       // ISO string olarak gönder
       onSave(date.toISOString())
     } catch (error) {
-      console.error('Invalid date format:', error)
-      alert('Geçersiz tarih formatı. Lütfen DD.MM.YYYY formatında girin.')
+      setAlertConfig({
+        isOpen: true,
+        title: "Geçersiz Format",
+        message: "Geçersiz tarih formatı. Lütfen DD.MM.YYYY formatında girin."
+      })
     }
   }
 
@@ -522,6 +565,13 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
           </div>
         )}
       </div>
+      
+      <ValidationAlert
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig({ isOpen: false, title: "", message: "" })}
+        title={alertConfig.title}
+        message={alertConfig.message}
+      />
     </div>
   )
 }
