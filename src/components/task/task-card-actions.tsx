@@ -62,6 +62,28 @@ interface TaskCardActionsProps {
   onDelete?: (taskId: string) => void
   onCopy?: (taskId: string) => void
   onMove?: (taskId: string) => void
+  onEdit?: (task: Task & {
+    createdAt: string
+    updatedAt: string
+    dueDate?: string
+    tags?: Array<{
+      id: string
+      taskId: string
+      tagId: string
+      tag: {
+        id: string
+        name: string
+        color: string
+      }
+    }>
+    reminders?: Array<{
+      id: string
+      taskId: string
+      datetime: Date
+      message?: string
+      isActive: boolean
+    }>
+  }) => void
   isFirstInSection?: boolean
 }
 
@@ -75,6 +97,7 @@ export function TaskCardActions({
   onDelete,
   onCopy,
   onMove,
+  onEdit,
   isFirstInSection = false
 }: TaskCardActionsProps) {
   const [showMoreActions, setShowMoreActions] = useState(false)
@@ -133,6 +156,11 @@ export function TaskCardActions({
   const handleMove = (e: React.MouseEvent) => {
     e.stopPropagation()
     onMove?.(task.id)
+  }
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit?.(task)
   }
 
   return (
@@ -268,7 +296,7 @@ export function TaskCardActions({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={handleEdit}>
               <span>Görevi düzenle</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCopy}>

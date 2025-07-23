@@ -66,6 +66,63 @@ export default function ProjectDetailPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [editingTask, setEditingTask] = useState<{
+    id: string
+    title: string
+    description?: string
+    projectId: string
+    sectionId: string
+    priority: string
+    dueDate?: string
+    tags?: Array<{
+      id: string
+      taskId: string
+      tagId: string
+      tag: {
+        id: string
+        name: string
+        color: string
+      }
+    }>
+    reminders?: Array<{
+      id: string
+      taskId: string
+      datetime: Date
+      message?: string
+      isActive: boolean
+    }>
+  } | null>(null)
+  
+  // Task edit handler
+  const handleEditTask = useCallback((task: {
+    id: string
+    title: string
+    description?: string
+    projectId: string
+    sectionId: string
+    priority: string
+    dueDate?: string
+    tags?: Array<{
+      id: string
+      taskId: string
+      tagId: string
+      tag: {
+        id: string
+        name: string
+        color: string
+      }
+    }>
+    reminders?: Array<{
+      id: string
+      taskId: string
+      datetime: Date
+      message?: string
+      isActive: boolean
+    }>
+  }) => {
+    setEditingTask(task)
+    setIsTaskModalOpen(true)
+  }, [])
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
@@ -614,6 +671,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   onPin={toggleTaskPin}
+                  onEdit={handleEditTask}
                   onCopy={(taskId) => {
                     const taskToClone = tasksWithoutSection.find(t => t.id === taskId)
                     if (taskToClone) {
@@ -807,6 +865,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onPin={toggleTaskPin}
+                      onEdit={handleEditTask}
                       onCopy={(taskId) => {
                         const taskToClone = sectionTasks.find(t => t.id === taskId)
                         if (taskToClone) {
@@ -965,6 +1024,7 @@ export default function ProjectDetailPage() {
         onClose={() => {
           setIsTaskModalOpen(false)
           setTaskModalContext({})
+          setEditingTask(null)
         }}
         onTaskCreated={async (newTask) => {
           if (!newTask) {
@@ -977,6 +1037,7 @@ export default function ProjectDetailPage() {
         defaultSection={taskModalContext.section}
         parentTaskId={taskModalContext.parentTaskId}
         parentTaskTitle={taskModalContext.parentTaskTitle}
+        editingTask={editingTask}
       />
 
       {/* Bölüm Taşıma Modal'ı */}

@@ -64,6 +64,7 @@ interface TaskCardProps {
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
+  onEdit?: (task: TaskWithRelations) => void
   className?: string
   isFirstInSection?: boolean
   // Hiyerarşik görünüm için yeni props
@@ -86,6 +87,7 @@ export function TaskCard({
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
+  onEdit,
   className,
   isFirstInSection = false,
   // Hiyerarşik görünüm props
@@ -580,6 +582,7 @@ export function TaskCard({
                 onDelete={onDelete}
                 onCopy={onCopy}
                 onMove={onMove}
+                onEdit={onEdit}
                 isFirstInSection={isFirstInSection}
               />
             </div>

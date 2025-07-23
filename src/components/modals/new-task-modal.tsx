@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Search, ChevronDown, Sparkles, Wand2 } from "lucide-react"
+import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag } from "lucide-react"
 import { generateTaskSuggestion, improveBrief } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DateTimePicker } from "../shared/date-time-picker"
@@ -16,6 +16,7 @@ import { ReminderPicker } from "@/components/ui/reminder-picker"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
+import { PRIORITIES } from "@/lib/constants/priority"
 
 import type { Project, Section, CreateTaskRequest } from "@/types/task"
 
@@ -36,9 +37,35 @@ interface NewTaskModalProps {
   }
   parentTaskId?: string
   parentTaskTitle?: string
+  editingTask?: {
+    id: string
+    title: string
+    description?: string
+    projectId: string
+    sectionId: string
+    priority: string
+    dueDate?: string
+    tags?: Array<{
+      id: string
+      taskId: string
+      tagId: string
+      tag: {
+        id: string
+        name: string
+        color: string
+      }
+    }>
+    reminders?: Array<{
+      id: string
+      taskId: string
+      datetime: Date
+      message?: string
+      isActive: boolean
+    }>
+  }
 }
 
-export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection, parentTaskId, parentTaskTitle }: NewTaskModalProps) {
+export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection, parentTaskId, parentTaskTitle, editingTask }: NewTaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -53,7 +80,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
   const [reminders, setReminders] = useState<string[]>([])
   const { tags, fetchTags, createTag } = useTagStore()
-  const { createTask, getTaskById } = useTaskStore()
+  const { updateTaskTags, updateTaskReminders } = useTaskStore()
+  const { createTask, updateTask, getTaskById } = useTaskStore()
   const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
@@ -71,17 +99,49 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
   useEffect(() => {
     if (isOpen) {
-      setTitle("")
-      setDescription("")
+      if (editingTask) {
+        // Düzenleme modunda mevcut verileri yükle
+        setTitle(editingTask.title)
+        setDescription(editingTask.description || "")
+        
+        // Priority mapping (İngilizce'den Türkçe'ye)
+        const priorityMapping: Record<string, string> = {
+          'HIGH': 'Yüksek',
+          'MEDIUM': 'Orta',
+          'LOW': 'Düşük',
+          'NONE': 'Yok',
+          'CRITICAL': 'Kritik'
+        }
+        const mappedPriority = priorityMapping[editingTask.priority] || editingTask.priority
+        setSelectedPriority(mappedPriority)
+        
+        setSelectedDateTime(editingTask.dueDate || null)
+        setSelectedTags(editingTask.tags?.map(t => t.tag.name) || [])
+        setReminders(editingTask.reminders?.map(r => {
+          const date = new Date(r.datetime)
+          const day = date.getDate()
+          const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+          const month = monthNames[date.getMonth()]
+          const year = date.getFullYear()
+          const time = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+          return `${day} ${month} ${year} ${time}`
+        }) || [])
+      } else {
+        // Yeni görev modunda temiz başla
+        setTitle("")
+        setDescription("")
+        setSelectedTags([])
+        setSelectedPriority("Yok")
+        setReminders([])
+        setSelectedDateTime(null)
+      }
+      
       setProjectSearchInput("")
       setSectionSearchInput("")
       setShowProjectPicker(false)
       setShowSectionPicker(false)
       setShowDatePicker(false)
-      setSelectedTags([])
-      setSelectedPriority("Yok")
-      setReminders([])
-      setSelectedDateTime(null)
       setIsSubmitting(false)
       setIsAILoading(false)
       setAiPrompt("yap")
@@ -89,7 +149,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       fetchTags() // Fetch real tags data
       fetchProjects() // Fetch projects data
     }
-  }, [isOpen, fetchTags, fetchProjects])
+  }, [isOpen, editingTask, fetchTags, fetchProjects])
 
   // Store'dan sections al
   const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []
@@ -97,8 +157,21 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   // Default proje ve bölüm seçimleri
   useEffect(() => {
     if (isOpen) {
-      // Eğer parent task ID'si verilmişse, parent task'ın proje/bölüm bilgilerini kullan
-      if (parentTaskId) {
+      // Düzenleme modu: editingTask'tan proje/bölüm bilgilerini yükle
+      if (editingTask) {
+        const editingProject = projects.find(p => p.id === editingTask.projectId)
+        if (editingProject) {
+          setSelectedProject(editingProject)
+          fetchSections(editingProject.id).then(() => {
+            const editingSection = getSectionsByProject(editingProject.id).find(s => s.id === editingTask.sectionId)
+            if (editingSection) {
+              setSelectedSection(editingSection)
+            }
+          })
+        }
+      }
+      // Parent task ID'si verilmişse, parent task'ın proje/bölüm bilgilerini kullan
+      else if (parentTaskId) {
         const parentTask = getTaskById(parentTaskId)
         if (parentTask) {
           const parentProject = projects.find(p => p.id === parentTask.projectId)
@@ -143,7 +216,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         }
       }
     }
-  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection, parentTaskId, getTaskById])
+  }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection, parentTaskId, editingTask, getTaskById])
 
   const handleDateTimeSave = (dateTime: string | null) => {
     // Parent task validasyonu
@@ -217,6 +290,20 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     setSelectedTags(newTags)
   }
 
+  const getPriorityColor = () => {
+    // İngilizce priority değerlerini Türkçe'ye eşleştir (edit modunda gelen değerler için)
+    const priorityMapping: Record<string, string> = {
+      'HIGH': 'Yüksek',
+      'MEDIUM': 'Orta',
+      'LOW': 'Düşük',
+      'NONE': 'Yok',
+      'CRITICAL': 'Kritik'
+    }
+    
+    const mappedPriority = priorityMapping[selectedPriority] || selectedPriority
+    const priority = PRIORITIES.find(p => p.name === mappedPriority)
+    return priority?.color || "#9ca3af" // Varsayılan olarak "Yok" rengini kullan
+  }
 
   const handlePrioritySelect = (priority: string) => {
     setSelectedPriority(priority)
@@ -287,30 +374,63 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         return reminder
       })
 
-      const taskData: CreateTaskRequest = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        projectId: selectedProject.id,
-        sectionId: selectedSection.id,
-        priority: selectedPriority,
-        dueDate: selectedDateTime || undefined,
-        tags: selectedTags,
-        reminders: formattedReminders,
-        ...(parentTaskId && { parentTaskId })
+      if (editingTask) {
+        // Düzenleme modu: mevcut görevi güncelle
+        const updateData = {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          projectId: selectedProject.id,
+          sectionId: selectedSection.id,
+          priority: selectedPriority,
+          dueDate: selectedDateTime || undefined,
+        }
+
+        await updateTask(editingTask.id, updateData)
+        
+        // Etiketleri güncelle
+        if (selectedTags.length > 0) {
+          const tagIds = selectedTags.map(tagName => {
+            const tag = tags.find(t => t.name === tagName)
+            return tag?.id
+          }).filter(Boolean) as string[]
+          await updateTaskTags(editingTask.id, tagIds)
+        }
+        
+        // Hatırlatıcıları güncelle
+        if (formattedReminders.length > 0) {
+          const reminderData = formattedReminders.map(reminder => ({
+            datetime: new Date(reminder),
+            isActive: true
+          }))
+          await updateTaskReminders(editingTask.id, reminderData)
+        }
+      } else {
+        // Yeni görev modu: yeni görev oluştur
+        const taskData: CreateTaskRequest = {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          projectId: selectedProject.id,
+          sectionId: selectedSection.id,
+          priority: selectedPriority,
+          dueDate: selectedDateTime || undefined,
+          tags: selectedTags,
+          reminders: formattedReminders,
+          ...(parentTaskId && { parentTaskId })
+        }
+
+        const newTask = await createTask(taskData)
+        
+        if (onTaskCreated) {
+          onTaskCreated(newTask)
+        }
       }
 
-      // TaskStore'u kullanarak görev oluştur
-      const newTask = await createTask(taskData)
-
-      // Önce modal'ı kapat
+      // Modal'ı kapat
       onClose()
       
-      // Sonra callback'leri çağır
+      // onSave callback'ini çağır
       if (onSave) {
         onSave(title.trim(), description.trim(), selectedProject.id, selectedSection.id)
-      }
-      if (onTaskCreated) {
-        onTaskCreated(newTask)
       }
     } catch (error) {
       // TODO: Kullanıcıya hata mesajı göster
@@ -394,7 +514,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
           <DialogTitle className="text-lg font-semibold">
-            {parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : '🎯 Görev Ekle'}
+            {editingTask ? '✏️ Görevi Düzenle' : 
+             parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : 
+             '🎯 Görev Ekle'}
           </DialogTitle>
           <Button
             variant="ghost"
@@ -407,58 +529,60 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
         {/* Content */}
         <div className="space-y-4">
-          {/* AI Helper */}
-          <div className="border rounded-lg p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="h-4 w-4 text-purple-600" />
-                <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                  AI Yardımcı
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAIHelper(!showAIHelper)}
-                className="h-6 px-2"
-              >
-                {showAIHelper ? "Gizle" : "Göster"}
-              </Button>
-            </div>
-            
-            {showAIHelper && (
-              <div className="space-y-2">
-                <div className="flex space-x-2">
-                  <Input
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder="Görevle ilgili ne yapmak istiyorsun? (örn: 'blog yazısı yaz', 'toplantı planla')"
-                    className="flex-1 text-sm"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleAIGenerate()
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleAIGenerate}
-                    disabled={!aiPrompt.trim() || isAILoading}
-                    size="sm"
-                    className="px-3"
-                  >
-                    {isAILoading ? (
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
-                    ) : (
-                      <Wand2 className="h-3 w-3" />
-                    )}
-                  </Button>
+          {/* AI Helper - Sadece yeni görev modunda göster */}
+          {!editingTask && (
+            <div className="border rounded-lg p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                    AI Yardımcı
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  AI size uygun bir görev başlığı ve açıklama önerecek
-                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAIHelper(!showAIHelper)}
+                  className="h-6 px-2"
+                >
+                  {showAIHelper ? "Gizle" : "Göster"}
+                </Button>
               </div>
-            )}
-          </div>
+              
+              {showAIHelper && (
+                <div className="space-y-2">
+                  <div className="flex space-x-2">
+                    <Input
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="Görevle ilgili ne yapmak istiyorsun? (örn: 'blog yazısı yaz', 'toplantı planla')"
+                      className="flex-1 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAIGenerate()
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleAIGenerate}
+                      disabled={!aiPrompt.trim() || isAILoading}
+                      size="sm"
+                      className="px-3"
+                    >
+                      {isAILoading ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                      ) : (
+                        <Wand2 className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    AI size uygun bir görev başlığı ve açıklama önerecek
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Title Input */}
           <div>
@@ -582,6 +706,20 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   <TagPicker
                     selectedTags={selectedTags}
                     onTagsChange={handleTagsChange}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 relative"
+                      >
+                        <Tag className="h-4 w-4" />
+                        {selectedTags.length > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
+                            {selectedTags.length}
+                          </span>
+                        )}
+                      </Button>
+                    }
                   />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -589,10 +727,30 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 </TooltipContent>
               </Tooltip>
               
-              <PriorityPicker
-                selectedPriority={selectedPriority}
-                onPrioritySelect={handlePrioritySelect}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PriorityPicker
+                    selectedPriority={selectedPriority}
+                    onPrioritySelect={handlePrioritySelect}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        style={{ color: getPriorityColor() }}
+                      >
+                        <Flag 
+                          className="h-4 w-4" 
+                          style={{ fill: 'currentColor', stroke: 'currentColor' }}
+                        />
+                      </Button>
+                    }
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Öncelik</p>
+                </TooltipContent>
+              </Tooltip>
               
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -620,9 +778,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => !parentTaskId && setShowProjectPicker(!showProjectPicker)}
+                  onClick={() => (!parentTaskId && !editingTask) && setShowProjectPicker(!showProjectPicker)}
                   className="flex items-center space-x-2"
-                  disabled={!!parentTaskId}
+                  disabled={!!parentTaskId || !!editingTask}
                 >
                 {selectedProject ? (
                   <span className="truncate max-w-[200px]">
@@ -683,9 +841,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => !parentTaskId && setShowSectionPicker(!showSectionPicker)}
+                  onClick={() => (!parentTaskId && !editingTask) && setShowSectionPicker(!showSectionPicker)}
                   className="flex items-center space-x-2"
-                  disabled={!selectedProject || !!parentTaskId}
+                  disabled={!selectedProject || !!parentTaskId || !!editingTask}
                 >
                   {selectedSection ? (
                     <span className="truncate max-w-[150px]">
@@ -732,7 +890,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
               onClick={handleSave}
               disabled={!title.trim() || !selectedProject || !selectedSection || isSubmitting}
             >
-              {isSubmitting ? "Ekleniyor..." : (parentTaskId ? "Alt Görev Ekle" : "Görev Ekle")}
+              {isSubmitting ? (editingTask ? "Güncelleniyor..." : "Ekleniyor...") : 
+               editingTask ? "Görevi Güncelle" :
+               parentTaskId ? "Alt Görev Ekle" : "Görev Ekle"}
             </Button>
           </div>
         </div>

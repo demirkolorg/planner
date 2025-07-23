@@ -36,6 +36,7 @@ interface HierarchicalTaskListProps {
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
+  onEdit?: (task: Task) => void
   onMoveTask?: (taskId: string, newParentId: string | null) => void
   className?: string
   showTreeConnectors?: boolean
@@ -54,6 +55,7 @@ export function HierarchicalTaskList({
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
+  onEdit,
   onMoveTask,
   className = "",
   showTreeConnectors = true,
@@ -186,6 +188,7 @@ export function HierarchicalTaskList({
               onUpdateTags={onUpdateTags}
               onUpdatePriority={onUpdatePriority}
               onUpdateReminders={onUpdateReminders}
+              onEdit={onEdit}
               isDragDisabled={false}
             />
           ) : (
@@ -218,6 +221,7 @@ export function HierarchicalTaskList({
                 onUpdateTags={onUpdateTags}
                 onUpdatePriority={onUpdatePriority}
                 onUpdateReminders={onUpdateReminders}
+                onEdit={onEdit}
                 className={task.level && task.level > 0 ? `ml-${task.level * 6}` : ""}
                 // Tree expansion state
                 isExpanded={isExpanded}

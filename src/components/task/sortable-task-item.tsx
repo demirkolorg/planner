@@ -24,6 +24,7 @@ interface SortableTaskItemProps {
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
+  onEdit?: (task: TaskWithHierarchy) => void
   isDragDisabled?: boolean
 }
 
@@ -43,6 +44,7 @@ export const SortableTaskItem = forwardRef<HTMLDivElement, SortableTaskItemProps
   onUpdateTags,
   onUpdatePriority,
   onUpdateReminders,
+  onEdit,
   isDragDisabled = false,
   ...props
 }, ref) => {
@@ -121,6 +123,7 @@ export const SortableTaskItem = forwardRef<HTMLDivElement, SortableTaskItemProps
           onUpdateTags={onUpdateTags}
           onUpdatePriority={onUpdatePriority}
           onUpdateReminders={onUpdateReminders}
+          onEdit={onEdit}
           // Tree expansion state
           isExpanded={isExpanded}
           hasChildren={hasChildren}
