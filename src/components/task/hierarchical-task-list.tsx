@@ -80,8 +80,6 @@ export function HierarchicalTaskList({
   // Expand durumuna göre görünür task listesi
   const visibleTasks = useMemo(() => {
     const result = flattenHierarchy(hierarchicalTasks, expandedTaskIds)
-    console.log('Flattened tasks:', result.map(t => ({ title: t.title, level: t.level })))
-    console.log('Expanded IDs:', Array.from(expandedTaskIds))
     return result
   }, [hierarchicalTasks, expandedTaskIds])
   
@@ -90,17 +88,13 @@ export function HierarchicalTaskList({
   
   // Expand/collapse toggle
   const toggleExpanded = useCallback((taskId: string) => {
-    console.log('Toggling expand for task:', taskId)
     setExpandedTaskIds(prev => {
       const newSet = new Set(prev)
       if (newSet.has(taskId)) {
         newSet.delete(taskId)
-        console.log('Collapsed task:', taskId)
       } else {
         newSet.add(taskId)
-        console.log('Expanded task:', taskId)
       }
-      console.log('New expanded set:', Array.from(newSet))
       return newSet
     })
   }, [])

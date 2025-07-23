@@ -118,7 +118,6 @@ export async function generateTaskSuggestion(
         result = { title: prompt, description: `${prompt} ile ilgili görev` }
       }
     } catch (parseError) {
-      console.error('JSON parse hatası:', parseError)
       // Parse edilemezse fallback
       result = { title: prompt, description: `${prompt} ile ilgili görev` }
     }
@@ -138,7 +137,6 @@ export async function generateTaskSuggestion(
       reminders: randomReminders
     }
   } catch (error) {
-    console.error('AI görev önerisi hatası:', error)
     // Fallback olarak basit sonuç döndür
     const fallbackPriority = getRandomPriority()
     const fallbackTags = getRandomTags(availableTags)
@@ -184,7 +182,6 @@ export async function improveBrief(brief: string): Promise<string> {
 
     return content || brief
   } catch (error) {
-    console.error('AI açıklama geliştirme hatası:', error)
     return brief
   }
 }

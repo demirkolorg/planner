@@ -30,7 +30,9 @@
       "Bash(tsx scripts/migrate-existing-data.ts:*)",
       "Bash(bunx tsx:*)",
       "Bash(bunx tsc:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c:*)"
     ],
     "deny": []
   }

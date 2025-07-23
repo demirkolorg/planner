@@ -271,7 +271,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         onTaskCreated(newTask)
       }
     } catch (error) {
-      console.error('Error creating task:', error)
       // TODO: Kullanıcıya hata mesajı göster
     } finally {
       setIsSubmitting(false)
@@ -323,7 +322,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setAiPrompt("yap")
       setShowAIHelper(true)
     } catch (error) {
-      console.error('AI görev oluşturma hatası:', error)
     } finally {
       setIsAILoading(false)
     }
@@ -337,7 +335,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       const improvedDescription = await improveBrief(description)
       setDescription(improvedDescription)
     } catch (error) {
-      console.error('AI açıklama geliştirme hatası:', error)
     } finally {
       setIsAILoading(false)
     }

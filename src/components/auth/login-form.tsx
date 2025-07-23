@@ -92,7 +92,6 @@ export function LoginForm({
       router.push(ROUTES.HOME)
       setIsSubmitting(false)
     } catch (error) {
-      console.error('Login error:', error)
       setApiError(error instanceof Error ? error.message : MESSAGES.ERROR.GENERIC_ERROR)
     } finally {
     }

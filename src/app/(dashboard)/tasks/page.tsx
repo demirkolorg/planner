@@ -328,11 +328,9 @@ export default function TasksPage() {
   }
 
   const handleUpdate = (taskId: string, updates: Record<string, unknown>) => {
-    console.log("Update task:", taskId, updates)
   }
 
   const handleDelete = (taskId: string) => {
-    console.log("Delete task:", taskId)
   }
 
   const handlePin = () => {
@@ -340,11 +338,9 @@ export default function TasksPage() {
   }
 
   const handleAddSubTask = (parentTaskId: string) => {
-    console.log("Add sub task to:", parentTaskId)
   }
 
   const handleUpdateTags = (taskId: string, tags: string[]) => {
-    console.log("Update tags:", taskId, tags)
   }
 
   const handleUpdatePriority = (taskId: string, priority: string) => {
@@ -352,7 +348,6 @@ export default function TasksPage() {
   }
 
   const handleUpdateReminders = (taskId: string, reminders: string[]) => {
-    console.log("Update reminders:", taskId, reminders)
   }
 
   return (
@@ -699,14 +694,14 @@ export default function TasksPage() {
                       <TaskCard
                         key={task.id}
                         task={task}
-                        onToggleComplete={(taskId) => console.log("Toggle complete:", taskId)}
-                        onUpdate={(taskId, updates) => console.log("Update task:", taskId, updates)}
-                        onDelete={(taskId) => console.log("Delete task:", taskId)}
-                        onPin={(taskId) => console.log("Pin task:", taskId)}
-                        onAddSubTask={(parentTaskId) => console.log("Add sub task:", parentTaskId)}
-                        onUpdateTags={(taskId, tags) => console.log("Update tags:", taskId, tags)}
-                        onUpdatePriority={(taskId, priority) => console.log("Update priority:", taskId, priority)}
-                        onUpdateReminders={(taskId, reminders) => console.log("Update reminders:", taskId, reminders)}
+                        onToggleComplete={(taskId) => {}}
+                        onUpdate={(taskId, updates) => {}}
+                        onDelete={(taskId) => {}}
+                        onPin={(taskId) => {}}
+                        onAddSubTask={(parentTaskId) => {}}
+                        onUpdateTags={(taskId, tags) => {}}
+                        onUpdatePriority={(taskId, priority) => {}}
+                        onUpdateReminders={(taskId, reminders) => {}}
                       />
                     ))}
                   </div>

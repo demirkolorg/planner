@@ -115,10 +115,6 @@ export function TaskCard({
   }
 
   const handleToggleExpanded = () => {
-    console.log('TaskCard handleToggleExpanded called', { 
-      hasChildren, 
-      externalOnToggleExpanded: !!externalOnToggleExpanded 
-    })
     if (externalOnToggleExpanded) {
       // Hiyerarşik modda external handler kullan - children olsun ya da olmasın çağır
       externalOnToggleExpanded()
@@ -150,7 +146,6 @@ export function TaskCard({
       await onUpdate?.(task.id, updateData)
       setIsEditingDate(false)
     } catch (error) {
-      console.error('Failed to update date:', error)
       setIsEditingDate(false) // Hata durumunda da edit modunu kapat
     }
   }
@@ -263,7 +258,6 @@ export function TaskCard({
             backgroundColor: isExpanded ? (getPriorityColorHex() + '1A' || '#3b82f6' + '1A') : 'transparent'
           }}
           onClick={(e) => {
-            console.log('TaskCard header clicked', { hasChildren })
             handleToggleExpanded()
           }}
         >

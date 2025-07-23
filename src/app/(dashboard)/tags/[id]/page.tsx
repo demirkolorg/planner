@@ -177,27 +177,23 @@ export default function TagDetailPage() {
           onPin={toggleTaskPin}
           onAddSubTask={(parentTaskId) => {
             // Etiket sayfasında alt görev ekleme özelliği şu anda yok
-            console.log('Alt görev ekleme:', parentTaskId)
           }}
           onUpdateTags={async (taskId, tagIds) => {
             try {
               await updateTaskTags(taskId, tagIds)
             } catch (error) {
-              console.error('Failed to update tags:', error)
             }
           }}
           onUpdatePriority={async (taskId, priority) => {
             try {
               await updateTask(taskId, { priority })
             } catch (error) {
-              console.error('Failed to update priority:', error)
             }
           }}
           onUpdateReminders={async (taskId, reminders) => {
             try {
               await updateTaskReminders(taskId, reminders)
             } catch (error) {
-              console.error('Failed to update reminders:', error)
             }
           }}
           showTreeConnectors={true}
@@ -214,7 +210,6 @@ export default function TagDetailPage() {
               // Tag bilgilerini güncelle
               setTag(prev => prev ? { ...prev, name, color } : null)
             } catch (error) {
-              console.error("Failed to update tag:", error)
             }
           }}
           editingTag={{

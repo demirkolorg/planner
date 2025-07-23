@@ -118,7 +118,6 @@ export function RegisterForm({
       login(data.user);
       router.push(ROUTES.HOME);
     } catch (error) {
-      console.error('Register error:', error);
       setApiError(error instanceof Error ? error.message : MESSAGES.ERROR.GENERIC_ERROR);
     } finally {
       setIsSubmitting(false);

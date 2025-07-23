@@ -5,10 +5,9 @@ import { ToastContainer } from "@/components/ui/toast";
 import "./globals.css";
 
 const poppins = Poppins({
-  variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -24,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body
-        className={`${poppins.variable} font-poppins antialiased`}
+        className={`${poppins.variable} font-sans antialiased`}
       >
         <ThemeProvider
           defaultTheme="system"
