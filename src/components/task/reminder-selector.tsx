@@ -19,13 +19,15 @@ interface ReminderSelectorProps {
   }>) => void
   trigger?: React.ReactNode
   dropdownPosition?: 'top' | 'bottom'
+  taskDueDate?: Date | null
 }
 
 export function ReminderSelector({ 
   taskReminders = [], 
   onUpdateReminders, 
   trigger, 
-  dropdownPosition = 'top' 
+  dropdownPosition = 'top',
+  taskDueDate
 }: ReminderSelectorProps) {
   // Mevcut görevin reminder'larını string formatına çevir
   const selectedReminderStrings = taskReminders.map(reminder => {
@@ -60,7 +62,7 @@ export function ReminderSelector({
           
           const month = monthMap[monthName] || '01'
           const dateStr = `${year}-${month}-${day.padStart(2, '0')}`
-          const dateTime = new Date(`${dateStr}T${time}:00.000Z`)
+          const dateTime = new Date(`${dateStr}T${time}:00`)
           
           return {
             datetime: dateTime,
@@ -87,6 +89,7 @@ export function ReminderSelector({
       onRemindersChange={handleRemindersChange}
       trigger={trigger}
       dropdownPosition={dropdownPosition}
+      parentTaskDueDate={taskDueDate}
     />
   )
 }

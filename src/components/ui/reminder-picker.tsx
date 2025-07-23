@@ -142,22 +142,22 @@ export function ReminderPicker({
             return
           }
           
-          // Parent task bitiş tarihi kontrolü
+          // Görev bitiş tarihi kontrolü
           if (parentTaskDueDate) {
-            // Eğer parent task'ın saati 00:00 ise, gün sonuna kadar (23:59) izin ver
-            const parentTaskEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+            // Eğer görevin saati 00:00 ise, gün sonuna kadar (23:59) izin ver
+            const taskEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
               ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
               : parentTaskDueDate
             
-            if (reminderDateTime > parentTaskEndOfDay) {
-              const parentDueDateWithTime = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+            if (reminderDateTime > taskEndOfDay) {
+              const taskDueDateWithTime = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
                 ? parentTaskDueDate.toLocaleDateString('tr-TR')
                 : `${parentTaskDueDate.toLocaleDateString('tr-TR')} ${parentTaskDueDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
               
               setAlertConfig({
                 isOpen: true,
                 title: "Tarih Sınırı Aşıldı",
-                message: `Hatırlatıcı tarihi (${reminderDate} ${reminderTime}), üst görevin bitiş tarihinden (${parentDueDateWithTime}) sonra olamaz.`
+                message: `Hatırlatıcı tarihi (${reminderDate} ${reminderTime}), görevin bitiş tarihinden (${taskDueDateWithTime}) sonra olamaz.`
               })
               return
             }
@@ -330,17 +330,17 @@ export function ReminderPicker({
                   const currentDate = new Date(reminderYear, reminderMonth, day)
                   const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
                   
-                  // Parent task bitiş tarihi kontrolü
-                  let isAfterParentDueDate = false
+                  // Görev bitiş tarihi kontrolü
+                  let isAfterTaskDueDate = false
                   if (parentTaskDueDate) {
-                    const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+                    const taskEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
                       ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
                       : parentTaskDueDate
                     
-                    isAfterParentDueDate = currentDate > parentEndOfDay
+                    isAfterTaskDueDate = currentDate > taskEndOfDay
                   }
                   
-                  const isDisabled = isPastDate || isAfterParentDueDate
+                  const isDisabled = isPastDate || isAfterTaskDueDate
                   
                   return (
                     <Button
@@ -350,7 +350,7 @@ export function ReminderPicker({
                       className={`h-8 w-8 text-xs ${
                         isPastDate 
                           ? 'opacity-50 cursor-not-allowed' 
-                          : isAfterParentDueDate 
+                          : isAfterTaskDueDate 
                           ? 'opacity-60 cursor-not-allowed bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
                           : ''
                       }`}

@@ -10,7 +10,8 @@ import {
   MoreHorizontal,
   Trash2,
   Copy,
-  Move
+  Move,
+  Edit
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -243,6 +244,7 @@ export function TaskCardActions({
           taskReminders={task.reminders}
           onUpdateReminders={handleUpdateReminders}
           dropdownPosition={isFirstInSection ? 'bottom' : 'top'}
+          taskDueDate={task.dueDate ? new Date(task.dueDate) : null}
           trigger={
             <Tooltip>
               <TooltipTrigger asChild>
@@ -272,7 +274,7 @@ export function TaskCardActions({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-7 w-7  ${task.isPinned ? 'text-red-500' : 'text-white'}`}
+              className={`h-7 w-7 ${task.isPinned ? 'text-red-500' : ''}`}
               onClick={handlePin}
             >
               <Pin className="h-3 w-3" />
@@ -297,6 +299,7 @@ export function TaskCardActions({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={handleEdit}>
+              <Edit className="h-4 w-4 mr-2" />
               <span>Görevi düzenle</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCopy}>
@@ -313,7 +316,7 @@ export function TaskCardActions({
                 e.stopPropagation()
                 handleDelete()
               }}
-              className="text-red-600 focus:text-red-600"
+              variant="destructive"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               <span>Görevi sil</span>

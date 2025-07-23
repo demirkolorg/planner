@@ -369,7 +369,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           
           const month = monthMap[monthName] || '01'
           const dateStr = `${year}-${month}-${day.padStart(2, '0')}`
-          return `${dateStr}T${time}:00.000Z`
+          return `${dateStr}T${time}:00`
         }
         return reminder
       })
@@ -760,7 +760,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     parentTaskDueDate={parentTaskId ? (() => {
                       const parentTask = getTaskById(parentTaskId)
                       return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
-                    })() : null}
+                    })() : editingTask && selectedDateTime ? new Date(selectedDateTime) : null}
                   />
                 </TooltipTrigger>
                 <TooltipContent>
