@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { useTaskStore } from "@/store/taskStore"
 import { ROUTES } from "@/lib/constants"
-import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 
 export default function DashboardLayout({
@@ -58,9 +57,11 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-background">
-      <DashboardSidebar isOpen={sidebarOpen} />
-      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-0'} w-full`}>
-        <DashboardHeader onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} sidebarOpen={sidebarOpen} />
+      <DashboardSidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+      />
+      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>

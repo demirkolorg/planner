@@ -1,8 +1,8 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { ROUTES } from "@/lib/constants"
-import { Plus, FolderKanban, Folder, TestTube, TestTube2 } from "lucide-react"
+import { ROUTES, THEME } from "@/lib/constants"
+import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
 import { MdOutlineSpaceDashboard, MdSpaceDashboard } from "react-icons/md"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
@@ -15,8 +15,18 @@ import { useState, useEffect } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
+import { useAuthStore } from "@/store/authStore"
+import { useThemeStore } from "@/store/themeStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
-import { BRAND_COLOR } from "@/lib/constants"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useRouter } from "next/navigation"
 
 const cardItems = [
   { name: "Anasayfa", count: null, icon: MdOutlineSpaceDashboard, activeIcon: MdSpaceDashboard, color: "bg-slate-800 text-slate-300 border-slate-700", activeColor: "bg-slate-700 text-slate-200 border-slate-600", href: ROUTES.DASHBOARD },
@@ -30,14 +40,19 @@ const cardItems = [
 
 interface DashboardSidebarProps {
   isOpen: boolean
+  onToggle: () => void
 }
 
-export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
+export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getTasksByProject, getPinnedTasks, getPendingTasksCount, fetchTasks, tasks } = useTaskStore()
+  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks } = useTaskStore()
+  const { user, logout } = useAuthStore()
+  const { theme, setTheme } = useThemeStore()
 
   useEffect(() => {
     fetchProjects()
@@ -48,9 +63,21 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   const handleCreateProject = async (name: string, emoji: string) => {
     try {
       await createProject(name, emoji)
-    } catch (error) {
-      console.error("Failed to create project:", error)
+    } catch {
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    router.push("/login")
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK)
+  }
+
+  const handleCreateTask = () => {
+    // Task creation logic will be added later
   }
 
   // Dinamik sayıları hesapla
@@ -66,84 +93,292 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   }
 
   return (
-    <div className={cn(
-      "flex h-full w-80 flex-col bg-sidebar transition-transform duration-300 ease-in-out fixed left-0 top-0 p-2 z-10",
-      isOpen ? "translate-x-0" : "-translate-x-full"
-    )}>
-      <div className="flex h-14 items-center px-4 text-primary">
-        <FolderKanban className="h-6 w-6 mr-3"  />
-        <h1 className="text-xl font-bold">Planner</h1>
+    <TooltipProvider>
+      <div className={cn(
+        "flex h-full flex-col bg-sidebar transition-all duration-300 ease-in-out fixed left-0 top-0 p-2 z-10",
+        isOpen ? "w-80" : "w-16"
+      )}>
+      <div className="flex h-14 items-center justify-between px-2 text-primary">
+        {isOpen ? (
+          <div className="flex items-center pl-2">
+            <FolderKanban className="h-7 w-7 mr-3 text-primary" />
+            <h1 className="text-xl font-bold">Planner</h1>
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 flex-shrink-0"
+          onClick={onToggle}
+        >
+          {isOpen ? (
+            <PanelLeftClose className="h-4 w-4" />
+          ) : (
+            <PanelLeft className="h-4 w-4" />
+          )}
+        </Button>
       </div>
       
-      <div className="p-4 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          {cardItems.map((item) => {
-            const dynamicCount = getDynamicCount(item.name)
-            const displayCount = dynamicCount !== null ? dynamicCount : item.count
+      {isOpen && (
+        <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-3">
+            {cardItems.map((item) => {
+              const dynamicCount = getDynamicCount(item.name)
+              const displayCount = dynamicCount !== null ? dynamicCount : item.count
+              
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "p-3 rounded-lg border transition-all duration-200 hover:shadow-md",
+                    pathname === item.href ? item.activeColor : item.color
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    {pathname === item.href ? (
+                      <item.activeIcon className="h-5 w-5" />
+                    ) : (
+                      <item.icon className="h-5 w-5" />
+                    )}
+                    {displayCount !== null && (
+                      <span className="text-sm font-medium">{displayCount}</span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-sm font-medium">{item.name}</div>
+                </Link>
+              )
+            })}
+          </div>
+          
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-3 px-2 border-b-1 border-gray-600 dark:border-gray-600  pb-2 text-primary">
+              <h3 className="text-sm font-medium ">Projeler</h3>
+              <Plus 
+                className="h-4 w-4 cursor-pointer" 
+                onClick={() => setIsProjectModalOpen(true)}
+              />
+            </div>
             
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "p-3 rounded-lg border transition-all duration-200 hover:shadow-md",
-                  pathname === item.href ? item.activeColor : item.color
-                )}
-              >
-                <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              {projects.map((project) => {
+                // TaskStore'dan bekleyen görev sayısını al
+                const pendingCount = getPendingTasksCount(project.id)
+                // API'den gelen sayı
+                const apiCount = project._count?.tasks || 0
+                // Eğer taskStore'da görevler yüklendiyse pending sayısını kullan, yoksa API'den gelen sayıyı kullan
+                const displayCount = tasks.length > 0 ? pendingCount : apiCount
+                
+                return (
+                  <Link
+                    key={project.id}
+                    href={`/projects/${project.id}`}
+                    className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-800 transition-colors group"
+                  >
+                    <div className="flex items-center space-x-2">
+                      {project.emoji ? (
+                        <span className="text-sm">{project.emoji}</span>
+                      ) : (
+                        <div className="w-3 h-3 rounded-full bg-primary" />
+                      )}
+                      <span className="text-sm text-gray-300">{project.name}</span>
+                    </div>
+                    <span className="text-xs text-gray-400 font-medium">{displayCount}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collapsed Navigation Icons */}
+      {!isOpen && (
+        <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+          {cardItems.map((item) => (
+            <Tooltip key={item.name}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-accent",
+                    pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
                   {pathname === item.href ? (
                     <item.activeIcon className="h-5 w-5" />
                   ) : (
                     <item.icon className="h-5 w-5" />
                   )}
-                  {displayCount !== null && (
-                    <span className="text-sm font-medium">{displayCount}</span>
-                  )}
-                </div>
-                <div className="mt-1 text-sm font-medium">{item.name}</div>
-              </Link>
-            )
-          })}
-        </div>
-        
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-3 px-2 border-b-1 border-gray-600 dark:border-gray-600  pb-2 text-primary">
-            <h3 className="text-sm font-medium ">Projeler</h3>
-            <Plus 
-              className="h-4 w-4 cursor-pointer" 
-              onClick={() => setIsProjectModalOpen(true)}
-            />
-          </div>
-          
-          <div className="space-y-1">
-            {projects.map((project) => {
-              // TaskStore'dan bekleyen görev sayısını al
-              const pendingCount = getPendingTasksCount(project.id)
-              // API'den gelen sayı
-              const apiCount = project._count?.tasks || 0
-              // Eğer taskStore'da görevler yüklendiyse pending sayısını kullan, yoksa API'den gelen sayıyı kullan
-              const displayCount = tasks.length > 0 ? pendingCount : apiCount
-              
-              return (
-                <Link
-                  key={project.id}
-                  href={`/projects/${project.id}`}
-                  className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-800 transition-colors group"
-                >
-                  <div className="flex items-center space-x-2">
-                    {project.emoji ? (
-                      <span className="text-sm">{project.emoji}</span>
-                    ) : (
-                      <div className="w-3 h-3 rounded-full bg-primary" />
-                    )}
-                    <span className="text-sm text-gray-300">{project.name}</span>
-                  </div>
-                  <span className="text-xs text-gray-400 font-medium">{displayCount}</span>
                 </Link>
-              )
-            })}
-          </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{item.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </div>
+      )}
+      
+      {/* Bottom Actions Section */}
+      <div className="p-2 border-t border-sidebar-border space-y-2">
+        {isOpen ? (
+          <>
+            {/* Add Task Button - Full width when expanded */}
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full px-3 py-2"
+              onClick={() => setIsTaskModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Görev Ekle
+            </Button>
+            
+            {/* Action Buttons Row */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="h-9 w-9"
+              >
+                {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-9 w-9 rounded-full">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{user?.firstName} {user?.lastName}</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Profil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Ayarlar
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Çıkış Yap
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
+        ) : (
+          /* Collapsed state - vertical icon stack */
+          <div className="flex flex-col items-center space-y-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setIsTaskModalOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Görev Ekle</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Arama</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="h-9 w-9"
+                >
+                  {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-9 w-9 rounded-full">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        <p className="font-medium">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-sm text-muted-foreground">{user?.email}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Profil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Ayarlar
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Çıkış Yap
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Kullanıcı Menüsü</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </div>
       
       <NewProjectModal
@@ -151,6 +386,13 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
         onClose={() => setIsProjectModalOpen(false)}
         onSave={handleCreateProject}
       />
-    </div>
+      
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onSave={handleCreateTask}
+      />
+      </div>
+    </TooltipProvider>
   )
 }
