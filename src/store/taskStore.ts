@@ -56,7 +56,7 @@ interface TaskStore {
   createTask: (taskData: CreateTaskRequest) => Promise<CreateTaskResponse | null>
   updateTask: (id: string, updates: Partial<TaskWithRelations>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
-  cloneTask: (id: string) => Promise<void>
+  cloneTask: (id: string, targetProjectId?: string, targetSectionId?: string | null) => Promise<void>
   moveTask: (id: string, targetProjectId: string, targetSectionId: string | null) => Promise<void>
   toggleTaskComplete: (id: string) => Promise<void>
   
@@ -305,11 +305,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  cloneTask: async (id: string) => {
+  cloneTask: async (id: string, targetProjectId?: string, targetSectionId?: string | null) => {
     set({ error: null })
     try {
+      const body = targetProjectId ? {
+        targetProjectId,
+        targetSectionId
+      } : {}
+      
       const response = await fetch(`/api/tasks/${id}/clone`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       })
       
       if (!response.ok) {

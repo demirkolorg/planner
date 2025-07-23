@@ -63,6 +63,8 @@ export default function ProjectDetailPage() {
   const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
   const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
+  const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
@@ -219,6 +221,18 @@ export default function ProjectDetailPage() {
       setTaskToMove(null)
     } catch (error) {
       console.error("Failed to move task:", error)
+    }
+  }
+
+  const handleCloneTask = async (targetProjectId: string, targetSectionId: string | null) => {
+    if (!taskToClone) return
+    
+    try {
+      await cloneTask(taskToClone.id, targetProjectId, targetSectionId)
+      setIsTaskCloneModalOpen(false)
+      setTaskToClone(null)
+    } catch (error) {
+      console.error("Failed to clone task:", error)
     }
   }
 
@@ -559,7 +573,18 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   onPin={toggleTaskPin}
-                  onCopy={cloneTask}
+                  onCopy={(taskId) => {
+                    const taskToClone = tasksWithoutSection.find(t => t.id === taskId)
+                    if (taskToClone) {
+                      setTaskToClone({
+                        id: taskId,
+                        title: taskToClone.title,
+                        projectId: taskToClone.projectId,
+                        sectionId: taskToClone.sectionId || undefined
+                      })
+                      setIsTaskCloneModalOpen(true)
+                    }
+                  }}
                   onMove={(taskId) => {
                     const taskToMove = tasksWithoutSection.find(t => t.id === taskId)
                     if (taskToMove) {
@@ -741,7 +766,18 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onPin={toggleTaskPin}
-                      onCopy={cloneTask}
+                      onCopy={(taskId) => {
+                        const taskToClone = sectionTasks.find(t => t.id === taskId)
+                        if (taskToClone) {
+                          setTaskToClone({
+                            id: taskId,
+                            title: taskToClone.title,
+                            projectId: taskToClone.projectId,
+                            sectionId: taskToClone.sectionId || undefined
+                          })
+                          setIsTaskCloneModalOpen(true)
+                        }
+                      }}
                       onMove={(taskId) => {
                         const taskToMove = sectionTasks.find(t => t.id === taskId)
                         if (taskToMove) {
@@ -912,6 +948,19 @@ export default function ProjectDetailPage() {
         onMove={handleMoveSection}
         section={sectionToMove}
         currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
+      />
+
+      {/* Görev Klonlama Modal'ı */}
+      <MoveTaskModal
+        isOpen={isTaskCloneModalOpen}
+        onClose={() => {
+          setIsTaskCloneModalOpen(false)
+          setTaskToClone(null)
+        }}
+        onMove={handleCloneTask}
+        task={taskToClone}
+        currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
+        mode="clone"
       />
 
       {/* Görev Taşıma Modal'ı */}

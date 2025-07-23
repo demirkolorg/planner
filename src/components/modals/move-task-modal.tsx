@@ -22,6 +22,7 @@ interface MoveTaskModalProps {
     name: string
     emoji?: string
   }
+  mode?: 'move' | 'clone'
 }
 
 interface Project {
@@ -50,7 +51,8 @@ export function MoveTaskModal({
   onClose, 
   onMove, 
   task, 
-  currentProject 
+  currentProject,
+  mode = 'move'
 }: MoveTaskModalProps) {
   const [searchInput, setSearchInput] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -142,7 +144,7 @@ export function MoveTaskModal({
         <div className="flex items-center justify-between">
           <DialogTitle className="text-lg font-semibold flex items-center">
             <Move className="w-5 h-5 mr-2" />
-            Görevi Taşı
+            {mode === 'clone' ? 'Görevi Klonla' : 'Görevi Taşı'}
           </DialogTitle>
           <Button
             variant="ghost"
@@ -281,7 +283,10 @@ export function MoveTaskModal({
             disabled={!selectedProject || !selectedSection || isMoving}
             className="min-w-[80px]"
           >
-            {isMoving ? "Taşınıyor..." : "Taşı"}
+            {isMoving 
+              ? (mode === 'clone' ? "Klonlanıyor..." : "Taşınıyor...") 
+              : (mode === 'clone' ? "Klonla" : "Taşı")
+            }
           </Button>
         </div>
       </DialogContent>

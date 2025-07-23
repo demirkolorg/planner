@@ -15,6 +15,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     
+    // Request body'den hedef proje ve bölüm bilgilerini al
+    const body = await request.json().catch(() => ({}))
+    const { targetProjectId, targetSectionId } = body
+    
     // Kopyalanacak görevi tüm ilişkili verilerle birlikte getir
     const originalTask = await db.task.findFirst({
       where: {
@@ -63,8 +67,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           dueDate: originalTask.dueDate,
           isPinned: false, // Kopyalanan görev sabitlenmiş olmasın
           parentTaskId: originalTask.parentTaskId,
-          projectId: originalTask.projectId,
-          sectionId: originalTask.sectionId,
+          projectId: targetProjectId || originalTask.projectId, // Hedef proje belirtilmişse onu kullan
+          sectionId: targetSectionId !== undefined ? targetSectionId : originalTask.sectionId, // Hedef bölüm belirtilmişse onu kullan
           userId: decoded.userId
         }
       })
@@ -103,8 +107,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               dueDate: subTask.dueDate,
               isPinned: false,
               parentTaskId: newTask.id, // Yeni ana görevin alt görevi olacak
-              projectId: subTask.projectId,
-              sectionId: subTask.sectionId,
+              projectId: targetProjectId || subTask.projectId, // Hedef proje belirtilmişse onu kullan
+              sectionId: targetSectionId !== undefined ? targetSectionId : subTask.sectionId, // Hedef bölüm belirtilmişse onu kullan
               userId: decoded.userId
             }
           })
