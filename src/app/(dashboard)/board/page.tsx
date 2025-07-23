@@ -4,10 +4,12 @@ import { useEffect, useState } from "react"
 import { Pin, Search, FolderClosed, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { TaskCard } from "@/components/task/task-card"
+import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import Link from "next/link"
+import { useCallback } from "react"
 import {
   Select,
   SelectContent,
@@ -39,6 +41,32 @@ export default function PinnedTasksPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<"date" | "priority" | "project">("date")
   const [filterBy, setFilterBy] = useState<"all" | "pending" | "completed">("all")
+  const [editingTask, setEditingTask] = useState<{
+    id: string
+    title: string
+    description?: string
+    projectId: string
+    sectionId: string
+    priority: string
+    dueDate?: string
+    tags?: Array<{
+      id: string
+      taskId: string
+      tagId: string
+      tag: {
+        id: string
+        name: string
+        color: string
+      }
+    }>
+    reminders?: Array<{
+      id: string
+      taskId: string
+      datetime: Date
+      message?: string
+      isActive: boolean
+    }>
+  } | null>(null)
   
   const { 
     fetchTasks, 
@@ -118,6 +146,36 @@ export default function PinnedTasksPage() {
     fetchTasks()
     fetchProjects()
   }, [fetchTasks, fetchProjects])
+
+  // Task edit handler
+  const handleEditTask = useCallback((task: {
+    id: string
+    title: string
+    description?: string
+    projectId: string
+    sectionId: string
+    priority: string
+    dueDate?: string
+    tags?: Array<{
+      id: string
+      taskId: string
+      tagId: string
+      tag: {
+        id: string
+        name: string
+        color: string
+      }
+    }>
+    reminders?: Array<{
+      id: string
+      taskId: string
+      datetime: Date
+      message?: string
+      isActive: boolean
+    }>
+  }) => {
+    setEditingTask(task)
+  }, [])
 
   // İstatistikler
   const totalPinned = pinnedTasks.length
@@ -286,53 +344,56 @@ export default function PinnedTasksPage() {
               </Link>
 
               {/* Tasks */}
-              <div className="grid gap-3">
-                {group.tasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onToggleComplete={toggleTaskComplete}
-                    onUpdate={updateTask}
-                    onDelete={deleteTask}
-                    onPin={toggleTaskPin}
-                    onAddSubTask={() => {
-                      // Sub-task ekleme için proje sayfasına yönlendir
-                      window.location.href = `/projects/${projectId}#task-${task.id}`
-                    }}
-                    onAddAttachment={(taskId, file) => {
-                      uploadAttachment(taskId, file)
-                    }}
-                    onDeleteAttachment={(attachmentId) => {
-                      deleteAttachment(attachmentId)
-                    }}
-                    onUpdateTags={async (taskId, tagIds) => {
-                      try {
-                        await updateTaskTags(taskId, tagIds)
-                      } catch (error) {
-                        console.error('Failed to update tags:', error)
-                      }
-                    }}
-                    onUpdatePriority={async (taskId, priority) => {
-                      try {
-                        await updateTask(taskId, { priority })
-                      } catch (error) {
-                        console.error('Failed to update priority:', error)
-                      }
-                    }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
-                      }
-                    }}
-                    className="bg-orange-50/50 dark:bg-orange-900/5 border-l-4 border-l-orange-500"
-                  />
-                ))}
-              </div>
+              <HierarchicalTaskList
+                tasks={group.tasks}
+                onToggleComplete={toggleTaskComplete}
+                onUpdate={updateTask}
+                onDelete={deleteTask}
+                onPin={toggleTaskPin}
+                onEdit={handleEditTask}
+                onAddSubTask={() => {
+                  // Sub-task ekleme için proje sayfasına yönlendir - bu özellik sabitlenmiş görevlerde devre dışı
+                }}
+                onAddAttachment={(taskId, file) => {
+                  uploadAttachment(taskId, file)
+                }}
+                onDeleteAttachment={(attachmentId) => {
+                  deleteAttachment(attachmentId)
+                }}
+                onUpdateTags={async (taskId, tagIds) => {
+                  try {
+                    await updateTaskTags(taskId, tagIds)
+                  } catch (error) {
+                    console.error('Failed to update tags:', error)
+                  }
+                }}
+                onUpdatePriority={async (taskId, priority) => {
+                  try {
+                    await updateTask(taskId, { priority })
+                  } catch (error) {
+                    console.error('Failed to update priority:', error)
+                  }
+                }}
+                onUpdateReminders={async (taskId, reminders) => {
+                  try {
+                    await updateTaskReminders(taskId, reminders)
+                  } catch (error) {
+                    console.error('Failed to update reminders:', error)
+                  }
+                }}
+              />
             </div>
           ))}
         </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <NewTaskModal
+          isOpen={true}
+          onClose={() => setEditingTask(null)}
+          editingTask={editingTask}
+        />
       )}
     </div>
   )
