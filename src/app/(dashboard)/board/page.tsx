@@ -313,34 +313,34 @@ export default function PinnedTasksPage() {
         <div className="space-y-6">
           {Object.entries(groupedTasks).map(([projectId, group]) => (
             <div key={projectId} className="space-y-3">
-              {/* Compact Project Header */}
+              {/* Ultra Compact Project Header */}
               <Link 
                 href={`/projects/${projectId}`}
-                className="group flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 border border-gray-200/50 dark:border-gray-700/30 hover:border-gray-300/70 dark:hover:border-gray-600/50 backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+                className="group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-white/60 to-gray-50/60 dark:from-gray-800/60 dark:to-gray-900/60 border border-gray-200/40 dark:border-gray-700/20 hover:border-gray-300/60 dark:hover:border-gray-600/40 backdrop-blur-sm transition-all duration-200 hover:shadow-sm"
               >
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2.5">
                   <div className="relative">
                     {group.project.emoji ? (
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                        <span className="text-lg">{group.project.emoji}</span>
+                      <div className="w-8 h-8 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-sm">
+                        <span className="text-sm">{group.project.emoji}</span>
                       </div>
                     ) : (
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500 shadow-sm group-hover:shadow-md transition-shadow" />
+                      <div className="w-8 h-8 rounded-md bg-gradient-to-br from-orange-400 to-orange-500 shadow-sm" />
                     )}
-                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center font-bold shadow-sm">
+                    <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center font-bold text-[10px]">
                       {group.tasks.length}
                     </div>
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
                       {group.project.name}
                     </h2>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {group.tasks.length} sabitlenen görev
+                      {group.tasks.length} görev
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors group-hover:translate-x-1" />
+                <ArrowRight className="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors group-hover:translate-x-0.5" />
               </Link>
 
               {/* Tasks */}
