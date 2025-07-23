@@ -3,15 +3,23 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { PiTagSimpleFill } from "react-icons/pi"
-import { ArrowLeft, Edit, Trash2, Clock, Check } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Clock, Check, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import Link from "next/link"
 import { useTaskStore } from "@/store/taskStore"
 import { useTagStore } from "@/store/tagStore"
+import { useProjectStore } from "@/store/projectStore"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { NewTagModal } from "@/components/modals/new-tag-modal"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
-import { Switch } from "@/components/ui/switch"
 
 interface Tag {
   id: string
@@ -33,6 +41,9 @@ export default function TagDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState<"date" | "priority" | "project">("date")
+  const [filterBy, setFilterBy] = useState<"all" | "pending" | "completed">("all")
   const { 
     fetchTasksByTag, 
     getTasksByTag,
@@ -48,9 +59,44 @@ export default function TagDetailPage() {
     getPendingTasksCountByTag
   } = useTaskStore()
   const { updateTag, deleteTag } = useTagStore()
+  const { projects, fetchProjects } = useProjectStore()
 
   // TaskStore'dan tag görevlerini al - tüm görevleri hierarchical sırayla göster
-  const tasks = getTasksByTag(tagId)
+  const allTasks = getTasksByTag(tagId)
+
+  // Arama ve filtreleme
+  const filteredTasks = allTasks.filter(task => {
+    // Arama filtresi
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         task.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    // Durum filtresi
+    const matchesFilter = filterBy === "all" || 
+                         (filterBy === "pending" && !task.completed) ||
+                         (filterBy === "completed" && task.completed)
+    
+    // Tamamlanan görevler ayarı
+    const matchesCompletedSetting = showCompletedTasks || !task.completed
+    
+    return matchesSearch && matchesFilter && matchesCompletedSetting
+  })
+
+  // Sıralama
+  const tasks = [...filteredTasks].sort((a, b) => {
+    switch (sortBy) {
+      case "priority":
+        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1, NONE: 0 }
+        return priorityOrder[b.priority as keyof typeof priorityOrder] - 
+               priorityOrder[a.priority as keyof typeof priorityOrder]
+      case "project":
+        const projectA = projects.find(p => p.id === a.projectId)?.name || ""
+        const projectB = projects.find(p => p.id === b.projectId)?.name || ""
+        return projectA.localeCompare(projectB)
+      case "date":
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    }
+  })
 
   useEffect(() => {
     const fetchTagAndTasks = async () => {
@@ -65,6 +111,9 @@ export default function TagDetailPage() {
 
         // TaskStore'dan görevleri al
         await fetchTasksByTag(tagId)
+        
+        // Projeleri yükle (sıralama için gerekli)
+        await fetchProjects()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Bir hata oluştu')
       } finally {
@@ -73,7 +122,7 @@ export default function TagDetailPage() {
     }
 
     fetchTagAndTasks()
-  }, [tagId, fetchTasksByTag])
+  }, [tagId, fetchTasksByTag, fetchProjects])
 
   if (isLoading) {
     return (
@@ -131,15 +180,6 @@ export default function TagDetailPage() {
           </div>
         </div>
         <div className="flex items-center space-x-2 ml-auto">
-          {/* Tamamlanan görevleri göster toggle */}
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-muted-foreground">Tamamlananlar</span>
-            <Switch
-              checked={showCompletedTasks}
-              onCheckedChange={toggleShowCompletedTasks}
-            />
-          </div>
-          
           <Button 
             variant="outline" 
             size="sm"
@@ -160,12 +200,76 @@ export default function TagDetailPage() {
         </div>
       </div>
 
+      {/* Compact Filters and Search */}
+      <div className="bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 rounded-xl p-4 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Görevlerde ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9 rounded-lg border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all duration-200"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={(value: "date" | "priority" | "project") => setSortBy(value)}>
+              <SelectTrigger className="w-40 h-9 rounded-lg border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200">
+                <SelectValue placeholder="Sıralama" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border-gray-200/60 dark:border-gray-700/60">
+                <SelectItem value="date">📅 Tarihe göre</SelectItem>
+                <SelectItem value="priority">🔥 Önceliğe göre</SelectItem>
+                <SelectItem value="project">📁 Projeye göre</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Filter */}
+            <Select value={filterBy} onValueChange={(value: "all" | "pending" | "completed") => setFilterBy(value)}>
+              <SelectTrigger className="w-32 h-9 rounded-lg border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200">
+                <SelectValue placeholder="Filtrele" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border-gray-200/60 dark:border-gray-700/60">
+                <SelectItem value="all">🔍 Tümü</SelectItem>
+                <SelectItem value="pending">⏳ Bekleyen</SelectItem>
+                <SelectItem value="completed">✅ Tamamlanan</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Show completed toggle */}
+            <Button
+              variant={showCompletedTasks ? "default" : "outline"}
+              size="sm"
+              onClick={toggleShowCompletedTasks}
+              className={`h-9 px-4 rounded-lg transition-all duration-200 ${
+                showCompletedTasks 
+                  ? 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md shadow-purple-500/25' 
+                  : 'border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-gray-50 dark:hover:bg-gray-700/80'
+              }`}
+            >
+              {showCompletedTasks ? "✅ Gizle" : "👀 Göster"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {tasks.length === 0 ? (
         <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <PiTagSimpleFill className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Bu etiketle ilişkili görev yok</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            {searchQuery || filterBy !== "all" 
+              ? "Arama kriterlerine uygun görev bulunamadı" 
+              : "Bu etiketle ilişkili görev yok"
+            }
+          </h3>
           <p className="text-muted-foreground">
-            Henüz bu etiketle işaretlenmiş görev bulunmuyor
+            {searchQuery || filterBy !== "all"
+              ? "Farklı arama terimleri veya filtreler deneyebilirsin"
+              : "Henüz bu etiketle işaretlenmiş görev bulunmuyor"
+            }
           </p>
         </div>
       ) : (
