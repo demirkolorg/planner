@@ -122,38 +122,42 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       </div>
       
       {isOpen && (
-        <div className="flex-1 p-4 space-y-3 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-3">
-            {cardItems.map((item) => {
-              const dynamicCount = getDynamicCount(item.name)
-              const displayCount = dynamicCount !== null ? dynamicCount : item.count
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "p-3 rounded-lg border transition-all duration-200 hover:shadow-md",
-                    pathname === item.href ? item.activeColor : item.color
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    {pathname === item.href ? (
-                      <item.activeIcon className="h-5 w-5" />
-                    ) : (
-                      <item.icon className="h-5 w-5" />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Navigation Cards */}
+          <div className="p-4 pb-2">
+            <div className="grid grid-cols-2 gap-3">
+              {cardItems.map((item) => {
+                const dynamicCount = getDynamicCount(item.name)
+                const displayCount = dynamicCount !== null ? dynamicCount : item.count
+                
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      "p-3 rounded-lg border transition-all duration-200 hover:shadow-md",
+                      pathname === item.href ? item.activeColor : item.color
                     )}
-                    {displayCount !== null && (
-                      <span className="text-sm font-medium">{displayCount}</span>
-                    )}
-                  </div>
-                  <div className="mt-1 text-sm font-medium">{item.name}</div>
-                </Link>
-              )
-            })}
+                  >
+                    <div className="flex items-center justify-between">
+                      {pathname === item.href ? (
+                        <item.activeIcon className="h-5 w-5" />
+                      ) : (
+                        <item.icon className="h-5 w-5" />
+                      )}
+                      {displayCount !== null && (
+                        <span className="text-sm font-medium">{displayCount}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 text-sm font-medium">{item.name}</div>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
           
-          <div className="mt-6">
+          {/* Projects Section */}
+          <div className="px-4 pb-2">
             <div className="flex items-center justify-between mb-3 px-2 border-b-1 border-gray-600 dark:border-gray-600  pb-2 text-primary">
               <h3 className="text-sm font-medium ">Projeler</h3>
               <Plus 
@@ -161,8 +165,11 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 onClick={() => setIsProjectModalOpen(true)}
               />
             </div>
-            
-            <div className="space-y-1">
+          </div>
+          
+          {/* Scrollable Projects List */}
+          <div className="flex-1 px-4 overflow-y-auto">
+            <div className="space-y-1 pb-2">
               {projects.map((project) => {
                 // TaskStore'dan bekleyen görev sayısını al
                 const pendingCount = getPendingTasksCount(project.id)
@@ -196,29 +203,61 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
 
       {/* Collapsed Navigation Icons */}
       {!isOpen && (
-        <div className="flex-1 p-2 space-y-2 overflow-y-auto">
-          {cardItems.map((item) => (
-            <Tooltip key={item.name}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-accent",
-                    pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {pathname === item.href ? (
-                    <item.activeIcon className="h-5 w-5" />
-                  ) : (
-                    <item.icon className="h-5 w-5" />
-                  )}
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{item.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Navigation Icons */}
+          <div className="p-2 space-y-2">
+            {cardItems.map((item) => (
+              <Tooltip key={item.name}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-accent",
+                      pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {pathname === item.href ? (
+                      <item.activeIcon className="h-5 w-5" />
+                    ) : (
+                      <item.icon className="h-5 w-5" />
+                    )}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{item.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="mx-2 border-t border-sidebar-border" />
+
+          {/* Collapsed Projects */}
+          <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+            {projects.map((project) => (
+              <Tooltip key={project.id}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className={cn(
+                      "flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-accent",
+                      pathname === `/projects/${project.id}` ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {project.emoji ? (
+                      <span className="text-lg">{project.emoji}</span>
+                    ) : (
+                      <div className="w-4 h-4 rounded-full bg-primary" />
+                    )}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{project.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         </div>
       )}
       
