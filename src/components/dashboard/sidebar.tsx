@@ -11,7 +11,7 @@ import { FaRegStar, FaStar, FaRegCheckCircle, FaCheckCircle } from "react-icons/
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
@@ -79,6 +79,17 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const handleCreateTask = () => {
     // Task creation logic will be added later
   }
+
+  // Projeleri sırala - Gelen Kutusu en üste
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      // Gelen Kutusu her zaman en üstte olsun
+      if (a.name === "Gelen Kutusu") return -1
+      if (b.name === "Gelen Kutusu") return 1
+      // Diğer projeler alfabetik sırada
+      return a.name.localeCompare(b.name, 'tr')
+    })
+  }, [projects])
 
   // Dinamik sayıları hesapla
   const getDynamicCount = (itemName: string) => {
@@ -170,7 +181,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           {/* Scrollable Projects List */}
           <div className="flex-1 px-4 overflow-y-auto">
             <div className="space-y-1 pb-2">
-              {projects.map((project) => {
+              {sortedProjects.map((project) => {
                 // TaskStore'dan bekleyen görev sayısını al
                 const pendingCount = getPendingTasksCount(project.id)
                 // API'den gelen sayı
@@ -235,7 +246,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
 
           {/* Collapsed Projects */}
           <div className="flex-1 p-2 space-y-2 overflow-y-auto">
-            {projects.map((project) => (
+            {sortedProjects.map((project) => (
               <Tooltip key={project.id}>
                 <TooltipTrigger asChild>
                   <Link
