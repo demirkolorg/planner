@@ -30,6 +30,8 @@ interface HierarchicalTaskListProps {
   onUpdate?: (taskId: string, updates: Partial<Task>) => void
   onDelete?: (taskId: string) => void
   onPin?: (taskId: string) => void
+  onCopy?: (taskId: string) => void
+  onMove?: (taskId: string) => void
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
@@ -46,6 +48,8 @@ export function HierarchicalTaskList({
   onUpdate,
   onDelete,
   onPin,
+  onCopy,
+  onMove,
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
@@ -182,6 +186,8 @@ export function HierarchicalTaskList({
               onUpdate={onUpdate}
               onDelete={onDelete}
               onPin={onPin}
+              onCopy={onCopy}
+              onMove={onMove}
               onAddSubTask={handleAddSubTask}
               onUpdateTags={onUpdateTags}
               onUpdatePriority={onUpdatePriority}
@@ -212,6 +218,8 @@ export function HierarchicalTaskList({
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onPin={onPin}
+                onCopy={onCopy}
+                onMove={onMove}
                 onAddSubTask={handleAddSubTask}
                 onUpdateTags={onUpdateTags}
                 onUpdatePriority={onUpdatePriority}

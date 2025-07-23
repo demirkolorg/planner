@@ -18,6 +18,8 @@ interface SortableTaskItemProps {
   onUpdate?: (taskId: string, updates: Partial<TaskWithHierarchy>) => void
   onDelete?: (taskId: string) => void
   onPin?: (taskId: string) => void
+  onCopy?: (taskId: string) => void
+  onMove?: (taskId: string) => void
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
@@ -35,6 +37,8 @@ export const SortableTaskItem = forwardRef<HTMLDivElement, SortableTaskItemProps
   onUpdate,
   onDelete,
   onPin,
+  onCopy,
+  onMove,
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
@@ -111,6 +115,8 @@ export const SortableTaskItem = forwardRef<HTMLDivElement, SortableTaskItemProps
           onUpdate={onUpdate}
           onDelete={onDelete}
           onPin={onPin}
+          onCopy={onCopy}
+          onMove={onMove}
           onAddSubTask={onAddSubTask}
           onUpdateTags={onUpdateTags}
           onUpdatePriority={onUpdatePriority}

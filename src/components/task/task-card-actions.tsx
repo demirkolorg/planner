@@ -8,7 +8,9 @@ import {
   Bell, 
   Pin, 
   MoreHorizontal,
-  Trash2
+  Trash2,
+  Copy,
+  Move
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -58,6 +60,8 @@ interface TaskCardActionsProps {
   }>) => void
   onPin?: (taskId: string) => void
   onDelete?: (taskId: string) => void
+  onCopy?: (taskId: string) => void
+  onMove?: (taskId: string) => void
   isFirstInSection?: boolean
 }
 
@@ -69,6 +73,8 @@ export function TaskCardActions({
   onUpdateReminders,
   onPin,
   onDelete,
+  onCopy,
+  onMove,
   isFirstInSection = false
 }: TaskCardActionsProps) {
   const [showMoreActions, setShowMoreActions] = useState(false)
@@ -117,6 +123,16 @@ export function TaskCardActions({
 
   const handleDelete = () => {
     onDelete?.(task.id)
+  }
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onCopy?.(task.id)
+  }
+
+  const handleMove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onMove?.(task.id)
   }
 
   return (
@@ -255,10 +271,12 @@ export function TaskCardActions({
             <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
               <span>Görevi düzenle</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-              <span>Kopyala</span>
+            <DropdownMenuItem onClick={handleCopy}>
+              <Copy className="h-4 w-4 mr-2" />
+              <span>Klonla</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={handleMove}>
+              <Move className="h-4 w-4 mr-2" />
               <span>Taşı</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

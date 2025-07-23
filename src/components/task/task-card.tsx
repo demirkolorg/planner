@@ -58,6 +58,8 @@ interface TaskCardProps {
   onUpdate?: (taskId: string, updates: Partial<TaskWithRelations>) => void
   onDelete?: (taskId: string) => void
   onPin?: (taskId: string) => void
+  onCopy?: (taskId: string) => void
+  onMove?: (taskId: string) => void
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
@@ -78,6 +80,8 @@ export function TaskCard({
   onUpdate,
   onDelete,
   onPin,
+  onCopy,
+  onMove,
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
@@ -580,6 +584,8 @@ export function TaskCard({
                 onUpdateReminders={onUpdateReminders}
                 onPin={onPin}
                 onDelete={onDelete}
+                onCopy={onCopy}
+                onMove={onMove}
                 isFirstInSection={isFirstInSection}
               />
             </div>

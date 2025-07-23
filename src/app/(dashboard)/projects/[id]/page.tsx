@@ -11,6 +11,7 @@ import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewSectionModal } from "@/components/modals/new-section-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveSectionModal } from "@/components/modals/move-section-modal"
+import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -60,15 +61,20 @@ export default function ProjectDetailPage() {
   const [sectionToMove, setSectionToMove] = useState<SectionType | null>(null)
   const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
+  const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
+  const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
     createTask, 
     getTasksByProject, 
     getTasksBySection,
+    getTasksWithoutSection,
     toggleTaskComplete,
     updateTask,
     deleteTask,
+    cloneTask,
+    moveTask,
     toggleTaskPin,
     addSubTask,
     updateTaskTags,
@@ -109,6 +115,8 @@ export default function ProjectDetailPage() {
   const tasks = getTasksByProject(projectId)
   // ProjectStore'dan proje section'larını al
   const sections = getSectionsByProject(projectId)
+  // Bölümsüz görevleri al
+  const tasksWithoutSection = getTasksWithoutSection(projectId)
 
   useEffect(() => {
     fetchProjectData()
@@ -125,9 +133,13 @@ export default function ProjectDetailPage() {
       if (getOverdueTasksCountByProject(projectId) > 0) {
         sectionsToOpen.push('overdue-tasks')
       }
+      // Bölümsüz görevler varsa onu da aç
+      if (tasksWithoutSection.length > 0) {
+        sectionsToOpen.push('tasks-without-section')
+      }
       setOpenSections(sectionsToOpen)
     }
-  }, [sectionIds.length, getOverdueTasksCountByProject, projectId]) // sadece length değişimini takip et
+  }, [sectionIds.length, getOverdueTasksCountByProject, projectId, tasksWithoutSection.length]) // tasksWithoutSection.length eklendi
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -195,6 +207,18 @@ export default function ProjectDetailPage() {
       setTaskToDelete(null)
     } catch (error) {
       console.error("Failed to delete task:", error)
+    }
+  }
+
+  const handleMoveTask = async (targetProjectId: string, targetSectionId: string | null) => {
+    if (!taskToMove) return
+    
+    try {
+      await moveTask(taskToMove.id, targetProjectId, targetSectionId)
+      setIsTaskMoveModalOpen(false)
+      setTaskToMove(null)
+    } catch (error) {
+      console.error("Failed to move task:", error)
     }
   }
 
@@ -417,7 +441,7 @@ export default function ProjectDetailPage() {
       )}
 
       {/* Bölümler ve Görevler */}
-      {sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 ? (
+      {sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 && tasksWithoutSection.length === 0 ? (
         <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
             {project.emoji ? (
@@ -463,6 +487,96 @@ export default function ProjectDetailPage() {
                     setTaskModalContext({
                       project: { id: project.id, name: project.name, emoji: project.emoji },
                       section: section ? { id: section.id, name: section.name, projectId: project.id } : undefined,
+                      parentTaskId: parentTaskId,
+                      parentTaskTitle: parentTask?.title
+                    })
+                    setIsTaskModalOpen(true)
+                  }}
+                  onUpdateTags={async (taskId, tagIds) => {
+                    try {
+                      await updateTaskTags(taskId, tagIds)
+                    } catch (error) {
+                      console.error('Failed to update tags:', error)
+                    }
+                  }}
+                  onUpdatePriority={async (taskId, priority) => {
+                    try {
+                      await updateTask(taskId, { priority })
+                    } catch (error) {
+                      console.error('Failed to update priority:', error)
+                    }
+                  }}
+                  onUpdateReminders={async (taskId, reminders) => {
+                    try {
+                      await updateTaskReminders(taskId, reminders)
+                    } catch (error) {
+                      console.error('Failed to update reminders:', error)
+                    }
+                  }}
+                  showTreeConnectors={true}
+                  enableDragAndDrop={true}
+                  onMoveTask={async (taskId, newParentId) => {
+                    try {
+                      await updateTask(taskId, { parentTaskId: newParentId })
+                    } catch (error) {
+                      console.error('Failed to move task:', error)
+                    }
+                  }}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Bölümsüz Görevler Accordion */}
+          {tasksWithoutSection.length > 0 && (
+            <AccordionItem key="tasks-without-section" value="tasks-without-section" className="border-none overflow-visible">
+              <AccordionTrigger className="px-4 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg border-b border-amber-200 dark:border-amber-800 mb-1 transition-colors hover:no-underline w-full bg-amber-50 dark:bg-amber-950/20">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <ChevronDown className="h-4 w-4 text-amber-600" />
+                    <h3 className="text-sm font-medium text-amber-700 dark:text-amber-400">Bölümsüz Görevler</h3>
+                    <span className="text-xs text-amber-600 dark:text-amber-500">
+                      {tasksWithoutSection.length}
+                    </span>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pt-1 pb-3 overflow-visible">
+                <HierarchicalTaskList
+                  tasks={tasksWithoutSection}
+                  onToggleComplete={toggleTaskComplete}
+                  onUpdate={updateTask}
+                  onDelete={(taskId) => {
+                    const taskToDelete = tasksWithoutSection.find(t => t.id === taskId)
+                    if (taskToDelete) {
+                      const subTaskCount = taskToDelete.subTasks?.length || 0
+                      setTaskToDelete({ 
+                        id: taskId, 
+                        title: taskToDelete.title,
+                        subTaskCount: subTaskCount
+                      })
+                      setIsTaskDeleteDialogOpen(true)
+                    }
+                  }}
+                  onPin={toggleTaskPin}
+                  onCopy={cloneTask}
+                  onMove={(taskId) => {
+                    const taskToMove = tasksWithoutSection.find(t => t.id === taskId)
+                    if (taskToMove) {
+                      setTaskToMove({
+                        id: taskId,
+                        title: taskToMove.title,
+                        projectId: taskToMove.projectId,
+                        sectionId: taskToMove.sectionId || undefined
+                      })
+                      setIsTaskMoveModalOpen(true)
+                    }
+                  }}
+                  onAddSubTask={(parentTaskId) => {
+                    const parentTask = tasksWithoutSection.find(t => t.id === parentTaskId)
+                    setTaskModalContext({
+                      project: { id: project.id, name: project.name, emoji: project.emoji },
+                      section: undefined, // Bölümsüz görevler için section undefined
                       parentTaskId: parentTaskId,
                       parentTaskTitle: parentTask?.title
                     })
@@ -627,6 +741,19 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onPin={toggleTaskPin}
+                      onCopy={cloneTask}
+                      onMove={(taskId) => {
+                        const taskToMove = sectionTasks.find(t => t.id === taskId)
+                        if (taskToMove) {
+                          setTaskToMove({
+                            id: taskId,
+                            title: taskToMove.title,
+                            projectId: taskToMove.projectId,
+                            sectionId: taskToMove.sectionId || undefined
+                          })
+                          setIsTaskMoveModalOpen(true)
+                        }
+                      }}
                       onAddSubTask={(parentTaskId) => {
                         const parentTask = sectionTasks.find(t => t.id === parentTaskId)
                         setTaskModalContext({
@@ -784,6 +911,18 @@ export default function ProjectDetailPage() {
         }}
         onMove={handleMoveSection}
         section={sectionToMove}
+        currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
+      />
+
+      {/* Görev Taşıma Modal'ı */}
+      <MoveTaskModal
+        isOpen={isTaskMoveModalOpen}
+        onClose={() => {
+          setIsTaskMoveModalOpen(false)
+          setTaskToMove(null)
+        }}
+        onMove={handleMoveTask}
+        task={taskToMove}
         currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
       />
     </div>

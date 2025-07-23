@@ -56,6 +56,8 @@ interface TaskStore {
   createTask: (taskData: CreateTaskRequest) => Promise<CreateTaskResponse | null>
   updateTask: (id: string, updates: Partial<TaskWithRelations>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
+  cloneTask: (id: string) => Promise<void>
+  moveTask: (id: string, targetProjectId: string, targetSectionId: string | null) => Promise<void>
   toggleTaskComplete: (id: string) => Promise<void>
   
   // New task features
@@ -72,6 +74,7 @@ interface TaskStore {
   getTasksByProject: (projectId: string) => TaskWithRelations[]
   getTasksByTag: (tagId: string) => TaskWithRelations[]
   getTasksBySection: (sectionId: string) => TaskWithRelations[]
+  getTasksWithoutSection: (projectId: string) => TaskWithRelations[]
   getPinnedTasks: () => TaskWithRelations[]
   getSubTasks: (parentTaskId: string) => TaskWithRelations[]
   getTaskById: (taskId: string) => TaskWithRelations | undefined
@@ -298,6 +301,114 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
       set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  cloneTask: async (id: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/tasks/${id}/clone`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to clone task')
+      }
+      
+      const clonedTask = await response.json()
+      
+      // Yeni klonlanan görevi ve tüm alt görevlerini store'a ekle
+      set(state => {
+        const newTasks = [clonedTask]
+        
+        // Alt görevleri de ayrı olarak ekle
+        if (clonedTask.subTasks && clonedTask.subTasks.length > 0) {
+          newTasks.push(...clonedTask.subTasks)
+        }
+        
+        return {
+          tasks: [...state.tasks, ...newTasks]
+        }
+      })
+
+      // Başarı mesajı göster
+      useToastStore.getState().addToast({
+        message: "Görev başarıyla klonlandı",
+        type: "success"
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      useToastStore.getState().addToast({
+        message: errorMessage,
+        type: "error"
+      })
+      throw error
+    }
+  },
+
+  moveTask: async (id: string, targetProjectId: string, targetSectionId: string | null) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/tasks/${id}/move`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          targetProjectId,
+          targetSectionId
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || errorData.error || 'Failed to move task')
+      }
+      
+      const updatedTask = await response.json()
+      
+      // Store'daki görevi güncelle ve alt görevleri de güncelle
+      set(state => {
+        const updatedTasks = state.tasks.map(task => {
+          // Ana görev ise güncelle
+          if (task.id === id) {
+            return {
+              ...task,
+              projectId: targetProjectId,
+              sectionId: targetSectionId,
+              updatedAt: new Date().toISOString()
+            }
+          }
+          // Alt görev ise güncelle
+          if (task.parentTaskId === id) {
+            return {
+              ...task,
+              projectId: targetProjectId,
+              sectionId: targetSectionId,
+              updatedAt: new Date().toISOString()
+            }
+          }
+          return task
+        })
+        
+        return { tasks: updatedTasks }
+      })
+
+      // Başarı mesajı göster
+      useToastStore.getState().addToast({
+        message: "Görev başarıyla taşındı",
+        type: "success"
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      useToastStore.getState().addToast({
+        message: errorMessage,
+        type: "error"
+      })
       throw error
     }
   },
@@ -542,6 +653,46 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const { tasks, showCompletedTasks } = get()
     const filteredTasks = tasks.filter(task => 
       task.sectionId === sectionId && 
+      (showCompletedTasks || !task.completed)
+    )
+    
+    // Recursive function to get all sub-tasks at any level
+    const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
+      const directSubTasks = filteredTasks.filter(task => task.parentTaskId === parentId)
+      const result: TaskWithRelations[] = []
+      
+      directSubTasks.forEach(subTask => {
+        // Add current sub-task with level information
+        const taskWithLevel = { ...subTask, level }
+        result.push(taskWithLevel)
+        
+        // Recursively add its sub-tasks
+        const nestedSubTasks = getAllSubTasksRecursive(subTask.id, level + 1)
+        result.push(...nestedSubTasks)
+      })
+      
+      return result
+    }
+    
+    // Ana görevleri ve tüm alt görevleri hierarchical sırayla döndür
+    const mainTasks = filteredTasks.filter(task => !task.parentTaskId)
+    const result: TaskWithRelations[] = []
+    
+    mainTasks.forEach(mainTask => {
+      result.push({ ...mainTask, level: 0 })
+      // Bu ana görevin tüm alt görevlerini recursive şekilde ekle
+      const allSubTasks = getAllSubTasksRecursive(mainTask.id)
+      result.push(...allSubTasks)
+    })
+    
+    return result
+  },
+
+  getTasksWithoutSection: (projectId: string) => {
+    const { tasks, showCompletedTasks } = get()
+    const filteredTasks = tasks.filter(task => 
+      task.projectId === projectId &&
+      task.sectionId === null && 
       (showCompletedTasks || !task.completed)
     )
     
