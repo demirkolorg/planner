@@ -37,7 +37,7 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getTasksByProject, getPinnedTasks, fetchTasks, tasks } = useTaskStore()
+  const { getTasksByProject, getPinnedTasks, getPendingTasksCount, fetchTasks, tasks } = useTaskStore()
 
   useEffect(() => {
     fetchProjects()
@@ -117,12 +117,12 @@ export function DashboardSidebar({ isOpen }: DashboardSidebarProps) {
           
           <div className="space-y-1">
             {projects.map((project) => {
-              // TaskStore'dan gerçek görev sayısını al
-              const taskStoreCount = getTasksByProject(project.id).length
+              // TaskStore'dan bekleyen görev sayısını al
+              const pendingCount = getPendingTasksCount(project.id)
               // API'den gelen sayı
               const apiCount = project._count?.tasks || 0
-              // Eğer taskStore'da görevler yüklendiyse onu kullan, yoksa API'den gelen sayıyı kullan
-              const displayCount = tasks.length > 0 ? taskStoreCount : apiCount
+              // Eğer taskStore'da görevler yüklendiyse pending sayısını kullan, yoksa API'den gelen sayıyı kullan
+              const displayCount = tasks.length > 0 ? pendingCount : apiCount
               
               return (
                 <Link

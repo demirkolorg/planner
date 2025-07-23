@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -339,8 +339,8 @@ export default function ProjectDetailPage() {
                 </div>
                 {getOverdueTasksCountByProject(projectId) > 0 && (
                   <div className="flex items-center space-x-1">
-                    <div className="h-3 w-3 rounded-full bg-red-500" />
-                    <span className="text-red-600 font-medium">{getOverdueTasksCountByProject(projectId)} gecikme</span>
+                  <TriangleAlert className="h-3 w-3 text-red-600" />
+                    <span className="text-red-600 font-medium">{getOverdueTasksCountByProject(projectId)}</span>
                   </div>
                 )}
                 <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
