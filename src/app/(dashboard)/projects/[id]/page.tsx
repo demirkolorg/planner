@@ -18,6 +18,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { TaskCard } from "@/components/task/task-card"
 
@@ -321,7 +322,8 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <TooltipProvider>
+      <div className="space-y-4">
       {/* Compact Project Header */}
       <div className="flex items-center justify-between">
         {/* Left: Navigation & Project Info */}
@@ -343,31 +345,70 @@ export default function ProjectDetailPage() {
             <div>
               <h1 className="text-2xl font-bold">{project.name}</h1>
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <div className="flex items-center space-x-1">
-                  <Check className="h-3 w-3 text-green-600" />
-                  <span>{getCompletedTasksCount(projectId)}</span>
-                </div>
-                <div className="flex items-center space-x-1">  
-                  <Clock className="h-3 w-3 text-blue-600" />
-                  <span>{getPendingTasksCount(projectId)}</span>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center space-x-1">
+                      <Check className="h-3 w-3 text-green-600" />
+                      <span>{getCompletedTasksCount(projectId)}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Tamamlanan görevler</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center space-x-1">  
+                      <Clock className="h-3 w-3 text-blue-600" />
+                      <span>{getPendingTasksCount(projectId)}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Bekleyen görevler</p>
+                  </TooltipContent>
+                </Tooltip>
+                
                 {getOverdueTasksCountByProject(projectId) > 0 && (
-                  <div className="flex items-center space-x-1">
-                  <TriangleAlert className="h-3 w-3 text-red-600" />
-                    <span className="text-red-600 font-medium">{getOverdueTasksCountByProject(projectId)}</span>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center space-x-1">
+                        <TriangleAlert className="h-3 w-3 text-red-600" />
+                        <span className="text-red-600 font-medium">{getOverdueTasksCountByProject(projectId)}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Süresi geçmiş görevler</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
-                <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ 
-                      width: `${((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100}%` 
-                    }}
-                  />
-                </div>
-                <span className="text-xs font-medium">
-                  {Math.round(((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100)}%
-                </span>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary rounded-full transition-all"
+                        style={{ 
+                          width: `${((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100}%` 
+                        }}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Tamamlanma oranı</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-xs font-medium">
+                      {Math.round(((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100)}%
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Tamamlanma yüzdesi</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -974,6 +1015,7 @@ export default function ProjectDetailPage() {
         task={taskToMove}
         currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
       />
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }
