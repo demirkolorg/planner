@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -37,6 +37,25 @@ export function ReminderPicker({
     title: "",
     message: ""
   })
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowReminderPicker(false)
+        setShowReminderCalendar(false)
+      }
+    }
+
+    if (showReminderPicker || showReminderCalendar) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showReminderPicker, showReminderCalendar])
 
   const formatReminderTimeInput = (value: string) => {
     // Sadece sayıları al
@@ -183,7 +202,7 @@ export function ReminderPicker({
 
   return (
     <TooltipProvider>
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         {trigger ? (
           <div onClick={() => setShowReminderPicker(!showReminderPicker)}>
             {trigger}

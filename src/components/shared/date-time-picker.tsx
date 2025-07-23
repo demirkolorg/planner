@@ -55,17 +55,19 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
   }, [initialDateTime])
 
   useEffect(() => {
-    if (!isModal) {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (!isModal) {
           handleSave()
+        } else {
+          onCancel()
         }
       }
-
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [selectedDate, selectedTime, isModal])
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [selectedDate, selectedTime, isModal, onCancel])
 
   const handleSave = () => {
     if (!selectedDate) {

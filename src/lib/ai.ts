@@ -26,18 +26,37 @@ const getRandomTags = (availableTags: string[]): string[] => {
   return shuffled.slice(0, Math.min(numTags, availableTags.length))
 }
 
-const getRandomDueDate = (): string | null => {
+const getRandomDueDate = (parentTaskDueDate?: Date | null): string | null => {
   const shouldHaveDueDate = Math.random() > 0.4 // %60 olasılık
   if (!shouldHaveDueDate) return null
   
   const now = new Date()
-  const daysToAdd = Math.floor(Math.random() * 14) + 1 // 1-14 gün arası
-  const dueDate = new Date(now.getTime() + daysToAdd * 24 * 60 * 60 * 1000)
+  let maxDate: Date
+  
+  if (parentTaskDueDate) {
+    // Parent task'ın bitiş tarihi varsa, o tarihten önce bir tarih seç
+    const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+      ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+      : parentTaskDueDate
+    
+    maxDate = parentEndOfDay
+    console.log('AI: Parent task due date detected:', parentTaskDueDate, 'Max date for AI suggestion:', maxDate)
+  } else {
+    // Parent task yoksa normal mantık (14 gün)
+    maxDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+  }
+  
+  // Bugün ile maxDate arasında rastgele bir tarih seç
+  const timeDiff = maxDate.getTime() - now.getTime()
+  if (timeDiff <= 0) return null // Parent task geçmişte ise tarih verme
+  
+  const randomTime = Math.random() * timeDiff
+  const dueDate = new Date(now.getTime() + randomTime)
   
   return dueDate.toISOString()
 }
 
-const getRandomReminders = (dueDate?: string | null): string[] => {
+const getRandomReminders = (dueDate?: string | null, parentTaskDueDate?: Date | null): string[] => {
   if (!dueDate || Math.random() > 0.5) return [] // %50 olasılık
   
   const due = new Date(dueDate)
@@ -53,6 +72,18 @@ const getRandomReminders = (dueDate?: string | null): string[] => {
   const numReminders = Math.floor(Math.random() * 2) + 1 // 1-2 hatırlatıcı
   for (let i = 0; i < numReminders && i < options.length; i++) {
     const reminderDate = options[i]
+    
+    // Parent task kontrolü - hatırlatıcı parent task'ın bitiş tarihinden sonra olamaz
+    if (parentTaskDueDate) {
+      const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+        ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+        : parentTaskDueDate
+      
+      if (reminderDate > parentEndOfDay) {
+        continue // Bu hatırlatıcıyı atla
+      }
+    }
+    
     reminders.push(reminderDate.toLocaleString('tr-TR', {
       day: 'numeric',
       month: 'long',
@@ -69,7 +100,8 @@ export async function generateTaskSuggestion(
   prompt: string, 
   projectName?: string, 
   sectionName?: string,
-  availableTags: string[] = []
+  availableTags: string[] = [],
+  parentTaskDueDate?: Date | null
 ): Promise<AITaskSuggestion> {
   try {
     const context = []
@@ -125,8 +157,8 @@ export async function generateTaskSuggestion(
     // Rastgele ekstra özellikler oluştur
     const randomPriority = getRandomPriority()
     const randomTags = getRandomTags(availableTags)
-    const randomDueDate = getRandomDueDate()
-    const randomReminders = getRandomReminders(randomDueDate)
+    const randomDueDate = getRandomDueDate(parentTaskDueDate)
+    const randomReminders = getRandomReminders(randomDueDate, parentTaskDueDate)
     
     return {
       title: result.title || prompt,
@@ -140,8 +172,8 @@ export async function generateTaskSuggestion(
     // Fallback olarak basit sonuç döndür
     const fallbackPriority = getRandomPriority()
     const fallbackTags = getRandomTags(availableTags)
-    const fallbackDueDate = getRandomDueDate()
-    const fallbackReminders = getRandomReminders(fallbackDueDate)
+    const fallbackDueDate = getRandomDueDate(parentTaskDueDate)
+    const fallbackReminders = getRandomReminders(fallbackDueDate, parentTaskDueDate)
     
     return {
       title: prompt,

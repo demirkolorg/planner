@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Tag, Search, Check, Plus, X } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Tag, Search, Check, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useTagStore } from "@/store/tagStore"
@@ -18,6 +18,24 @@ export function TagPicker({ selectedTags, onTagsChange, trigger, className, drop
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [tagSearchInput, setTagSearchInput] = useState("")
   const { tags, fetchTags, createTag } = useTagStore()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowTagPicker(false)
+      }
+    }
+
+    if (showTagPicker) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showTagPicker])
 
   useEffect(() => {
     if (showTagPicker) {
@@ -68,7 +86,7 @@ export function TagPicker({ selectedTags, onTagsChange, trigger, className, drop
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       {trigger ? (
         <div onClick={() => setShowTagPicker(!showTagPicker)}>
           {trigger}

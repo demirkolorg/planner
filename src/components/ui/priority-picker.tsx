@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Flag } from "lucide-react"
@@ -16,6 +16,24 @@ interface PriorityPickerProps {
 
 export const PriorityPicker = ({ selectedPriority, onPrioritySelect, trigger, className, dropdownPosition = 'bottom' }: PriorityPickerProps) => {
   const [showPicker, setShowPicker] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPicker(false)
+      }
+    }
+
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPicker])
 
   const getPriorityColor = () => {
     const priority = PRIORITIES.find(p => p.name === selectedPriority)
@@ -28,7 +46,7 @@ export const PriorityPicker = ({ selectedPriority, onPrioritySelect, trigger, cl
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       {trigger ? (
         <div onClick={() => setShowPicker(!showPicker)}>
           {trigger}

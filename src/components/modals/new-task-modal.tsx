@@ -334,11 +334,18 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       // Mevcut etiket isimlerini al
       const availableTagNames = tags.map(tag => tag.name)
       
+      // Parent task bilgilerini al
+      const parentTaskDueDate = parentTaskId ? (() => {
+        const parentTask = getTaskById(parentTaskId)
+        return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
+      })() : null
+
       const suggestion = await generateTaskSuggestion(
         aiPrompt,
         selectedProject?.name,
         selectedSection?.name,
-        availableTagNames
+        availableTagNames,
+        parentTaskDueDate
       )
       
       setTitle(suggestion.title)
