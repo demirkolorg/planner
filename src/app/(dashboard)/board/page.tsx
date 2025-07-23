@@ -126,110 +126,127 @@ export default function PinnedTasksPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Compact Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/20">
-            <Pin className="h-6 w-6 text-orange-600" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-md">
+            <Pin className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Sabitlenmiş Görevler</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+              Sabitlenmiş Görevler
+            </h1>
+            <p className="text-sm text-muted-foreground">
               Tüm projelerden sabitlenmiş görevlerin listesi
             </p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center space-x-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{totalPinned}</div>
-            <div className="text-xs text-muted-foreground">Toplam</div>
+        {/* Compact Stats */}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 px-3 py-2 bg-orange-50/80 dark:bg-orange-900/20 border border-orange-200/50 dark:border-orange-700/30 rounded-lg">
+            <Pin className="h-4 w-4 text-orange-600" />
+            <span className="text-lg font-bold text-orange-600">{totalPinned}</span>
+            <span className="text-xs text-orange-700 dark:text-orange-300">toplam</span>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{completedPinned}</div>
-            <div className="text-xs text-muted-foreground">Tamamlanan</div>
+          <div className="flex items-center space-x-2 px-3 py-2 bg-green-50/80 dark:bg-green-900/20 border border-green-200/50 dark:border-green-700/30 rounded-lg">
+            <span className="text-green-600 font-bold">✓</span>
+            <span className="text-lg font-bold text-green-600">{completedPinned}</span>
+            <span className="text-xs text-green-700 dark:text-green-300">tamamlanan</span>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{pendingPinned}</div>
-            <div className="text-xs text-muted-foreground">Bekleyen</div>
+          <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-700/30 rounded-lg">
+            <span className="text-blue-600">⏳</span>
+            <span className="text-lg font-bold text-blue-600">{pendingPinned}</span>
+            <span className="text-xs text-blue-700 dark:text-blue-300">bekleyen</span>
           </div>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Görevlerde ara..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      {/* Compact Filters and Search */}
+      <div className="bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 rounded-xl p-4 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Görevlerde ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9 rounded-lg border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all duration-200"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={(value: "date" | "priority" | "project") => setSortBy(value)}>
+              <SelectTrigger className="w-40 h-9 rounded-lg border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200">
+                <SelectValue placeholder="Sıralama" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border-gray-200/60 dark:border-gray-700/60">
+                <SelectItem value="date">📅 Tarihe göre</SelectItem>
+                <SelectItem value="priority">🔥 Önceliğe göre</SelectItem>
+                <SelectItem value="project">📁 Projeye göre</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Filter */}
+            <Select value={filterBy} onValueChange={(value: "all" | "pending" | "completed") => setFilterBy(value)}>
+              <SelectTrigger className="w-32 h-9 rounded-lg border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200">
+                <SelectValue placeholder="Filtrele" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border-gray-200/60 dark:border-gray-700/60">
+                <SelectItem value="all">🔍 Tümü</SelectItem>
+                <SelectItem value="pending">⏳ Bekleyen</SelectItem>
+                <SelectItem value="completed">✅ Tamamlanan</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Show completed toggle */}
+            <Button
+              variant={showCompletedTasks ? "default" : "outline"}
+              size="sm"
+              onClick={toggleShowCompletedTasks}
+              className={`h-9 px-4 rounded-lg transition-all duration-200 ${
+                showCompletedTasks 
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/25' 
+                  : 'border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-gray-50 dark:hover:bg-gray-700/80'
+              }`}
+            >
+              {showCompletedTasks ? "✅ Gizle" : "👀 Göster"}
+            </Button>
+          </div>
         </div>
-
-        {/* Sort */}
-        <Select value={sortBy} onValueChange={(value: "date" | "priority" | "project") => setSortBy(value)}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Sıralama" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="date">📅 Tarihe göre</SelectItem>
-            <SelectItem value="priority">🔥 Önceliğe göre</SelectItem>
-            <SelectItem value="project">📁 Projeye göre</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Filter */}
-        <Select value={filterBy} onValueChange={(value: "all" | "pending" | "completed") => setFilterBy(value)}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filtrele" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">🔍 Tümü</SelectItem>
-            <SelectItem value="pending">⏳ Bekleyen</SelectItem>
-            <SelectItem value="completed">✅ Tamamlanan</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Show completed toggle */}
-        <Button
-          variant={showCompletedTasks ? "default" : "outline"}
-          size="sm"
-          onClick={toggleShowCompletedTasks}
-        >
-          {showCompletedTasks ? "✅ Tamamlananları Gizle" : "👀 Tamamlananları Göster"}
-        </Button>
       </div>
 
-      {/* Empty State */}
+      {/* Compact Empty State */}
       {sortedTasks.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-orange-100 dark:bg-orange-900/20">
+        <div className="text-center py-12">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-4">
             <Pin className="h-8 w-8 text-orange-600" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">
-            {searchQuery || filterBy !== "all" 
-              ? "Arama kriterlerine uygun sabitlenmiş görev bulunamadı" 
-              : "Henüz sabitlenmiş görev yok"
-            }
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            {searchQuery || filterBy !== "all"
-              ? "Farklı arama terimleri veya filtreler deneyebilirsin"
-              : "Önemli görevleri sabitle ve onlara buradan hızlıca eriş"
-            }
-          </p>
-          {!searchQuery && filterBy === "all" && (
-            <Link href="/">
-              <Button>
-                <FolderClosed className="h-4 w-4 mr-2" />
-                Projelere Git
-              </Button>
-            </Link>
-          )}
+          
+          <div className="max-w-md mx-auto space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {searchQuery || filterBy !== "all" 
+                ? "Arama kriterlerine uygun sabitlenmiş görev bulunamadı" 
+                : "Henüz sabitlenmiş görev yok"
+              }
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {searchQuery || filterBy !== "all"
+                ? "Farklı arama terimleri veya filtreler deneyebilirsin"
+                : "Önemli görevleri sabitle ve onlara buradan hızlıca eriş"
+              }
+            </p>
+            {!searchQuery && filterBy === "all" && (
+              <Link href="/">
+                <Button className="mt-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md shadow-orange-500/25 text-white rounded-lg">
+                  <FolderClosed className="h-4 w-4 mr-2" />
+                  Projelere Git
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       )}
 
@@ -238,26 +255,35 @@ export default function PinnedTasksPage() {
         <div className="space-y-6">
           {Object.entries(groupedTasks).map(([projectId, group]) => (
             <div key={projectId} className="space-y-3">
-              {/* Project Header */}
-              <div className="flex items-center justify-between">
-                <Link 
-                  href={`/projects/${projectId}`}
-                  className="flex items-center space-x-3 group hover:bg-accent/50 p-2 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
+              {/* Compact Project Header */}
+              <Link 
+                href={`/projects/${projectId}`}
+                className="group flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-800/80 dark:to-gray-900/80 border border-gray-200/50 dark:border-gray-700/30 hover:border-gray-300/70 dark:hover:border-gray-600/50 backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
                     {group.project.emoji ? (
-                      <span className="text-xl">{group.project.emoji}</span>
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                        <span className="text-lg">{group.project.emoji}</span>
+                      </div>
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-primary" />
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500 shadow-sm group-hover:shadow-md transition-shadow" />
                     )}
-                    <h2 className="text-lg font-semibold">{group.project.name}</h2>
-                    <span className="text-sm text-muted-foreground">
-                      ({group.tasks.length} sabitlenen görev)
-                    </span>
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center font-bold shadow-sm">
+                      {group.tasks.length}
+                    </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </Link>
-              </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                      {group.project.name}
+                    </h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {group.tasks.length} sabitlenen görev
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors group-hover:translate-x-1" />
+              </Link>
 
               {/* Tasks */}
               <div className="grid gap-3">
