@@ -569,7 +569,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   showTreeConnectors={true}
-                  enableDragAndDrop={true}
+                  enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
                     try {
                       await updateTask(taskId, { parentTaskId: newParentId })
@@ -670,7 +670,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   showTreeConnectors={true}
-                  enableDragAndDrop={true}
+                  enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
                     try {
                       await updateTask(taskId, { parentTaskId: newParentId })
@@ -689,7 +689,7 @@ export default function ProjectDetailPage() {
             
             return (
               <AccordionItem key={section.id} value={section.id} className="border-none overflow-visible">
-                <AccordionTrigger className="px-4 py-2 hover:bg-accent/50 rounded-lg border-b-1 mb-1 transition-colors hover:no-underline w-full">
+                <AccordionTrigger className="px-4 py-2 hover:bg-accent/50 rounded-lg border-b-1 mb-2 transition-colors hover:no-underline w-full">
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center space-x-3 flex-1">
                       {isOpen ? (
@@ -863,7 +863,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       showTreeConnectors={true}
-                      enableDragAndDrop={true}
+                      enableDragAndDrop={false}
                       onMoveTask={async (taskId, newParentId) => {
                         try {
                           await updateTask(taskId, { parentTaskId: newParentId })

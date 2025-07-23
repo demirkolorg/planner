@@ -489,12 +489,12 @@ export function TaskCard({
         {/* Expanded Content */}
         {isExpanded && (
           <div className={cn(
-            "px-4 pb-4",
+            "px-4 pb-4 ",
             getDateAlertGradient()
           )}>
             {/* Description */}
             {task.description && (
-              <div className="mt-3 mb-4">
+              <div className="pt-3 mb-4">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                   {task.description}
                 </p>
