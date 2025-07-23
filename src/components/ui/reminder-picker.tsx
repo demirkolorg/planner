@@ -330,15 +330,33 @@ export function ReminderPicker({
                   const currentDate = new Date(reminderYear, reminderMonth, day)
                   const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
                   
+                  // Parent task bitiş tarihi kontrolü
+                  let isAfterParentDueDate = false
+                  if (parentTaskDueDate) {
+                    const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+                      ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+                      : parentTaskDueDate
+                    
+                    isAfterParentDueDate = currentDate > parentEndOfDay
+                  }
+                  
+                  const isDisabled = isPastDate || isAfterParentDueDate
+                  
                   return (
                     <Button
                       key={day}
                       variant={reminderDate?.startsWith(`${day} `) ? "default" : "ghost"}
                       size="sm"
-                      className={`h-8 w-8 text-xs ${isPastDate ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isPastDate}
+                      className={`h-8 w-8 text-xs ${
+                        isPastDate 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : isAfterParentDueDate 
+                          ? 'opacity-60 cursor-not-allowed bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
+                          : ''
+                      }`}
+                      disabled={isDisabled}
                       onClick={() => {
-                        if (!isPastDate) {
+                        if (!isDisabled) {
                           handleReminderDateSelect(day)
                         }
                       }}

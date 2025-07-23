@@ -33,6 +33,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
     title: "",
     message: ""
   })
+  const [isTimeConfirmLoading, setIsTimeConfirmLoading] = useState(false)
 
   useEffect(() => {
     if (initialDateTime) {
@@ -231,16 +232,37 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
     return new Date(year, month + 1, 0).getDate()
   }
 
-  const handleTimeConfirm = () => {
+  const handleTimeConfirm = async () => {
     if (timeInput.trim()) {
+      // Time input validation
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+      if (!timeRegex.test(timeInput.trim())) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Geçersiz Saat",
+          message: "Lütfen geçerli bir saat formatı girin (ÖR: 14:30)"
+        })
+        return
+      }
+      
+      // Visual feedback - show loading state
+      setIsTimeConfirmLoading(true)
+      
       // Eğer tarih seçilmemişse bugünün tarihini seç
       if (!selectedDate) {
         const today = new Date()
         const formattedDate = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`
         setSelectedDate(formattedDate)
       }
+      
+      // Brief delay for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
       setSelectedTime(timeInput.trim())
       setShowTimeInput(false)
+      setIsTimeConfirmLoading(false)
+      
+      console.log('Time confirmed:', timeInput.trim(), 'Date:', selectedDate)
     }
   }
 
@@ -251,10 +273,14 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
   }
 
   const handleTimeButtonClick = () => {
-    // Şu anki saati input'a koy
-    const now = new Date()
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-    setTimeInput(currentTime)
+    // Eğer selectedTime varsa onu kullan, yoksa şu anki saati koy
+    if (selectedTime) {
+      setTimeInput(selectedTime)
+    } else {
+      const now = new Date()
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+      setTimeInput(currentTime)
+    }
     setShowTimeInput(true)
   }
 
@@ -442,16 +468,34 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                   const currentDate = new Date(currentYear, currentMonth, day)
                   const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
                   
+                  // Parent task bitiş tarihi kontrolü
+                  let isAfterParentDueDate = false
+                  if (parentTaskDueDate) {
+                    const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+                      ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+                      : parentTaskDueDate
+                    
+                    isAfterParentDueDate = currentDate > parentEndOfDay
+                  }
+                  
+                  const isDisabled = isPastDate || isAfterParentDueDate
+                  
                   return (
                     <Button
                       key={day}
                       variant={selectedDate?.startsWith(`${day.toString().padStart(2, '0')}.${(currentMonth + 1).toString().padStart(2, '0')}`) ? "default" : "ghost"}
                       size="sm"
-                      className={`h-8 w-8 text-xs ${isPastDate ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={isPastDate}
+                      className={`h-8 w-8 text-xs ${
+                        isPastDate 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : isAfterParentDueDate 
+                          ? 'opacity-60 cursor-not-allowed bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
+                          : ''
+                      }`}
+                      disabled={isDisabled}
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (!isPastDate) {
+                        if (!isDisabled) {
                           handleCalendarDateSelect(day)
                         }
                       }}
@@ -489,7 +533,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
               >
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2" />
-                  <span>Zaman</span>
+                  <span>{selectedTime || "Zaman"}</span>
                 </div>
                 <Plus className="h-4 w-4" />
               </Button>
@@ -541,8 +585,16 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                     handleTimeConfirm()
                   }}
                   className="flex-1"
+                  disabled={isTimeConfirmLoading}
                 >
-                  Tamamlandı
+                  {isTimeConfirmLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                      <span>Kaydediliyor...</span>
+                    </div>
+                  ) : (
+                    "Tamamlandı"
+                  )}
                 </Button>
               </div>
             )}
