@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag } from "lucide-react"
+import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info } from "lucide-react"
 import { generateTaskSuggestion, improveBrief } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DateTimePicker } from "../shared/date-time-picker"
@@ -76,6 +76,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [sectionSearchInput, setSectionSearchInput] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedDateTime, setSelectedDateTime] = useState<string | null>(null)
+  const [parentTask, setParentTask] = useState<any>(null)
+  const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
   const [reminders, setReminders] = useState<string[]>([])
@@ -86,7 +88,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("yap")
-  const [showAIHelper, setShowAIHelper] = useState(true)
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean
     title: string
@@ -145,7 +146,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setIsSubmitting(false)
       setIsAILoading(false)
       setAiPrompt("yap")
-      setShowAIHelper(true)
       fetchTags() // Fetch real tags data
       fetchProjects() // Fetch projects data
     }
@@ -172,13 +172,14 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       }
       // Parent task ID'si verilmişse, parent task'ın proje/bölüm bilgilerini kullan
       else if (parentTaskId) {
-        const parentTask = getTaskById(parentTaskId)
-        if (parentTask) {
-          const parentProject = projects.find(p => p.id === parentTask.projectId)
+        const foundParentTask = getTaskById(parentTaskId)
+        if (foundParentTask) {
+          setParentTask(foundParentTask)
+          const parentProject = projects.find(p => p.id === foundParentTask.projectId)
           if (parentProject) {
             setSelectedProject(parentProject)
             fetchSections(parentProject.id).then(() => {
-              const parentSection = getSectionsByProject(parentProject.id).find(s => s.id === parentTask.sectionId)
+              const parentSection = getSectionsByProject(parentProject.id).find(s => s.id === foundParentTask.sectionId)
               if (parentSection) {
                 setSelectedSection(parentSection)
               }
@@ -405,14 +406,20 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           await updateTaskReminders(editingTask.id, reminderData)
         }
       } else {
-        // Yeni görev modu: yeni görev oluştur
+        // Yeni görev modu: yeni görev oluştur  
+        // Eğer parent task'ın due date'i var ve kullanıcı tarih seçmemişse, otomatik ata
+        let finalDueDate = selectedDateTime
+        if (!selectedDateTime && parentTask?.dueDate) {
+          finalDueDate = parentTask.dueDate
+        }
+        
         const taskData: CreateTaskRequest = {
           title: title.trim(),
           description: description.trim() || undefined,
           projectId: selectedProject.id,
           sectionId: selectedSection.id,
           priority: selectedPriority,
-          dueDate: selectedDateTime || undefined,
+          dueDate: finalDueDate || undefined,
           tags: selectedTags,
           reminders: formattedReminders,
           ...(parentTaskId && { parentTaskId })
@@ -489,7 +496,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       }
       
       setAiPrompt("yap")
-      setShowAIHelper(true)
     } catch (error) {
     } finally {
       setIsAILoading(false)
@@ -509,6 +515,60 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }
   }
 
+  const handleQuickAIGenerate = async () => {
+    setIsAILoading(true)
+    try {
+      // Mevcut context bilgilerini topla
+      const contextPrompt = [
+        selectedProject?.name ? `Proje: ${selectedProject.name}` : '',
+        selectedSection?.name ? `Bölüm: ${selectedSection.name}` : '',
+        parentTask?.title ? `Üst Görev: ${parentTask.title}` : ''
+      ].filter(Boolean).join(', ')
+      
+      const aiPrompt = contextPrompt ? 
+        `${contextPrompt} için uygun bir görev öner` : 
+        'Genel bir iş görevi öner'
+      
+      // Mevcut etiket isimlerini al
+      const availableTagNames = tags.map(tag => tag.name)
+      
+      // Parent task bilgilerini al
+      const parentTaskDueDate = parentTask?.dueDate ? new Date(parentTask.dueDate) : null
+
+      const suggestion = await generateTaskSuggestion(
+        aiPrompt,
+        selectedProject?.name,
+        selectedSection?.name,
+        availableTagNames,
+        parentTaskDueDate
+      )
+      
+      // Form alanlarını doldur
+      setTitle(suggestion.title)
+      setDescription(suggestion.description)
+      
+      // Öncelik ata
+      if (suggestion.priority) {
+        setSelectedPriority(suggestion.priority)
+      }
+      
+      // Etiketleri ata
+      if (suggestion.tags && suggestion.tags.length > 0) {
+        setSelectedTags(suggestion.tags)
+      }
+      
+      // Tarih ata (parent task yoksa veya parent'ın tarihi yoksa)
+      if (suggestion.dueDate && !parentTask?.dueDate) {
+        setSelectedDateTime(suggestion.dueDate)
+      }
+      
+    } catch (error) {
+      console.error('AI öneri hatası:', error)
+    } finally {
+      setIsAILoading(false)
+    }
+  }
+
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -518,71 +578,46 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
              parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : 
              '🎯 Görev Ekle'}
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute right-4 top-4"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="absolute right-4 top-4 flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleQuickAIGenerate}
+              disabled={isAILoading}
+              className="h-8 px-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40"
+              title="AI ile görev öner"
+            >
+              {isAILoading ? (
+                <div className="animate-spin rounded-full h-3 w-3 border-purple-600 border-t-transparent" />
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 text-purple-600 mr-1" />
+                  <span className="text-xs text-purple-700 dark:text-purple-300">AI</span>
+                </>
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowInfoModal(true)}
+              className="h-8 w-8"
+              title="Yardım"
+            >
+              <Info className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
         {/* Content */}
         <div className="space-y-4">
-          {/* AI Helper - Sadece yeni görev modunda göster */}
-          {!editingTask && (
-            <div className="border rounded-lg p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Sparkles className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                    AI Yardımcı
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAIHelper(!showAIHelper)}
-                  className="h-6 px-2"
-                >
-                  {showAIHelper ? "Gizle" : "Göster"}
-                </Button>
-              </div>
-              
-              {showAIHelper && (
-                <div className="space-y-2">
-                  <div className="flex space-x-2">
-                    <Input
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="Görevle ilgili ne yapmak istiyorsun? (örn: 'blog yazısı yaz', 'toplantı planla')"
-                      className="flex-1 text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleAIGenerate()
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={handleAIGenerate}
-                      disabled={!aiPrompt.trim() || isAILoading}
-                      size="sm"
-                      className="px-3"
-                    >
-                      {isAILoading ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
-                      ) : (
-                        <Wand2 className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    AI size uygun bir görev başlığı ve açıklama önerecek
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+
 
           {/* Title Input */}
           <div>
@@ -898,6 +933,113 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Info Modal */}
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] top-[10%] translate-y-0">
+          <DialogTitle className="text-xl font-semibold flex items-center space-x-2">
+            <Info className="h-6 w-6 text-blue-500" />
+            <span>Görev Ekleme Rehberi</span>
+          </DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowInfoModal(false)}
+            className="absolute right-4 top-4"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+
+          <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+            {/* AI Yardımcı Bilgisi */}
+            <section className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                <h3 className="font-medium text-purple-700 dark:text-purple-300">AI Yardımcı</h3>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2 pl-6">
+                <p>• Modal başlığındaki mor AI butonuna tıklayın</p>
+                <p>• Seçili proje, bölüm ve üst görev bilgilerine göre otomatik önerir</p>
+                <p>• Başlık, açıklama, öncelik ve etiketleri otomatik doldurur</p>
+                <p>• Önerilen içerikleri daha sonra düzenleyebilirsiniz</p>
+              </div>
+            </section>
+
+            {/* Alt Görev Bilgisi */}
+            {parentTaskId && parentTask && (
+              <section className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <h3 className="font-medium text-blue-700 dark:text-blue-300">Alt Görev Ekleme</h3>
+                </div>
+                <div className="text-sm text-muted-foreground space-y-2 pl-6">
+                  <p><strong>Üst Görev:</strong> {parentTask.title}</p>
+                  {parentTask.dueDate && (
+                    <p><strong>Üst Görev Son Tarihi:</strong> {new Date(parentTask.dueDate).toLocaleDateString('tr-TR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      ...(new Date(parentTask.dueDate).getHours() !== 0 || new Date(parentTask.dueDate).getMinutes() !== 0) && {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }
+                    })}</p>
+                  )}
+                  <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+                    <p className="text-orange-700 dark:text-orange-300 font-medium">📋 Önemli Kurallar:</p>
+                    <ul className="mt-2 space-y-1 text-orange-600 dark:text-orange-400">
+                      <li>• Alt görev, üst görevden daha geç bitirilemez</li>
+                      {parentTask.dueDate && <li>• Tarih seçmezseniz, üst görevin tarihi otomatik atanır</li>}
+                      <li>• Üst görev tamamlanmadan tamamlanamaz</li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Tarih Seçimi */}
+            <section className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-green-600" />
+                <h3 className="font-medium text-green-700 dark:text-green-300">Tarih ve Saat</h3>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2 pl-6">
+                <p>• Takvim ikonuna tıklayarak tarih/saat seçebilirsiniz</p>
+                <p>• Sadece tarih seçmek için saati 00:00 bırakın</p>
+                <p>• Seçilen tarih kartlarda renkli olarak gösterilir</p>
+                {parentTaskId && <p>• Alt görevlerde üst görev tarihi sınırlaması uygulanır</p>}
+              </div>
+            </section>
+
+            {/* Etiket ve Öncelik */}
+            <section className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Tag className="h-4 w-4 text-blue-600" />
+                <h3 className="font-medium text-blue-700 dark:text-blue-300">Etiket ve Öncelik</h3>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2 pl-6">
+                <p>• Etiket ikonu ile görevleri kategorilere ayırabilirsiniz</p>
+                <p>• Bayrak ikonu ile öncelik seviyesi belirleyebilirsiniz</p>
+                <p>• Öncelik renkleri: Kritik (kırmızı), Yüksek (turuncu), Orta (sarı), Düşük (mavi)</p>
+              </div>
+            </section>
+
+            {/* Hatırlatıcı */}
+            <section className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-yellow-600">🔔</span>
+                <h3 className="font-medium text-yellow-700 dark:text-yellow-300">Hatırlatıcılar</h3>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2 pl-6">
+                <p>• Çan ikonu ile hatırlatıcı ekleyebilirsiniz</p>
+                <p>• Birden fazla hatırlatıcı ayarlayabilirsiniz</p>
+                <p>• Hatırlatıcılar belirlenen zamanda bildirim gönderir</p>
+              </div>
+            </section>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       
       <ValidationAlert
         isOpen={alertConfig.isOpen}
