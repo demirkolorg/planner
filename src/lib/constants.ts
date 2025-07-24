@@ -27,6 +27,7 @@ export const ROUTES = {
   SEARCH: '/search',
   TAGS: '/tags',
   COMPLETED: '/completed',
+  OVERDUE: '/overdue',
   PROJECTS: '/projects',
   TASKS: '/tasks',
   PROFILE: '/profile',

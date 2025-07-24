@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
-import { MdOutlineSpaceDashboard, MdSpaceDashboard } from "react-icons/md"
+import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -31,15 +30,6 @@ import { useRouter } from "next/navigation"
 
 const cardItems = [
   { 
-    name: "Anasayfa", 
-    count: null, 
-    icon: MdOutlineSpaceDashboard, 
-    activeIcon: MdSpaceDashboard, 
-    color: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-800/50", 
-    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/70 dark:to-indigo-900/70 text-blue-800 dark:text-blue-200 border-blue-300/70 dark:border-blue-700/70 shadow-lg shadow-blue-500/10", 
-    href: ROUTES.DASHBOARD 
-  },
-  { 
     name: "Bugün", 
     count: 1, 
     icon: FaRegStar, 
@@ -47,6 +37,15 @@ const cardItems = [
     color: "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-800/50", 
     activeColor: "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/70 dark:to-teal-900/70 text-emerald-800 dark:text-emerald-200 border-emerald-300/70 dark:border-emerald-700/70 shadow-lg shadow-emerald-500/10", 
     href: ROUTES.TODAY 
+  },
+  { 
+    name: "Gecikmiş", 
+    count: null, 
+    icon: CalendarX, 
+    activeIcon: CalendarX, 
+    color: "bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/50 dark:to-rose-950/50 text-red-700 dark:text-red-300 border-red-200/50 dark:border-red-800/50", 
+    activeColor: "bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/70 dark:to-rose-900/70 text-red-800 dark:text-red-200 border-red-300/70 dark:border-red-700/70 shadow-lg shadow-red-500/10", 
+    href: ROUTES.OVERDUE 
   },
   { 
     name: "Zamanlanmış", 
@@ -58,22 +57,13 @@ const cardItems = [
     href: ROUTES.SCHEDULED 
   },
   { 
-    name: "Pano", 
-    count: 2, 
-    icon: BsPin, 
-    activeIcon: BsFillPinFill, 
-    color: "bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-800/50", 
-    activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
-    href: ROUTES.BOARD 
-  },
-  { 
-    name: "Arama", 
+    name: "Tamamlandı", 
     count: null, 
-    icon: Search, 
-    activeIcon: Search, 
-    color: "bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/50 dark:to-blue-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200/50 dark:border-cyan-800/50", 
-    activeColor: "bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/70 dark:to-blue-900/70 text-cyan-800 dark:text-cyan-200 border-cyan-300/70 dark:border-cyan-700/70 shadow-lg shadow-cyan-500/10", 
-    href: ROUTES.SEARCH 
+    icon: FaRegCheckCircle, 
+    activeIcon: FaCheckCircle, 
+    color: "bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950/50 dark:to-lime-950/50 text-green-700 dark:text-green-300 border-green-200/50 dark:border-green-800/50", 
+    activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-900/70 dark:to-lime-900/70 text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/70 shadow-lg shadow-green-500/10", 
+    href: ROUTES.COMPLETED 
   },
   { 
     name: "Etiketler", 
@@ -85,13 +75,13 @@ const cardItems = [
     href: ROUTES.TAGS 
   },
   { 
-    name: "Tamamlandı", 
-    count: null, 
-    icon: FaRegCheckCircle, 
-    activeIcon: FaCheckCircle, 
-    color: "bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950/50 dark:to-lime-950/50 text-green-700 dark:text-green-300 border-green-200/50 dark:border-green-800/50", 
-    activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-900/70 dark:to-lime-900/70 text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/70 shadow-lg shadow-green-500/10", 
-    href: ROUTES.COMPLETED 
+    name: "Pano", 
+    count: 2, 
+    icon: BsPin, 
+    activeIcon: BsFillPinFill, 
+    color: "bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-800/50", 
+    activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
+    href: ROUTES.BOARD 
   },
 ]
 
@@ -108,7 +98,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount } = useTaskStore()
+  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
 
@@ -154,16 +144,18 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     switch (itemName) {
       case "Bugün":
         return getTasksDueToday().length
+      case "Gecikmiş":
+        return getOverdueTasks().length
       case "Zamanlanmış":
         const count = getCurrentWeekTasksCount()
         console.log('Sidebar - Current week tasks count:', count)
         return count
-      case "Pano":
-        return getPinnedTasks().length
-      case "Etiketler":
-        return tags.length
       case "Tamamlandı":
         return getTotalCompletedTasksCount()
+      case "Etiketler":
+        return tags.length
+      case "Pano":
+        return getPinnedTasks().length
       default:
         return null
     }
@@ -177,12 +169,21 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       )}>
       <div className="flex h-14 items-center justify-between px-2 text-primary">
         {isOpen ? (
-          <div className="flex items-center pl-2">
+          <Link href={ROUTES.DASHBOARD} className="flex items-center pl-2 hover:opacity-80 transition-opacity">
             <FolderKanban className="h-7 w-7 mr-3 text-primary" />
             <h1 className="text-xl font-bold">Planner</h1>
-          </div>
+          </Link>
         ) : (
-          <div className="flex-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={ROUTES.DASHBOARD} className="flex-1 flex items-center justify-center hover:opacity-80 transition-opacity">
+                <FolderKanban className="h-7 w-7 text-primary" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Anasayfa</p>
+            </TooltipContent>
+          </Tooltip>
         )}
         <Button
           variant="ghost"
@@ -200,17 +201,29 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       
       {isOpen && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Add Task Button */}
+          {/* Add Task and Search Buttons */}
           <div className="px-4 pt-2 pb-3">
-            <Button
-              variant="default"
-              size="sm"
-              className="w-full px-3 py-2"
-              onClick={() => setIsTaskModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Görev Ekle
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="flex-1 px-3 py-2"
+                onClick={() => setIsTaskModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Görev Ekle
+              </Button>
+              <Link href={ROUTES.SEARCH} className="flex-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full px-3 py-2"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Arama
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Navigation Cards */}
@@ -312,8 +325,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       {/* Collapsed Navigation Icons */}
       {!isOpen && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Add Task Button - Collapsed - At Top */}
-          <div className="p-2">
+          {/* Add Task and Search Buttons - Collapsed */}
+          <div className="p-2 space-y-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -327,6 +340,22 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p>Görev Ekle</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={ROUTES.SEARCH}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-full h-9"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Arama</p>
               </TooltipContent>
             </Tooltip>
           </div>

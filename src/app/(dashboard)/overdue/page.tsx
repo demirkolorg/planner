@@ -1,10 +1,61 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { CheckCircle2, Sun, Folder, Tag, Flag, ArrowRight, ChevronDown, Clock, Calendar } from "lucide-react"
+import { AlertTriangle, CheckCircle2, CalendarX, Folder, Tag, Flag, ArrowRight, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { useTaskStore } from "@/store/taskStore"
+
+interface TaskWithRelations {
+  id: string
+  title: string
+  description?: string
+  completed: boolean
+  priority: string
+  dueDate?: string
+  isPinned: boolean
+  parentTaskId?: string
+  projectId: string
+  sectionId?: string
+  userId: string
+  createdAt: string
+  updatedAt: string
+  level?: number
+  project?: {
+    id: string
+    name: string
+    emoji?: string
+  }
+  section?: {
+    id: string
+    name: string
+  }
+  tags?: Array<{
+    id: string
+    taskId: string
+    tagId: string
+    tag: {
+      id: string
+      name: string
+      color: string
+    }
+  }>
+  reminders?: Array<{
+    id: string
+    taskId: string
+    datetime: Date
+    message?: string
+    isActive: boolean
+  }>
+  subTasks?: Array<{
+    id: string
+    title: string
+    completed: boolean
+    priority: string
+    createdAt: string
+    updatedAt: string
+  }>
+}
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { Button } from "@/components/ui/button"
@@ -15,7 +66,7 @@ import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 
 type ViewMode = 'simple' | 'project' | 'tag' | 'priority'
 
-export default function TodayPage() {
+export default function OverduePage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('simple')
   
@@ -33,7 +84,7 @@ export default function TodayPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
-  const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [editingTask, setEditingTask] = useState<TaskWithRelations | null>(null)
   
   const { 
     tasks,
@@ -54,9 +105,6 @@ export default function TodayPage() {
 
   // Bugünün tarihi (local timezone)
   const today = new Date()
-  const todayStr = today.getFullYear() + '-' + 
-                  String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                  String(today.getDate()).padStart(2, '0')
 
   const formatToTurkishDate = (date: Date) => {
     const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
@@ -75,33 +123,20 @@ export default function TodayPage() {
     return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
   }
 
-  // Sadece bugün tarihli görevleri filtrele
-  const todayTasks = tasks.filter(task => {
+  // Gecikmiş görevleri filtrele
+  const overdueTasks = tasks.filter(task => {
     if (!task.dueDate || task.completed) return false
-    const taskDueDate = new Date(task.dueDate)
-    const taskDateStr = taskDueDate.getFullYear() + '-' + 
-                       String(taskDueDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(taskDueDate.getDate()).padStart(2, '0')
-    
-    return taskDateStr === todayStr
-  })
-
-  const completedTodayTasks = tasks.filter(task => {
-    if (!task.dueDate || !task.completed) return false
-    const taskDueDate = new Date(task.dueDate)
-    const taskDateStr = taskDueDate.getFullYear() + '-' + 
-                       String(taskDueDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(taskDueDate.getDate()).padStart(2, '0')
-    return taskDateStr === todayStr
+    const dueDate = new Date(task.dueDate)
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    return dueDate < todayMidnight
   })
 
   // İstatistikler
-  const totalToday = todayTasks.length
-  const completedToday = completedTodayTasks.length
-  const remainingToday = totalToday
+  const totalOverdue = overdueTasks.length
+  const remainingOverdue = totalOverdue
 
   // Görünüm modları için gruplama fonksiyonları
-  const allRelevantTasks = [...todayTasks]
+  const allRelevantTasks = [...overdueTasks]
 
   const groupTasksByProject = () => {
     const grouped: Record<string, {
@@ -178,8 +213,41 @@ export default function TodayPage() {
     return grouped
   }
 
+  // Görevleri gecikme süresine göre grupla
+  const groupTasksByOverdueDuration = () => {
+    const now = new Date()
+    const groups = {
+      'Bugün gecikti': [] as typeof overdueTasks,
+      '1-3 gün gecikti': [] as typeof overdueTasks,
+      '4-7 gün gecikti': [] as typeof overdueTasks,
+      '1-2 hafta gecikti': [] as typeof overdueTasks,
+      '2+ hafta gecikti': [] as typeof overdueTasks
+    }
+
+    overdueTasks.forEach(task => {
+      if (!task.dueDate) return
+      
+      const dueDate = new Date(task.dueDate)
+      const diffInDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+      
+      if (diffInDays === 0) {
+        groups['Bugün gecikti'].push(task)
+      } else if (diffInDays >= 1 && diffInDays <= 3) {
+        groups['1-3 gün gecikti'].push(task)
+      } else if (diffInDays >= 4 && diffInDays <= 7) {
+        groups['4-7 gün gecikti'].push(task)
+      } else if (diffInDays >= 8 && diffInDays <= 14) {
+        groups['1-2 hafta gecikti'].push(task)
+      } else {
+        groups['2+ hafta gecikti'].push(task)
+      }
+    })
+
+    return groups
+  }
+
   // Handler functions
-  const handleEditTask = useCallback((task: any) => {
+  const handleEditTask = useCallback((task: TaskWithRelations) => {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
@@ -284,15 +352,15 @@ export default function TodayPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-              <Sun className="h-7 w-7 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center shadow-lg">
+              <CalendarX className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-                Bugün
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
+                Gecikmiş Görevler
               </h1>
               <p className="text-muted-foreground">
-                {formatToTurkishDate(today)}
+                Vadesi geçmiş görevleriniz - {formatToTurkishDate(today)}
               </p>
             </div>
           </div>
@@ -300,12 +368,8 @@ export default function TodayPage() {
           {/* Mini Stats - Centered */}
           <div className="flex items-center space-x-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600">{remainingToday}</div>
-              <div className="text-xs text-muted-foreground">yapılacak</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{completedToday}</div>
-              <div className="text-xs text-muted-foreground">tamamlandı</div>
+              <div className="text-2xl font-bold text-red-600">{remainingOverdue}</div>
+              <div className="text-xs text-muted-foreground">gecikmiş görev</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-medium text-muted-foreground">
@@ -323,7 +387,7 @@ export default function TodayPage() {
               onClick={() => setViewMode('simple')}
               className="h-8 px-3 rounded-lg"
             >
-              <Sun className="h-4 w-4 mr-2" />
+              <CalendarX className="h-4 w-4 mr-2" />
               Basit
             </Button>
             <Button
@@ -357,22 +421,14 @@ export default function TodayPage() {
         </div>
       </div>
 
-      {/* Progress Bar */}
-      {totalToday > 0 && (
-        <div className="bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Günlük İlerleme</span>
-            <span className="text-sm text-muted-foreground">
-              {Math.round((completedToday / (totalToday + completedToday)) * 100)}%
+      {/* Info Bar */}
+      {totalOverdue > 0 && (
+        <div className="bg-gradient-to-r from-red-50/50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/20 border border-red-200/50 dark:border-red-700/30 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-red-700 dark:text-red-300">Gecikmiş Görevler</span>
+            <span className="text-sm text-red-600 dark:text-red-400">
+              {totalOverdue} görev acil eylem bekliyor
             </span>
-          </div>
-          <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
-              style={{ 
-                width: `${totalToday + completedToday > 0 ? (completedToday / (totalToday + completedToday)) * 100 : 0}%` 
-              }}
-            />
           </div>
         </div>
       )}
@@ -380,157 +436,107 @@ export default function TodayPage() {
       {/* View Mode Content */}
       {viewMode === 'simple' ? (
         <>
-          {/* Bugünkü Görevler - Saatlere göre organize edilmiş */}
-          {todayTasks.length > 0 ? (
-            <div className="space-y-4">
+          {/* Gecikmiş Görevler - Duration-based grouping */}
+          {overdueTasks.length > 0 ? (
+            <div className="space-y-6">
               {(() => {
-                // Görevleri saate göre grupla
-                const tasksByHour: Record<string, typeof todayTasks> = {
-                  'all-day': []
-                }
+                const groups = groupTasksByOverdueDuration()
+                const groupOrder = ['2+ hafta gecikti', '1-2 hafta gecikti', '4-7 gün gecikti', '1-3 gün gecikti', 'Bugün gecikti']
                 
-                // Tüm saatler için boş array'ler oluştur
-                for (let hour = 0; hour < 24; hour++) {
-                  tasksByHour[hour.toString().padStart(2, '0')] = []
-                }
-                
-                // Görevleri saatlerine göre grupla
-                todayTasks.forEach(task => {
-                  if (!task.dueDate) {
-                    tasksByHour['all-day'].push(task)
-                  } else {
-                    const dueDate = new Date(task.dueDate)
-                    const hours = dueDate.getHours()
-                    const minutes = dueDate.getMinutes()
-                    
-                    // Eğer saat 00:00 ise tüm gün olarak kabul et
-                    if (hours === 0 && minutes === 0) {
-                      tasksByHour['all-day'].push(task)
-                    } else {
-                      tasksByHour[hours.toString().padStart(2, '0')].push(task)
+                return groupOrder.map(groupName => {
+                  const tasksInGroup = groups[groupName as keyof typeof groups]
+                  if (tasksInGroup.length === 0) return null
+                  
+                  const getGroupColor = (name: string) => {
+                    switch (name) {
+                      case 'Bugün gecikti': return 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                      case '1-3 gün gecikti': return 'bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                      case '4-7 gün gecikti': return 'bg-amber-100 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                      case '1-2 hafta gecikti': return 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                      case '2+ hafta gecikti': return 'bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
+                      default: return 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                     }
                   }
-                })
-                
-                // Önce tüm gün görevlerini göster
-                const sections = []
-                
-                if (tasksByHour['all-day'].length > 0) {
-                  sections.push(
-                    <div key="all-day" className="space-y-2">
-                      <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>Tüm Gün</span>
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                          {tasksByHour['all-day'].length}
-                        </span>
+                  
+                  const getGroupTextColor = (name: string) => {
+                    switch (name) {
+                      case 'Bugün gecikti': return 'text-red-700 dark:text-red-300'
+                      case '1-3 gün gecikti': return 'text-orange-700 dark:text-orange-300'
+                      case '4-7 gün gecikti': return 'text-amber-700 dark:text-amber-300'
+                      case '1-2 hafta gecikti': return 'text-yellow-700 dark:text-yellow-300'
+                      case '2+ hafta gecikti': return 'text-purple-700 dark:text-purple-300'
+                      default: return 'text-red-700 dark:text-red-300'
+                    }
+                  }
+                  
+                  return (
+                    <div key={groupName} className="space-y-3">
+                      <div className={`flex items-center justify-between px-3 py-2 rounded-lg ${getGroupColor(groupName)}`}>
+                        <div className="flex items-center space-x-2.5">
+                          <div className="w-8 h-8 rounded-md bg-white/50 dark:bg-black/20 flex items-center justify-center shadow-sm">
+                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                          </div>
+                          <div>
+                            <h2 className={`text-sm font-medium ${getGroupTextColor(groupName)}`}>
+                              {groupName}
+                            </h2>
+                            <p className={`text-xs ${getGroupTextColor(groupName)}/70`}>
+                              Acil eylem gerekli
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-2 py-1 rounded-lg bg-red-600 text-white text-sm font-semibold min-w-[24px] text-center">
+                          {tasksInGroup.length}
+                        </div>
                       </div>
-                      <div className="pl-6">
-                        <HierarchicalTaskList
-                          tasks={tasksByHour['all-day']}
-                          onToggleComplete={toggleTaskComplete}
-                          onUpdate={updateTask}
-                          onDelete={handleDeleteTask}
-                          onPin={toggleTaskPin}
-                          onAddSubTask={handleAddSubTask}
-                          onEdit={handleEditTask}
-                          onCopy={handleCopyTask}
-                          onMove={handleMoveTaskModal}
-                          onUpdateTags={async (taskId, tagIds) => {
-                            try {
-                              await updateTaskTags(taskId, tagIds)
-                            } catch (error) {
-                              console.error('Failed to update tags:', error)
-                            }
-                          }}
-                          onUpdatePriority={async (taskId, priority) => {
-                            try {
-                              await updateTask(taskId, { priority })
-                            } catch (error) {
-                              console.error('Failed to update priority:', error)
-                            }
-                          }}
-                          onUpdateReminders={async (taskId, reminders) => {
-                            try {
-                              await updateTaskReminders(taskId, reminders)
-                            } catch (error) {
-                              console.error('Failed to update reminders:', error)
-                            }
-                          }}
-                        />
-                      </div>
+                      <HierarchicalTaskList
+                        tasks={tasksInGroup}
+                        onToggleComplete={toggleTaskComplete}
+                        onUpdate={updateTask}
+                        onDelete={handleDeleteTask}
+                        onPin={toggleTaskPin}
+                        onAddSubTask={handleAddSubTask}
+                        onEdit={handleEditTask}
+                        onCopy={handleCopyTask}
+                        onMove={handleMoveTaskModal}
+                        onUpdateTags={async (taskId, tagIds) => {
+                          try {
+                            await updateTaskTags(taskId, tagIds)
+                          } catch (error) {
+                            console.error('Failed to update tags:', error)
+                          }
+                        }}
+                        onUpdatePriority={async (taskId, priority) => {
+                          try {
+                            await updateTask(taskId, { priority })
+                          } catch (error) {
+                            console.error('Failed to update priority:', error)
+                          }
+                        }}
+                        onUpdateReminders={async (taskId, reminders) => {
+                          try {
+                            await updateTaskReminders(taskId, reminders)
+                          } catch (error) {
+                            console.error('Failed to update reminders:', error)
+                          }
+                        }}
+                      />
                     </div>
                   )
-                }
-                
-                // Sonra saatli görevleri göster
-                for (let hour = 0; hour < 24; hour++) {
-                  const hourStr = hour.toString().padStart(2, '0')
-                  const hourTasks = tasksByHour[hourStr]
-                  
-                  if (hourTasks.length > 0) {
-                    sections.push(
-                      <div key={hourStr} className="space-y-2">
-                        <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{hourStr}:00</span>
-                          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                            {hourTasks.length}
-                          </span>
-                        </div>
-                        <div className="pl-6">
-                          <HierarchicalTaskList
-                            tasks={hourTasks}
-                            onToggleComplete={toggleTaskComplete}
-                            onUpdate={updateTask}
-                            onDelete={handleDeleteTask}
-                            onPin={toggleTaskPin}
-                            onAddSubTask={handleAddSubTask}
-                            onEdit={handleEditTask}
-                            onCopy={handleCopyTask}
-                            onMove={handleMoveTaskModal}
-                            onUpdateTags={async (taskId, tagIds) => {
-                              try {
-                                await updateTaskTags(taskId, tagIds)
-                              } catch (error) {
-                                console.error('Failed to update tags:', error)
-                              }
-                            }}
-                            onUpdatePriority={async (taskId, priority) => {
-                              try {
-                                await updateTask(taskId, { priority })
-                              } catch (error) {
-                                console.error('Failed to update priority:', error)
-                              }
-                            }}
-                            onUpdateReminders={async (taskId, reminders) => {
-                              try {
-                                await updateTaskReminders(taskId, reminders)
-                              } catch (error) {
-                                console.error('Failed to update reminders:', error)
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  }
-                }
-                
-                return sections
+                })
               })()}
             </div>
           ) : (
             /* Empty State */
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <CheckCircle2 className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <CheckCircle2 className="h-10 w-10 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Bugün için görev yok
+                Gecikmiş görev yok
               </h3>
               <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Harika! Bugün için planlanmış görevin yok. Dinlenme zamanın ya da yeni hedefler belirleme fırsatın.
+                Harika! Vadesi geçmiş hiçbir görevin yok. Tüm görevlerin zamanında tamamlanıyor.
               </p>
             </div>
           )}
@@ -540,14 +546,14 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByProject()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Folder className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Folder className="h-10 w-10 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Bugün için görev yok
+                Gecikmiş görev yok
               </h3>
               <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Bugün tarihi için hiçbir projede görev bulunmuyor.
+                Hiçbir projede gecikmiş görev bulunmuyor.
               </p>
             </div>
           ) : (
@@ -570,7 +576,7 @@ export default function TodayPage() {
                           {projectName}
                         </h2>
                         <p className="text-xs text-muted-foreground">
-                          {group.tasks.length} görev
+                          {group.tasks.length} gecikmiş görev
                         </p>
                       </div>
                     </div>
@@ -626,14 +632,14 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByPriority()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Flag className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Flag className="h-10 w-10 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Bugün için görev yok
+                Gecikmiş görev yok
               </h3>
               <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Bugün tarihi için hiçbir öncelik seviyesinde görev bulunmuyor.
+                Hiçbir öncelik seviyesinde gecikmiş görev bulunmuyor.
               </p>
             </div>
           ) : (
@@ -668,7 +674,7 @@ export default function TodayPage() {
                             {group.priority}
                           </h2>
                           <p className="text-xs text-muted-foreground">
-                            {group.tasks.length} görev
+                            {group.tasks.length} gecikmiş görev
                           </p>
                         </div>
                       </div>
@@ -719,14 +725,14 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByTag()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Tag className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Tag className="h-10 w-10 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Bugün için görev yok
+                Gecikmiş görev yok
               </h3>
               <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Bugün tarihi için hiçbir etikette görev bulunmuyor.
+                Hiçbir etikette gecikmiş görev bulunmuyor.
               </p>
             </div>
           ) : (
@@ -751,7 +757,7 @@ export default function TodayPage() {
                           {tagName}
                         </h2>
                         <p className="text-xs text-muted-foreground">
-                          {group.tasks.length} görev
+                          {group.tasks.length} gecikmiş görev
                         </p>
                       </div>
                     </div>
@@ -807,61 +813,6 @@ export default function TodayPage() {
         </div>
       ) : null}
 
-      {/* Tamamlanan Görevler */}
-      {completedTodayTasks.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-md bg-green-100 dark:bg-green-800/50 flex items-center justify-center shadow-sm">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-medium text-green-700 dark:text-green-300">
-                  Tamamlanan Görevler
-                </h2>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Bugün tamamlandı
-                </p>
-              </div>
-            </div>
-            <div className="px-2 py-1 rounded-lg bg-green-600 dark:bg-green-500 text-white text-sm font-semibold min-w-[24px] text-center">
-              {completedTodayTasks.length}
-            </div>
-          </div>
-          <HierarchicalTaskList
-            tasks={completedTodayTasks}
-            onToggleComplete={toggleTaskComplete}
-            onUpdate={updateTask}
-            onDelete={handleDeleteTask}
-            onPin={toggleTaskPin}
-            onAddSubTask={handleAddSubTask}
-            onEdit={handleEditTask}
-            onCopy={handleCopyTask}
-            onMove={handleMoveTaskModal}
-            onUpdateTags={async (taskId, tagIds) => {
-              try {
-                await updateTaskTags(taskId, tagIds)
-              } catch (error) {
-                console.error('Failed to update tags:', error)
-              }
-            }}
-            onUpdatePriority={async (taskId, priority) => {
-              try {
-                await updateTask(taskId, { priority })
-              } catch (error) {
-                console.error('Failed to update priority:', error)
-              }
-            }}
-            onUpdateReminders={async (taskId, reminders) => {
-              try {
-                await updateTaskReminders(taskId, reminders)
-              } catch (error) {
-                console.error('Failed to update reminders:', error)
-              }
-            }}
-          />
-        </div>
-      )}
 
       {/* Modals */}
       <NewTaskModal
