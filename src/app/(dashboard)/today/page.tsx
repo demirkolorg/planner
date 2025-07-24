@@ -194,7 +194,7 @@ export default function TodayPage() {
             </div>
           </div>
           
-          {/* Mini Stats */}
+          {/* Mini Stats - Centered */}
           <div className="flex items-center space-x-4 text-sm">
             <div className="text-center">
               <div className="text-2xl font-bold text-amber-600">{remainingToday}</div>
@@ -211,62 +211,46 @@ export default function TodayPage() {
               <div className="text-xs text-muted-foreground">şu an</div>
             </div>
           </div>
-        </div>
 
-        {/* View Mode Navigation */}
-        <div className="flex items-center space-x-1 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 rounded-xl p-1">
-          <Button
-            variant={viewMode === 'simple' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('simple')}
-            className={`h-8 px-3 rounded-lg transition-all duration-200 ${
-              viewMode === 'simple' 
-                ? 'bg-white dark:bg-gray-800 shadow-sm' 
-                : 'hover:bg-white/50 dark:hover:bg-gray-800/50'
-            }`}
-          >
-            <Sun className="h-4 w-4 mr-2" />
-            Basit
-          </Button>
-          <Button
-            variant={viewMode === 'project' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('project')}
-            className={`h-8 px-3 rounded-lg transition-all duration-200 ${
-              viewMode === 'project' 
-                ? 'bg-white dark:bg-gray-800 shadow-sm' 
-                : 'hover:bg-white/50 dark:hover:bg-gray-800/50'
-            }`}
-          >
-            <Folder className="h-4 w-4 mr-2" />
-            Proje
-          </Button>
-          <Button
-            variant={viewMode === 'priority' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('priority')}
-            className={`h-8 px-3 rounded-lg transition-all duration-200 ${
-              viewMode === 'priority' 
-                ? 'bg-white dark:bg-gray-800 shadow-sm' 
-                : 'hover:bg-white/50 dark:hover:bg-gray-800/50'
-            }`}
-          >
-            <Flag className="h-4 w-4 mr-2" />
-            Öncelik
-          </Button>
-          <Button
-            variant={viewMode === 'tag' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('tag')}
-            className={`h-8 px-3 rounded-lg transition-all duration-200 ${
-              viewMode === 'tag' 
-                ? 'bg-white dark:bg-gray-800 shadow-sm' 
-                : 'hover:bg-white/50 dark:hover:bg-gray-800/50'
-            }`}
-          >
-            <Tag className="h-4 w-4 mr-2" />
-            Etiket
-          </Button>
+          {/* View Mode Navigation - Right Aligned */}
+          <div className="flex items-center space-x-1 bg-muted/50 border border-border rounded-xl p-1">
+            <Button
+              variant={viewMode === 'simple' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('simple')}
+              className="h-8 px-3 rounded-lg"
+            >
+              <Sun className="h-4 w-4 mr-2" />
+              Basit
+            </Button>
+            <Button
+              variant={viewMode === 'project' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('project')}
+              className="h-8 px-3 rounded-lg"
+            >
+              <Folder className="h-4 w-4 mr-2" />
+              Proje
+            </Button>
+            <Button
+              variant={viewMode === 'priority' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('priority')}
+              className="h-8 px-3 rounded-lg"
+            >
+              <Flag className="h-4 w-4 mr-2" />
+              Öncelik
+            </Button>
+            <Button
+              variant={viewMode === 'tag' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('tag')}
+              className="h-8 px-3 rounded-lg"
+            >
+              <Tag className="h-4 w-4 mr-2" />
+              Etiket
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -296,21 +280,21 @@ export default function TodayPage() {
           {/* Geciken Görevler */}
           {overdueTasks.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-red-50/60 to-orange-50/60 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200/40 dark:border-red-700/20 backdrop-blur-sm">
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-md bg-gradient-to-br from-red-100 to-red-200 dark:from-red-800 dark:to-red-900 flex items-center justify-center shadow-sm">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <div className="w-8 h-8 rounded-md bg-destructive/20 flex items-center justify-center shadow-sm">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-medium text-red-700 dark:text-red-300">
+                    <h2 className="text-sm font-medium text-destructive">
                       Geciken Görevler
                     </h2>
-                    <p className="text-xs text-red-600 dark:text-red-400">
+                    <p className="text-xs text-destructive/70">
                       Vadesi geçmiş
                     </p>
                   </div>
                 </div>
-                <div className="px-2 py-1 rounded-lg bg-red-500 text-white text-sm font-semibold min-w-[24px] text-center">
+                <div className="px-2 py-1 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold min-w-[24px] text-center">
                   {overdueTasks.length}
                 </div>
               </div>
@@ -412,28 +396,28 @@ export default function TodayPage() {
               <div key={projectName} className="space-y-3">
                 <Link 
                   href={group.project.id ? `/projects/${group.project.id}` : '#'}
-                  className="group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-white/60 to-gray-50/60 dark:from-gray-800/60 dark:to-gray-900/60 border border-gray-200/40 dark:border-gray-700/20 hover:border-gray-300/60 dark:hover:border-gray-600/40 backdrop-blur-sm transition-all duration-200 hover:shadow-sm"
+                  className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm"
                 >
                   <div className="flex items-center space-x-2.5">
                     <div>
                       {group.project.emoji ? (
-                        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center shadow-sm">
+                        <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
                           <span className="text-sm">{group.project.emoji}</span>
                         </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-amber-400 to-amber-500 shadow-sm" />
+                        <div className="w-8 h-8 rounded-md bg-primary shadow-sm" />
                       )}
                     </div>
                     <div>
-                      <h2 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                      <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
                         {projectName}
                       </h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {group.tasks.length} görev
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors group-hover:translate-x-0.5" />
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-0.5" />
                 </Link>
                 <HierarchicalTaskList
                   tasks={group.tasks}
@@ -502,17 +486,17 @@ export default function TodayPage() {
               
               return (
                 <div key={priority} className="space-y-3">
-                  <div className="flex items-center space-x-2.5 px-3 py-2 rounded-lg bg-gradient-to-r from-white/60 to-gray-50/60 dark:from-gray-800/60 dark:to-gray-900/60 border border-gray-200/40 dark:border-gray-700/20 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2.5 px-3 py-2 rounded-lg bg-muted/50 border border-border">
                     <div>
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center shadow-sm ${priorityColors[priority as keyof typeof priorityColors]}`}>
+                      <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
                         <span className="text-sm">{priorityIcons[priority as keyof typeof priorityIcons]}</span>
                       </div>
                     </div>
                     <div>
-                      <h2 className="text-sm font-medium text-gray-900 dark:text-white">
+                      <h2 className="text-sm font-medium text-foreground">
                         {group.priority}
                       </h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {group.tasks.length} görev
                       </p>
                     </div>
@@ -571,27 +555,26 @@ export default function TodayPage() {
               <div key={tagName} className="space-y-3">
                 <Link 
                   href={group.tag.id ? `/tags/${group.tag.id}` : '#'}
-                  className="group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-white/60 to-gray-50/60 dark:from-gray-800/60 dark:to-gray-900/60 border border-gray-200/40 dark:border-gray-700/20 hover:border-gray-300/60 dark:hover:border-gray-600/40 backdrop-blur-sm transition-all duration-200 hover:shadow-sm"
+                  className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm"
                 >
                   <div className="flex items-center space-x-2.5">
                     <div>
                       <div 
-                        className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm"
-                        style={{ backgroundColor: `${group.tag.color}20` }}
+                        className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-secondary"
                       >
-                        <Tag className="h-4 w-4" style={{ color: group.tag.color }} />
+                        <Tag className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div>
-                      <h2 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                      <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
                         {tagName}
                       </h2>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {group.tasks.length} görev
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors group-hover:translate-x-0.5" />
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-0.5" />
                 </Link>
                 <HierarchicalTaskList
                   tasks={group.tasks}
@@ -631,9 +614,9 @@ export default function TodayPage() {
       {/* Tamamlanan Görevler */}
       {completedTodayTasks.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-green-50/60 to-emerald-50/60 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/40 dark:border-green-700/20 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800 dark:to-green-900 flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-md bg-green-100 dark:bg-green-800/50 flex items-center justify-center shadow-sm">
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
               <div>
@@ -645,7 +628,7 @@ export default function TodayPage() {
                 </p>
               </div>
             </div>
-            <div className="px-2 py-1 rounded-lg bg-green-500 text-white text-sm font-semibold min-w-[24px] text-center">
+            <div className="px-2 py-1 rounded-lg bg-green-600 dark:bg-green-500 text-white text-sm font-semibold min-w-[24px] text-center">
               {completedTodayTasks.length}
             </div>
           </div>
