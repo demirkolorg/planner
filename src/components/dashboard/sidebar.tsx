@@ -99,7 +99,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage } = useTaskStore()
+  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
 
@@ -143,6 +143,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   // Dinamik sayıları hesapla
   const getDynamicCount = (itemName: string) => {
     switch (itemName) {
+      case "Bugün":
+        return getTasksDueToday().length
       case "Pano":
         return getPinnedTasks().length
       case "Etiketler":
