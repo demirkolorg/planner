@@ -573,46 +573,49 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
-          <DialogTitle className="text-lg font-semibold">
-            {editingTask ? '✏️ Görevi Düzenle' : 
-             parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : 
-             '🎯 Görev Ekle'}
-          </DialogTitle>
-          <div className="absolute right-4 top-4 flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleQuickAIGenerate}
-              disabled={isAILoading}
-              className="h-8 px-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40"
-              title="AI ile görev öner"
-            >
-              {isAILoading ? (
-                <div className="animate-spin rounded-full h-3 w-3 border-purple-600 border-t-transparent" />
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 text-purple-600 mr-1" />
-                  <span className="text-xs text-purple-700 dark:text-purple-300">AI</span>
-                </>
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowInfoModal(true)}
-              className="h-8 w-8"
-              title="Yardım"
-            >
-              <Info className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          {/* Modal Header with Proper Layout */}
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <DialogTitle className="text-lg font-semibold leading-tight pr-2 flex-1 min-w-0">
+              {editingTask ? '✏️ Görevi Düzenle' : 
+               parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : 
+               '🎯 Görev Ekle'}
+            </DialogTitle>
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleQuickAIGenerate}
+                disabled={isAILoading}
+                className="h-8 px-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40"
+                title="AI ile görev öner"
+              >
+                {isAILoading ? (
+                  <div className="animate-spin rounded-full h-3 w-3 border-purple-600 border-t-transparent" />
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 text-purple-600 mr-1" />
+                    <span className="text-xs text-purple-700 dark:text-purple-300">AI</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowInfoModal(true)}
+                className="h-8 w-8"
+                title="Yardım"
+              >
+                <Info className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
         {/* Content */}
