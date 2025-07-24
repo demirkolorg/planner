@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
@@ -99,13 +99,26 @@ export function TaskCard({
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
+  const [isToggling, setIsToggling] = useState(false)
+  const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed)
 
   // External prop'lar varsa onları kullan, yoksa internal state'i kullan
   const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
   const hasChildren = externalHasChildren !== undefined ? externalHasChildren : (task.subTasks && task.subTasks.length > 0)
   
+  // Task completed state'i task prop'undan gelen değer ile senkronize et
+  React.useEffect(() => {
+    setOptimisticCompleted(task.completed)
+  }, [task.completed])
   
-  const handleToggleComplete = () => {
+  // Görünen completed değeri (optimistic veya gerçek)
+  const displayCompleted = optimisticCompleted
+  
+  
+  const handleToggleComplete = async () => {
+    // Zaten işlem devam ediyorsa çık
+    if (isToggling) return
+    
     // Ana görevde tamamlanmamış alt görevler varsa tamamlanamaz
     if (task.subTasks && task.subTasks.length > 0) {
       const hasIncompleteSubTasks = task.subTasks.some(subTask => !subTask.completed)
@@ -113,7 +126,20 @@ export function TaskCard({
         return // Tamamlanamaz
       }
     }
-    onToggleComplete?.(task.id)
+    
+    // Optimistic update - UI'ı hemen güncelle
+    const newCompletedState = !task.completed
+    setOptimisticCompleted(newCompletedState)
+    setIsToggling(true)
+    
+    try {
+      await onToggleComplete?.(task.id)
+    } catch (error) {
+      // Hata durumunda geri al
+      setOptimisticCompleted(task.completed)
+    } finally {
+      setIsToggling(false)
+    }
   }
 
   const handleToggleExpanded = () => {
@@ -269,12 +295,12 @@ export function TaskCard({
               const hasIncompleteSubTasks = task.subTasks && task.subTasks.length > 0
                 ? task.subTasks.some(subTask => !subTask.completed)
                 : false
-              const isDisabled = hasIncompleteSubTasks && !task.completed
+              const isDisabled = (hasIncompleteSubTasks && !displayCompleted) || isToggling
 
               return (
                 <>
                   <Checkbox
-                    checked={task.completed}
+                    checked={displayCompleted}
                     onCheckedChange={isDisabled ? undefined : handleToggleComplete}
                     disabled={isDisabled}
                     className="peer opacity-0 absolute"
@@ -284,14 +310,15 @@ export function TaskCard({
                     className={cn(
                       "w-5 h-5 border-2 rounded-md flex items-center justify-center",
                       "peer-checked:text-white transition-colors",
-                      task.completed && "text-white",
+                      displayCompleted && "text-white",
                       isDisabled
                         ? "cursor-not-allowed opacity-50"
-                        : "cursor-pointer"
+                        : "cursor-pointer",
+                      isToggling && "animate-pulse"
                     )}
                     style={{
                       borderColor: getPriorityColorHex() || '#ef4444', // fallback kırmızı
-                      backgroundColor: task.completed ? (getPriorityColorHex() || '#ef4444') : 'transparent'
+                      backgroundColor: displayCompleted ? (getPriorityColorHex() || '#ef4444') : 'transparent'
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -300,14 +327,16 @@ export function TaskCard({
                       }
                     }}
                   >
-                    {task.completed && (
+                    {isToggling ? (
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : displayCompleted ? (
                       <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
                           d="m11.4669 3.72684c.2683.264.2683.69.0000.95265l-6.5000 6.5c-.2641.264-.6914.264-.9555.000l-3.0000-3.0c-.2634-.264-.2634-.691.0000-.955.2635-.264.6905-.264.9540.000l2.5220 2.523 6.0220-6.023c.264-.264.691-.264.955.000z"
                           fill="currentColor"
                         />
                       </svg>
-                    )}
+                    ) : null}
                   </div>
                 </>
               )
@@ -328,7 +357,7 @@ export function TaskCard({
           <div className="flex-1 min-w-0">
             <h4 className={cn(
               "font-medium text-xs truncate flex items-center gap-3",
-              task.completed && "line-through text-muted-foreground"
+              displayCompleted && "line-through text-muted-foreground"
             )}>
               <span className="flex-1 min-w-0 truncate">{task.title}</span>
               {/* Due Date Icon with Overdue Warning */}

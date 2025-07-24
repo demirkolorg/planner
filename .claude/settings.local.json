@@ -32,7 +32,9 @@
       "Bash(bunx tsc:*)",
       "Bash(touch:*)",
       "Bash(taskkill:*)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(bun remove:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }
