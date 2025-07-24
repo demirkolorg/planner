@@ -578,8 +578,14 @@ export default function BoardPage() {
                   <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
                     <div className="flex items-center space-x-2.5">
                       <div>
-                        <div className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-secondary">
-                          <Tag className="h-4 w-4 text-muted-foreground" />
+                        <div 
+                          className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm"
+                          style={{ 
+                            backgroundColor: group.tag.color ? `${group.tag.color}20` : '#e5e7eb',
+                            border: `1px solid ${group.tag.color ? `${group.tag.color}40` : '#d1d5db'}`
+                          }}
+                        >
+                          <Tag className="h-4 w-4" style={{ color: group.tag.color || '#6b7280' }} />
                         </div>
                       </div>
                       <div>
