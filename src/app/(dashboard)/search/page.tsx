@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Calendar, Flag, Sun, Folder, Tag, ChevronDown, ArrowRight } from "lucide-react"
+import { Search, Calendar, Flag, Sun, Folder, Tag, ChevronDown, ArrowRight, CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SimpleDatePicker } from "@/components/ui/simple-date-picker"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
@@ -26,6 +27,8 @@ export default function SearchPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('simple')
   const [resultViewMode, setResultViewMode] = useState<ResultViewMode>('simple')
   const [searchQuery, setSearchQuery] = useState('')
+  const [titleQuery, setTitleQuery] = useState('')
+  const [descriptionQuery, setDescriptionQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Task[]>([])
   
   // Detailed search filters
@@ -85,11 +88,17 @@ export default function SearchPage() {
   const performDetailedSearch = () => {
     let filtered = tasks
 
-    // Title/description search
-    if (searchQuery.trim()) {
+    // Title search
+    if (titleQuery.trim()) {
       filtered = filtered.filter(task => 
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        task.title.toLowerCase().includes(titleQuery.toLowerCase())
+      )
+    }
+
+    // Description search
+    if (descriptionQuery.trim()) {
+      filtered = filtered.filter(task => 
+        task.description && task.description.toLowerCase().includes(descriptionQuery.toLowerCase())
       )
     }
 
@@ -383,19 +392,33 @@ export default function SearchPage() {
           </Button>
         </div>
       ) : (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-              /* Detailed Search */
-              <div className="space-y-6">
-                {/* Search Query */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Görev Adı / Açıklama</label>
-                  <Input
-                    placeholder="Aranacak kelimeler..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+        <div className="space-y-6 mb-6">
+          {/* Detailed Search Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Görev Adı</label>
+              <Input
+                placeholder="Görev adında ara..."
+                value={titleQuery}
+                onChange={(e) => setTitleQuery(e.target.value)}
+                className="h-12"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Açıklama</label>
+              <Input
+                placeholder="Açıklamada ara..."
+                value={descriptionQuery}
+                onChange={(e) => setDescriptionQuery(e.target.value)}
+                className="h-12"
+              />
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-6">
+                {/* Advanced Filters */}
+                <div className="space-y-6">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Project Selection */}
@@ -487,25 +510,17 @@ export default function SearchPage() {
                   <label className="text-sm font-medium mb-2 block">Bitiş Tarihi Aralığı</label>
                   <div className="flex space-x-4">
                     <div className="flex-1">
-                      <Input
-                        type="date"
+                      <SimpleDatePicker
+                        date={dateRange.from}
+                        onSelect={(date) => setDateRange({ ...dateRange, from: date })}
                         placeholder="Başlangıç tarihi"
-                        value={dateRange.from ? dateRange.from.toISOString().split('T')[0] : ''}
-                        onChange={(e) => setDateRange({
-                          ...dateRange, 
-                          from: e.target.value ? new Date(e.target.value) : undefined
-                        })}
                       />
                     </div>
                     <div className="flex-1">
-                      <Input
-                        type="date"
+                      <SimpleDatePicker
+                        date={dateRange.to}
+                        onSelect={(date) => setDateRange({ ...dateRange, to: date })}
                         placeholder="Bitiş tarihi"
-                        value={dateRange.to ? dateRange.to.toISOString().split('T')[0] : ''}
-                        onChange={(e) => setDateRange({
-                          ...dateRange, 
-                          to: e.target.value ? new Date(e.target.value) : undefined
-                        })}
                       />
                     </div>
                     <Button 
@@ -518,16 +533,32 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* Search Button */}
-                <div className="flex justify-end">
+                {/* Search and Clear Buttons */}
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setTitleQuery('')
+                      setDescriptionQuery('')
+                      setSelectedProjects([])
+                      setSelectedTags([])
+                      setSelectedPriorities([])
+                      setDateRange({})
+                      setSearchResults([])
+                    }}
+                    className="px-6"
+                  >
+                    Filtreyi Temizle
+                  </Button>
                   <Button onClick={handleSearch} className="px-8">
                     <Search className="h-4 w-4 mr-2" />
                     Detaylı Ara
                   </Button>
                 </div>
-              </div>
-          </CardContent>
-        </Card>
+                </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Search Results */}
