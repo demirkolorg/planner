@@ -99,7 +99,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount } = useTaskStore()
+  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
 
@@ -145,6 +145,10 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     switch (itemName) {
       case "Bugün":
         return getTasksDueToday().length
+      case "Zamanlanmış":
+        const count = getCurrentWeekTasksCount()
+        console.log('Sidebar - Current week tasks count:', count)
+        return count
       case "Pano":
         return getPinnedTasks().length
       case "Etiketler":

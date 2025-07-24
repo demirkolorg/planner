@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Task, CreateTaskRequest, CreateTaskResponse } from '@/types/task'
 import { useToastStore } from './toastStore'
-import { getTaskDateStatus } from '@/lib/date-utils'
+import { getTaskDateStatus, isTaskDueInCurrentWeek } from '@/lib/date-utils'
 
 interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueDate' | 'tags'> {
   createdAt: string
@@ -94,6 +94,12 @@ interface TaskStore {
   getTasksDueSoon: () => TaskWithRelations[]
   getOverdueTasksCount: () => number
   getOverdueTasksCountByProject: (projectId: string) => number
+  getTasksDueThisWeek: () => TaskWithRelations[]
+  getTasksDueThisWeekCount: () => number
+  getCurrentWeekTasks: () => TaskWithRelations[]
+  getCurrentWeekTasksCount: () => number
+  getScheduledTasks: () => TaskWithRelations[]
+  getScheduledTasksCount: () => number
   
   // Completed tasks helpers
   getCompletedTasks: () => TaskWithRelations[]
@@ -1102,6 +1108,73 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   getOverdueTasksCountByProject: (projectId: string) => {
     return get().getOverdueTasksByProject(projectId).length
+  },
+
+  getTasksDueThisWeek: () => {
+    const { tasks } = get()
+    return tasks.filter(task => 
+      !task.completed && 
+      !task.parentTaskId && // Sadece ana görevler
+      isTaskDueInCurrentWeek(task.dueDate)
+    )
+  },
+
+  getTasksDueThisWeekCount: () => {
+    return get().getTasksDueThisWeek().length
+  },
+
+  // /scheduled sayfası ile exact aynı haftalık hesaplama
+  getCurrentWeekTasks: () => {
+    const { tasks } = get()
+    const today = new Date()
+    
+    // Hafta günlerini al (Pazartesi başlangıç)
+    const getWeekDays = (date: Date) => {
+      const startOfWeek = new Date(date)
+      const day = startOfWeek.getDay()
+      const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1) // Pazartesi başlangıç
+      startOfWeek.setDate(diff)
+      
+      const days = []
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek)
+        day.setDate(startOfWeek.getDate() + i)
+        days.push(day)
+      }
+      return days
+    }
+    
+    // Belirli tarihteki görevleri al
+    const getTasksForDate = (date: Date) => {
+      const dateStr = date.getFullYear() + '-' + 
+                     String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(date.getDate()).padStart(2, '0')
+      
+      return tasks.filter(task => {
+        if (!task.dueDate) return false
+        const taskDate = new Date(task.dueDate)
+        const taskDateStr = taskDate.getFullYear() + '-' + 
+                           String(taskDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(taskDate.getDate()).padStart(2, '0')
+        return taskDateStr === dateStr
+      })
+    }
+    
+    const weekDays = getWeekDays(today)
+    return weekDays.flatMap(day => getTasksForDate(day))
+  },
+
+  getCurrentWeekTasksCount: () => {
+    return get().getCurrentWeekTasks().length
+  },
+
+  getScheduledTasks: () => {
+    const { tasks } = get()
+    return tasks.filter(task => task.dueDate) // Tüm görevler (ana + alt) - /scheduled sayfası ile aynı mantık
+  },
+
+  getScheduledTasksCount: () => {
+    return get().getScheduledTasks().length
   },
 
   getProjectCompletionPercentage: (projectId: string) => {

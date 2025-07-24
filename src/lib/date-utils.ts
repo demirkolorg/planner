@@ -119,3 +119,30 @@ export function getDateStatusColor(status: TaskDateStatus['status']): string {
       return '#6b7280' // gray
   }
 }
+
+// Haftalık görev filtreleme için yardımcı fonksiyon
+export function isTaskDueInCurrentWeek(dueDate: string | Date | undefined): boolean {
+  if (!dueDate) return false
+  
+  const due = toSafeDate(dueDate)
+  if (!due) return false
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  // Bu haftanın başlangıcı (Pazartesi)
+  const currentDay = today.getDay()
+  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay // Pazar = 0, Pazartesi = 1
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() + mondayOffset)
+  
+  // Bu haftanın sonu (Pazar)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6)
+  weekEnd.setHours(23, 59, 59, 999)
+  
+  const dueDateTime = new Date(due)
+  dueDateTime.setHours(0, 0, 0, 0)
+  
+  return dueDateTime >= weekStart && dueDateTime <= weekEnd
+}

@@ -73,6 +73,9 @@ export default function ScheduledPage() {
 
   // Zamanlanmış görevleri al (tarih bilgisi olan görevler)
   const scheduledTasks = tasks.filter(task => task.dueDate)
+  
+  // Debug: Console'da toplam scheduled task sayısını göster
+  console.log('Scheduled page - Total scheduled tasks:', scheduledTasks.length)
 
   // Tarihe göre görevleri grupla
   const getTasksForDate = (date: Date) => {
@@ -178,6 +181,9 @@ export default function ScheduledPage() {
     weekDays.flatMap(day => getTasksForDate(day)) : []
   const weekCompletedTasks = weekTasks.filter(task => task.completed)
   const weekPendingTasks = weekTasks.filter(task => !task.completed)
+  
+  // Debug: Haftalık görev sayılarını console'da göster
+  console.log('Scheduled page - Week tasks:', weekTasks.length, 'Pending:', weekPendingTasks.length, 'Completed:', weekCompletedTasks.length)
   
   // Hafta numarası hesaplama
   const getWeekNumber = (date: Date) => {
