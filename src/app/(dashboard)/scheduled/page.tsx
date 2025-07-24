@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Calendar, ChevronLeft, ChevronRight, Clock, Flag, Pin, CheckCircle2, Circle, ChevronDown } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -8,6 +8,9 @@ import { useTagStore } from "@/store/tagStore"
 import { Button } from "@/components/ui/button"
 import { TaskCard } from "@/components/task/task-card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { MoveTaskModal } from "@/components/modals/move-task-modal"
+import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 
 type ViewMode = 'week' | 'month'
 
@@ -15,15 +18,34 @@ export default function ScheduledPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('week')
   
+  // Modal states
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalContext, setTaskModalContext] = useState<{
+    project?: { id: string; name: string; emoji?: string }
+    section?: { id: string; name: string; projectId: string }
+    parentTaskId?: string
+    parentTaskTitle?: string
+  }>({})
+  const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
+  const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
+  const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
+  const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [editingTask, setEditingTask] = useState<any | null>(null)
+  
   const { 
     tasks,
     fetchTasks,
     toggleTaskComplete,
     updateTask,
-    deleteTask,
+    deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
     updateTaskReminders,
+    addSubTask,
+    cloneTask,
+    moveTask,
   } = useTaskStore()
   
   const { projects, fetchProjects } = useProjectStore()
@@ -165,6 +187,93 @@ export default function ScheduledPage() {
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
     return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
   }
+
+  // Handler functions
+  const handleEditTask = useCallback((task: any) => {
+    setEditingTask(task)
+    setIsTaskModalOpen(true)
+  }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (task) {
+      const subTaskCount = task.subTasks?.length || 0
+      setTaskToDelete({ id: taskId, title: task.title, subTaskCount })
+      setIsTaskDeleteDialogOpen(true)
+    }
+  }, [tasks])
+
+  const handleCloneTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await cloneTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskCloneModalOpen(false)
+      setTaskToClone(null)
+      await fetchTasks()
+    } catch (error) {
+      console.error('Failed to clone task:', error)
+    }
+  }, [cloneTask, fetchTasks])
+
+  const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await moveTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskMoveModalOpen(false)
+      setTaskToMove(null)
+      await fetchTasks()
+    } catch (error) {
+      console.error('Failed to move task:', error)
+    }
+  }, [moveTask, fetchTasks])
+
+  const handleAddSubTask = useCallback((parentTaskId: string) => {
+    const parentTask = tasks.find(t => t.id === parentTaskId)
+    const project = parentTask ? projects.find(p => p.id === parentTask.projectId) : null
+    
+    // Parent task'ın section'ını kullan, yoksa default section oluştur
+    const section = parentTask?.sectionId ? {
+      id: parentTask.sectionId,
+      name: 'Varsayılan',
+      projectId: parentTask.projectId
+    } : {
+      id: 'default',
+      name: 'Varsayılan',
+      projectId: project?.id || ''
+    }
+    
+    setTaskModalContext({
+      project: project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined,
+      section: section,
+      parentTaskId: parentTaskId,
+      parentTaskTitle: parentTask?.title
+    })
+    setIsTaskModalOpen(true)
+  }, [tasks, projects])
+
+  const handleCopyTask = useCallback((taskId: string) => {
+    const taskToCopy = tasks.find(t => t.id === taskId)
+    if (taskToCopy) {
+      setTaskToClone({
+        id: taskId,
+        title: taskToCopy.title,
+        projectId: taskToCopy.projectId,
+        sectionId: undefined
+      })
+      setIsTaskCloneModalOpen(true)
+    }
+  }, [tasks])
+
+  const handleMoveTaskModal = useCallback((taskId: string) => {
+    const taskToMoveItem = tasks.find(t => t.id === taskId)
+    if (taskToMoveItem) {
+      setTaskToMove({
+        id: taskId,
+        title: taskToMoveItem.title,
+        projectId: taskToMoveItem.projectId,
+        sectionId: undefined
+      })
+      setIsTaskMoveModalOpen(true)
+    }
+  }, [tasks])
 
   useEffect(() => {
     fetchTasks()
@@ -362,10 +471,14 @@ export default function ScheduledPage() {
                           task={task}
                           onToggleComplete={toggleTaskComplete}
                           onUpdate={updateTask}
-                          onDelete={deleteTask}
+                          onDelete={handleDeleteTask}
                           onPin={toggleTaskPin}
                           onUpdateTags={updateTaskTags}
                           onUpdateReminders={updateTaskReminders}
+                          onAddSubTask={handleAddSubTask}
+                          onEdit={handleEditTask}
+                          onCopy={handleCopyTask}
+                          onMove={handleMoveTaskModal}
                           className="hover:shadow-sm transition-shadow"
                         />
                       ))}
@@ -461,6 +574,75 @@ export default function ScheduledPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false)
+          setTaskModalContext({})
+          setEditingTask(null)
+        }}
+        onTaskCreated={async (newTask) => {
+          try {
+            if (taskModalContext.parentTaskId) {
+              await addSubTask(taskModalContext.parentTaskId, newTask)
+            }
+            await fetchTasks()
+            setIsTaskModalOpen(false)
+            setTaskModalContext({})
+          } catch (error) {
+            console.error('Failed to create task:', error)
+          }
+        }}
+        defaultProject={taskModalContext.project}
+        defaultSection={taskModalContext.section}
+        parentTaskId={taskModalContext.parentTaskId}
+        parentTaskTitle={taskModalContext.parentTaskTitle}
+        editingTask={editingTask}
+      />
+
+      <TaskDeleteDialog
+        isOpen={isTaskDeleteDialogOpen}
+        onClose={() => {
+          setIsTaskDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onConfirm={async () => {
+          if (taskToDelete) {
+            try {
+              await deleteTaskFromStore(taskToDelete.id)
+              await fetchTasks()
+              setIsTaskDeleteDialogOpen(false)
+              setTaskToDelete(null)
+            } catch (error) {
+              console.error('Failed to delete task:', error)
+            }
+          }
+        }}
+        task={taskToDelete}
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskCloneModalOpen}
+        onClose={() => {
+          setIsTaskCloneModalOpen(false)
+          setTaskToClone(null)
+        }}
+        onMove={handleCloneTask}
+        task={taskToClone}
+        mode="clone"
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskMoveModalOpen}
+        onClose={() => {
+          setIsTaskMoveModalOpen(false)
+          setTaskToMove(null)
+        }}
+        onMove={handleMoveTask}
+        task={taskToMove}
+      />
     </div>
   )
 }

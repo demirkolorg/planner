@@ -26,6 +26,9 @@ export default function BoardPage() {
     updateTaskTags,
     updateTaskReminders,
     getPinnedTasks,
+    cloneTask,
+    moveTask,
+    addSubTask,
   } = useTaskStore()
   
   const { projects, fetchProjects } = useProjectStore()
@@ -341,7 +344,35 @@ export default function BoardPage() {
                 onUpdate={updateTask}
                 onDelete={deleteTask}
                 onPin={toggleTaskPin}
-                onAddSubTask={() => {}}
+                onEdit={(task) => {
+                  // Task düzenleme handler'ı - modal açma veya inline edit
+                  console.log('Edit task:', task.id)
+                }}
+                onCopy={async (taskId) => {
+                  try {
+                    await cloneTask(taskId)
+                  } catch (error) {
+                    console.error('Failed to copy task:', error)
+                  }
+                }}
+                onMove={async (taskId) => {
+                  // Move task handler'ı - proje/section seçim modal'ı açma
+                  console.log('Move task:', taskId)
+                }}
+                onAddSubTask={async (parentTaskId) => {
+                  try {
+                    const parentTask = tasks.find(t => t.id === parentTaskId)
+                    if (parentTask) {
+                      await addSubTask(parentTaskId, {
+                        title: 'Yeni alt görev',
+                        projectId: parentTask.projectId,
+                        sectionId: parentTask.sectionId
+                      })
+                    }
+                  } catch (error) {
+                    console.error('Failed to add subtask:', error)
+                  }
+                }}
                 onUpdateTags={async (taskId, tagIds) => {
                   try {
                     await updateTaskTags(taskId, tagIds)
@@ -438,7 +469,35 @@ export default function BoardPage() {
                     onUpdate={updateTask}
                     onDelete={deleteTask}
                     onPin={toggleTaskPin}
-                    onAddSubTask={() => {}}
+                    onEdit={(task) => {
+                      // Task düzenleme handler'ı - modal açma veya inline edit
+                      console.log('Edit task:', task.id)
+                    }}
+                    onCopy={async (taskId) => {
+                      try {
+                        await cloneTask(taskId)
+                      } catch (error) {
+                        console.error('Failed to copy task:', error)
+                      }
+                    }}
+                    onMove={async (taskId) => {
+                      // Move task handler'ı - proje/section seçim modal'ı açma
+                      console.log('Move task:', taskId)
+                    }}
+                    onAddSubTask={async (parentTaskId) => {
+                      try {
+                        const parentTask = tasks.find(t => t.id === parentTaskId)
+                        if (parentTask) {
+                          await addSubTask(parentTaskId, {
+                            title: 'Yeni alt görev',
+                            projectId: parentTask.projectId,
+                            sectionId: parentTask.sectionId
+                          })
+                        }
+                      } catch (error) {
+                        console.error('Failed to add subtask:', error)
+                      }
+                    }}
                     onUpdateTags={async (taskId, tagIds) => {
                       try {
                         await updateTaskTags(taskId, tagIds)
@@ -527,7 +586,35 @@ export default function BoardPage() {
                       onUpdate={updateTask}
                       onDelete={deleteTask}
                       onPin={toggleTaskPin}
-                      onAddSubTask={() => {}}
+                      onEdit={(task) => {
+                        // Task düzenleme handler'ı - modal açma veya inline edit
+                        console.log('Edit task:', task.id)
+                      }}
+                      onCopy={async (taskId) => {
+                        try {
+                          await cloneTask(taskId)
+                        } catch (error) {
+                          console.error('Failed to copy task:', error)
+                        }
+                      }}
+                      onMove={async (taskId) => {
+                        // Move task handler'ı - proje/section seçim modal'ı açma
+                        console.log('Move task:', taskId)
+                      }}
+                      onAddSubTask={async (parentTaskId) => {
+                        try {
+                          const parentTask = tasks.find(t => t.id === parentTaskId)
+                          if (parentTask) {
+                            await addSubTask(parentTaskId, {
+                              title: 'Yeni alt görev',
+                              projectId: parentTask.projectId,
+                              sectionId: parentTask.sectionId
+                            })
+                          }
+                        } catch (error) {
+                          console.error('Failed to add subtask:', error)
+                        }
+                      }}
                       onUpdateTags={async (taskId, tagIds) => {
                         try {
                           await updateTaskTags(taskId, tagIds)
@@ -616,7 +703,35 @@ export default function BoardPage() {
                     onUpdate={updateTask}
                     onDelete={deleteTask}
                     onPin={toggleTaskPin}
-                    onAddSubTask={() => {}}
+                    onEdit={(task) => {
+                      // Task düzenleme handler'ı - modal açma veya inline edit
+                      console.log('Edit task:', task.id)
+                    }}
+                    onCopy={async (taskId) => {
+                      try {
+                        await cloneTask(taskId)
+                      } catch (error) {
+                        console.error('Failed to copy task:', error)
+                      }
+                    }}
+                    onMove={async (taskId) => {
+                      // Move task handler'ı - proje/section seçim modal'ı açma
+                      console.log('Move task:', taskId)
+                    }}
+                    onAddSubTask={async (parentTaskId) => {
+                      try {
+                        const parentTask = tasks.find(t => t.id === parentTaskId)
+                        if (parentTask) {
+                          await addSubTask(parentTaskId, {
+                            title: 'Yeni alt görev',
+                            projectId: parentTask.projectId,
+                            sectionId: parentTask.sectionId
+                          })
+                        }
+                      } catch (error) {
+                        console.error('Failed to add subtask:', error)
+                      }
+                    }}
                     onUpdateTags={async (taskId, tagIds) => {
                       try {
                         await updateTaskTags(taskId, tagIds)

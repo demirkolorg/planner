@@ -591,7 +591,18 @@ export default function ProjectDetailPage() {
                   tasks={getOverdueTasksByProject(projectId)}
                   onToggleComplete={toggleTaskComplete}
                   onUpdate={updateTask}
-                  onDelete={deleteTask}
+                  onDelete={(taskId) => {
+                    const taskToDelete = getOverdueTasksByProject(projectId).find(t => t.id === taskId)
+                    if (taskToDelete) {
+                      const subTaskCount = taskToDelete.subTasks?.length || 0
+                      setTaskToDelete({ 
+                        id: taskId, 
+                        title: taskToDelete.title,
+                        subTaskCount: subTaskCount
+                      })
+                      setIsTaskDeleteDialogOpen(true)
+                    }
+                  }}
                   onPin={toggleTaskPin}
                   onAddSubTask={(parentTaskId) => {
                     const parentTask = getOverdueTasksByProject(projectId).find(t => t.id === parentTaskId)
@@ -1014,8 +1025,15 @@ export default function ProjectDetailPage() {
             handleDeleteTask(taskToDelete.id)
           }
         }}
-        taskTitle={taskToDelete?.title || ""}
-        subTaskCount={taskToDelete?.subTaskCount || 0}
+        task={taskToDelete ? {
+          id: taskToDelete.id,
+          title: taskToDelete.title,
+          subTasks: Array(taskToDelete.subTaskCount).fill({}).map((_, index) => ({
+            id: `sub-${index}`,
+            title: `Alt görev ${index + 1}`,
+            completed: false
+          }))
+        } : null}
       />
 
       {/* Görev Ekleme Modal'ı */}

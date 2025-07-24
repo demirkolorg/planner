@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle, Folder } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
@@ -25,6 +25,15 @@ interface TaskWithRelations {
   createdAt: string
   updatedAt: string
   level?: number
+  project?: {
+    id: string
+    name: string
+    emoji?: string
+  }
+  section?: {
+    id: string
+    name: string
+  }
   tags?: Array<{
     id: string
     taskId: string
@@ -260,6 +269,9 @@ export function TaskCard({
     return ""
   }
 
+  // Tamamlanmış görevlerde tüm düzenleme işlemlerini disable et
+  const isTaskCompleted = task.completed
+
   return (
     <TooltipProvider>
       <div className={cn(
@@ -275,16 +287,13 @@ export function TaskCard({
         {/* Header - Always Visible */}
         <div
           className={cn(
-            "flex items-center p-2 cursor-pointer transition-colors",
+            "flex items-center p-2 transition-colors",
             isExpanded
               ? "hover:bg-accent/50 rounded-t-lg"
               : "hover:bg-accent/50 rounded-lg"
           )}
           style={{
             backgroundColor: isExpanded ? (getPriorityColorHex() + '1A' || '#3b82f6' + '1A') : 'transparent'
-          }}
-          onClick={(e) => {
-            handleToggleExpanded()
           }}
         >
           <div className="mr-2 relative">
@@ -352,12 +361,19 @@ export function TaskCard({
             />
           )}
 
-          <div className="flex-1 min-w-0">
+          <div 
+            className="flex-1 min-w-0 cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation()
+              handleToggleExpanded()
+            }}
+          >
             <h4 className={cn(
-              "font-medium text-xs truncate flex items-center gap-3",
+              "font-medium text-xs truncate flex items-center gap-3 task-title",
               displayCompleted && "line-through text-muted-foreground"
             )}>
               <span className="flex-1 min-w-0 truncate">{task.title}</span>
+              
               {/* Due Date Icon with Overdue Warning */}
               {task.dueDate && (
                 <Tooltip>
@@ -408,6 +424,7 @@ export function TaskCard({
                   </TooltipContent>
                 </Tooltip>
               )}
+              
               {/* Tags Icon and Count */}
               {task.tags && task.tags.length > 0 && (
                 <Tooltip>
@@ -480,7 +497,32 @@ export function TaskCard({
             </h4>
           </div>
 
-          <div className="flex items-center ml-2 space-x-2">
+          <div className="flex items-center ml-2 space-x-2 pointer-events-auto">
+            {/* Project and Section Info */}
+            {(task.project || task.section) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Folder className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="space-y-1">
+                    {task.project && (
+                      <p className="text-sm">
+                        <span className="font-medium">Proje:</span> {task.project.emoji} {task.project.name}
+                      </p>
+                    )}
+                    {task.section && (
+                      <p className="text-sm">
+                        <span className="font-medium">Bölüm:</span> {task.section.name}
+                      </p>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
             {/* Pin indicator */}
             {task.isPinned && (
               <Tooltip>
@@ -553,14 +595,17 @@ export function TaskCard({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
-                          className="cursor-pointer hover:text-foreground transition-colors"
-                          onClick={handleDateClick}
+                          className={isTaskCompleted 
+                            ? "cursor-not-allowed opacity-50" 
+                            : "cursor-pointer hover:text-foreground transition-colors"
+                          }
+                          onClick={isTaskCompleted ? undefined : handleDateClick}
                         >
                           📅 {formatDateTime(task.dueDate)}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Bitiş Tarihi</p>
+                        <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Bitiş Tarihi'}</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
@@ -570,7 +615,7 @@ export function TaskCard({
 
                 {/* Reminders */}
                 {task.reminders && task.reminders.length > 0 && (
-                  <div className="flex items-center space-x-2">
+                  <div className={`flex items-center space-x-2 ${isTaskCompleted ? 'opacity-50' : ''}`}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center space-x-1 cursor-default">
@@ -579,12 +624,17 @@ export function TaskCard({
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Hatırlatıcılar</p>
+                        <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Hatırlatıcılar'}</p>
                       </TooltipContent>
                     </Tooltip>
                     <div className="flex flex-wrap gap-1">
                       {task.reminders.map((reminder, index) => (
-                        <span key={index} className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded cursor-default">
+                        <span 
+                          key={index} 
+                          className={`text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded cursor-default ${
+                            isTaskCompleted ? 'opacity-75' : ''
+                          }`}
+                        >
                           {new Date(reminder.datetime).toLocaleString('tr-TR', {
                             day: 'numeric',
                             month: 'short',
@@ -594,6 +644,38 @@ export function TaskCard({
                         </span>
                       ))}
                     </div>
+                  </div>
+                )}
+                
+                {/* Project and Section Info */}
+                {(task.project || task.section) && (
+                  <div className={`flex items-center space-x-2 ${isTaskCompleted ? 'opacity-50' : ''}`}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-1 cursor-default">
+                          <Folder className="h-3 w-3" />
+                          <span className="text-xs">
+                            {task.project?.emoji} {task.project?.name}
+                            {task.project && task.section && ' • '}
+                            {task.section?.name}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-1">
+                          {task.project && (
+                            <p className="text-sm">
+                              <span className="font-medium">Proje:</span> {task.project.emoji} {task.project.name}
+                            </p>
+                          )}
+                          {task.section && (
+                            <p className="text-sm">
+                              <span className="font-medium">Bölüm:</span> {task.section.name}
+                            </p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )}
               </div>

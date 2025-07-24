@@ -61,7 +61,7 @@ export default function DashboardLayout({
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)} 
       />
-      <div className={`flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
+      <div className={`flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>

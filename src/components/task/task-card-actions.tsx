@@ -101,7 +101,8 @@ export function TaskCardActions({
   onEdit,
   isFirstInSection = false
 }: TaskCardActionsProps) {
-  const [showMoreActions, setShowMoreActions] = useState(false)
+  // DropdownMenu state'ini tamamen Radix UI'ye bırakalım
+  // const [showMoreActions, setShowMoreActions] = useState(false)
 
   const getPriorityColorHex = () => {
     // İngilizce priority değerlerini Türkçe'ye eşleştir
@@ -164,9 +165,12 @@ export function TaskCardActions({
     onEdit?.(task)
   }
 
+  // Tamamlanmış görevlerde tüm aksiyonları disable et
+  const isTaskCompleted = task.completed
+  
   return (
     <TooltipProvider>
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-1 task-card-actions pointer-events-auto">
         {/* Add Sub-task */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -174,13 +178,14 @@ export function TaskCardActions({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={handleAddSubTask}
+              onClick={isTaskCompleted ? undefined : handleAddSubTask}
+              disabled={isTaskCompleted}
             >
               <Plus className="h-3 w-3" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Alt görev ekle</p>
+            <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Alt görev ekle'}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -188,8 +193,9 @@ export function TaskCardActions({
         {/* Tag Selector */}
         <TagSelector
           taskTags={task.tags}
-          onUpdateTags={handleUpdateTags}
+          onUpdateTags={isTaskCompleted ? undefined : handleUpdateTags}
           dropdownPosition={isFirstInSection ? 'bottom' : 'top'}
+          disabled={isTaskCompleted}
           trigger={
             <Tooltip>
               <TooltipTrigger asChild>
@@ -197,6 +203,7 @@ export function TaskCardActions({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 relative"
+                  disabled={isTaskCompleted}
                 >
                   <Tag className="h-3 w-3" />
                   {task.tags && task.tags.length > 0 && (
@@ -207,7 +214,7 @@ export function TaskCardActions({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Etiket ekle</p>
+                <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Etiket ekle'}</p>
               </TooltipContent>
             </Tooltip>
           }
@@ -216,7 +223,8 @@ export function TaskCardActions({
         {/* Priority Selector */}
         <PrioritySelector
           currentPriority={task.priority}
-          onUpdatePriority={handleUpdatePriority}
+          onUpdatePriority={isTaskCompleted ? undefined : handleUpdatePriority}
+          disabled={isTaskCompleted}
           trigger={
             <Tooltip>
               <TooltipTrigger asChild>
@@ -224,6 +232,7 @@ export function TaskCardActions({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 relative"
+                  disabled={isTaskCompleted}
                 >
                   <Flag className="h-3 w-3" />
                   <div 
@@ -233,7 +242,7 @@ export function TaskCardActions({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Öncelik belirle</p>
+                <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Öncelik belirle'}</p>
               </TooltipContent>
             </Tooltip>
           }
@@ -242,9 +251,10 @@ export function TaskCardActions({
         {/* Reminder Selector */}
         <ReminderSelector
           taskReminders={task.reminders}
-          onUpdateReminders={handleUpdateReminders}
+          onUpdateReminders={isTaskCompleted ? undefined : handleUpdateReminders}
           dropdownPosition={isFirstInSection ? 'bottom' : 'top'}
           taskDueDate={task.dueDate ? new Date(task.dueDate) : null}
+          disabled={isTaskCompleted}
           trigger={
             <Tooltip>
               <TooltipTrigger asChild>
@@ -252,6 +262,7 @@ export function TaskCardActions({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 relative"
+                  disabled={isTaskCompleted}
                 >
                   <Bell className="h-3 w-3" />
                   {task.reminders && task.reminders.length > 0 && (
@@ -262,7 +273,7 @@ export function TaskCardActions({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Hatırlatıcı ekle</p>
+                <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Hatırlatıcı ekle'}</p>
               </TooltipContent>
             </Tooltip>
           }
@@ -275,48 +286,50 @@ export function TaskCardActions({
               variant="ghost"
               size="icon"
               className={`h-7 w-7 ${task.isPinned ? 'text-red-500' : ''}`}
-              onClick={handlePin}
+              onClick={isTaskCompleted ? undefined : handlePin}
+              disabled={isTaskCompleted}
             >
               <Pin className="h-3 w-3" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{task.isPinned ? 'Sabitlemeyi kaldır' : 'Sabitle'}</p>
+            <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : (task.isPinned ? 'Sabitlemeyi kaldır' : 'Sabitle')}</p>
           </TooltipContent>
         </Tooltip>
 
         {/* More Actions */}
-        <DropdownMenu open={showMoreActions} onOpenChange={setShowMoreActions}>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={(e) => e.stopPropagation()}
+              disabled={isTaskCompleted}
             >
               <MoreHorizontal className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleEdit}>
+            <DropdownMenuItem onClick={isTaskCompleted ? undefined : handleEdit} disabled={isTaskCompleted}>
               <Edit className="h-4 w-4 mr-2" />
               <span>Görevi düzenle</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCopy}>
+            <DropdownMenuItem onClick={isTaskCompleted ? undefined : handleCopy} disabled={isTaskCompleted}>
               <Copy className="h-4 w-4 mr-2" />
               <span>Klonla</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleMove}>
+            <DropdownMenuItem onClick={isTaskCompleted ? undefined : handleMove} disabled={isTaskCompleted}>
               <Move className="h-4 w-4 mr-2" />
               <span>Taşı</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={(e) => {
+              onClick={isTaskCompleted ? undefined : (e) => {
                 e.stopPropagation()
                 handleDelete()
               }}
               variant="destructive"
+              disabled={isTaskCompleted}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               <span>Görevi sil</span>

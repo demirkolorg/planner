@@ -11,22 +11,23 @@ interface TaskDeleteDialogProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => void
-  taskTitle: string
-  subTaskCount?: number
+  task: { id: string; title: string; subTaskCount: number } | null
 }
 
 export function TaskDeleteDialog({
   isOpen,
   onClose,
   onConfirm,
-  taskTitle,
-  subTaskCount = 0
+  task
 }: TaskDeleteDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [inputValue, setInputValue] = useState("")
 
+  // Eğer task yoksa dialog'u gösterme
+  if (!task) return null
+
   // Input value'yu taskTitle ile karşılaştır
-  const isInputValid = inputValue.trim() === taskTitle.trim()
+  const isInputValid = inputValue.trim() === task.title.trim()
 
   const handleConfirm = async () => {
     if (!isInputValid) return
@@ -65,13 +66,13 @@ export function TaskDeleteDialog({
         
         <div className="py-4 space-y-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            <strong>&quot;{taskTitle}&quot;</strong> görevini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            <strong>&quot;{task.title}&quot;</strong> görevini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
           </p>
           
-          {subTaskCount > 0 && (
+          {task.subTaskCount > 0 && (
             <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
               <p className="text-sm text-orange-800 dark:text-orange-200 font-medium">
-                ⚠️ Bu görevin {subTaskCount} alt görevi var
+                ⚠️ Bu görevin {task.subTaskCount} alt görevi var
               </p>
               <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
                 Ana görev silindiğinde tüm alt görevler de silinecek.
@@ -87,7 +88,7 @@ export function TaskDeleteDialog({
               id="task-name-confirmation"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={taskTitle}
+              placeholder={task.title}
               className="font-mono text-sm"
               disabled={isLoading}
             />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { AlertTriangle, CheckCircle2, Sun, Folder, Tag, Flag, ArrowRight, ChevronDown, Clock, Calendar } from "lucide-react"
 import Link from "next/link"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
@@ -9,6 +9,9 @@ import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { MoveTaskModal } from "@/components/modals/move-task-modal"
+import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 
 type ViewMode = 'simple' | 'project' | 'tag' | 'priority'
 
@@ -16,15 +19,34 @@ export default function TodayPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('simple')
   
+  // Modal states
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalContext, setTaskModalContext] = useState<{
+    project?: { id: string; name: string; emoji?: string }
+    section?: { id: string; name: string; projectId: string }
+    parentTaskId?: string
+    parentTaskTitle?: string
+  }>({})
+  const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
+  const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
+  const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
+  const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [editingTask, setEditingTask] = useState<any | null>(null)
+  
   const { 
     tasks,
     fetchTasks,
     toggleTaskComplete,
     updateTask,
-    deleteTask,
+    deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
     updateTaskReminders,
+    addSubTask,
+    cloneTask,
+    moveTask,
   } = useTaskStore()
   
   const { projects, fetchProjects } = useProjectStore()
@@ -162,6 +184,93 @@ export default function TodayPage() {
     })
     return grouped
   }
+
+  // Handler functions
+  const handleEditTask = useCallback((task: any) => {
+    setEditingTask(task)
+    setIsTaskModalOpen(true)
+  }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (task) {
+      const subTaskCount = task.subTasks?.length || 0
+      setTaskToDelete({ id: taskId, title: task.title, subTaskCount })
+      setIsTaskDeleteDialogOpen(true)
+    }
+  }, [tasks])
+
+  const handleCloneTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await cloneTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskCloneModalOpen(false)
+      setTaskToClone(null)
+      await fetchTasks()
+    } catch (error) {
+      console.error('Failed to clone task:', error)
+    }
+  }, [cloneTask, fetchTasks])
+
+  const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await moveTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskMoveModalOpen(false)
+      setTaskToMove(null)
+      await fetchTasks()
+    } catch (error) {
+      console.error('Failed to move task:', error)
+    }
+  }, [moveTask, fetchTasks])
+
+  const handleAddSubTask = useCallback((parentTaskId: string) => {
+    const parentTask = tasks.find(t => t.id === parentTaskId)
+    const project = parentTask ? projects.find(p => p.id === parentTask.projectId) : null
+    
+    // Parent task'ın section'ını kullan, yoksa default section oluştur
+    const section = parentTask?.sectionId ? {
+      id: parentTask.sectionId,
+      name: 'Varsayılan',
+      projectId: parentTask.projectId
+    } : {
+      id: 'default',
+      name: 'Varsayılan',
+      projectId: project?.id || ''
+    }
+    
+    setTaskModalContext({
+      project: project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined,
+      section: section,
+      parentTaskId: parentTaskId,
+      parentTaskTitle: parentTask?.title
+    })
+    setIsTaskModalOpen(true)
+  }, [tasks, projects])
+
+  const handleCopyTask = useCallback((taskId: string) => {
+    const taskToCopy = tasks.find(t => t.id === taskId)
+    if (taskToCopy) {
+      setTaskToClone({
+        id: taskId,
+        title: taskToCopy.title,
+        projectId: taskToCopy.projectId,
+        sectionId: undefined
+      })
+      setIsTaskCloneModalOpen(true)
+    }
+  }, [tasks])
+
+  const handleMoveTaskModal = useCallback((taskId: string) => {
+    const taskToMoveItem = tasks.find(t => t.id === taskId)
+    if (taskToMoveItem) {
+      setTaskToMove({
+        id: taskId,
+        title: taskToMoveItem.title,
+        projectId: taskToMoveItem.projectId,
+        sectionId: undefined
+      })
+      setIsTaskMoveModalOpen(true)
+    }
+  }, [tasks])
 
   useEffect(() => {
     fetchTasks()
@@ -303,9 +412,12 @@ export default function TodayPage() {
                 tasks={overdueTasks}
                 onToggleComplete={toggleTaskComplete}
                 onUpdate={updateTask}
-                onDelete={deleteTask}
+                onDelete={handleDeleteTask}
                 onPin={toggleTaskPin}
-                onAddSubTask={() => {}}
+                onAddSubTask={handleAddSubTask}
+                onEdit={handleEditTask}
+                onCopy={handleCopyTask}
+                onMove={handleMoveTaskModal}
                 onUpdateTags={async (taskId, tagIds) => {
                   try {
                     await updateTaskTags(taskId, tagIds)
@@ -381,9 +493,12 @@ export default function TodayPage() {
                           tasks={tasksByHour['all-day']}
                           onToggleComplete={toggleTaskComplete}
                           onUpdate={updateTask}
-                          onDelete={deleteTask}
+                          onDelete={handleDeleteTask}
                           onPin={toggleTaskPin}
-                          onAddSubTask={() => {}}
+                          onAddSubTask={handleAddSubTask}
+                          onEdit={handleEditTask}
+                          onCopy={handleCopyTask}
+                          onMove={handleMoveTaskModal}
                           onUpdateTags={async (taskId, tagIds) => {
                             try {
                               await updateTaskTags(taskId, tagIds)
@@ -431,9 +546,12 @@ export default function TodayPage() {
                             tasks={hourTasks}
                             onToggleComplete={toggleTaskComplete}
                             onUpdate={updateTask}
-                            onDelete={deleteTask}
+                            onDelete={handleDeleteTask}
                             onPin={toggleTaskPin}
-                            onAddSubTask={() => {}}
+                            onAddSubTask={handleAddSubTask}
+                            onEdit={handleEditTask}
+                            onCopy={handleCopyTask}
+                            onMove={handleMoveTaskModal}
                             onUpdateTags={async (taskId, tagIds) => {
                               try {
                                 await updateTaskTags(taskId, tagIds)
@@ -625,9 +743,12 @@ export default function TodayPage() {
                       tasks={group.tasks}
                       onToggleComplete={toggleTaskComplete}
                       onUpdate={updateTask}
-                      onDelete={deleteTask}
+                      onDelete={handleDeleteTask}
                       onPin={toggleTaskPin}
-                      onAddSubTask={() => {}}
+                      onAddSubTask={handleAddSubTask}
+                      onEdit={handleEditTask}
+                      onCopy={handleCopyTask}
+                      onMove={handleMoveTaskModal}
                       onUpdateTags={async (taskId, tagIds) => {
                         try {
                           await updateTaskTags(taskId, tagIds)
@@ -714,9 +835,12 @@ export default function TodayPage() {
                     tasks={group.tasks}
                     onToggleComplete={toggleTaskComplete}
                     onUpdate={updateTask}
-                    onDelete={deleteTask}
+                    onDelete={handleDeleteTask}
                     onPin={toggleTaskPin}
-                    onAddSubTask={() => {}}
+                    onAddSubTask={handleAddSubTask}
+                    onEdit={handleEditTask}
+                    onCopy={handleCopyTask}
+                    onMove={handleMoveTaskModal}
                     onUpdateTags={async (taskId, tagIds) => {
                       try {
                         await updateTaskTags(taskId, tagIds)
@@ -771,9 +895,12 @@ export default function TodayPage() {
             tasks={completedTodayTasks}
             onToggleComplete={toggleTaskComplete}
             onUpdate={updateTask}
-            onDelete={deleteTask}
+            onDelete={handleDeleteTask}
             onPin={toggleTaskPin}
-            onAddSubTask={() => {}}
+            onAddSubTask={handleAddSubTask}
+            onEdit={handleEditTask}
+            onCopy={handleCopyTask}
+            onMove={handleMoveTaskModal}
             onUpdateTags={async (taskId, tagIds) => {
               try {
                 await updateTaskTags(taskId, tagIds)
@@ -798,6 +925,79 @@ export default function TodayPage() {
           />
         </div>
       )}
+
+      {/* Modals */}
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false)
+          setTaskModalContext({})
+          setEditingTask(null)
+        }}
+        onTaskCreated={async (newTask) => {
+          try {
+            console.log('onTaskCreated called with:', newTask)
+            console.log('taskModalContext.parentTaskId:', taskModalContext.parentTaskId)
+            
+            if (taskModalContext.parentTaskId) {
+              console.log('Calling addSubTask with:', taskModalContext.parentTaskId, newTask)
+              await addSubTask(taskModalContext.parentTaskId, newTask)
+            }
+            await fetchTasks()
+            setIsTaskModalOpen(false)
+            setTaskModalContext({})
+          } catch (error) {
+            console.error('Failed to create task:', error)
+          }
+        }}
+        defaultProject={taskModalContext.project}
+        defaultSection={taskModalContext.section}
+        parentTaskId={taskModalContext.parentTaskId}
+        parentTaskTitle={taskModalContext.parentTaskTitle}
+        editingTask={editingTask}
+      />
+
+      <TaskDeleteDialog
+        isOpen={isTaskDeleteDialogOpen}
+        onClose={() => {
+          setIsTaskDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onConfirm={async () => {
+          if (taskToDelete) {
+            try {
+              await deleteTaskFromStore(taskToDelete.id)
+              await fetchTasks()
+              setIsTaskDeleteDialogOpen(false)
+              setTaskToDelete(null)
+            } catch (error) {
+              console.error('Failed to delete task:', error)
+            }
+          }
+        }}
+        task={taskToDelete}
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskCloneModalOpen}
+        onClose={() => {
+          setIsTaskCloneModalOpen(false)
+          setTaskToClone(null)
+        }}
+        onMove={handleCloneTask}
+        task={taskToClone}
+        mode="clone"
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskMoveModalOpen}
+        onClose={() => {
+          setIsTaskMoveModalOpen(false)
+          setTaskToMove(null)
+        }}
+        onMove={handleMoveTask}
+        task={taskToMove}
+      />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { PiTagSimpleFill } from "react-icons/pi"
 import { ArrowLeft, Edit, Trash2, Clock, Check, Search } from "lucide-react"
@@ -19,6 +19,9 @@ import { useTagStore } from "@/store/tagStore"
 import { useProjectStore } from "@/store/projectStore"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { NewTagModal } from "@/components/modals/new-tag-modal"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { MoveTaskModal } from "@/components/modals/move-task-modal"
+import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 
 interface Tag {
@@ -44,19 +47,39 @@ export default function TagDetailPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<"date" | "priority" | "project">("date")
   const [filterBy, setFilterBy] = useState<"all" | "pending" | "completed">("all")
+  
+  // Modal states
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalContext, setTaskModalContext] = useState<{
+    project?: { id: string; name: string; emoji?: string }
+    section?: { id: string; name: string; projectId: string }
+    parentTaskId?: string
+    parentTaskTitle?: string
+  }>({})
+  const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
+  const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
+  const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
+  const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [editingTask, setEditingTask] = useState<any | null>(null)
   const { 
     fetchTasksByTag, 
     getTasksByTag,
     toggleTaskComplete,
     updateTask,
-    deleteTask,
+    deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
     updateTaskReminders,
     showCompletedTasks,
     toggleShowCompletedTasks,
     getCompletedTasksCountByTag,
-    getPendingTasksCountByTag
+    getPendingTasksCountByTag,
+    addSubTask,
+    cloneTask,
+    moveTask,
+    fetchTasks
   } = useTaskStore()
   const { updateTag, deleteTag } = useTagStore()
   const { projects, fetchProjects } = useProjectStore()
@@ -97,6 +120,93 @@ export default function TagDetailPage() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     }
   })
+
+  // Handler functions
+  const handleEditTask = useCallback((task: any) => {
+    setEditingTask(task)
+    setIsTaskModalOpen(true)
+  }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    const task = allTasks.find(t => t.id === taskId)
+    if (task) {
+      const subTaskCount = task.subTasks?.length || 0
+      setTaskToDelete({ id: taskId, title: task.title, subTaskCount })
+      setIsTaskDeleteDialogOpen(true)
+    }
+  }, [allTasks])
+
+  const handleCloneTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await cloneTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskCloneModalOpen(false)
+      setTaskToClone(null)
+      await fetchTasksByTag(tagId)
+    } catch (error) {
+      console.error('Failed to clone task:', error)
+    }
+  }, [cloneTask, fetchTasksByTag, tagId])
+
+  const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await moveTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskMoveModalOpen(false)
+      setTaskToMove(null)
+      await fetchTasksByTag(tagId)
+    } catch (error) {
+      console.error('Failed to move task:', error)
+    }
+  }, [moveTask, fetchTasksByTag, tagId])
+
+  const handleAddSubTask = useCallback((parentTaskId: string) => {
+    const parentTask = allTasks.find(t => t.id === parentTaskId)
+    const project = parentTask ? projects.find(p => p.id === parentTask.projectId) : null
+    
+    // Parent task'ın section'ını kullan, yoksa default section oluştur
+    const section = parentTask?.sectionId ? {
+      id: parentTask.sectionId,
+      name: 'Varsayılan',
+      projectId: parentTask.projectId
+    } : {
+      id: 'default',
+      name: 'Varsayılan',
+      projectId: project?.id || ''
+    }
+    
+    setTaskModalContext({
+      project: project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined,
+      section: section,
+      parentTaskId: parentTaskId,
+      parentTaskTitle: parentTask?.title
+    })
+    setIsTaskModalOpen(true)
+  }, [allTasks, projects])
+
+  const handleCopyTask = useCallback((taskId: string) => {
+    const taskToCopy = allTasks.find(t => t.id === taskId)
+    if (taskToCopy) {
+      setTaskToClone({
+        id: taskId,
+        title: taskToCopy.title,
+        projectId: taskToCopy.projectId,
+        sectionId: undefined
+      })
+      setIsTaskCloneModalOpen(true)
+    }
+  }, [allTasks])
+
+  const handleMoveTaskModal = useCallback((taskId: string) => {
+    const taskToMoveItem = allTasks.find(t => t.id === taskId)
+    if (taskToMoveItem) {
+      setTaskToMove({
+        id: taskId,
+        title: taskToMoveItem.title,
+        projectId: taskToMoveItem.projectId,
+        sectionId: undefined
+      })
+      setIsTaskMoveModalOpen(true)
+    }
+  }, [allTasks])
 
   useEffect(() => {
     const fetchTagAndTasks = async () => {
@@ -277,27 +387,31 @@ export default function TagDetailPage() {
           tasks={tasks}
           onToggleComplete={toggleTaskComplete}
           onUpdate={updateTask}
-          onDelete={deleteTask}
+          onDelete={handleDeleteTask}
           onPin={toggleTaskPin}
-          onAddSubTask={(parentTaskId) => {
-            // Etiket sayfasında alt görev ekleme özelliği şu anda yok
-          }}
+          onAddSubTask={handleAddSubTask}
+          onEdit={handleEditTask}
+          onCopy={handleCopyTask}
+          onMove={handleMoveTaskModal}
           onUpdateTags={async (taskId, tagIds) => {
             try {
               await updateTaskTags(taskId, tagIds)
             } catch (error) {
+              console.error('Failed to update tags:', error)
             }
           }}
           onUpdatePriority={async (taskId, priority) => {
             try {
               await updateTask(taskId, { priority })
             } catch (error) {
+              console.error('Failed to update priority:', error)
             }
           }}
           onUpdateReminders={async (taskId, reminders) => {
             try {
               await updateTaskReminders(taskId, reminders)
             } catch (error) {
+              console.error('Failed to update reminders:', error)
             }
           }}
           showTreeConnectors={true}
@@ -337,6 +451,75 @@ export default function TagDetailPage() {
         confirmText="Sil"
         cancelText="İptal"
         variant="destructive"
+      />
+
+      {/* Task Modals */}
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false)
+          setTaskModalContext({})
+          setEditingTask(null)
+        }}
+        onTaskCreated={async (newTask) => {
+          try {
+            if (taskModalContext.parentTaskId) {
+              await addSubTask(taskModalContext.parentTaskId, newTask)
+            }
+            await fetchTasksByTag(tagId)
+            setIsTaskModalOpen(false)
+            setTaskModalContext({})
+          } catch (error) {
+            console.error('Failed to create task:', error)
+          }
+        }}
+        defaultProject={taskModalContext.project}
+        defaultSection={taskModalContext.section}
+        parentTaskId={taskModalContext.parentTaskId}
+        parentTaskTitle={taskModalContext.parentTaskTitle}
+        editingTask={editingTask}
+      />
+
+      <TaskDeleteDialog
+        isOpen={isTaskDeleteDialogOpen}
+        onClose={() => {
+          setIsTaskDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onConfirm={async () => {
+          if (taskToDelete) {
+            try {
+              await deleteTaskFromStore(taskToDelete.id)
+              await fetchTasksByTag(tagId)
+              setIsTaskDeleteDialogOpen(false)
+              setTaskToDelete(null)
+            } catch (error) {
+              console.error('Failed to delete task:', error)
+            }
+          }
+        }}
+        task={taskToDelete}
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskCloneModalOpen}
+        onClose={() => {
+          setIsTaskCloneModalOpen(false)
+          setTaskToClone(null)
+        }}
+        onMove={handleCloneTask}
+        task={taskToClone}
+        mode="clone"
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskMoveModalOpen}
+        onClose={() => {
+          setIsTaskMoveModalOpen(false)
+          setTaskToMove(null)
+        }}
+        onMove={handleMoveTask}
+        task={taskToMove}
       />
     </div>
   )

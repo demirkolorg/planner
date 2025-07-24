@@ -67,15 +67,43 @@ export async function POST(request: NextRequest) {
     }
 
     // Bölüm mevcut mu kontrol et
-    const section = await db.section.findFirst({
-      where: {
-        id: sectionId,
-        projectId: projectId
+    let finalSectionId = sectionId
+    
+    // Eğer 'default' section kullanılıyorsa, projenin ilk section'ını bul veya oluştur
+    if (sectionId === 'default') {
+      let defaultSection = await db.section.findFirst({
+        where: {
+          projectId: projectId
+        },
+        orderBy: {
+          createdAt: 'asc'
+        }
+      })
+      
+      // Eğer proje hiç section'a sahip değilse, default section oluştur
+      if (!defaultSection) {
+        defaultSection = await db.section.create({
+          data: {
+            name: 'Varsayılan',
+            projectId: projectId,
+            order: 0
+          }
+        })
       }
-    })
+      
+      finalSectionId = defaultSection.id
+    } else {
+      // Normal section kontrolü
+      const section = await db.section.findFirst({
+        where: {
+          id: sectionId,
+          projectId: projectId
+        }
+      })
 
-    if (!section) {
-      return NextResponse.json({ error: "Section not found" }, { status: 404 })
+      if (!section) {
+        return NextResponse.json({ error: "Section not found" }, { status: 404 })
+      }
     }
 
     // Due date oluştur (ISO string'den)
@@ -103,7 +131,7 @@ export async function POST(request: NextRequest) {
           priority: PRIORITY_MAP[priority] || "NONE",
           dueDate: parsedDueDate,
           projectId,
-          sectionId,
+          sectionId: finalSectionId,
           userId: decoded.userId,
           parentTaskId
         }
