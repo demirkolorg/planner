@@ -24,6 +24,7 @@ export const ROUTES = {
   TODAY: '/today',
   SCHEDULED: '/scheduled',
   BOARD: '/board',
+  SEARCH: '/search',
   TAGS: '/tags',
   COMPLETED: '/completed',
   PROJECTS: '/projects',
