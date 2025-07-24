@@ -77,7 +77,7 @@ const cardItems = [
   },
   { 
     name: "Tamamlandı", 
-    count: 3, 
+    count: null, 
     icon: FaRegCheckCircle, 
     activeIcon: FaCheckCircle, 
     color: "bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950/50 dark:to-lime-950/50 text-green-700 dark:text-green-300 border-green-200/50 dark:border-green-800/50", 
@@ -99,7 +99,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
-  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday } = useTaskStore()
+  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
 
@@ -149,6 +149,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         return getPinnedTasks().length
       case "Etiketler":
         return tags.length
+      case "Tamamlandı":
+        return getTotalCompletedTasksCount()
       default:
         return null
     }

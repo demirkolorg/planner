@@ -94,6 +94,13 @@ interface TaskStore {
   getTasksDueSoon: () => TaskWithRelations[]
   getOverdueTasksCount: () => number
   getOverdueTasksCountByProject: (projectId: string) => number
+  
+  // Completed tasks helpers
+  getCompletedTasks: () => TaskWithRelations[]
+  getCompletedTasksToday: () => TaskWithRelations[]
+  getCompletedTasksThisWeek: () => TaskWithRelations[]
+  getCompletedTasksThisMonth: () => TaskWithRelations[]
+  getTotalCompletedTasksCount: () => number
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
@@ -1112,5 +1119,59 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const percentage = Math.round((completedTasks.length / projectTasks.length) * 100)
     
     return percentage
+  },
+
+  // Completed tasks helper functions
+  getCompletedTasks: () => {
+    const { tasks } = get()
+    return tasks.filter(task => task.completed)
+  },
+
+  getCompletedTasksToday: () => {
+    const { tasks } = get()
+    const today = new Date()
+    const todayStr = today.getFullYear() + '-' + 
+                    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(today.getDate()).padStart(2, '0')
+
+    return tasks.filter(task => {
+      if (!task.completed || !task.updatedAt) return false
+      const taskUpdatedDate = new Date(task.updatedAt)
+      const taskDateStr = taskUpdatedDate.getFullYear() + '-' + 
+                         String(taskUpdatedDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(taskUpdatedDate.getDate()).padStart(2, '0')
+      return taskDateStr === todayStr
+    })
+  },
+
+  getCompletedTasksThisWeek: () => {
+    const { tasks } = get()
+    const today = new Date()
+    const startOfWeek = new Date(today)
+    startOfWeek.setDate(today.getDate() - today.getDay())
+    startOfWeek.setHours(0, 0, 0, 0)
+    
+    return tasks.filter(task => {
+      if (!task.completed || !task.updatedAt) return false
+      const taskUpdatedDate = new Date(task.updatedAt)
+      return taskUpdatedDate >= startOfWeek
+    })
+  },
+
+  getCompletedTasksThisMonth: () => {
+    const { tasks } = get()
+    const today = new Date()
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    
+    return tasks.filter(task => {
+      if (!task.completed || !task.updatedAt) return false
+      const taskUpdatedDate = new Date(task.updatedAt)
+      return taskUpdatedDate >= startOfMonth
+    })
+  },
+
+  getTotalCompletedTasksCount: () => {
+    const { tasks } = get()
+    return tasks.filter(task => task.completed).length
   }
 }))

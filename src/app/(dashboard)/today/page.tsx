@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertTriangle, CheckCircle2, Sun, Folder, Tag, Flag, ArrowRight } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Sun, Folder, Tag, Flag, ArrowRight, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 type ViewMode = 'simple' | 'project' | 'tag' | 'priority'
 
@@ -393,62 +394,72 @@ export default function TodayPage() {
             </div>
           ) : (
             Object.entries(groupTasksByProject()).map(([projectName, group]) => (
-              <div key={projectName} className="space-y-3">
-                <Link 
-                  href={group.project.id ? `/projects/${group.project.id}` : '#'}
-                  className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div>
-                      {group.project.emoji ? (
-                        <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
-                          <span className="text-sm">{group.project.emoji}</span>
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 rounded-md bg-primary shadow-sm" />
-                      )}
+              <Collapsible key={projectName} defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                  <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
+                    <div className="flex items-center space-x-2.5">
+                      <div>
+                        {group.project.emoji ? (
+                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                            <span className="text-sm">{group.project.emoji}</span>
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-md bg-primary shadow-sm" />
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
+                          {projectName}
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                          {group.tasks.length} görev
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
-                        {projectName}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {group.tasks.length} görev
-                      </p>
+                    <div className="flex items-center space-x-2">
+                      <Link 
+                        href={group.project.id ? `/projects/${group.project.id}` : '#'}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </Link>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-all" />
                     </div>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-0.5" />
-                </Link>
-                <HierarchicalTaskList
-                  tasks={group.tasks}
-                  onToggleComplete={toggleTaskComplete}
-                  onUpdate={updateTask}
-                  onDelete={deleteTask}
-                  onPin={toggleTaskPin}
-                  onAddSubTask={() => {}}
-                  onUpdateTags={async (taskId, tagIds) => {
-                    try {
-                      await updateTaskTags(taskId, tagIds)
-                    } catch (error) {
-                      console.error('Failed to update tags:', error)
-                    }
-                  }}
-                  onUpdatePriority={async (taskId, priority) => {
-                    try {
-                      await updateTask(taskId, { priority })
-                    } catch (error) {
-                      console.error('Failed to update priority:', error)
-                    }
-                  }}
-                  onUpdateReminders={async (taskId, reminders) => {
-                    try {
-                      await updateTaskReminders(taskId, reminders)
-                    } catch (error) {
-                      console.error('Failed to update reminders:', error)
-                    }
-                  }}
-                />
-              </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">
+                  <HierarchicalTaskList
+                    tasks={group.tasks}
+                    onToggleComplete={toggleTaskComplete}
+                    onUpdate={updateTask}
+                    onDelete={deleteTask}
+                    onPin={toggleTaskPin}
+                    onAddSubTask={() => {}}
+                    onUpdateTags={async (taskId, tagIds) => {
+                      try {
+                        await updateTaskTags(taskId, tagIds)
+                      } catch (error) {
+                        console.error('Failed to update tags:', error)
+                      }
+                    }}
+                    onUpdatePriority={async (taskId, priority) => {
+                      try {
+                        await updateTask(taskId, { priority })
+                      } catch (error) {
+                        console.error('Failed to update priority:', error)
+                      }
+                    }}
+                    onUpdateReminders={async (taskId, reminders) => {
+                      try {
+                        await updateTaskReminders(taskId, reminders)
+                      } catch (error) {
+                        console.error('Failed to update reminders:', error)
+                      }
+                    }}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             ))
           )}
         </div>
@@ -485,22 +496,111 @@ export default function TodayPage() {
               }
               
               return (
-                <div key={priority} className="space-y-3">
-                  <div className="flex items-center space-x-2.5 px-3 py-2 rounded-lg bg-muted/50 border border-border">
-                    <div>
-                      <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
-                        <span className="text-sm">{priorityIcons[priority as keyof typeof priorityIcons]}</span>
+                <Collapsible key={priority} defaultOpen={false}>
+                  <CollapsibleTrigger asChild>
+                    <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
+                      <div className="flex items-center space-x-2.5">
+                        <div>
+                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                            <span className="text-sm">{priorityIcons[priority as keyof typeof priorityIcons]}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <h2 className="text-sm font-medium text-foreground">
+                            {group.priority}
+                          </h2>
+                          <p className="text-xs text-muted-foreground">
+                            {group.tasks.length} görev
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-all" />
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3">
+                    <HierarchicalTaskList
+                      tasks={group.tasks}
+                      onToggleComplete={toggleTaskComplete}
+                      onUpdate={updateTask}
+                      onDelete={deleteTask}
+                      onPin={toggleTaskPin}
+                      onAddSubTask={() => {}}
+                      onUpdateTags={async (taskId, tagIds) => {
+                        try {
+                          await updateTaskTags(taskId, tagIds)
+                        } catch (error) {
+                          console.error('Failed to update tags:', error)
+                        }
+                      }}
+                      onUpdatePriority={async (taskId, priority) => {
+                        try {
+                          await updateTask(taskId, { priority })
+                        } catch (error) {
+                          console.error('Failed to update priority:', error)
+                        }
+                      }}
+                      onUpdateReminders={async (taskId, reminders) => {
+                        try {
+                          await updateTaskReminders(taskId, reminders)
+                        } catch (error) {
+                          console.error('Failed to update reminders:', error)
+                        }
+                      }}
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
+              )
+            })
+          )}
+        </div>
+      ) : viewMode === 'tag' ? (
+        /* Tag View */
+        <div className="space-y-6">
+          {Object.entries(groupTasksByTag()).length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Tag className="h-10 w-10 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Bugün için görev yok
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                Bugün tarihi için hiçbir etikette görev bulunmuyor.
+              </p>
+            </div>
+          ) : (
+            Object.entries(groupTasksByTag()).map(([tagName, group]) => (
+              <Collapsible key={tagName} defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                  <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
+                    <div className="flex items-center space-x-2.5">
+                      <div>
+                        <div className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-secondary">
+                          <Tag className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
+                          {tagName}
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                          {group.tasks.length} görev
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <h2 className="text-sm font-medium text-foreground">
-                        {group.priority}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {group.tasks.length} görev
-                      </p>
+                    <div className="flex items-center space-x-2">
+                      <Link 
+                        href={group.tag.id ? `/tags/${group.tag.id}` : '#'}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </Link>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-all" />
                     </div>
                   </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">
                   <HierarchicalTaskList
                     tasks={group.tasks}
                     onToggleComplete={toggleTaskComplete}
@@ -530,82 +630,8 @@ export default function TodayPage() {
                       }
                     }}
                   />
-                </div>
-              )
-            })
-          )}
-        </div>
-      ) : viewMode === 'tag' ? (
-        /* Tag View */
-        <div className="space-y-6">
-          {Object.entries(groupTasksByTag()).length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Tag className="h-10 w-10 text-amber-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Bugün için görev yok
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Bugün tarihi için hiçbir etikette görev bulunmuyor.
-              </p>
-            </div>
-          ) : (
-            Object.entries(groupTasksByTag()).map(([tagName, group]) => (
-              <div key={tagName} className="space-y-3">
-                <Link 
-                  href={group.tag.id ? `/tags/${group.tag.id}` : '#'}
-                  className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div>
-                      <div 
-                        className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-secondary"
-                      >
-                        <Tag className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
-                        {tagName}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {group.tasks.length} görev
-                      </p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-0.5" />
-                </Link>
-                <HierarchicalTaskList
-                  tasks={group.tasks}
-                  onToggleComplete={toggleTaskComplete}
-                  onUpdate={updateTask}
-                  onDelete={deleteTask}
-                  onPin={toggleTaskPin}
-                  onAddSubTask={() => {}}
-                  onUpdateTags={async (taskId, tagIds) => {
-                    try {
-                      await updateTaskTags(taskId, tagIds)
-                    } catch (error) {
-                      console.error('Failed to update tags:', error)
-                    }
-                  }}
-                  onUpdatePriority={async (taskId, priority) => {
-                    try {
-                      await updateTask(taskId, { priority })
-                    } catch (error) {
-                      console.error('Failed to update priority:', error)
-                    }
-                  }}
-                  onUpdateReminders={async (taskId, reminders) => {
-                    try {
-                      await updateTaskReminders(taskId, reminders)
-                    } catch (error) {
-                      console.error('Failed to update reminders:', error)
-                    }
-                  }}
-                />
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             ))
           )}
         </div>
