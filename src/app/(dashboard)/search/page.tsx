@@ -288,6 +288,14 @@ export default function SearchPage() {
             </div>
           </div>
           
+          {/* Search Result Count - Center */}
+          {searchResults.length > 0 && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-cyan-600">{searchResults.length}</div>
+              <div className="text-xs text-muted-foreground">sonuç bulundu</div>
+            </div>
+          )}
+
           {/* View Mode Navigation - Right Aligned */}
           <div className="flex items-center space-x-1 bg-muted/50 border border-border rounded-xl p-1">
             <Button
@@ -569,69 +577,84 @@ export default function SearchPage() {
           ) : resultViewMode === 'project' ? (
             // Proje görünümü - projelere göre gruplandırılmış
             Object.entries(groupTasksByProject()).map(([projectName, { project, tasks }]) => (
-              <div key={projectName} className="space-y-3">
-                {/* Proje Başlığı */}
-                <div className="p-4 rounded-xl border bg-card">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center">
-                        <span className="text-white text-lg">{project.emoji || '📁'}</span>
+              <Collapsible key={projectName} defaultOpen={true}>
+                <CollapsibleTrigger asChild>
+                  <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
+                    <div className="flex items-center space-x-2.5">
+                      <div>
+                        {project.emoji ? (
+                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                            <span className="text-sm">{project.emoji}</span>
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-md bg-primary shadow-sm" />
+                        )}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                          {project.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h2 className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
+                          {projectName}
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
                           {tasks.length} görev
                         </p>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <Link 
+                        href={project.id ? `/projects/${project.id}` : '#'}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </Link>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-all" />
+                    </div>
                   </div>
-                </div>
-                
-                {/* Görevler */}
-                <div className="space-y-2 pl-6">
-                  {tasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onToggleComplete={toggleTaskComplete}
-                      onUpdate={updateTask}
-                      onDelete={handleDeleteTask}
-                      onPin={toggleTaskPin}
-                      onCopy={(taskId) => {
-                        const taskToClone = searchResults.find(t => t.id === taskId)
-                        if (taskToClone) {
-                          setTaskToClone({
-                            id: taskId,
-                            title: taskToClone.title,
-                            projectId: taskToClone.projectId,
-                            sectionId: taskToClone.sectionId
-                          })
-                          setIsTaskCloneModalOpen(true)
-                        }
-                      }}
-                      onMove={(taskId) => {
-                        const taskToMove = searchResults.find(t => t.id === taskId)
-                        if (taskToMove) {
-                          setTaskToMove({
-                            id: taskId,
-                            title: taskToMove.title,
-                            projectId: taskToMove.projectId,
-                            sectionId: taskToMove.sectionId
-                          })
-                          setIsTaskMoveModalOpen(true)
-                        }
-                      }}
-                      onAddSubTask={handleAddSubTask}
-                      onUpdateTags={updateTaskTags}
-                      onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                      onUpdateReminders={updateTaskReminders}
-                      onEdit={handleEditTask}
-                    />
-                  ))}
-                </div>
-              </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3">
+                  <div className="space-y-2">
+                    {tasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onToggleComplete={toggleTaskComplete}
+                        onUpdate={updateTask}
+                        onDelete={handleDeleteTask}
+                        onPin={toggleTaskPin}
+                        onCopy={(taskId) => {
+                          const taskToClone = searchResults.find(t => t.id === taskId)
+                          if (taskToClone) {
+                            setTaskToClone({
+                              id: taskId,
+                              title: taskToClone.title,
+                              projectId: taskToClone.projectId,
+                              sectionId: taskToClone.sectionId
+                            })
+                            setIsTaskCloneModalOpen(true)
+                          }
+                        }}
+                        onMove={(taskId) => {
+                          const taskToMove = searchResults.find(t => t.id === taskId)
+                          if (taskToMove) {
+                            setTaskToMove({
+                              id: taskId,
+                              title: taskToMove.title,
+                              projectId: taskToMove.projectId,
+                              sectionId: taskToMove.sectionId
+                            })
+                            setIsTaskMoveModalOpen(true)
+                          }
+                        }}
+                        onAddSubTask={handleAddSubTask}
+                        onUpdateTags={updateTaskTags}
+                        onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
+                        onUpdateReminders={updateTaskReminders}
+                        onEdit={handleEditTask}
+                      />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             ))
           ) : resultViewMode === 'tag' ? (
             // Etiket görünümü - etiketlere göre gruplandırılmış

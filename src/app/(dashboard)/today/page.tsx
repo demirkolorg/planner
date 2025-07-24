@@ -654,7 +654,7 @@ export default function TodayPage() {
                     tasks={group.tasks}
                     onToggleComplete={toggleTaskComplete}
                     onUpdate={updateTask}
-                    onDelete={deleteTask}
+                    onDelete={handleDeleteTask}
                     onPin={toggleTaskPin}
                     onAddSubTask={() => {}}
                     onUpdateTags={async (taskId, tagIds) => {
