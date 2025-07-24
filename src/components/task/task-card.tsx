@@ -147,10 +147,8 @@ export function TaskCard({
       // Hiyerarşik modda external handler kullan - children olsun ya da olmasın çağır
       externalOnToggleExpanded()
     } else {
-      // Eski mod - internal state (sadece children varsa expand/collapse)
-      if (hasChildren) {
-        setInternalIsExpanded(!internalIsExpanded)
-      }
+      // Internal state - tüm kartlar expand/collapse yapabilir
+      setInternalIsExpanded(!internalIsExpanded)
     }
   }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertTriangle, CheckCircle2, Sun, Folder, Tag, Flag, ArrowRight, ChevronDown } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Sun, Folder, Tag, Flag, ArrowRight, ChevronDown, Clock, Calendar } from "lucide-react"
 import Link from "next/link"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { useTaskStore } from "@/store/taskStore"
@@ -331,37 +331,140 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* Bugünkü Görevler */}
+          {/* Bugünkü Görevler - Saatlere göre organize edilmiş */}
           {todayTasks.length > 0 ? (
-            <HierarchicalTaskList
-                tasks={todayTasks}
-                onToggleComplete={toggleTaskComplete}
-                onUpdate={updateTask}
-                onDelete={deleteTask}
-                onPin={toggleTaskPin}
-                onAddSubTask={() => {}}
-                onUpdateTags={async (taskId, tagIds) => {
-                  try {
-                    await updateTaskTags(taskId, tagIds)
-                  } catch (error) {
-                    console.error('Failed to update tags:', error)
+            <div className="space-y-4">
+              {(() => {
+                // Görevleri saate göre grupla
+                const tasksByHour: Record<string, typeof todayTasks> = {
+                  'all-day': []
+                }
+                
+                // Tüm saatler için boş array'ler oluştur
+                for (let hour = 0; hour < 24; hour++) {
+                  tasksByHour[hour.toString().padStart(2, '0')] = []
+                }
+                
+                // Görevleri saatlerine göre grupla
+                todayTasks.forEach(task => {
+                  if (!task.dueDate) {
+                    tasksByHour['all-day'].push(task)
+                  } else {
+                    const dueDate = new Date(task.dueDate)
+                    const hours = dueDate.getHours()
+                    const minutes = dueDate.getMinutes()
+                    
+                    // Eğer saat 00:00 ise tüm gün olarak kabul et
+                    if (hours === 0 && minutes === 0) {
+                      tasksByHour['all-day'].push(task)
+                    } else {
+                      tasksByHour[hours.toString().padStart(2, '0')].push(task)
+                    }
                   }
-                }}
-                onUpdatePriority={async (taskId, priority) => {
-                  try {
-                    await updateTask(taskId, { priority })
-                  } catch (error) {
-                    console.error('Failed to update priority:', error)
+                })
+                
+                // Önce tüm gün görevlerini göster
+                const sections = []
+                
+                if (tasksByHour['all-day'].length > 0) {
+                  sections.push(
+                    <div key="all-day" className="space-y-2">
+                      <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>Tüm Gün</span>
+                        <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                          {tasksByHour['all-day'].length}
+                        </span>
+                      </div>
+                      <div className="pl-6">
+                        <HierarchicalTaskList
+                          tasks={tasksByHour['all-day']}
+                          onToggleComplete={toggleTaskComplete}
+                          onUpdate={updateTask}
+                          onDelete={deleteTask}
+                          onPin={toggleTaskPin}
+                          onAddSubTask={() => {}}
+                          onUpdateTags={async (taskId, tagIds) => {
+                            try {
+                              await updateTaskTags(taskId, tagIds)
+                            } catch (error) {
+                              console.error('Failed to update tags:', error)
+                            }
+                          }}
+                          onUpdatePriority={async (taskId, priority) => {
+                            try {
+                              await updateTask(taskId, { priority })
+                            } catch (error) {
+                              console.error('Failed to update priority:', error)
+                            }
+                          }}
+                          onUpdateReminders={async (taskId, reminders) => {
+                            try {
+                              await updateTaskReminders(taskId, reminders)
+                            } catch (error) {
+                              console.error('Failed to update reminders:', error)
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )
+                }
+                
+                // Sonra saatli görevleri göster
+                for (let hour = 0; hour < 24; hour++) {
+                  const hourStr = hour.toString().padStart(2, '0')
+                  const hourTasks = tasksByHour[hourStr]
+                  
+                  if (hourTasks.length > 0) {
+                    sections.push(
+                      <div key={hourStr} className="space-y-2">
+                        <div className="flex items-center space-x-2 text-sm font-medium text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{hourStr}:00</span>
+                          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                            {hourTasks.length}
+                          </span>
+                        </div>
+                        <div className="pl-6">
+                          <HierarchicalTaskList
+                            tasks={hourTasks}
+                            onToggleComplete={toggleTaskComplete}
+                            onUpdate={updateTask}
+                            onDelete={deleteTask}
+                            onPin={toggleTaskPin}
+                            onAddSubTask={() => {}}
+                            onUpdateTags={async (taskId, tagIds) => {
+                              try {
+                                await updateTaskTags(taskId, tagIds)
+                              } catch (error) {
+                                console.error('Failed to update tags:', error)
+                              }
+                            }}
+                            onUpdatePriority={async (taskId, priority) => {
+                              try {
+                                await updateTask(taskId, { priority })
+                              } catch (error) {
+                                console.error('Failed to update priority:', error)
+                              }
+                            }}
+                            onUpdateReminders={async (taskId, reminders) => {
+                              try {
+                                await updateTaskReminders(taskId, reminders)
+                              } catch (error) {
+                                console.error('Failed to update reminders:', error)
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )
                   }
-                }}
-                onUpdateReminders={async (taskId, reminders) => {
-                  try {
-                    await updateTaskReminders(taskId, reminders)
-                  } catch (error) {
-                    console.error('Failed to update reminders:', error)
-                  }
-                }}
-              />
+                }
+                
+                return sections
+              })()}
+            </div>
           ) : overdueTasks.length === 0 ? (
             /* Empty State */
             <div className="text-center py-16">

@@ -152,6 +152,53 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+/* Custom Scrollbar Styles */
+.scrollbar-hidden {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Thin scrollbar that shows on hover */
+.scrollbar-thin-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thin-hover:hover {
+  scrollbar-color: rgb(209 213 219) transparent; /* gray-300 */
+}
+
+.dark .scrollbar-thin-hover:hover {
+  scrollbar-color: rgb(55 65 81) transparent; /* gray-700 */
+}
+
+/* Webkit browsers */
+.scrollbar-thin-hover::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin-hover::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px;
+}
+
+.scrollbar-thin-hover:hover::-webkit-scrollbar-thumb {
+  background-color: rgb(209 213 219); /* gray-300 */
+}
+
+.dark .scrollbar-thin-hover:hover::-webkit-scrollbar-thumb {
+  background-color: rgb(55 65 81); /* gray-700 */
+}
+
 body {
   letter-spacing: var(--tracking-normal);
 }
