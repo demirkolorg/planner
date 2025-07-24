@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
+import { Plus, FolderKanban, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft } from "lucide-react"
 import { MdOutlineSpaceDashboard, MdSpaceDashboard } from "react-icons/md"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
@@ -389,15 +389,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         {isOpen ? (
           <>
             {/* Action Buttons Row */}
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              
+            <div className="flex items-center justify-center space-x-4">
               <Button
                 variant="ghost"
                 size="icon"
@@ -443,21 +435,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         ) : (
           /* Collapsed state - vertical icon stack */
           <div className="flex flex-col items-center space-y-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Arama</p>
-              </TooltipContent>
-            </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
