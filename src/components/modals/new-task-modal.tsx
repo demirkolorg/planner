@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info } from "lucide-react"
-import { generateTaskSuggestion, improveBrief } from "@/lib/ai"
+import { generateTaskSuggestion, improveBrief, improveTitle } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
@@ -87,7 +87,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
+  const [isTitleAILoading, setIsTitleAILoading] = useState(false)
+  const [isDescriptionAILoading, setIsDescriptionAILoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("yap")
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean
     title: string
@@ -153,6 +156,14 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
   // Store'dan sections al
   const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []
+
+  // Auto-resize description textarea
+  useEffect(() => {
+    if (descriptionRef.current) {
+      descriptionRef.current.style.height = 'auto'
+      descriptionRef.current.style.height = `${Math.min(descriptionRef.current.scrollHeight, 240)}px`
+    }
+  }, [description])
 
   // Default proje ve bölüm seçimleri
   useEffect(() => {
@@ -505,13 +516,28 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const handleImproveBrief = async () => {
     if (!description.trim()) return
     
-    setIsAILoading(true)
+    setIsDescriptionAILoading(true)
     try {
       const improvedDescription = await improveBrief(description)
       setDescription(improvedDescription)
     } catch (error) {
+      console.error('Description improvement error:', error)
     } finally {
-      setIsAILoading(false)
+      setIsDescriptionAILoading(false)
+    }
+  }
+
+  const handleImproveTitle = async () => {
+    if (!title.trim()) return
+    
+    setIsTitleAILoading(true)
+    try {
+      const improvedTitle = await improveTitle(title)
+      setTitle(improvedTitle)
+    } catch (error) {
+      console.error('Title improvement error:', error)
+    } finally {
+      setIsTitleAILoading(false)
     }
   }
 
@@ -574,8 +600,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
           {/* Modal Header with Proper Layout */}
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <DialogTitle className="text-lg font-semibold leading-tight pr-2 flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <DialogTitle className="text-lg font-semibold leading-relaxed pr-2 flex-1 min-w-0 mb-2">
               {editingTask ? '✏️ Görevi Düzenle' : 
                parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : 
                '🎯 Görev Ekle'}
@@ -586,17 +612,80 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 size="sm"
                 onClick={handleQuickAIGenerate}
                 disabled={isAILoading}
-                className="h-8 px-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40"
-                title="AI ile görev öner"
+                className={`h-8 px-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 transition-all duration-200 ${
+                  isAILoading ? 'animate-pulse bg-purple-100 dark:bg-purple-900/40' : ''
+                }`}
+                title={isAILoading ? "AI görev üretiyor..." : "AI ile görev öner"}
               >
-                {isAILoading ? (
-                  <div className="animate-spin rounded-full h-3 w-3 border-purple-600 border-t-transparent" />
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 text-purple-600 mr-1" />
-                    <span className="text-xs text-purple-700 dark:text-purple-300">AI</span>
-                  </>
-                )}
+                <div className="relative flex items-center">
+                  <Sparkles 
+                    className={`h-4 w-4 text-purple-600 mr-1 transition-all duration-300 ${
+                      isAILoading 
+                        ? 'animate-pulse scale-110 drop-shadow-sm' 
+                        : 'hover:scale-105'
+                    }`}
+                    style={{
+                      animation: isAILoading 
+                        ? 'sparkle 1.5s ease-in-out infinite, pulse 1.5s ease-in-out infinite' 
+                        : undefined
+                    }}
+                  />
+                  <span className={`text-xs text-purple-700 dark:text-purple-300 transition-all duration-300 ${
+                    isAILoading ? 'animate-pulse' : ''
+                  }`}>
+                    {isAILoading ? 'Üretiyor...' : 'ai'}
+                  </span>
+                  
+                  {/* Sparkle effect overlay */}
+                  {isAILoading && (
+                    <>
+                      <div className="absolute -inset-2 opacity-75 pointer-events-none">
+                        <div 
+                          className="absolute top-0 left-0 w-1 h-1 bg-purple-400 rounded-full"
+                          style={{ 
+                            animation: 'twinkle 2s ease-in-out infinite',
+                            animationDelay: '0s' 
+                          }} 
+                        />
+                        <div 
+                          className="absolute top-1 right-0 w-0.5 h-0.5 bg-purple-300 rounded-full"
+                          style={{ 
+                            animation: 'twinkle 2s ease-in-out infinite',
+                            animationDelay: '0.5s' 
+                          }} 
+                        />
+                        <div 
+                          className="absolute bottom-0 left-1 w-0.5 h-0.5 bg-purple-500 rounded-full"
+                          style={{ 
+                            animation: 'twinkle 2s ease-in-out infinite',
+                            animationDelay: '1s' 
+                          }} 
+                        />
+                        <div 
+                          className="absolute bottom-1 right-1 w-1 h-1 bg-purple-400 rounded-full"
+                          style={{ 
+                            animation: 'twinkle 2s ease-in-out infinite',
+                            animationDelay: '1.5s' 
+                          }} 
+                        />
+                        <div 
+                          className="absolute top-2 left-1/2 w-0.5 h-0.5 bg-purple-200 rounded-full"
+                          style={{ 
+                            animation: 'twinkle 2s ease-in-out infinite',
+                            animationDelay: '0.8s' 
+                          }} 
+                        />
+                        <div 
+                          className="absolute bottom-2 right-1/3 w-0.5 h-0.5 bg-purple-600 rounded-full"
+                          style={{ 
+                            animation: 'twinkle 2s ease-in-out infinite',
+                            animationDelay: '1.3s' 
+                          }} 
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </Button>
               <Button
                 variant="ghost"
@@ -623,23 +712,92 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
 
           {/* Title Input */}
-          <div>
+          <div className="relative">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Yapılacak adı"
               onKeyDown={handleKeyDown}
               autoFocus
+              className="pr-10"
             />
+            {title.trim() && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleImproveTitle}
+                    disabled={isTitleAILoading}
+                    className="absolute top-1/2 right-2 -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <div className="relative">
+                      <Sparkles 
+                        className={`h-3 w-3 transition-all duration-300 ${
+                          isTitleAILoading 
+                            ? 'text-purple-600 animate-pulse scale-110' 
+                            : 'text-purple-500 hover:scale-110'
+                        }`}
+                        style={{
+                          animation: isTitleAILoading 
+                            ? 'sparkle 1.5s ease-in-out infinite' 
+                            : undefined
+                        }}
+                      />
+                      {/* Sparkle effect for title */}
+                      {isTitleAILoading && (
+                        <div className="absolute -inset-2 opacity-75 pointer-events-none">
+                          <div 
+                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-purple-400 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-purple-300 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0.7s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-purple-500 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '1.4s' 
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isTitleAILoading ? 'AI başlığı geliştiriyor...' : 'AI ile başlığı geliştir'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           {/* Description Input */}
           <div className="relative">
             <Textarea
+              ref={descriptionRef}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Açıklama ekle..."
               onKeyDown={handleKeyDown}
+              className="min-h-[80px] max-h-[240px] resize-none overflow-y-auto pr-10"
+              style={{
+                height: description ? 'auto' : undefined,
+                minHeight: '80px'
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement
+                target.style.height = 'auto'
+                target.style.height = `${Math.min(target.scrollHeight, 240)}px`
+              }}
             />
             {description.trim() && (
               <Tooltip>
@@ -648,18 +806,53 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     variant="ghost"
                     size="sm"
                     onClick={handleImproveBrief}
-                    disabled={isAILoading}
+                    disabled={isDescriptionAILoading}
                     className="absolute top-2 right-2 h-6 w-6 p-0"
                   >
-                    {isAILoading ? (
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
-                    ) : (
-                      <Sparkles className="h-3 w-3" />
-                    )}
+                    <div className="relative">
+                      <Sparkles 
+                        className={`h-3 w-3 transition-all duration-300 ${
+                          isDescriptionAILoading 
+                            ? 'text-purple-600 animate-pulse scale-110' 
+                            : 'text-purple-500 hover:scale-110'
+                        }`}
+                        style={{
+                          animation: isDescriptionAILoading 
+                            ? 'sparkle 1.5s ease-in-out infinite' 
+                            : undefined
+                        }}
+                      />
+                      {/* Sparkle effect for description */}
+                      {isDescriptionAILoading && (
+                        <div className="absolute -inset-2 opacity-75 pointer-events-none">
+                          <div 
+                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-purple-400 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-purple-300 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0.7s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-purple-500 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '1.4s' 
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </div>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>AI ile açıklamayı geliştir</p>
+                  <p>{isDescriptionAILoading ? 'AI açıklamayı geliştiriyor...' : 'AI ile açıklamayı geliştir'}</p>
                 </TooltipContent>
               </Tooltip>
             )}

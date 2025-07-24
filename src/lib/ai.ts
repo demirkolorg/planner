@@ -216,3 +216,46 @@ export async function improveBrief(brief: string): Promise<string> {
     return brief
   }
 }
+
+export async function improveTitle(title: string): Promise<string> {
+  if (!title || title.trim().length === 0) {
+    return title
+  }
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [{
+          role: 'user',
+          content: `Bu görev başlığını daha net ve profesyonel hale getir: "${title}". 
+          Önemli kurallar:
+          - Türkçe olsun
+          - Maksimum 50 karakter
+          - Net ve anlaşılır
+          - Aksiyona yönelik (fiil ile başla)
+          - Sadece düzeltilmiş başlığı döndür, başka açıklama ekleme`
+        }],
+        max_tokens: 50,
+        temperature: 0.5
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`AI API hatası: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const content = data.choices[0]?.message?.content?.trim()
+
+    return content || title
+  } catch (error) {
+    console.error('Title improvement error:', error)
+    return title
+  }
+}
