@@ -18,7 +18,8 @@ import {
   CalendarCheck,
   CalendarClock,
   Home,
-  Plus
+  Plus,
+  Lightbulb
 } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -62,6 +63,31 @@ export function DashboardOverview() {
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [editingTask, setEditingTask] = useState<any | null>(null)
+
+  // Motivasyon sözleri listesi
+  const motivationalQuotes = [
+    { quote: "Büyük işler yapabilmek için tutkulu olmak yeterli değildir, aynı zamanda disiplinli de olmak gerekir.", author: "Benjamin Franklin" },
+    { quote: "Başarı, küçük çabaların günden güne tekrar edilmesiyle elde edilir.", author: "Robert Collier" },
+    { quote: "Hedefinize odaklanın ve her gün ona doğru küçük bir adım atın.", author: "Jack Canfield" },
+    { quote: "Zaman yönetimi aslında dikkat yönetimidir.", author: "Dan Kennedy" },
+    { quote: "Üretkenlik, meşgul olmak değil, doğru şeyleri yapmaktır.", author: "Tim Ferriss" },
+    { quote: "Mükemmel bir plan bugün, kusursuz bir plan yarından iyidir.", author: "George S. Patton" },
+    { quote: "Önceliklerinizi belirleyin ve onlara göre hareket edin.", author: "Stephen Covey" },
+    { quote: "Her büyük başarı, küçük görevlerin birikiminden doğar.", author: "Peter Drucker" },
+    { quote: "Odaklanma, hayır demeyi öğrenmektir.", author: "Steve Jobs" },
+    { quote: "İyi organize olmak, zamanı yönetmek değil, enerjinizi yönetmektir.", author: "David Allen" },
+    { quote: "Başarı, hazırlık ile fırsatın buluştuğu andır.", author: "Seneca" },
+    { quote: "Hedeflerinizi yazın. Yazılmayan hedefler sadece dilektir.", author: "Antoine de Saint-Exupéry" },
+    { quote: "Küçük ve sürekli gelişmeler, büyük sonuçlar doğurur.", author: "Kaizen Felsefesi" },
+    { quote: "Zamanınızı kontrol edin, hayatınızı kontrol edin.", author: "Alan Lakein" },
+    { quote: "Mükemmellik bir hedef değil, sürekli gelişim sürecidir.", author: "Tony Robbins" }
+  ]
+
+  // Her render'da farklı bir söz seç
+  const todaysQuote = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length)
+    return motivationalQuotes[randomIndex]
+  }, [])
 
   useEffect(() => {
     fetchTasks()
@@ -322,6 +348,25 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Motivational Quote Card - Compact */}
+      <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border-indigo-200 dark:border-indigo-800">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 shadow-sm flex-shrink-0">
+              <Lightbulb className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <blockquote className="text-sm font-medium text-indigo-900 dark:text-indigo-100 leading-snug mb-1 line-clamp-2">
+                "{todaysQuote.quote}"
+              </blockquote>
+              <cite className="text-xs text-indigo-600 dark:text-indigo-300 font-medium">
+                — {todaysQuote.author}
+              </cite>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Task Lists - Horizontal Layout */}
       <div className="space-y-6">

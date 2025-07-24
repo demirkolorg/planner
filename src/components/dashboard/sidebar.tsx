@@ -260,7 +260,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           </div>
           
           {/* Projects Section */}
-          <div className="px-4 pb-2">
+          <div className="px-4 pb-2 pt-4">
             <div className="flex items-center justify-between mb-3 px-2 border-b border-gray-300 dark:border-gray-600 pb-2 text-primary">
               <h3 className="text-sm font-medium ">Projeler</h3>
               <Plus 
