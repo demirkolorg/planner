@@ -35,8 +35,8 @@ const cardItems = [
     count: null, 
     icon: MdOutlineSpaceDashboard, 
     activeIcon: MdSpaceDashboard, 
-    color: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700", 
-    activeColor: "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-400 dark:border-slate-600", 
+    color: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-800/50", 
+    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/70 dark:to-indigo-900/70 text-blue-800 dark:text-blue-200 border-blue-300/70 dark:border-blue-700/70 shadow-lg shadow-blue-500/10", 
     href: ROUTES.DASHBOARD 
   },
   { 
@@ -44,8 +44,8 @@ const cardItems = [
     count: 1, 
     icon: FaRegStar, 
     activeIcon: FaStar, 
-    color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700", 
-    activeColor: "bg-green-200 dark:bg-green-800/50 text-green-800 dark:text-green-200 border-green-400 dark:border-green-600", 
+    color: "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-800/50", 
+    activeColor: "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/70 dark:to-teal-900/70 text-emerald-800 dark:text-emerald-200 border-emerald-300/70 dark:border-emerald-700/70 shadow-lg shadow-emerald-500/10", 
     href: ROUTES.TODAY 
   },
   { 
@@ -53,8 +53,8 @@ const cardItems = [
     count: 3, 
     icon: RiCalendarScheduleLine, 
     activeIcon: RiCalendarScheduleFill, 
-    color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700", 
-    activeColor: "bg-purple-200 dark:bg-purple-800/50 text-purple-800 dark:text-purple-200 border-purple-400 dark:border-purple-600", 
+    color: "bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 text-violet-700 dark:text-violet-300 border-violet-200/50 dark:border-violet-800/50", 
+    activeColor: "bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/70 dark:to-purple-900/70 text-violet-800 dark:text-violet-200 border-violet-300/70 dark:border-violet-700/70 shadow-lg shadow-violet-500/10", 
     href: ROUTES.SCHEDULED 
   },
   { 
@@ -62,8 +62,8 @@ const cardItems = [
     count: 2, 
     icon: BsPin, 
     activeIcon: BsFillPinFill, 
-    color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700", 
-    activeColor: "bg-red-200 dark:bg-red-800/50 text-red-800 dark:text-red-200 border-red-400 dark:border-red-600", 
+    color: "bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-800/50", 
+    activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
     href: ROUTES.BOARD 
   },
   { 
@@ -71,8 +71,8 @@ const cardItems = [
     count: 2, 
     icon: PiTagSimpleBold, 
     activeIcon: PiTagSimpleFill, 
-    color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700", 
-    activeColor: "bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 border-amber-400 dark:border-amber-600", 
+    color: "bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/50 text-amber-700 dark:text-amber-300 border-amber-200/50 dark:border-amber-800/50", 
+    activeColor: "bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/70 dark:to-yellow-900/70 text-amber-800 dark:text-amber-200 border-amber-300/70 dark:border-amber-700/70 shadow-lg shadow-amber-500/10", 
     href: ROUTES.TAGS 
   },
   { 
@@ -80,8 +80,8 @@ const cardItems = [
     count: 3, 
     icon: FaRegCheckCircle, 
     activeIcon: FaCheckCircle, 
-    color: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700", 
-    activeColor: "bg-orange-200 dark:bg-orange-800/50 text-orange-800 dark:text-orange-200 border-orange-400 dark:border-orange-600", 
+    color: "bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950/50 dark:to-lime-950/50 text-green-700 dark:text-green-300 border-green-200/50 dark:border-green-800/50", 
+    activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-900/70 dark:to-lime-900/70 text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/70 shadow-lg shadow-green-500/10", 
     href: ROUTES.COMPLETED 
   },
 ]
@@ -210,7 +210,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "p-3 rounded-lg border transition-all duration-200 hover:shadow-md",
+                      "p-3 rounded-xl border transition-all duration-300 hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5",
                       pathname === item.href ? item.activeColor : item.color
                     )}
                   >
