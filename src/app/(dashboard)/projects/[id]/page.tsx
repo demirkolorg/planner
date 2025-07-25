@@ -992,6 +992,9 @@ export default function ProjectDetailPage() {
           }
         }}
         editingSection={editingSectionId ? { id: editingSectionId, name: editingSectionName } : null}
+        projectName={project?.name}
+        projectEmoji={project?.emoji}
+        existingSections={sections.map(section => section.name)}
       />
 
       {/* Bölüm Silme Onay Dialog'u */}
