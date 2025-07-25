@@ -18,6 +18,7 @@ interface HierarchicalTaskListProps {
   onUpdatePriority?: (taskId: string, priority: string) => void
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
   onEdit?: (task: Task) => void
+  onComment?: (taskId: string, taskTitle: string) => void
   className?: string
   showTreeConnectors?: boolean
 }
@@ -35,6 +36,7 @@ export function HierarchicalTaskList({
   onUpdatePriority,
   onUpdateReminders,
   onEdit,
+  onComment,
   className = "",
   showTreeConnectors = true
 }: HierarchicalTaskListProps) {
@@ -115,6 +117,7 @@ export function HierarchicalTaskList({
             onUpdatePriority={onUpdatePriority}
             onUpdateReminders={onUpdateReminders}
             onEdit={onEdit}
+            onComment={onComment}
           />
         )
       })}

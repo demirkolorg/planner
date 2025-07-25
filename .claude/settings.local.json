@@ -34,7 +34,8 @@
       "Bash(taskkill:*)",
       "Bash(cmd /c:*)",
       "Bash(bun remove:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

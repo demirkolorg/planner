@@ -11,7 +11,8 @@ import {
   Copy,
   Move,
   Edit,
-  Clock
+  Clock,
+  MessageCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -86,6 +87,7 @@ interface TaskCardActionsProps {
     }>
   }) => void
   onTimeline?: (taskId: string, taskTitle: string) => void
+  onComment?: (taskId: string, taskTitle: string) => void
   isFirstInSection?: boolean
 }
 
@@ -101,6 +103,7 @@ export function TaskCardActions({
   onMove,
   onEdit,
   onTimeline,
+  onComment,
   isFirstInSection = false
 }: TaskCardActionsProps) {
   // DropdownMenu state'ini tamamen Radix UI'ye bırakalım
@@ -170,6 +173,11 @@ export function TaskCardActions({
   const handleTimeline = (e: React.MouseEvent) => {
     e.stopPropagation()
     onTimeline?.(task.id, task.title)
+  }
+
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onComment?.(task.id, task.title)
   }
 
   // Tamamlanmış görevlerde tüm aksiyonları disable et
@@ -300,6 +308,23 @@ export function TaskCardActions({
           </TooltipTrigger>
           <TooltipContent>
             <p>Zaman çizelgesi</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Comments */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleComment}
+            >
+              <MessageCircle className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Yorumlar</p>
           </TooltipContent>
         </Tooltip>
 

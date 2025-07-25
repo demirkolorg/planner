@@ -12,6 +12,7 @@ import { NewSectionModal } from "@/components/modals/new-section-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveSectionModal } from "@/components/modals/move-section-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
+import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -66,6 +67,8 @@ export default function ProjectDetailPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
+  const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string } | null>(null)
   const [editingTask, setEditingTask] = useState<{
     id: string
     title: string
@@ -292,6 +295,11 @@ export default function ProjectDetailPage() {
     } catch (error) {
       console.error("Failed to clone task:", error)
     }
+  }
+
+  const handleCommentTask = (taskId: string, taskTitle: string) => {
+    setCommentsModalTask({ id: taskId, title: taskTitle })
+    setIsCommentsModalOpen(true)
   }
 
   // Debounce hook
@@ -636,6 +644,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to update reminders:', error)
                     }
                   }}
+                  onComment={handleCommentTask}
                   showTreeConnectors={true}
                   enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
@@ -738,6 +747,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to update reminders:', error)
                     }
                   }}
+                  onComment={handleCommentTask}
                   showTreeConnectors={true}
                   enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
@@ -932,6 +942,7 @@ export default function ProjectDetailPage() {
                           console.error('Failed to update reminders:', error)
                         }
                       }}
+                      onComment={handleCommentTask}
                       showTreeConnectors={true}
                       enableDragAndDrop={false}
                       onMoveTask={async (taskId, newParentId) => {
@@ -1096,6 +1107,17 @@ export default function ProjectDetailPage() {
         onMove={handleMoveTask}
         task={taskToMove}
         currentProject={project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined}
+      />
+
+      {/* Görev Yorumları Modal'ı */}
+      <TaskCommentsModal
+        isOpen={isCommentsModalOpen}
+        onClose={() => {
+          setIsCommentsModalOpen(false)
+          setCommentsModalTask(null)
+        }}
+        taskId={commentsModalTask?.id || ''}
+        taskTitle={commentsModalTask?.title || ''}
       />
       </div>
     </TooltipProvider>
