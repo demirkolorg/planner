@@ -421,18 +421,6 @@ export default function OverduePage() {
         </div>
       </div>
 
-      {/* Info Bar */}
-      {totalOverdue > 0 && (
-        <div className="bg-gradient-to-r from-red-50/50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/20 border border-red-200/50 dark:border-red-700/30 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-red-700 dark:text-red-300">Gecikmiş Görevler</span>
-            <span className="text-sm text-red-600 dark:text-red-400">
-              {totalOverdue} görev acil eylem bekliyor
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* View Mode Content */}
       {viewMode === 'simple' ? (
         <>

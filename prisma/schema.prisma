@@ -105,3 +105,16 @@ model Reminder {
   updatedAt DateTime @updatedAt
 }
 
+model TaskActivity {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actionType  String   // "created", "updated", "completed", "priority_changed", "tag_added", "tag_removed", "moved", "deleted"
+  oldValue    String?
+  newValue    String?
+  description String
+  createdAt   DateTime @default(now())
+}
+
