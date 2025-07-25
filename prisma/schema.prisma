@@ -12,16 +12,17 @@ datasource db {
 
 
 model User {
-  id        String   @id @default(cuid())
-  firstName String
-  lastName  String
-  email     String   @unique
-  password  String
-  projects  Project[]
-  tasks     Task[]
-  tags      Tag[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String         @unique
+  password      String
+  projects      Project[]
+  tasks         Task[]
+  tags          Tag[]
+  taskActivities TaskActivity[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Project {
@@ -38,26 +39,27 @@ model Project {
 }
 
 model Task {
-  id           String       @id @default(cuid())
+  id           String         @id @default(cuid())
   title        String
   description  String?
-  completed    Boolean      @default(false)
-  priority     String       @default("NONE")
+  completed    Boolean        @default(false)
+  priority     String         @default("NONE")
   dueDate      DateTime?
-  isPinned     Boolean      @default(false)
+  isPinned     Boolean        @default(false)
   parentTaskId String?
-  parentTask   Task?        @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
-  subTasks     Task[]       @relation("SubTasks")
+  parentTask   Task?          @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subTasks     Task[]         @relation("SubTasks")
   projectId    String
-  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   sectionId    String?
-  section      Section?     @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  section      Section?       @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   userId       String
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags         TaskTag[]
   reminders    Reminder[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  activities   TaskActivity[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model Section {

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { 
   Plus, 
   Tag, 
@@ -11,7 +10,8 @@ import {
   Trash2,
   Copy,
   Move,
-  Edit
+  Edit,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -85,6 +85,7 @@ interface TaskCardActionsProps {
       isActive: boolean
     }>
   }) => void
+  onTimeline?: (taskId: string, taskTitle: string) => void
   isFirstInSection?: boolean
 }
 
@@ -99,6 +100,7 @@ export function TaskCardActions({
   onCopy,
   onMove,
   onEdit,
+  onTimeline,
   isFirstInSection = false
 }: TaskCardActionsProps) {
   // DropdownMenu state'ini tamamen Radix UI'ye bırakalım
@@ -163,6 +165,11 @@ export function TaskCardActions({
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
     onEdit?.(task)
+  }
+
+  const handleTimeline = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onTimeline?.(task.id, task.title)
   }
 
   // Tamamlanmış görevlerde tüm aksiyonları disable et
@@ -278,6 +285,23 @@ export function TaskCardActions({
             </Tooltip>
           }
         />
+
+        {/* Timeline */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleTimeline}
+            >
+              <Clock className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Zaman çizelgesi</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Pin/Unpin */}
         <Tooltip>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -161,6 +162,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
       })
     })
+
+    // Klonlama aktivitesi kaydet - hem orijinal hem de klonlanan görev için
+    if (clonedTask) {
+      // Orijinal görev için aktivite
+      await createTaskActivity({
+        taskId: id,
+        userId: decoded.userId,
+        actionType: TaskActivityTypes.CLONED,
+        description: getActivityDescription(TaskActivityTypes.CLONED)
+      })
+
+      // Klonlanan görev için oluşturma aktivitesi
+      await createTaskActivity({
+        taskId: clonedTask.id,
+        userId: decoded.userId,
+        actionType: TaskActivityTypes.CREATED,
+        description: "Görev klonlanarak oluşturuldu"
+      })
+    }
 
     return NextResponse.json(clonedTask)
   } catch (error) {

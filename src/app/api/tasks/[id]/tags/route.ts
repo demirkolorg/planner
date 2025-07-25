@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -21,11 +22,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "tagIds must be an array" }, { status: 400 })
     }
 
-    // Check if task exists and belongs to user
+    // Check if task exists and belongs to user, with existing tags
     const existingTask = await db.task.findFirst({
       where: {
         id: taskId,
         userId: decoded.userId
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true
+          }
+        }
       }
     })
 
@@ -47,6 +55,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // Mevcut ve yeni tag'leri karşılaştır
+    const currentTagIds = existingTask.tags.map(t => t.tagId)
+    const addedTagIds = tagIds.filter((tagId: string) => !currentTagIds.includes(tagId))
+    const removedTagIds = currentTagIds.filter(tagId => !tagIds.includes(tagId))
+
     // Delete existing task tags
     await db.taskTag.deleteMany({
       where: {
@@ -62,6 +75,44 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           tagId
         }))
       })
+    }
+
+    // Aktivite logları oluştur
+    if (addedTagIds.length > 0 || removedTagIds.length > 0) {
+      const allTags = await db.tag.findMany({
+        where: {
+          id: { in: [...addedTagIds, ...removedTagIds] },
+          userId: decoded.userId
+        }
+      })
+
+      // Eklenen etiketler için aktivite
+      for (const tagId of addedTagIds) {
+        const tag = allTags.find(t => t.id === tagId)
+        if (tag) {
+          await createTaskActivity({
+            taskId,
+            userId: decoded.userId,
+            actionType: TaskActivityTypes.TAG_ADDED,
+            newValue: tag.name,
+            description: getActivityDescription(TaskActivityTypes.TAG_ADDED, null, tag.name)
+          })
+        }
+      }
+
+      // Kaldırılan etiketler için aktivite
+      for (const tagId of removedTagIds) {
+        const tag = allTags.find(t => t.id === tagId)
+        if (tag) {
+          await createTaskActivity({
+            taskId,
+            userId: decoded.userId,
+            actionType: TaskActivityTypes.TAG_REMOVED,
+            oldValue: tag.name,
+            description: getActivityDescription(TaskActivityTypes.TAG_REMOVED, tag.name, null)
+          })
+        }
+      }
     }
 
     // Return updated task with tags

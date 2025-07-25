@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Task'ı ilişkili verilerle birlikte döndür
-      return await tx.task.findUnique({
+      const result = await tx.task.findUnique({
         where: { id: task.id },
         include: {
           project: true,
@@ -196,7 +197,30 @@ export async function POST(request: NextRequest) {
           }
         }
       })
+
+      return result
     })
+
+    // Transaction başarılı olduktan sonra aktivite kaydet
+    if (result) {
+      await createTaskActivity({
+        taskId: result.id,
+        userId: decoded.userId,
+        actionType: TaskActivityTypes.CREATED,
+        description: getActivityDescription(TaskActivityTypes.CREATED)
+      })
+
+      // Eğer bu bir alt görev ise, parent task'a da aktivite kaydet
+      if (parentTaskId) {
+        await createTaskActivity({
+          taskId: parentTaskId,
+          userId: decoded.userId,
+          actionType: TaskActivityTypes.SUBTASK_ADDED,
+          newValue: result.title,
+          description: getActivityDescription(TaskActivityTypes.SUBTASK_ADDED, null, result.title)
+        })
+      }
+    }
 
     return NextResponse.json(result, { status: 201 })
   } catch (error) {

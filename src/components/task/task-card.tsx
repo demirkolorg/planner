@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle, Folder } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
+import { TaskTimelineModal } from "../modals/task-timeline-modal"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
@@ -107,6 +108,7 @@ export function TaskCard({
   // İç expansion state (eski davranış için fallback)
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false)
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
   const [isToggling, setIsToggling] = useState(false)
   const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed)
@@ -187,6 +189,10 @@ export function TaskCard({
 
   const handleDateCancel = () => {
     setIsEditingDate(false)
+  }
+
+  const handleTimelineOpen = () => {
+    setIsTimelineOpen(true)
   }
 
   const formatDate = (dateString?: string) => {
@@ -692,12 +698,21 @@ export function TaskCard({
                 onCopy={onCopy}
                 onMove={onMove}
                 onEdit={onEdit}
+                onTimeline={handleTimelineOpen}
                 isFirstInSection={isFirstInSection}
               />
             </div>
           </div>
         )}
       </div>
+
+      {/* Timeline Modal */}
+      <TaskTimelineModal
+        isOpen={isTimelineOpen}
+        onClose={() => setIsTimelineOpen(false)}
+        taskId={task.id}
+        taskTitle={task.title}
+      />
     </TooltipProvider>
   )
 }

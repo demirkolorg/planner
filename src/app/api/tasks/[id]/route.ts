@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription, getPriorityDisplayName } from "@/lib/task-activity"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -43,6 +44,74 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateData.priority = PRIORITY_MAP[updateData.priority]
     }
 
+    // Değişiklikleri tespit et ve aktivite logları oluştur
+    const changes: Array<{type: any, oldValue?: string, newValue?: string}> = []
+
+    // Title değişikliği
+    if (updateData.title && updateData.title !== existingTask.title) {
+      changes.push({
+        type: TaskActivityTypes.TITLE_CHANGED,
+        oldValue: existingTask.title,
+        newValue: updateData.title
+      })
+    }
+
+    // Description değişikliği
+    if (updateData.description !== undefined && updateData.description !== existingTask.description) {
+      changes.push({
+        type: TaskActivityTypes.DESCRIPTION_CHANGED,
+        oldValue: existingTask.description || '',
+        newValue: updateData.description || ''
+      })
+    }
+
+    // Completion durumu değişikliği
+    if (updateData.completed !== undefined && updateData.completed !== existingTask.completed) {
+      changes.push({
+        type: updateData.completed ? TaskActivityTypes.COMPLETED : TaskActivityTypes.UNCOMPLETED
+      })
+    }
+
+    // Öncelik değişikliği
+    if (updateData.priority && updateData.priority !== existingTask.priority) {
+      changes.push({
+        type: TaskActivityTypes.PRIORITY_CHANGED,
+        oldValue: getPriorityDisplayName(existingTask.priority),
+        newValue: getPriorityDisplayName(updateData.priority)
+      })
+    }
+
+    // Due date değişikliği
+    if (updateData.dueDate !== undefined) {
+      const oldDate = existingTask.dueDate ? new Date(existingTask.dueDate).toLocaleDateString('tr-TR') : null
+      const newDate = updateData.dueDate ? new Date(updateData.dueDate).toLocaleDateString('tr-TR') : null
+      
+      if (oldDate !== newDate) {
+        changes.push({
+          type: TaskActivityTypes.DUE_DATE_CHANGED,
+          oldValue: oldDate,
+          newValue: newDate
+        })
+      }
+    }
+
+    // Pin durumu değişikliği
+    if (updateData.isPinned !== undefined && updateData.isPinned !== existingTask.isPinned) {
+      changes.push({
+        type: updateData.isPinned ? TaskActivityTypes.PINNED : TaskActivityTypes.UNPINNED
+      })
+    }
+
+    // Genel güncelleme (eğer başka değişiklikler varsa)
+    if (Object.keys(updateData).some(key => 
+      !['completed', 'priority', 'dueDate', 'isPinned', 'title', 'description'].includes(key) && 
+      updateData[key] !== existingTask[key as keyof typeof existingTask]
+    )) {
+      changes.push({
+        type: TaskActivityTypes.UPDATED
+      })
+    }
+
     // Update task
     const updatedTask = await db.task.update({
       where: { id },
@@ -70,6 +139,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         section: true
       }
     })
+
+    // Aktivite loglarını oluştur
+    for (const change of changes) {
+      await createTaskActivity({
+        taskId: id,
+        userId: decoded.userId,
+        actionType: change.type,
+        oldValue: change.oldValue,
+        newValue: change.newValue,
+        description: getActivityDescription(change.type, change.oldValue, change.newValue)
+      })
+    }
 
     return NextResponse.json(updatedTask)
   } catch (error) {
@@ -101,6 +182,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!existingTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
+
+    // Silme aktivitesi kaydet (task silinmeden önce)
+    await createTaskActivity({
+      taskId: id,
+      userId: decoded.userId,
+      actionType: TaskActivityTypes.DELETED,
+      description: getActivityDescription(TaskActivityTypes.DELETED)
+    })
 
     // Delete task (this will also delete sub-tasks due to cascade)
     await db.task.delete({

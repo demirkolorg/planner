@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,11 +17,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const { targetProjectId, targetSectionId } = await request.json()
     
-    // Taşınacak görevi kontrol et
+    // Taşınacak görevi kontrol et (current project ve section bilgileriyle)
     const taskToMove = await db.task.findFirst({
       where: {
         id,
         userId: decoded.userId
+      },
+      include: {
+        project: true,
+        section: true
       }
     })
 
@@ -109,6 +114,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       return updatedMainTask
+    })
+
+    // Taşıma aktivitesi kaydet
+    const fromLocation = `${taskToMove.project.name}${taskToMove.section ? ` - ${taskToMove.section.name}` : ''}`
+    const toLocation = `${targetProject.name}${targetSectionId ? ` - ${(await db.section.findUnique({ where: { id: targetSectionId } }))?.name || ''}` : ''}`
+    
+    await createTaskActivity({
+      taskId: id,
+      userId: decoded.userId,
+      actionType: TaskActivityTypes.MOVED,
+      oldValue: fromLocation,
+      newValue: toLocation,
+      description: getActivityDescription(TaskActivityTypes.MOVED, fromLocation, toLocation)
     })
 
     return NextResponse.json(updatedTasks)

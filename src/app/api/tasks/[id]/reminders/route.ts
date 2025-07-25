@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -21,17 +22,44 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "reminders must be an array" }, { status: 400 })
     }
 
-    // Check if task exists and belongs to user
+    // Check if task exists and belongs to user with existing reminders
     const existingTask = await db.task.findFirst({
       where: {
         id: taskId,
         userId: decoded.userId
+      },
+      include: {
+        reminders: true
       }
     })
 
     if (!existingTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
+
+    // Mevcut ve yeni reminder'ları karşılaştır
+    const currentReminders = existingTask.reminders.map(r => ({
+      datetime: r.datetime.toISOString(),
+      message: r.message || '',
+    }))
+    
+    const newReminders = reminders.map((r: any) => ({
+      datetime: new Date(r.datetime).toISOString(),
+      message: r.message || '',
+    }))
+
+    // Eklenen ve kaldırılan reminder'ları tespit et
+    const addedReminders = newReminders.filter(nr => 
+      !currentReminders.some(cr => 
+        cr.datetime === nr.datetime && cr.message === nr.message
+      )
+    )
+    
+    const removedReminders = currentReminders.filter(cr => 
+      !newReminders.some(nr => 
+        nr.datetime === cr.datetime && nr.message === cr.message
+      )
+    )
 
     // Delete existing reminders
     await db.reminder.deleteMany({
@@ -53,6 +81,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           message: reminder.message || null,
           isActive: reminder.isActive !== false // Default to true if not specified
         }))
+      })
+    }
+
+    // Aktivite logları oluştur
+    for (const reminder of addedReminders) {
+      const reminderText = new Date(reminder.datetime).toLocaleString('tr-TR')
+      await createTaskActivity({
+        taskId,
+        userId: decoded.userId,
+        actionType: TaskActivityTypes.REMINDER_ADDED,
+        newValue: reminderText,
+        description: getActivityDescription(TaskActivityTypes.REMINDER_ADDED, null, reminderText)
+      })
+    }
+
+    for (const reminder of removedReminders) {
+      const reminderText = new Date(reminder.datetime).toLocaleString('tr-TR')
+      await createTaskActivity({
+        taskId,
+        userId: decoded.userId,
+        actionType: TaskActivityTypes.REMINDER_REMOVED,
+        oldValue: reminderText,
+        description: getActivityDescription(TaskActivityTypes.REMINDER_REMOVED, reminderText, null)
       })
     }
 

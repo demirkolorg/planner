@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -28,10 +29,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // Toggle pin status
+    const newPinStatus = !existingTask.isPinned
     const updatedTask = await db.task.update({
       where: { id },
       data: {
-        isPinned: !existingTask.isPinned
+        isPinned: newPinStatus
       },
       include: {
         tags: {
@@ -53,6 +55,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         project: true,
         section: true
       }
+    })
+
+    // Aktivite kaydı
+    await createTaskActivity({
+      taskId: id,
+      userId: decoded.userId,
+      actionType: newPinStatus ? TaskActivityTypes.PINNED : TaskActivityTypes.UNPINNED,
+      description: getActivityDescription(newPinStatus ? TaskActivityTypes.PINNED : TaskActivityTypes.UNPINNED)
     })
 
     return NextResponse.json(updatedTask)
