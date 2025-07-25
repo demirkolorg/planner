@@ -190,7 +190,7 @@ export function TaskTimelineModal({ isOpen, onClose, taskId, taskTitle }: TaskTi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[95vh] flex flex-col top-[5%] translate-y-0">
+      <DialogContent className="sm:max-w-2xl max-h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
