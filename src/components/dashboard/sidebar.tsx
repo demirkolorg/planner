@@ -298,6 +298,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                       <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
                     </div>
                     <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{displayCount}</span>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div>
@@ -312,7 +313,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                           <p>%{completionPercentage} tamamlandı</p>
                         </TooltipContent>
                       </Tooltip>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{displayCount}</span>
                     </div>
                   </Link>
                 )

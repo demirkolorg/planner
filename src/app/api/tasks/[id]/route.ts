@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createTaskActivity, TaskActivityTypes, getActivityDescription, getPriorityDisplayName } from "@/lib/task-activity"
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -31,6 +32,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       where: {
         id,
         userId: decoded.userId
+      },
+      include: {
+        project: true
       }
     })
 
@@ -150,6 +154,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         newValue: change.newValue,
         description: getActivityDescription(change.type, change.oldValue, change.newValue)
       })
+
+      // Proje aktivitesi kaydet (sadece completion/uncompletion için)
+      if (change.type === TaskActivityTypes.COMPLETED) {
+        await createProjectActivity({
+          projectId: existingTask.project.id,
+          userId: decoded.userId,
+          actionType: ProjectActivityTypes.TASK_COMPLETED,
+          entityType: "task",
+          entityId: id,
+          entityName: existingTask.title,
+          description: `Görev tamamlandı: "${existingTask.title}"`
+        })
+      } else if (change.type === TaskActivityTypes.UNCOMPLETED) {
+        await createProjectActivity({
+          projectId: existingTask.project.id,
+          userId: decoded.userId,
+          actionType: ProjectActivityTypes.TASK_UNCOMPLETED,
+          entityType: "task",
+          entityId: id,
+          entityName: existingTask.title,
+          description: `Görev tamamlanması geri alındı: "${existingTask.title}"`
+        })
+      }
     }
 
     return NextResponse.json(updatedTask)
@@ -176,6 +203,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       where: {
         id,
         userId: decoded.userId
+      },
+      include: {
+        project: true
       }
     })
 
@@ -183,17 +213,30 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Silme aktivitesi kaydet (task silinmeden önce)
-    await createTaskActivity({
-      taskId: id,
-      userId: decoded.userId,
-      actionType: TaskActivityTypes.DELETED,
-      description: getActivityDescription(TaskActivityTypes.DELETED)
-    })
+    await db.$transaction(async (tx) => {
+      // Silme aktivitesi kaydet (task silinmeden önce)
+      await createTaskActivity({
+        taskId: id,
+        userId: decoded.userId,
+        actionType: TaskActivityTypes.DELETED,
+        description: getActivityDescription(TaskActivityTypes.DELETED)
+      })
 
-    // Delete task (this will also delete sub-tasks due to cascade)
-    await db.task.delete({
-      where: { id }
+      // Proje aktivitesi kaydet
+      await createProjectActivity({
+        projectId: existingTask.project.id,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.TASK_DELETED,
+        entityType: "task",
+        entityId: id,
+        entityName: existingTask.title,
+        description: `Görev silindi: "${existingTask.title}"`
+      })
+
+      // Delete task (this will also delete sub-tasks due to cascade)
+      await tx.task.delete({
+        where: { id }
+      })
     })
 
     return NextResponse.json({ success: true })

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { X } from "lucide-react"
+import { X, Sparkles, Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Emoji kategorileri
 const emojiCategories = {
@@ -37,6 +38,82 @@ const emojiCategories = {
   ]
 }
 
+// Proje türleri ve özel öneriler
+const projectTypes = {
+  "Kamu Yönetimi": {
+    emoji: "🏛️",
+    suggestions: [
+      "E-Devlet Hizmetleri Modernizasyonu", "Vatandaş Memnuniyet Projesi", "Dijital Dönüşüm İnisiyatifi",
+      "Kamu Hizmet Kalitesi Artırma", "Bürokrasi Azaltma Çalışması", "Hizmet Süreçleri İyileştirme",
+      "Vatandaş Odaklı Hizmet Tasarımı", "İdari Kapasite Güçlendirme", "Şeffaflık ve Hesap Verebilirlik",
+      "Kamu Personeli Eğitim Programı", "Hizmet Standartları Belirleme", "Performans Yönetim Sistemi"
+    ]
+  },
+  "Eğitim": {
+    emoji: "🎓",
+    suggestions: [
+      "Okul Öncesi Eğitim Güçlendirme", "Dijital Eğitim Altyapısı", "Öğretmen Mesleki Gelişimi",
+      "Eğitimde Fırsat Eşitliği", "STEM Eğitimi Yaygınlaştırma", "Mesleki Eğitim Modernizasyonu",
+      "Özel Eğitim Hizmetleri", "Hayat Boyu Öğrenme Programı", "Eğitim Kalitesi İzleme",
+      "Okul Güvenliği ve Sağlığı", "Aile Katılımı Projesi", "Eğitim Teknolojileri Entegrasyonu"
+    ]
+  },
+  "Sağlık": {
+    emoji: "🏥",
+    suggestions: [
+      "Birinci Basamak Sağlık Güçlendirme", "Koruyucu Sağlık Hizmetleri", "Sağlık Turizmi Geliştirme",
+      "Acil Sağlık Hizmetleri İyileştirme", "Toplum Sağlığı Taramaları", "Sağlık Teknolojileri",
+      "Yaşlı Bakım Hizmetleri", "Ana Çocuk Sağlığı Programı", "Ruh Sağlığı Hizmetleri",
+      "Sağlık Bilgi Sistemi", "Tıbbi Atık Yönetimi", "Sağlık Personeli Eğitimi"
+    ]
+  },
+  "Altyapı": {
+    emoji: "🏗️",
+    suggestions: [
+      "Ulaştırma Master Planı", "İçme Suyu Kalitesi Projesi", "Atık Su Arıtma Sistemi",
+      "Kentsel Dönüşüm Projesi", "Akıllı Şehir Altyapısı", "Enerji Verimliliği Programı",
+      "Yeşil Bina Sertifikasyonu", "Karayolu İyileştirme", "Köprü ve Tünel Projeleri",
+      "Park ve Rekreasyon Alanları", "Bisiklet Yolu Ağı", "Toplu Taşıma Optimizasyonu"
+    ]
+  },
+  "Güvenlik": {
+    emoji: "🛡️",
+    suggestions: [
+      "Afet Risk Azaltma Planı", "Güvenli Şehir Projesi", "Siber Güvenlik Altyapısı",
+      "İtfaiye Hizmetleri Modernizasyonu", "Acil Durum Koordinasyonu", "Kriz Yönetim Merkezi",
+      "Toplum Destekli Güvenlik", "Trafik Güvenliği Kampanyası", "Doğal Afet Hazırlığı",
+      "Güvenlik Kamerası Sistemi", "Acil Çağrı Merkezi", "Güvenlik Personeli Eğitimi"
+    ]
+  },
+  "Ekonomi": {
+    emoji: "💼",
+    suggestions: [
+      "KOBİ Destekleme Programı", "Girişimcilik Ekosistemi", "Yatırım Teşvik Sistemi",
+      "İş Gücü Geliştirme Programı", "Ekonomik Kalkınma Stratejisi", "İnovasyon Merkezi Kurulumu",
+      "Tarımsal Üretim Destekleme", "Turizm Potansiyeli Değerlendirme", "Organize Sanayi Bölgesi",
+      "Teknoloji Transfer Ofisi", "İhracat Geliştirme Programı", "Finansal Okuryazarlık Eğitimi"
+    ]
+  },
+  "Çevre": {
+    emoji: "🌱",
+    suggestions: [
+      "Çevre Koruma Master Planı", "Karbon Ayak İzi Azaltma", "Geri Dönüşüm Sistemi",
+      "Hava Kalitesi İzleme", "Su Kaynaklarını Koruma", "Biyoçeşitlilik Koruma",
+      "Yeşil Alan Artırma", "Temiz Enerji Projesi", "Çevre Eğitimi Programı",
+      "Atık Azaltma Kampanyası", "Ekolojik Tarım Destekleme", "İklim Değişikliği Adaptasyonu"
+    ]
+  },
+  "Sosyal Hizmetler": {
+    emoji: "🤝",
+    suggestions: [
+      "Engelli Dostu Şehir Projesi", "Yaşlı Destek Programı", "Çocuk Koruma Hizmetleri",
+      "Kadın Güçlendirme Programı", "Gençlik Projeleri", "Sosyal Yardım Koordinasyonu",
+      "Toplumsal Cinsiyet Eşitliği", "Aile Danışmanlık Hizmetleri", "Sosyal Kaynaşma Programı",
+      "Dezavantajlı Gruplar Destekleme", "Gönüllülük Platformu", "Sosyal İçerme Projeleri"
+    ]
+  }
+}
+
 interface NewProjectModalProps {
   isOpen: boolean
   onClose: () => void
@@ -48,6 +125,8 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
   const [name, setName] = useState("")
   const [selectedEmoji, setSelectedEmoji] = useState("🚀")
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof emojiCategories>("Favoriler")
+  const [isGeneratingName, setIsGeneratingName] = useState(false)
+  const [selectedProjectType, setSelectedProjectType] = useState<keyof typeof projectTypes>("Kamu Yönetimi")
 
   useEffect(() => {
     if (editingProject) {
@@ -69,6 +148,31 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
 
   const getCurrentEmojis = () => {
     return emojiCategories[selectedCategory]
+  }
+
+  // AI proje adı önerisi
+  const generateProjectName = async () => {
+    setIsGeneratingName(true)
+    try {
+      // Seçilen proje türüne göre öneriler al
+      const suggestions = projectTypes[selectedProjectType].suggestions
+      
+      // Rastgele bir öneri seç
+      const randomIndex = Math.floor(Math.random() * suggestions.length)
+      const suggestion = suggestions[randomIndex]
+      
+      // Biraz gecikme ekle (gerçek AI hissi için)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      setName(suggestion)
+      
+      // İlgili emoji'yi de otomatik seç
+      setSelectedEmoji(projectTypes[selectedProjectType].emoji)
+    } catch (error) {
+      console.error('AI öneri hatası:', error)
+    } finally {
+      setIsGeneratingName(false)
+    }
   }
 
   return (
@@ -96,14 +200,55 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
             </div>
           </div>
 
+          {/* Proje Türü */}
+          <div className="space-y-2">
+            <Label>Proje türü</Label>
+            <Select value={selectedProjectType} onValueChange={(value: keyof typeof projectTypes) => setSelectedProjectType(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Proje türü seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(projectTypes).map(([type, config]) => (
+                  <SelectItem key={type} value={type}>
+                    <div className="flex items-center gap-2">
+                      <span>{config.emoji}</span>
+                      <span>{type}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Proje Adı */}
           <div className="space-y-2">
             <Label>Proje adı</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Proje adı"
-            />
+            <div className="flex gap-2">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Proje adı"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={generateProjectName}
+                disabled={isGeneratingName}
+                className="shrink-0"
+                title={`${selectedProjectType} alanında AI ile proje adı öner`}
+              >
+                {isGeneratingName ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              AI, {selectedProjectType.toLowerCase()} alanına uygun proje adları önerecek
+            </p>
           </div>
 
           {/* Emoji Kategorileri */}

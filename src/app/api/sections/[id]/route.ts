@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -87,7 +88,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       include: {
         project: {
           select: {
-            userId: true
+            userId: true,
+            id: true
           }
         },
         tasks: {
@@ -107,20 +109,32 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Transaction kullanarak önce tüm görevleri sil, sonra section'ı sil
-    await db.$transaction([
+    await db.$transaction(async (tx) => {
+      // Bölüm silme aktivitesi (silmeden önce ekle)
+      await createProjectActivity({
+        projectId: section.project.id,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.SECTION_DELETED,
+        entityType: "section",
+        entityId: section.id,
+        entityName: section.name,
+        description: `Bölüm silindi: "${section.name}"`
+      })
+
       // Önce section'daki tüm task'ları sil
-      db.task.deleteMany({
+      await tx.task.deleteMany({
         where: {
           sectionId: id
         }
-      }),
+      })
+
       // Sonra section'ı sil
-      db.section.delete({
+      await tx.section.delete({
         where: {
           id
         }
       })
-    ])
+    })
 
     return NextResponse.json({ message: "Section deleted successfully" })
   } catch (error) {

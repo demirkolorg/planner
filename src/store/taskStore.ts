@@ -41,6 +41,9 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
     name: string
     projectId: string
   }
+  _count?: {
+    comments: number
+  }
 }
 
 interface TaskStore {

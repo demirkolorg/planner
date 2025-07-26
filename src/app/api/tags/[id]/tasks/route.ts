@@ -65,7 +65,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             }
           }
         },
-        reminders: true
+        reminders: true,
+        _count: {
+          select: {
+            comments: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'

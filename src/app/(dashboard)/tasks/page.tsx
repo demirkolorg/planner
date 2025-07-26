@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { TaskCard } from "@/components/task/task-card"
+import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -195,6 +196,10 @@ export default function TasksPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showCompleted, setShowCompleted] = useState(true)
   const [showPinned, setShowPinned] = useState(true)
+  
+  // Comment modal states
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
+  const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string; completed: boolean } | null>(null)
 
   // Create dynamic mock task based on controls
   const getMockTask = () => {
@@ -265,6 +270,14 @@ export default function TasksPage() {
   }
 
   const mockTask = getMockTask()
+
+  // Handler functions
+  const handleCommentTask = (taskId: string, taskTitle: string) => {
+    // Mock task olduğu için completed durumunu mock task'tan al
+    const task = mockTasks.find(t => t.id === taskId) || mockTask
+    setCommentsModalTask({ id: taskId, title: taskTitle, completed: task.completed })
+    setIsCommentsModalOpen(true)
+  }
 
   // Filter function for multiple cards
   const getFilteredTasks = () => {
@@ -674,6 +687,7 @@ export default function TasksPage() {
                     onUpdateTags={handleUpdateTags}
                     onUpdatePriority={handleUpdatePriority}
                     onUpdateReminders={handleUpdateReminders}
+                    onComment={handleCommentTask}
                   />
                 </div>
               </CardContent>
@@ -737,6 +751,7 @@ export default function TasksPage() {
                       onUpdateTags={handleUpdateTags}
                       onUpdatePriority={handleUpdatePriority}
                       onUpdateReminders={handleUpdateReminders}
+                      onComment={handleCommentTask}
                     />
                   ))}
                 </div>
@@ -762,6 +777,7 @@ export default function TasksPage() {
                       onUpdateTags={handleUpdateTags}
                       onUpdatePriority={handleUpdatePriority}
                       onUpdateReminders={handleUpdateReminders}
+                      onComment={handleCommentTask}
                     />
                   ))}
                 </div>
@@ -771,6 +787,18 @@ export default function TasksPage() {
           )}
         </div>
       </div>
+
+      {/* Görev Yorumları Modal'ı */}
+      <TaskCommentsModal
+        isOpen={isCommentsModalOpen}
+        onClose={() => {
+          setIsCommentsModalOpen(false)
+          setCommentsModalTask(null)
+        }}
+        taskId={commentsModalTask?.id || ''}
+        taskTitle={commentsModalTask?.title || ''}
+        isTaskCompleted={commentsModalTask?.completed || false}
+      />
     </div>
   )
 }

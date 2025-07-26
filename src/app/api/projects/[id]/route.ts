@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -82,22 +83,39 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Project with this name already exists" }, { status: 409 })
     }
 
-    const updatedProject = await db.project.update({
-      where: {
-        id
-      },
-      data: {
-        name,
-        emoji,
-        notes
-      },
-      include: {
-        _count: {
-          select: {
-            tasks: true
+    const updatedProject = await db.$transaction(async (tx) => {
+      const updated = await tx.project.update({
+        where: {
+          id
+        },
+        data: {
+          name,
+          emoji,
+          notes
+        },
+        include: {
+          _count: {
+            select: {
+              tasks: true
+            }
           }
         }
+      })
+
+      // Proje güncelleme aktivitesi (sadece isim değişmişse)
+      if (existingProject.name !== name) {
+        await createProjectActivity({
+          projectId: id,
+          userId: decoded.userId,
+          actionType: ProjectActivityTypes.PROJECT_UPDATED,
+          entityType: "project",
+          oldValue: existingProject.name,
+          newValue: name,
+          description: `Proje adı güncellendi: "${existingProject.name}" → "${name}"`
+        })
       }
+
+      return updated
     })
 
     return NextResponse.json(updatedProject)
@@ -131,10 +149,21 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    await db.project.delete({
-      where: {
-        id
-      }
+    await db.$transaction(async (tx) => {
+      // Proje silme aktivitesi (silmeden önce ekle)
+      await createProjectActivity({
+        projectId: id,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.PROJECT_DELETED,
+        entityType: "project",
+        description: `Proje silindi: "${existingProject.name}"`
+      })
+
+      await tx.project.delete({
+        where: {
+          id
+        }
+      })
     })
 
     return NextResponse.json({ message: "Project deleted successfully" })

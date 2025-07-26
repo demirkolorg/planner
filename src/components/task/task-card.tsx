@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle, Folder } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle, Folder, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { TaskTimelineModal } from "../modals/task-timeline-modal"
@@ -453,6 +453,24 @@ export function TaskCard({
                   </TooltipContent>
                 </Tooltip>
               )}
+              
+              {/* Comments Icon and Count */}
+              {task._count && task._count.comments > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="text-xs">{task._count.comments}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {task._count.comments} Yorum
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               {/* Priority Flag */}
               <Tooltip>
                 <TooltipTrigger asChild>

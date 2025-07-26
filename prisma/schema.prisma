@@ -12,31 +12,33 @@ datasource db {
 
 
 model User {
-  id            String         @id @default(cuid())
-  firstName     String
-  lastName      String
-  email         String         @unique
-  password      String
-  projects      Project[]
-  tasks         Task[]
-  tags          Tag[]
-  taskActivities TaskActivity[]
-  comments      Comment[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id               String            @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String            @unique
+  password         String
+  projects         Project[]
+  tasks            Task[]
+  tags             Tag[]
+  taskActivities   TaskActivity[]
+  projectActivities ProjectActivity[]
+  comments         Comment[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model Project {
-  id        String    @id @default(cuid())
-  name      String
-  emoji     String?
-  notes     String?
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks     Task[]
-  sections  Section[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String            @id @default(cuid())
+  name       String
+  emoji      String?
+  notes      String?
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks      Task[]
+  sections   Section[]
+  activities ProjectActivity[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
 }
 
 model Task {
@@ -134,5 +136,21 @@ model Comment {
   replies   Comment[] @relation("CommentReplies")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model ProjectActivity {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actionType  String   // "project_created", "project_updated", "project_deleted", "section_created", "section_moved", "section_deleted", "task_created", "task_completed", "task_uncompleted"
+  entityType  String   // "project", "section", "task"
+  entityId    String?  // ID of section or task if applicable
+  entityName  String?  // Name of section or task for easier display
+  oldValue    String?
+  newValue    String?
+  description String
+  createdAt   DateTime @default(now())
 }
 

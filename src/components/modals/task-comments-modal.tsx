@@ -50,9 +50,10 @@ interface TaskCommentsModalProps {
   onClose: () => void
   taskId: string
   taskTitle: string
+  isTaskCompleted?: boolean
 }
 
-export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle }: TaskCommentsModalProps) {
+export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCompleted = false }: TaskCommentsModalProps) {
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
@@ -238,7 +239,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle }: TaskCo
   }
 
   // Yorum bileşeni
-  const CommentItem = memo(({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
+  const CommentItem = memo(function CommentItem({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) {
     const [showReplies, setShowReplies] = useState(false)
     const isOwner = user?.id === comment.user.id
     
@@ -297,7 +298,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle }: TaskCo
               </p>
             </div>
             
-            {!isReply && (
+            {!isReply && !isTaskCompleted && (
               <div className="flex items-center gap-4 text-sm">
                 <button
                   onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
@@ -307,15 +308,20 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle }: TaskCo
                   Yanıtla
                 </button>
                 
-                {comment._count && comment._count.replies > 0 && (
-                  <button
-                    onClick={() => setShowReplies(!showReplies)}
-                    className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <MessageCircle className="h-3 w-3" />
-                    {comment._count.replies} yanıt {showReplies ? 'gizle' : 'göster'}
-                  </button>
-                )}
+                
+              </div>
+            )}
+            
+            {/* Yanıt sayısını gösterme butonu - her zaman görünür */}
+            {!isReply && comment._count && comment._count.replies > 0 && (
+              <div className="flex items-center gap-4 text-sm">
+                <button
+                  onClick={() => setShowReplies(!showReplies)}
+                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MessageCircle className="h-3 w-3" />
+                  {comment._count.replies} yanıt {showReplies ? 'gizle' : 'göster'}
+                </button>
               </div>
             )}
             
@@ -397,37 +403,48 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle }: TaskCo
         </DialogHeader>
 
         {/* Yeni yorum ekleme */}
-        <div className="flex-shrink-0 space-y-3 p-1">
-          <div className="flex gap-3">
-            <Avatar className="w-8 h-8 flex-shrink-0">
-              <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white">
-                {user ? getUserInitials(user.firstName, user.lastName) : "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-2">
-              <Textarea
-                placeholder="Yorumunuzu yazın..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="min-h-[80px] resize-none"
-                onFocus={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-              />
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSubmitComment}
-                  disabled={!newComment.trim() || isSubmitting}
-                  size="sm"
-                >
-                  <Send className="h-3 w-3 mr-1" />
-                  Gönder
-                </Button>
+        {!isTaskCompleted && (
+          <div className="flex-shrink-0 space-y-3 p-1">
+            <div className="flex gap-3">
+              <Avatar className="w-8 h-8 flex-shrink-0">
+                <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white">
+                  {user ? getUserInitials(user.firstName, user.lastName) : "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <Textarea
+                  placeholder="Yorumunuzu yazın..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="min-h-[80px] resize-none"
+                  onFocus={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSubmitComment}
+                    disabled={!newComment.trim() || isSubmitting}
+                    size="sm"
+                  >
+                    <Send className="h-3 w-3 mr-1" />
+                    Gönder
+                  </Button>
+                </div>
               </div>
             </div>
+            <Separator />
           </div>
-          <Separator />
-        </div>
+        )}
+        
+        {/* Tamamlanmış görev için bilgi mesajı */}
+        {isTaskCompleted && (
+          <div className="flex-shrink-0 p-4 bg-muted/50 rounded-lg mb-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Bu görev tamamlanmış. Mevcut yorumları görüntüleyebilirsiniz ancak yeni yorum ekleyemezsiniz.
+            </p>
+          </div>
+        )}
 
         {/* Yorumlar listesi */}
         <div className="flex-1 overflow-y-auto px-1 min-h-0">

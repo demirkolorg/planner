@@ -35,7 +35,8 @@
       "Bash(cmd /c:*)",
       "Bash(bun remove:*)",
       "Bash(timeout:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

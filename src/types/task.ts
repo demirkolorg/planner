@@ -21,6 +21,9 @@ export interface Task {
   reminders?: Reminder[]
   createdAt: Date
   updatedAt: Date
+  _count?: {
+    comments: number
+  }
 }
 
 // Hiyerarşik task gösterimi için genişletilmiş tip

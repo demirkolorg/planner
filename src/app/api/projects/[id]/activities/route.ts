@@ -13,12 +13,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
-    const { id } = await params
+    const { id: projectId } = await params
     
-    // Check if project exists and belongs to user
+    // Projenin kullanıcıya ait olduğunu kontrol et
     const project = await db.project.findFirst({
       where: {
-        id,
+        id: projectId,
         userId: decoded.userId
       }
     })
@@ -27,43 +27,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    // Get all tasks associated with this project (both parent and sub-tasks)
-    const tasks = await db.task.findMany({
+    // Proje aktivitelerini getir
+    const activities = await db.projectActivity.findMany({
       where: {
-        projectId: id
+        projectId: projectId
       },
       include: {
-        tags: {
-          include: {
-            tag: true
-          }
-        },
-        reminders: true,
-        section: true,
-        subTasks: {
-          include: {
-            tags: {
-              include: {
-                tag: true
-              }
-            },
-            reminders: true,
-          }
-        },
-        _count: {
+        user: {
           select: {
-            comments: true
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
           }
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc' // En yeni aktiviteler önce
       }
     })
 
-    return NextResponse.json(tasks)
+    return NextResponse.json(activities)
   } catch (error) {
-    console.error("❌ Error fetching tasks for project:", error)
+    console.error("Error fetching project activities:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

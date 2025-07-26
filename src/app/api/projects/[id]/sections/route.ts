@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -94,19 +95,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const order = lastSection ? lastSection.order + 1 : 0
 
     // Create the section
-    const section = await db.section.create({
-      data: {
-        name,
-        projectId: id,
-        order
-      },
-      include: {
-        _count: {
-          select: {
-            tasks: true
+    const section = await db.$transaction(async (tx) => {
+      const newSection = await tx.section.create({
+        data: {
+          name,
+          projectId: id,
+          order
+        },
+        include: {
+          _count: {
+            select: {
+              tasks: true
+            }
           }
         }
-      }
+      })
+
+      // Bölüm oluşturma aktivitesi
+      await createProjectActivity({
+        projectId: id,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.SECTION_CREATED,
+        entityType: "section",
+        entityId: newSection.id,
+        entityName: newSection.name,
+        description: `Bölüm oluşturuldu: "${newSection.name}"`
+      })
+
+      return newSection
     })
 
     return NextResponse.json(section, { status: 201 })

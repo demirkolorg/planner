@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -220,6 +221,17 @@ export async function POST(request: NextRequest) {
           description: getActivityDescription(TaskActivityTypes.SUBTASK_ADDED, null, result.title)
         })
       }
+
+      // Proje aktivitesi kaydet
+      await createProjectActivity({
+        projectId: result.projectId,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.TASK_CREATED,
+        entityType: "task",
+        entityId: result.id,
+        entityName: result.title,
+        description: `Görev oluşturuldu: "${result.title}"`
+      })
     }
 
     return NextResponse.json(result, { status: 201 })
@@ -262,6 +274,11 @@ export async function GET(request: NextRequest) {
               }
             },
             reminders: true,
+          }
+        },
+        _count: {
+          select: {
+            comments: true
           }
         }
       },

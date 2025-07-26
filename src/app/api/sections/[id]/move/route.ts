@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { cookies } from "next/headers"
+import jwt from "jsonwebtoken"
 
 // Bölümü başka projeye taşı
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sectionId = params.id
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const { id: sectionId } = await params
     const { targetProjectId } = await request.json()
 
     if (!targetProjectId) {
@@ -64,6 +75,32 @@ export async function PATCH(
           data: { projectId: targetProjectId }
         })
       }
+
+      // Bölüm taşıma aktivitesi (eski projeye)
+      await createProjectActivity({
+        projectId: existingSection.project.id,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.SECTION_MOVED,
+        entityType: "section",
+        entityId: existingSection.id,
+        entityName: existingSection.name,
+        oldValue: existingSection.project.name,
+        newValue: targetProject.name,
+        description: `Bölüm taşındı: "${existingSection.name}" → ${targetProject.name}`
+      })
+
+      // Bölüm taşıma aktivitesi (yeni projeye)
+      await createProjectActivity({
+        projectId: targetProjectId,
+        userId: decoded.userId,
+        actionType: ProjectActivityTypes.SECTION_MOVED,
+        entityType: "section",
+        entityId: existingSection.id,
+        entityName: existingSection.name,
+        oldValue: existingSection.project.name,
+        newValue: targetProject.name,
+        description: `Bölüm alındı: "${existingSection.name}" ← ${existingSection.project.name}`
+      })
 
       return updatedSection
     })

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -13,6 +13,7 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveSectionModal } from "@/components/modals/move-section-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
+import { ProjectTimelineModal } from "@/components/modals/project-timeline-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -68,7 +69,8 @@ export default function ProjectDetailPage() {
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
-  const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string } | null>(null)
+  const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string; completed: boolean } | null>(null)
+  const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<{
     id: string
     title: string
@@ -298,7 +300,9 @@ export default function ProjectDetailPage() {
   }
 
   const handleCommentTask = (taskId: string, taskTitle: string) => {
-    setCommentsModalTask({ id: taskId, title: taskTitle })
+    // Görevin tamamlanma durumunu bul
+    const task = tasks.find(t => t.id === taskId)
+    setCommentsModalTask({ id: taskId, title: taskTitle, completed: task?.completed || false })
     setIsCommentsModalOpen(true)
   }
 
@@ -480,7 +484,19 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
+          {/* Tamamlananları Göster/Gizle Switch */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="show-completed" className="text-sm text-muted-foreground">
+              Tamamlananlar
+            </label>
+            <Switch
+              id="show-completed"
+              checked={showCompletedTasks}
+              onCheckedChange={toggleShowCompletedTasks}
+            />
+          </div>
+          
           <Button
             variant="outline"
             size="sm"
@@ -515,14 +531,9 @@ export default function ProjectDetailPage() {
                 <Edit className="h-4 w-4 mr-2" />
                 Projeyi Düzenle
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={toggleShowCompletedTasks}>
-                {showCompletedTasks ? (
-                  <EyeOff className="h-4 w-4 mr-2" />
-                ) : (
-                  <Eye className="h-4 w-4 mr-2" />
-                )}
-                {showCompletedTasks ? 'Tamamlananları Gizle' : 'Tamamlananları Göster'}
+              <DropdownMenuItem onClick={() => setIsTimelineModalOpen(true)}>
+                <Clock className="h-4 w-4 mr-2" />
+                Proje Zaman Çizelgesi
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
@@ -1118,6 +1129,15 @@ export default function ProjectDetailPage() {
         }}
         taskId={commentsModalTask?.id || ''}
         taskTitle={commentsModalTask?.title || ''}
+        isTaskCompleted={commentsModalTask?.completed || false}
+      />
+
+      {/* Proje Timeline Modal'ı */}
+      <ProjectTimelineModal
+        isOpen={isTimelineModalOpen}
+        onClose={() => setIsTimelineModalOpen(false)}
+        projectId={projectId}
+        projectTitle={project?.name || ''}
       />
       </div>
     </TooltipProvider>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,13 +84,43 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      await tx.section.create({
+      const defaultSection = await tx.section.create({
         data: {
           name: "Genel",
           projectId: project.id,
           order: 0
         }
       })
+
+      // Proje oluşturma aktivitesi
+      try {
+        await createProjectActivity({
+          projectId: project.id,
+          userId: decoded.userId,
+          actionType: ProjectActivityTypes.PROJECT_CREATED,
+          entityType: "project",
+          description: `Proje oluşturuldu: "${project.name}"`
+        })
+        console.log("Project creation activity logged successfully")
+      } catch (activityError) {
+        console.error("Error logging project creation activity:", activityError)
+      }
+
+      // Default section oluşturma aktivitesi
+      try {
+        await createProjectActivity({
+          projectId: project.id,
+          userId: decoded.userId,
+          actionType: ProjectActivityTypes.SECTION_CREATED,
+          entityType: "section",
+          entityId: defaultSection.id,
+          entityName: defaultSection.name,
+          description: `Bölüm oluşturuldu: "${defaultSection.name}"`
+        })
+        console.log("Section creation activity logged successfully")
+      } catch (activityError) {
+        console.error("Error logging section creation activity:", activityError)
+      }
 
       return project
     })

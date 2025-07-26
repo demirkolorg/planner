@@ -14,6 +14,7 @@ import { useTagStore } from "@/store/tagStore"
 import { TaskCard } from "@/components/task/task-card"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
+import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
@@ -52,6 +53,8 @@ export default function SearchPage() {
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
+  const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string; completed: boolean } | null>(null)
 
   const { 
     tasks,
@@ -192,6 +195,13 @@ export default function SearchPage() {
       parentTaskTitle: parentTask?.title
     })
     setIsTaskModalOpen(true)
+  }
+
+  const handleCommentTask = (taskId: string, taskTitle: string) => {
+    // Görevin tamamlanma durumunu bul
+    const task = tasks.find(t => t.id === taskId)
+    setCommentsModalTask({ id: taskId, title: taskTitle, completed: task?.completed || false })
+    setIsCommentsModalOpen(true)
   }
 
   const priorities = [
@@ -603,6 +613,7 @@ export default function SearchPage() {
                 onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
                 onUpdateReminders={updateTaskReminders}
                 onEdit={handleEditTask}
+                onComment={handleCommentTask}
               />
             ))
           ) : resultViewMode === 'project' ? (
@@ -681,6 +692,7 @@ export default function SearchPage() {
                         onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
                         onUpdateReminders={updateTaskReminders}
                         onEdit={handleEditTask}
+                        onComment={handleCommentTask}
                       />
                     ))}
                   </div>
@@ -846,6 +858,7 @@ export default function SearchPage() {
                         onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
                         onUpdateReminders={updateTaskReminders}
                         onEdit={handleEditTask}
+                        onComment={handleCommentTask}
                       />
                     ))}
                     </div>
@@ -918,6 +931,18 @@ export default function SearchPage() {
         }}
         currentProjectId={taskToMove?.projectId || ''}
         currentSectionId={taskToMove?.sectionId}
+      />
+
+      {/* Görev Yorumları Modal'ı */}
+      <TaskCommentsModal
+        isOpen={isCommentsModalOpen}
+        onClose={() => {
+          setIsCommentsModalOpen(false)
+          setCommentsModalTask(null)
+        }}
+        taskId={commentsModalTask?.id || ''}
+        taskTitle={commentsModalTask?.title || ''}
+        isTaskCompleted={commentsModalTask?.completed || false}
       />
     </div>
   )
