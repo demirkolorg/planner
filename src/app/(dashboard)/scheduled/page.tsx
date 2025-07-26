@@ -1,13 +1,12 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Flag, Pin, CheckCircle2, Circle, ChevronDown } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Pin, CheckCircle2, Circle } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { Button } from "@/components/ui/button"
 import { TaskCard } from "@/components/task/task-card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
@@ -33,7 +32,7 @@ export default function ScheduledPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
-  const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
   const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string; completed: boolean } | null>(null)
   
@@ -129,7 +128,7 @@ export default function ScheduledPage() {
     startDate.setDate(firstDay.getDate() - daysToSubtract)
     
     const days = []
-    let currentDate = new Date(startDate)
+    const currentDate = new Date(startDate)
     
     // 6 hafta göster (42 gün)
     for (let i = 0; i < 42; i++) {
@@ -198,7 +197,7 @@ export default function ScheduledPage() {
   }
 
   // Handler functions
-  const handleEditTask = useCallback((task: any) => {
+  const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
@@ -221,10 +220,21 @@ export default function ScheduledPage() {
 
   const handleCloneTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
     try {
-      await cloneTask(taskId, targetProjectId, targetSectionId)
+      // Optimistic UI updates
       setIsTaskCloneModalOpen(false)
       setTaskToClone(null)
-      await fetchTasks()
+      
+      // Execute clone and refresh in parallel where possible
+      const [cloneResult] = await Promise.allSettled([
+        cloneTask(taskId, targetProjectId, targetSectionId)
+      ])
+      
+      // Refresh only if clone was successful
+      if (cloneResult.status === 'fulfilled') {
+        await fetchTasks()
+      } else {
+        console.error('Clone failed:', cloneResult.reason)
+      }
     } catch (error) {
       console.error('Failed to clone task:', error)
     }
@@ -232,10 +242,21 @@ export default function ScheduledPage() {
 
   const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
     try {
-      await moveTask(taskId, targetProjectId, targetSectionId)
+      // Optimistic UI updates
       setIsTaskMoveModalOpen(false)
       setTaskToMove(null)
-      await fetchTasks()
+      
+      // Execute move and refresh in parallel where possible
+      const [moveResult] = await Promise.allSettled([
+        moveTask(taskId, targetProjectId, targetSectionId)
+      ])
+      
+      // Refresh only if move was successful
+      if (moveResult.status === 'fulfilled') {
+        await fetchTasks()
+      } else {
+        console.error('Move failed:', moveResult.reason)
+      }
     } catch (error) {
       console.error('Failed to move task:', error)
     }
@@ -292,9 +313,13 @@ export default function ScheduledPage() {
   }, [tasks])
 
   useEffect(() => {
-    fetchTasks()
-    fetchProjects()
-    fetchTags()
+    Promise.all([
+      fetchTasks(),
+      fetchProjects(),
+      fetchTags()
+    ]).catch(error => {
+      console.error('Failed to fetch scheduled page data:', error)
+    })
   }, [fetchTasks, fetchProjects, fetchTags])
 
   return (

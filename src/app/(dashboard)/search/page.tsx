@@ -52,7 +52,7 @@ export default function SearchPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
-  const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
   const [commentsModalTask, setCommentsModalTask] = useState<{ id: string; title: string; completed: boolean } | null>(null)
 
@@ -165,7 +165,7 @@ export default function SearchPage() {
     }
   }
 
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: Task) => {
     setEditingTask(task)
     setTaskModalContext({
       project: task.project ? { id: task.project.id, name: task.project.name, emoji: task.project.emoji } : undefined,

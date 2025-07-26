@@ -1,6 +1,5 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
-import { BackgroundBeams } from "@/components/ui/background-beams";
 
 export default function LoginPage() {
   return (

@@ -27,7 +27,6 @@ export default function BoardPage() {
     updateTaskReminders,
     getPinnedTasks,
     cloneTask,
-    moveTask,
     addSubTask,
   } = useTaskStore()
   
@@ -172,9 +171,13 @@ export default function BoardPage() {
   }
 
   useEffect(() => {
-    fetchTasks()
-    fetchProjects()
-    fetchTags()
+    Promise.all([
+      fetchTasks(),
+      fetchProjects(),
+      fetchTags()
+    ]).catch(error => {
+      console.error('Failed to fetch board data:', error)
+    })
     
     // Saati her dakika güncelle
     const timer = setInterval(() => {
@@ -542,13 +545,6 @@ export default function BoardPage() {
             </div>
           ) : (
             Object.entries(groupTasksByPriority()).map(([priority, group]) => {
-              const priorityColors = {
-                'CRITICAL': 'bg-red-100 dark:bg-red-900/20',
-                'HIGH': 'bg-orange-100 dark:bg-orange-900/20',
-                'MEDIUM': 'bg-yellow-100 dark:bg-yellow-900/20',
-                'LOW': 'bg-blue-100 dark:bg-blue-900/20',
-                'NONE': 'bg-gray-100 dark:bg-gray-900/20'
-              }
               const priorityIcons = {
                 'CRITICAL': '🔴',
                 'HIGH': '🟠', 

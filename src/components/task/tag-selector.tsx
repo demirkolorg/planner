@@ -35,7 +35,7 @@ export function TagSelector({ taskTags = [], onUpdateTags, trigger, dropdownPosi
         
         // Seçilen tag isimlerini ID'lere çevir
         const tagIds = newTagNames
-          .map(name => allTags.find((tag: any) => tag.name === name)?.id)
+          .map(name => allTags.find((tag: Tag) => tag.name === name)?.id)
           .filter(Boolean)
         
         onUpdateTags?.(tagIds)

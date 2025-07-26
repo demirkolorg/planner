@@ -34,25 +34,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
       include: {
         tags: {
-          include: {
-            tag: true
+          select: {
+            id: true,
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                color: true
+              }
+            }
           }
         },
-        reminders: true,
-        section: true,
-        subTasks: {
-          include: {
-            tags: {
-              include: {
-                tag: true
-              }
-            },
-            reminders: true,
+        reminders: {
+          select: {
+            id: true,
+            datetime: true,
+            message: true,
+            isActive: true
+          }
+        },
+        section: {
+          select: {
+            id: true,
+            name: true
           }
         },
         _count: {
           select: {
-            comments: true
+            comments: true,
+            subTasks: true
           }
         }
       },

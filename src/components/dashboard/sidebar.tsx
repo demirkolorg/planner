@@ -103,9 +103,13 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const { theme, setTheme } = useThemeStore()
 
   useEffect(() => {
-    fetchProjects()
-    fetchTags()
-    fetchTasks() // Tüm görevleri yükle
+    Promise.all([
+      fetchProjects(),
+      fetchTags(),
+      fetchTasks() // Tüm görevleri yükle
+    ]).catch(error => {
+      console.error('Failed to fetch sidebar data:', error)
+    })
   }, [fetchProjects, fetchTags, fetchTasks])
 
   const handleCreateProject = async (name: string, emoji: string) => {

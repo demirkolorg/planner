@@ -62,7 +62,7 @@ export default function TagDetailPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
-  const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const { 
     fetchTasksByTag, 
     getTasksByTag,
@@ -122,7 +122,7 @@ export default function TagDetailPage() {
   })
 
   // Handler functions
-  const handleEditTask = useCallback((task: any) => {
+  const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
@@ -211,19 +211,38 @@ export default function TagDetailPage() {
   useEffect(() => {
     const fetchTagAndTasks = async () => {
       try {
-        // Tag bilgilerini al
-        const tagResponse = await fetch(`/api/tags/${tagId}`)
-        if (!tagResponse.ok) {
+        setIsLoading(true)
+        
+        // Cache'den tag bilgisini kontrol et (eğer varsa hemen göster)
+        const cachedTag = allTasks.length > 0 ? allTasks[0]?.tags?.find(t => t.tag.id === tagId)?.tag : null
+        if (cachedTag) {
+          setTag(cachedTag)
+          setIsLoading(false) // Cached data varsa loading'i hemen kapat
+        }
+        
+        // Paralel olarak tüm verileri çek
+        const [tagResponse, tasksResult, projectsResult] = await Promise.allSettled([
+          fetch(`/api/tags/${tagId}`),
+          fetchTasksByTag(tagId),
+          fetchProjects()
+        ])
+
+        // Tag bilgilerini işle
+        if (tagResponse.status === 'fulfilled' && tagResponse.value.ok) {
+          const tagData = await tagResponse.value.json()
+          setTag(tagData)
+        } else if (!cachedTag) {
           throw new Error('Tag bulunamadı')
         }
-        const tagData = await tagResponse.json()
-        setTag(tagData)
 
-        // TaskStore'dan görevleri al
-        await fetchTasksByTag(tagId)
-        
-        // Projeleri yükle (sıralama için gerekli)
-        await fetchProjects()
+        // Hataları log'la ama sayfayı durdurma
+        if (tasksResult.status === 'rejected') {
+          console.warn('Tasks yüklenemedi:', tasksResult.reason)
+        }
+        if (projectsResult.status === 'rejected') {
+          console.warn('Projects yüklenemedi:', projectsResult.reason)
+        }
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Bir hata oluştu')
       } finally {
@@ -234,10 +253,37 @@ export default function TagDetailPage() {
     fetchTagAndTasks()
   }, [tagId, fetchTasksByTag, fetchProjects])
 
-  if (isLoading) {
+  if (isLoading && !tag) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-8 w-8 rounded bg-muted animate-pulse" />
+            <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+          </div>
+          <div className="h-10 w-32 rounded bg-muted animate-pulse" />
+        </div>
+
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-lg p-4 space-y-2">
+              <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+              <div className="h-8 w-12 rounded bg-muted animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Tasks skeleton */}
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-lg p-3 space-y-2">
+              <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-1/2 rounded bg-muted animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

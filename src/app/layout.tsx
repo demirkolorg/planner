@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { ToastContainer } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -25,14 +26,16 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} font-sans antialiased`}
       >
-        <ThemeProvider
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <ToastContainer />
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <ToastContainer />
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

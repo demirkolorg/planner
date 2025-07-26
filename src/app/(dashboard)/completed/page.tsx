@@ -144,9 +144,13 @@ export default function CompletedPage() {
   }
 
   useEffect(() => {
-    fetchTasks()
-    fetchProjects()
-    fetchTags()
+    Promise.all([
+      fetchTasks(),
+      fetchProjects(),
+      fetchTags()
+    ]).catch(error => {
+      console.error('Failed to fetch completed page data:', error)
+    })
     
     // Saati her dakika güncelle
     const timer = setInterval(() => {

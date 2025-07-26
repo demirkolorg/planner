@@ -68,7 +68,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [selectedDate, selectedTime, isModal, onCancel])
+  }, [selectedDate, selectedTime, isModal, onCancel, handleSave])
 
   const handleSave = () => {
     if (!selectedDate) {

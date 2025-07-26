@@ -195,10 +195,21 @@ export default function TodayPage() {
 
   const handleCloneTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
     try {
-      await cloneTask(taskId, targetProjectId, targetSectionId)
+      // Optimistic UI updates
       setIsTaskCloneModalOpen(false)
       setTaskToClone(null)
-      await fetchTasks()
+      
+      // Execute clone and refresh in parallel where possible
+      const [cloneResult] = await Promise.allSettled([
+        cloneTask(taskId, targetProjectId, targetSectionId)
+      ])
+      
+      // Refresh only if clone was successful
+      if (cloneResult.status === 'fulfilled') {
+        await fetchTasks()
+      } else {
+        console.error('Clone failed:', cloneResult.reason)
+      }
     } catch (error) {
       console.error('Failed to clone task:', error)
     }
@@ -206,10 +217,21 @@ export default function TodayPage() {
 
   const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
     try {
-      await moveTask(taskId, targetProjectId, targetSectionId)
+      // Optimistic UI updates
       setIsTaskMoveModalOpen(false)
       setTaskToMove(null)
-      await fetchTasks()
+      
+      // Execute move and refresh in parallel where possible
+      const [moveResult] = await Promise.allSettled([
+        moveTask(taskId, targetProjectId, targetSectionId)
+      ])
+      
+      // Refresh only if move was successful
+      if (moveResult.status === 'fulfilled') {
+        await fetchTasks()
+      } else {
+        console.error('Move failed:', moveResult.reason)
+      }
     } catch (error) {
       console.error('Failed to move task:', error)
     }
@@ -266,9 +288,13 @@ export default function TodayPage() {
   }, [tasks])
 
   useEffect(() => {
-    fetchTasks()
-    fetchProjects()
-    fetchTags()
+    Promise.all([
+      fetchTasks(),
+      fetchProjects(),
+      fetchTags()
+    ]).catch(error => {
+      console.error('Failed to fetch today page data:', error)
+    })
     
     // Saati her dakika güncelle
     const timer = setInterval(() => {

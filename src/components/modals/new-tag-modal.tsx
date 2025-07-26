@@ -49,7 +49,7 @@ export function NewTagModal({ isOpen, onClose, onSave, editingTag }: NewTagModal
     }
   }
 
-  const handleEmojiClick = (emojiObject: any) => {
+  const handleEmojiClick = (emojiObject: { emoji: string }) => {
     setTagName(tagName + emojiObject.emoji)
     setShowEmojiPicker(false)
   }

@@ -24,7 +24,7 @@ interface NewTaskModalProps {
   isOpen: boolean
   onClose: () => void
   onSave?: (title: string, description: string, projectId: string, sectionId: string) => void
-  onTaskCreated?: (task?: any) => void
+  onTaskCreated?: (task?: Task) => void
   defaultProject?: {
     id: string
     name: string
@@ -76,7 +76,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [sectionSearchInput, setSectionSearchInput] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedDateTime, setSelectedDateTime] = useState<string | null>(null)
-  const [parentTask, setParentTask] = useState<any>(null)
+  const [parentTask, setParentTask] = useState<Task | null>(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
@@ -103,6 +103,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
   useEffect(() => {
     if (isOpen) {
+      // Optimistic: sadece gerekli fetch'leri yap
+      Promise.allSettled([
+        tags.length === 0 ? fetchTags() : Promise.resolve(),
+        projects.length === 0 ? fetchProjects() : Promise.resolve()
+      ])
+      
       if (editingTask) {
         // Düzenleme modunda mevcut verileri yükle
         setTitle(editingTask.title)
@@ -141,6 +147,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setSelectedDateTime(null)
       }
       
+      // UI state'leri reset et
       setProjectSearchInput("")
       setSectionSearchInput("")
       setShowProjectPicker(false)
@@ -149,10 +156,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setIsSubmitting(false)
       setIsAILoading(false)
       setAiPrompt("yap")
-      fetchTags() // Fetch real tags data
-      fetchProjects() // Fetch projects data
     }
-  }, [isOpen, editingTask, fetchTags, fetchProjects])
+  }, [isOpen, editingTask, tags.length, projects.length, fetchTags, fetchProjects])
 
   // Store'dan sections al
   const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []
@@ -322,17 +327,30 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }
 
   const handleProjectSelect = async (project: Project) => {
+    // Update UI immediately (optimistic update)
     setSelectedProject(project)
     setShowProjectPicker(false)
     setProjectSearchInput("")
-    // Proje seçilince o projenin bölümlerini getir ve "Genel"i seç
-    await fetchSections(project.id)
-    const projectSections = getSectionsByProject(project.id)
-    const generalSection = projectSections.find((s: Section) => s.name === "Genel")
-    if (generalSection) {
-      setSelectedSection(generalSection)
-    } else if (projectSections.length > 0) {
-      setSelectedSection(projectSections[0])
+    
+    try {
+      // Check if sections already exist in store
+      let projectSections = getSectionsByProject(project.id)
+      
+      // Only fetch if sections don't exist
+      if (projectSections.length === 0) {
+        await fetchSections(project.id)
+        projectSections = getSectionsByProject(project.id)
+      }
+      
+      // Auto-select appropriate section
+      const generalSection = projectSections.find((s: Section) => s.name === "Genel")
+      if (generalSection) {
+        setSelectedSection(generalSection)
+      } else if (projectSections.length > 0) {
+        setSelectedSection(projectSections[0])
+      }
+    } catch (error) {
+      console.error('Failed to fetch sections:', error)
     }
   }
 
@@ -397,7 +415,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           dueDate: selectedDateTime || undefined,
         }
 
-        await updateTask(editingTask.id, updateData)
+        // Tüm update işlemlerini paralel yap
+        const updatePromises = [updateTask(editingTask.id, updateData)]
         
         // Etiketleri güncelle
         if (selectedTags.length > 0) {
@@ -405,7 +424,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             const tag = tags.find(t => t.name === tagName)
             return tag?.id
           }).filter(Boolean) as string[]
-          await updateTaskTags(editingTask.id, tagIds)
+          updatePromises.push(updateTaskTags(editingTask.id, tagIds))
         }
         
         // Hatırlatıcıları güncelle
@@ -414,8 +433,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             datetime: new Date(reminder),
             isActive: true
           }))
-          await updateTaskReminders(editingTask.id, reminderData)
+          updatePromises.push(updateTaskReminders(editingTask.id, reminderData))
         }
+        
+        // Tüm işlemleri paralel bekle
+        await Promise.all(updatePromises)
       } else {
         // Yeni görev modu: yeni görev oluştur  
         // Eğer parent task'ın due date'i var ve kullanıcı tarih seçmemişse, otomatik ata

@@ -13,6 +13,7 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveSectionModal } from "@/components/modals/move-section-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
+import { ProjectSkeleton } from "@/components/ui/skeleton"
 import { ProjectTimelineModal } from "@/components/modals/project-timeline-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
@@ -128,7 +129,7 @@ export default function ProjectDetailPage() {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
-  const { updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
+  const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
   const { 
     fetchTasksByProject, 
     createTask, 
@@ -152,21 +153,39 @@ export default function ProjectDetailPage() {
     getOverdueTasksCountByProject
   } = useTaskStore()
 
-  const fetchProjectData = async () => {
+  const fetchProjectData = useCallback(async () => {
     try {
-      // Proje bilgilerini al
-      const projectResponse = await fetch(`/api/projects/${projectId}`)
-      if (!projectResponse.ok) {
+      setIsLoading(true)
+      
+      // Store'da data varsa hemen loading'i kapat
+      const hasExistingData = projects.find(p => p.id === projectId)
+      if (hasExistingData) {
+        setProject(hasExistingData)
+        setIsLoading(false)
+      }
+      
+      // Tüm API çağrılarını paralel yap
+      const [projectResponse, sectionsResult, tasksResult] = await Promise.allSettled([
+        fetch(`/api/projects/${projectId}`),
+        fetchSections(projectId),
+        fetchTasksByProject(projectId)
+      ])
+
+      // Proje bilgisini işle
+      if (projectResponse.status === 'fulfilled' && projectResponse.value.ok) {
+        const projectData = await projectResponse.value.json()
+        setProject(projectData)
+      } else if (!hasExistingData) {
         throw new Error('Proje bulunamadı')
       }
-      const projectData = await projectResponse.json()
-      setProject(projectData)
 
-      // ProjectStore'dan section'ları al
-      await fetchSections(projectId)
-
-      // TaskStore'dan görevleri al
-      await fetchTasksByProject(projectId)
+      // Hatalar varsa log'la ama sayfayı durdurma
+      if (sectionsResult.status === 'rejected') {
+        console.warn('Sections yüklenemedi:', sectionsResult.reason)
+      }
+      if (tasksResult.status === 'rejected') {
+        console.warn('Tasks yüklenemedi:', tasksResult.reason)
+      }
 
       setIsLoading(false)
     } catch (error) {
@@ -174,7 +193,7 @@ export default function ProjectDetailPage() {
       setError(error instanceof Error ? error.message : 'Bilinmeyen hata')
       setIsLoading(false)
     }
-  }
+  }, [projectId, fetchSections, fetchTasksByProject, projects])
 
   // TaskStore'dan proje görevlerini al
   const tasks = getTasksByProject(projectId)
@@ -185,7 +204,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     fetchProjectData()
-  }, [projectId])
+  }, [projectId, fetchProjectData])
 
   // Section ID'lerini memoize et
   const sectionIds = useMemo(() => sections.map(s => s.id), [sections])
@@ -204,7 +223,7 @@ export default function ProjectDetailPage() {
       }
       setOpenSections(sectionsToOpen)
     }
-  }, [sectionIds.length, getOverdueTasksCountByProject, projectId, tasksWithoutSection.length]) // tasksWithoutSection.length eklendi
+  }, [sectionIds.length, getOverdueTasksCountByProject, projectId, tasksWithoutSection.length]) // openSections.length kaldırıldı - infinite loop prevention
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -364,10 +383,10 @@ export default function ProjectDetailPage() {
     setIsEditingNotes(false)
   }
 
-  if (isLoading) {
+  if (isLoading && !project) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="container mx-auto p-6">
+        <ProjectSkeleton />
       </div>
     )
   }
