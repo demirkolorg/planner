@@ -289,3 +289,34 @@ body {
     transform: scale(1);
   }
 }
+
+/* Design Token CSS Variables */
+:root {
+  /* Priority Colors */
+  --priority-critical: hsl(0 84% 60%);
+  --priority-high: hsl(25 95% 53%);
+  --priority-medium: hsl(221 83% 53%);
+  --priority-low: hsl(258 90% 66%);
+  --priority-none: hsl(220 9% 46%);
+  
+  /* Status Colors */
+  --status-success: hsl(142 71% 45%);
+  --status-warning: hsl(38 92% 50%);
+  --status-error: hsl(0 84% 60%);
+  --status-info: hsl(221 83% 53%);
+  
+  /* Semantic Spacing */
+  --task-indent-1: 1.5rem;   /* 24px */
+  --task-indent-2: 3rem;     /* 48px */
+  --task-indent-3: 4.5rem;   /* 72px */
+  --task-indent-4: 6rem;     /* 96px */
+  
+  --section-padding: 1rem;
+  --section-margin: 1.5rem;
+  --section-gap: 0.75rem;
+  
+  --card-padding-sm: 0.75rem;
+  --card-padding-md: 1rem;
+  --card-padding-lg: 1.5rem;
+  --card-gap: 0.5rem;
+}

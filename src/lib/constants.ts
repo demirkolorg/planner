@@ -77,5 +77,10 @@ export const THEME = {
   SYSTEM: 'system',
 } as const;
 
-// Brand Colors
-export const BRAND_COLOR = '#f59e0b';
+// Brand Colors - migrated to design tokens
+import { BRAND_COLORS as DESIGN_TOKEN_BRAND_COLORS } from '@/lib/design-tokens'
+
+export const BRAND_COLORS = DESIGN_TOKEN_BRAND_COLORS
+
+// Legacy support
+export const BRAND_COLOR = '#f59e0b'; // Deprecated: use BRAND_COLORS.PRIMARY

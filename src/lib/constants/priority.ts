@@ -1,18 +1,22 @@
-export const PRIORITY_COLORS = {
-  KRITIK: "#ef4444",
-  YUKSEK: "#f97316", 
-  ORTA: "#3b82f6",
-  DUSUK: "#8b5cf6",
-  YOK: "#9ca3af"
-} as const;
+// Import and re-export from centralized design tokens
+import { 
+  PRIORITY_COLORS as DESIGN_TOKEN_COLORS,
+  PRIORITIES as DESIGN_TOKEN_PRIORITIES,
+  type PriorityKey as DesignTokenPriorityKey,
+  type Priority as DesignTokenPriority
+} from '@/lib/design-tokens'
 
-export const PRIORITIES = [
-  { name: "Kritik", color: PRIORITY_COLORS.KRITIK, key: "KRITIK" },
-  { name: "Yüksek", color: PRIORITY_COLORS.YUKSEK, key: "YUKSEK" },
-  { name: "Orta", color: PRIORITY_COLORS.ORTA, key: "ORTA" },
-  { name: "Düşük", color: PRIORITY_COLORS.DUSUK, key: "DUSUK" },
-  { name: "Yok", color: PRIORITY_COLORS.YOK, key: "YOK" }
-] as const;
+// Re-export with original names
+export const PRIORITY_COLORS = DESIGN_TOKEN_COLORS
+export const PRIORITIES = DESIGN_TOKEN_PRIORITIES
+export type PriorityKey = DesignTokenPriorityKey
+export type Priority = DesignTokenPriority
 
-export type PriorityKey = keyof typeof PRIORITY_COLORS;
-export type Priority = typeof PRIORITIES[number];
+// Backward compatibility mapping for Turkish keys
+export const PRIORITY_COLORS_LEGACY = {
+  KRITIK: DESIGN_TOKEN_COLORS.CRITICAL,
+  YUKSEK: DESIGN_TOKEN_COLORS.HIGH, 
+  ORTA: DESIGN_TOKEN_COLORS.MEDIUM,
+  DUSUK: DESIGN_TOKEN_COLORS.LOW,
+  YOK: DESIGN_TOKEN_COLORS.NONE
+} as const
