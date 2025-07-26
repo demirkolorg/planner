@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -431,6 +431,16 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               <Button
                 variant="ghost"
                 size="icon"
+                asChild
+                className="h-9 w-9"
+              >
+                <Link href="/guide">
+                  <Info className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={toggleTheme}
                 className="h-9 w-9"
               >
@@ -473,6 +483,24 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         ) : (
           /* Collapsed state - vertical icon stack */
           <div className="flex flex-col items-center space-y-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="h-9 w-9"
+                >
+                  <Link href="/guide">
+                    <Info className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Kullanım Kılavuzu</p>
+              </TooltipContent>
+            </Tooltip>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
