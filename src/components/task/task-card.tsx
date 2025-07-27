@@ -266,13 +266,13 @@ export function TaskCard({
     if (task.completed) return ""
     
     if (dateStatus.isOverdue) {
-      return "bg-gradient-to-r from-transparent to-red-100 dark:to-red-950/30"
+      return "bg-gradient-to-r from-transparent to-destructive/10 dark:to-destructive/5"
     }
     if (dateStatus.isDueToday) {
-      return "bg-gradient-to-r from-transparent to-orange-100 dark:to-orange-950/30"
+      return "bg-gradient-to-r from-transparent to-primary/10 dark:to-primary/5"
     }
     if (dateStatus.isDueTomorrow) {
-      return "bg-gradient-to-r from-transparent to-yellow-100 dark:to-yellow-950/30"
+      return "bg-gradient-to-r from-transparent to-secondary/20 dark:to-secondary/10"
     }
     return ""
   }
@@ -657,7 +657,7 @@ export function TaskCard({
                       {task.reminders.map((reminder, index) => (
                         <span 
                           key={index} 
-                          className={`text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1 py-0.5 rounded cursor-default ${
+                          className={`text-xs bg-secondary/50 dark:bg-secondary/20 text-secondary-foreground px-1 py-0.5 rounded cursor-default ${
                             isTaskCompleted ? 'opacity-75' : ''
                           }`}
                         >

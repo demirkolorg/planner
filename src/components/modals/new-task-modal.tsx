@@ -634,14 +634,14 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 size="sm"
                 onClick={handleQuickAIGenerate}
                 disabled={isAILoading}
-                className={`h-8 px-3 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 transition-all duration-200 ${
-                  isAILoading ? 'animate-pulse bg-purple-100 dark:bg-purple-900/40' : ''
+                className={`h-8 px-3 bg-primary/10 hover:bg-primary/20 transition-all duration-200 ${
+                  isAILoading ? 'animate-pulse bg-primary/20' : ''
                 }`}
                 title={isAILoading ? "AI görev üretiyor..." : "AI ile görev öner"}
               >
                 <div className="relative flex items-center">
                   <Sparkles 
-                    className={`h-4 w-4 text-purple-600 mr-1 transition-all duration-300 ${
+                    className={`h-4 w-4 text-primary mr-1 transition-all duration-300 ${
                       isAILoading 
                         ? 'animate-pulse scale-110 drop-shadow-sm' 
                         : 'hover:scale-105'
@@ -652,7 +652,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                         : undefined
                     }}
                   />
-                  <span className={`text-xs text-purple-700 dark:text-purple-300 transition-all duration-300 ${
+                  <span className={`text-xs text-primary transition-all duration-300 ${
                     isAILoading ? 'animate-pulse' : ''
                   }`}>
                     {isAILoading ? 'Üretiyor...' : 'ai'}
@@ -663,42 +663,42 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     <>
                       <div className="absolute -inset-2 opacity-75 pointer-events-none">
                         <div 
-                          className="absolute top-0 left-0 w-1 h-1 bg-purple-400 rounded-full"
+                          className="absolute top-0 left-0 w-1 h-1 bg-primary/60 rounded-full"
                           style={{ 
                             animation: 'twinkle 2s ease-in-out infinite',
                             animationDelay: '0s' 
                           }} 
                         />
                         <div 
-                          className="absolute top-1 right-0 w-0.5 h-0.5 bg-purple-300 rounded-full"
+                          className="absolute top-1 right-0 w-0.5 h-0.5 bg-primary/40 rounded-full"
                           style={{ 
                             animation: 'twinkle 2s ease-in-out infinite',
                             animationDelay: '0.5s' 
                           }} 
                         />
                         <div 
-                          className="absolute bottom-0 left-1 w-0.5 h-0.5 bg-purple-500 rounded-full"
+                          className="absolute bottom-0 left-1 w-0.5 h-0.5 bg-primary/80 rounded-full"
                           style={{ 
                             animation: 'twinkle 2s ease-in-out infinite',
                             animationDelay: '1s' 
                           }} 
                         />
                         <div 
-                          className="absolute bottom-1 right-1 w-1 h-1 bg-purple-400 rounded-full"
+                          className="absolute bottom-1 right-1 w-1 h-1 bg-primary/60 rounded-full"
                           style={{ 
                             animation: 'twinkle 2s ease-in-out infinite',
                             animationDelay: '1.5s' 
                           }} 
                         />
                         <div 
-                          className="absolute top-2 left-1/2 w-0.5 h-0.5 bg-purple-200 rounded-full"
+                          className="absolute top-2 left-1/2 w-0.5 h-0.5 bg-primary/20 rounded-full"
                           style={{ 
                             animation: 'twinkle 2s ease-in-out infinite',
                             animationDelay: '0.8s' 
                           }} 
                         />
                         <div 
-                          className="absolute bottom-2 right-1/3 w-0.5 h-0.5 bg-purple-600 rounded-full"
+                          className="absolute bottom-2 right-1/3 w-0.5 h-0.5 bg-primary rounded-full"
                           style={{ 
                             animation: 'twinkle 2s ease-in-out infinite',
                             animationDelay: '1.3s' 
@@ -757,8 +757,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       <Sparkles 
                         className={`h-3 w-3 transition-all duration-300 ${
                           isTitleAILoading 
-                            ? 'text-purple-600 animate-pulse scale-110' 
-                            : 'text-purple-500 hover:scale-110'
+                            ? 'text-primary animate-pulse scale-110' 
+                            : 'text-primary hover:scale-110'
                         }`}
                         style={{
                           animation: isTitleAILoading 
@@ -770,21 +770,21 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       {isTitleAILoading && (
                         <div className="absolute -inset-2 opacity-75 pointer-events-none">
                           <div 
-                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-purple-400 rounded-full"
+                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
                             style={{ 
                               animation: 'twinkle 2s ease-in-out infinite',
                               animationDelay: '0s' 
                             }} 
                           />
                           <div 
-                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-purple-300 rounded-full"
+                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-primary/40 rounded-full"
                             style={{ 
                               animation: 'twinkle 2s ease-in-out infinite',
                               animationDelay: '0.7s' 
                             }} 
                           />
                           <div 
-                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-purple-500 rounded-full"
+                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-primary/80 rounded-full"
                             style={{ 
                               animation: 'twinkle 2s ease-in-out infinite',
                               animationDelay: '1.4s' 
@@ -835,8 +835,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       <Sparkles 
                         className={`h-3 w-3 transition-all duration-300 ${
                           isDescriptionAILoading 
-                            ? 'text-purple-600 animate-pulse scale-110' 
-                            : 'text-purple-500 hover:scale-110'
+                            ? 'text-primary animate-pulse scale-110' 
+                            : 'text-primary hover:scale-110'
                         }`}
                         style={{
                           animation: isDescriptionAILoading 
@@ -848,21 +848,21 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       {isDescriptionAILoading && (
                         <div className="absolute -inset-2 opacity-75 pointer-events-none">
                           <div 
-                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-purple-400 rounded-full"
+                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
                             style={{ 
                               animation: 'twinkle 2s ease-in-out infinite',
                               animationDelay: '0s' 
                             }} 
                           />
                           <div 
-                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-purple-300 rounded-full"
+                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-primary/40 rounded-full"
                             style={{ 
                               animation: 'twinkle 2s ease-in-out infinite',
                               animationDelay: '0.7s' 
                             }} 
                           />
                           <div 
-                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-purple-500 rounded-full"
+                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-primary/80 rounded-full"
                             style={{ 
                               animation: 'twinkle 2s ease-in-out infinite',
                               animationDelay: '1.4s' 
@@ -967,7 +967,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       >
                         <Tag className="h-4 w-4" />
                         {selectedTags.length > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
+                          <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
                             {selectedTags.length}
                           </span>
                         )}
@@ -1156,7 +1156,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
         <DialogContent className="sm:max-w-4xl max-h-[80vh] top-[10%] translate-y-0">
           <DialogTitle className="text-xl font-semibold flex items-center space-x-2">
-            <Info className="h-6 w-6 text-blue-500" />
+            <Info className="h-6 w-6 text-primary" />
             <span>Görev Ekleme Rehberi</span>
           </DialogTitle>
           <Button
@@ -1172,11 +1172,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             {/* AI Yardımcı Bilgisi */}
             <section className="space-y-3">
               <div className="flex items-center space-x-2">
-                <Sparkles className="h-4 w-4 text-purple-600" />
-                <h3 className="font-medium text-purple-700 dark:text-purple-300">AI Yardımcı</h3>
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h3 className="font-medium text-primary">AI Yardımcı</h3>
               </div>
               <div className="text-sm text-muted-foreground space-y-2 pl-6">
-                <p>• Modal başlığındaki mor AI butonuna tıklayın</p>
+                <p>• Modal başlığındaki AI butonuna tıklayın</p>
                 <p>• Seçili proje, bölüm ve üst görev bilgilerine göre otomatik önerir</p>
                 <p>• Başlık, açıklama, öncelik ve etiketleri otomatik doldurur</p>
                 <p>• Önerilen içerikleri daha sonra düzenleyebilirsiniz</p>
@@ -1187,8 +1187,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             {parentTaskId && parentTask && (
               <section className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <h3 className="font-medium text-blue-700 dark:text-blue-300">Alt Görev Ekleme</h3>
+                  <div className="w-3 h-3 bg-primary rounded-full"></div>
+                  <h3 className="font-medium text-primary">Alt Görev Ekleme</h3>
                 </div>
                 <div className="text-sm text-muted-foreground space-y-2 pl-6">
                   <p><strong>Üst Görev:</strong> {parentTask.title}</p>
@@ -1203,9 +1203,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       }
                     })}</p>
                   )}
-                  <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
-                    <p className="text-orange-700 dark:text-orange-300 font-medium">📋 Önemli Kurallar:</p>
-                    <ul className="mt-2 space-y-1 text-orange-600 dark:text-orange-400">
+                  <div className="bg-secondary/20 p-3 rounded-lg">
+                    <p className="text-secondary-foreground font-medium">📋 Önemli Kurallar:</p>
+                    <ul className="mt-2 space-y-1 text-secondary-foreground">
                       <li>• Alt görev, üst görevden daha geç bitirilemez</li>
                       {parentTask.dueDate && <li>• Tarih seçmezseniz, üst görevin tarihi otomatik atanır</li>}
                       <li>• Üst görev tamamlanmadan tamamlanamaz</li>
@@ -1218,8 +1218,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             {/* Tarih Seçimi */}
             <section className="space-y-3">
               <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-green-600" />
-                <h3 className="font-medium text-green-700 dark:text-green-300">Tarih ve Saat</h3>
+                <Calendar className="h-4 w-4 text-accent-foreground" />
+                <h3 className="font-medium text-accent-foreground">Tarih ve Saat</h3>
               </div>
               <div className="text-sm text-muted-foreground space-y-2 pl-6">
                 <p>• Takvim ikonuna tıklayarak tarih/saat seçebilirsiniz</p>
@@ -1232,8 +1232,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             {/* Etiket ve Öncelik */}
             <section className="space-y-3">
               <div className="flex items-center space-x-2">
-                <Tag className="h-4 w-4 text-blue-600" />
-                <h3 className="font-medium text-blue-700 dark:text-blue-300">Etiket ve Öncelik</h3>
+                <Tag className="h-4 w-4 text-primary" />
+                <h3 className="font-medium text-primary">Etiket ve Öncelik</h3>
               </div>
               <div className="text-sm text-muted-foreground space-y-2 pl-6">
                 <p>• Etiket ikonu ile görevleri kategorilere ayırabilirsiniz</p>
@@ -1245,8 +1245,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             {/* Hatırlatıcı */}
             <section className="space-y-3">
               <div className="flex items-center space-x-2">
-                <span className="text-yellow-600">🔔</span>
-                <h3 className="font-medium text-yellow-700 dark:text-yellow-300">Hatırlatıcılar</h3>
+                <span className="text-secondary-foreground">🔔</span>
+                <h3 className="font-medium text-secondary-foreground">Hatırlatıcılar</h3>
               </div>
               <div className="text-sm text-muted-foreground space-y-2 pl-6">
                 <p>• Çan ikonu ile hatırlatıcı ekleyebilirsiniz</p>

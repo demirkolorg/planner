@@ -281,7 +281,7 @@ export function DashboardOverview() {
       description: "Aktif projeler",
       icon: FolderOpen,
       color: "text-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20"
+      bgColor: "bg-primary/10 dark:bg-primary/5"
     },
     {
       title: "Toplam Görev",
@@ -289,7 +289,7 @@ export function DashboardOverview() {
       description: "Tüm görevler",
       icon: CheckSquare,
       color: "text-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/20"
+      bgColor: "bg-accent/10 dark:bg-accent/5"
     },
     {
       title: "Tamamlanan",
@@ -297,7 +297,7 @@ export function DashboardOverview() {
       description: `%${stats.completionRate} tamamlandı`,
       icon: TrendingUp,
       color: "text-purple-600",
-      bgColor: "bg-purple-50 dark:bg-purple-950/20"
+      bgColor: "bg-secondary/20 dark:bg-secondary/10"
     },
     {
       title: "Bekleyen",
@@ -305,7 +305,7 @@ export function DashboardOverview() {
       description: "Devam eden görevler",
       icon: Clock,
       color: "text-orange-600",
-      bgColor: "bg-orange-50 dark:bg-orange-950/20"
+      bgColor: "bg-destructive/10 dark:bg-destructive/5"
     }
   ]
 
@@ -314,11 +314,11 @@ export function DashboardOverview() {
       {/* Header with Today-style design */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center shadow-lg">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
             <Home className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-500 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Anasayfa
             </h1>
             <p className="text-muted-foreground">
@@ -361,7 +361,7 @@ export function DashboardOverview() {
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/20">
+              <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/5">
                 <BarChart3 className="h-4 w-4 text-indigo-600" />
               </div>
               <div>
@@ -451,9 +451,9 @@ export function DashboardOverview() {
 
         {/* Today's Tasks - Always Show */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-orange-100/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-destructive/10 dark:bg-destructive/5 border border-destructive/20 dark:border-destructive/10">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-md bg-orange-200/50 dark:bg-orange-800/50 flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 rounded-md bg-destructive/20 dark:bg-destructive/10 flex items-center justify-center shadow-sm">
                 <CalendarCheck className="h-4 w-4 text-orange-600" />
               </div>
               <div>
@@ -472,7 +472,7 @@ export function DashboardOverview() {
               >
                 Tümünü Gör →
               </Link>
-              <div className="px-2 py-1 rounded-lg bg-orange-600 text-white text-sm font-semibold min-w-[24px] text-center">
+              <div className="px-2 py-1 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold min-w-[24px] text-center">
                 {stats.tasksDueToday.length}
               </div>
             </div>
@@ -510,9 +510,9 @@ export function DashboardOverview() {
         {/* Upcoming Tasks */}
         {stats.upcomingTasks.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-blue-100/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/10">
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-md bg-blue-200/50 dark:bg-blue-800/50 flex items-center justify-center shadow-sm">
+                <div className="w-8 h-8 rounded-md bg-primary/20 dark:bg-primary/10 flex items-center justify-center shadow-sm">
                   <CalendarClock className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
@@ -531,7 +531,7 @@ export function DashboardOverview() {
                 >
                   Tümünü Gör →
                 </Link>
-                <div className="px-2 py-1 rounded-lg bg-blue-600 text-white text-sm font-semibold min-w-[24px] text-center">
+                <div className="px-2 py-1 rounded-lg bg-primary text-primary-foreground text-sm font-semibold min-w-[24px] text-center">
                   {stats.upcomingTasks.length}
                 </div>
               </div>

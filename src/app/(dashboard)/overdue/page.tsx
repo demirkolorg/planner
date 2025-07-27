@@ -378,11 +378,11 @@ export default function OverduePage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-destructive/70 to-destructive flex items-center justify-center shadow-lg">
               <CalendarX className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-destructive to-destructive/80 bg-clip-text text-transparent">
                 Gecikmiş Görevler
               </h1>
               <p className="text-muted-foreground">
@@ -394,7 +394,7 @@ export default function OverduePage() {
           {/* Mini Stats - Centered */}
           <div className="flex items-center space-x-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{remainingOverdue}</div>
+              <div className="text-2xl font-bold text-destructive">{remainingOverdue}</div>
               <div className="text-xs text-muted-foreground">gecikmiş görev</div>
             </div>
             <div className="text-center">
@@ -463,23 +463,23 @@ export default function OverduePage() {
                   
                   const getGroupColor = (name: string) => {
                     switch (name) {
-                      case 'Bugün gecikti': return 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                      case '1-3 gün gecikti': return 'bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
-                      case '4-7 gün gecikti': return 'bg-amber-100 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-                      case '1-2 hafta gecikti': return 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                      case '2+ hafta gecikti': return 'bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
-                      default: return 'bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                      case 'Bugün gecikti': return 'bg-destructive/10 border-destructive/20'
+                      case '1-3 gün gecikti': return 'bg-secondary/30 border-secondary/40'
+                      case '4-7 gün gecikti': return 'bg-secondary/20 border-secondary/30'
+                      case '1-2 hafta gecikti': return 'bg-secondary/10 border-secondary/20'
+                      case '2+ hafta gecikti': return 'bg-primary/10 border-primary/20'
+                      default: return 'bg-destructive/10 border-destructive/20'
                     }
                   }
                   
                   const getGroupTextColor = (name: string) => {
                     switch (name) {
-                      case 'Bugün gecikti': return 'text-red-700 dark:text-red-300'
-                      case '1-3 gün gecikti': return 'text-orange-700 dark:text-orange-300'
-                      case '4-7 gün gecikti': return 'text-amber-700 dark:text-amber-300'
-                      case '1-2 hafta gecikti': return 'text-yellow-700 dark:text-yellow-300'
-                      case '2+ hafta gecikti': return 'text-purple-700 dark:text-purple-300'
-                      default: return 'text-red-700 dark:text-red-300'
+                      case 'Bugün gecikti': return 'text-destructive'
+                      case '1-3 gün gecikti': return 'text-secondary-foreground'
+                      case '4-7 gün gecikti': return 'text-secondary-foreground'
+                      case '1-2 hafta gecikti': return 'text-secondary-foreground'
+                      case '2+ hafta gecikti': return 'text-primary'
+                      default: return 'text-destructive'
                     }
                   }
                   
@@ -487,8 +487,8 @@ export default function OverduePage() {
                     <div key={groupName} className="space-y-3">
                       <div className={`flex items-center justify-between px-3 py-2 rounded-lg ${getGroupColor(groupName)}`}>
                         <div className="flex items-center space-x-2.5">
-                          <div className="w-8 h-8 rounded-md bg-white/50 dark:bg-black/20 flex items-center justify-center shadow-sm">
-                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <div className="w-8 h-8 rounded-md bg-background/50 flex items-center justify-center shadow-sm">
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
                           </div>
                           <div>
                             <h2 className={`text-sm font-medium ${getGroupTextColor(groupName)}`}>
@@ -499,7 +499,7 @@ export default function OverduePage() {
                             </p>
                           </div>
                         </div>
-                        <div className="px-2 py-1 rounded-lg bg-red-600 text-white text-sm font-semibold min-w-[24px] text-center">
+                        <div className="px-2 py-1 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold min-w-[24px] text-center">
                           {tasksInGroup.length}
                         </div>
                       </div>
@@ -543,13 +543,13 @@ export default function OverduePage() {
           ) : (
             /* Empty State */
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <CheckCircle2 className="h-10 w-10 text-green-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent/30 to-accent/50 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <CheckCircle2 className="h-10 w-10 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Gecikmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Harika! Vadesi geçmiş hiçbir görevin yok. Tüm görevlerin zamanında tamamlanıyor.
               </p>
             </div>
@@ -560,13 +560,13 @@ export default function OverduePage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByProject()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Folder className="h-10 w-10 text-green-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent/30 to-accent/50 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Folder className="h-10 w-10 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Gecikmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Hiçbir projede gecikmiş görev bulunmuyor.
               </p>
             </div>
@@ -578,11 +578,11 @@ export default function OverduePage() {
                     <div className="flex items-center space-x-2.5">
                       <div>
                         {group.project.emoji ? (
-                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                          <div className="w-8 h-8 rounded-md bg-secondary/50 flex items-center justify-center shadow-sm">
                             <span className="text-sm">{group.project.emoji}</span>
                           </div>
                         ) : (
-                          <div className="w-8 h-8 rounded-md bg-primary shadow-sm" />
+                          <div className="w-8 h-8 rounded-md bg-primary/50 shadow-sm" />
                         )}
                       </div>
                       <div>
@@ -646,24 +646,24 @@ export default function OverduePage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByPriority()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Flag className="h-10 w-10 text-green-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent/30 to-accent/50 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Flag className="h-10 w-10 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Gecikmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Hiçbir öncelik seviyesinde gecikmiş görev bulunmuyor.
               </p>
             </div>
           ) : (
             Object.entries(groupTasksByPriority()).map(([priority, group]) => {
               const priorityColors = {
-                'CRITICAL': 'bg-red-100 dark:bg-red-900/20',
-                'HIGH': 'bg-orange-100 dark:bg-orange-900/20',
-                'MEDIUM': 'bg-yellow-100 dark:bg-yellow-900/20',
-                'LOW': 'bg-blue-100 dark:bg-blue-900/20',
-                'NONE': 'bg-gray-100 dark:bg-gray-900/20'
+                'CRITICAL': 'bg-destructive/10',
+                'HIGH': 'bg-secondary/30',
+                'MEDIUM': 'bg-secondary/20',
+                'LOW': 'bg-primary/10',
+                'NONE': 'bg-muted/50'
               }
               const priorityIcons = {
                 'CRITICAL': '🔴',
@@ -679,7 +679,7 @@ export default function OverduePage() {
                     <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
                       <div className="flex items-center space-x-2.5">
                         <div>
-                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                          <div className="w-8 h-8 rounded-md bg-secondary/50 flex items-center justify-center shadow-sm">
                             <span className="text-sm">{priorityIcons[priority as keyof typeof priorityIcons]}</span>
                           </div>
                         </div>
@@ -739,13 +739,13 @@ export default function OverduePage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByTag()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Tag className="h-10 w-10 text-green-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent/30 to-accent/50 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Tag className="h-10 w-10 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Gecikmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Hiçbir etikette gecikmiş görev bulunmuyor.
               </p>
             </div>

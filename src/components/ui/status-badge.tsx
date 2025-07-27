@@ -14,11 +14,11 @@ const statusBadgeVariants = cva(
   {
     variants: {
       status: {
-        overdue: "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400",
-        due_today: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400",
-        due_tomorrow: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400", 
-        upcoming: "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400",
-        completed: "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400",
+        overdue: "bg-destructive/10 text-destructive",
+        due_today: "bg-primary/10 text-primary",
+        due_tomorrow: "bg-secondary/20 text-secondary-foreground", 
+        upcoming: "bg-primary/10 text-primary",
+        completed: "bg-accent/10 text-accent",
         no_date: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400",
       },
       size: {

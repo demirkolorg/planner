@@ -402,8 +402,8 @@ export default function ProjectDetailPage() {
           </Button>
           <h1 className="text-2xl font-bold">Proje Bulunamadı</h1>
         </div>
-        <div className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 rounded-lg">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
+        <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-lg">
+          <p className="text-destructive">{error}</p>
         </div>
       </div>
     )
@@ -436,7 +436,7 @@ export default function ProjectDetailPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center space-x-1">
-                      <Check className="h-3 w-3 text-green-600" />
+                      <Check className="h-3 w-3 text-accent" />
                       <span>{getCompletedTasksCount(projectId)}</span>
                     </div>
                   </TooltipTrigger>
@@ -448,7 +448,7 @@ export default function ProjectDetailPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center space-x-1">  
-                      <Clock className="h-3 w-3 text-blue-600" />
+                      <Clock className="h-3 w-3 text-primary" />
                       <span>{getPendingTasksCount(projectId)}</span>
                     </div>
                   </TooltipTrigger>
@@ -461,8 +461,8 @@ export default function ProjectDetailPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center space-x-1">
-                        <TriangleAlert className="h-3 w-3 text-red-600" />
-                        <span className="text-red-600 font-medium">{getOverdueTasksCountByProject(projectId)}</span>
+                        <TriangleAlert className="h-3 w-3 text-destructive" />
+                        <span className="text-destructive font-medium">{getOverdueTasksCountByProject(projectId)}</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -557,7 +557,7 @@ export default function ProjectDetailPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => setIsDeleteDialogOpen(true)}
-                className="text-red-600 focus:text-red-600 dark:text-red-400"
+                className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Projeyi Sil
@@ -592,7 +592,7 @@ export default function ProjectDetailPage() {
 
       {/* Bölümler ve Görevler */}
       {sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 && tasksWithoutSection.length === 0 ? (
-        <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+        <div className="text-center p-8 border-2 border-dashed border-muted rounded-lg">
           <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
             {project.emoji ? (
               <span className="text-3xl">{project.emoji}</span>
@@ -613,12 +613,12 @@ export default function ProjectDetailPage() {
           {/* Süresi Geçmiş Görevler Accordion */}
           {getOverdueTasksByProject(projectId).length > 0 && (
             <AccordionItem key="overdue-tasks" value="overdue-tasks" className="border-none overflow-visible">
-              <AccordionTrigger className="px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg border-b border-red-200 dark:border-red-800 mb-1 transition-colors hover:no-underline w-full bg-red-50 dark:bg-red-950/20">
+              <AccordionTrigger className="px-4 py-2 hover:bg-destructive/10 rounded-lg border-b border-destructive/20 mb-1 transition-colors hover:no-underline w-full bg-destructive/10">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-3 flex-1">
-                    <ChevronDown className="h-4 w-4 text-red-600" />
-                    <h3 className="text-sm font-medium text-red-700 dark:text-red-400">Süresi Geçmiş Görevler</h3>
-                    <span className="text-xs text-red-600 dark:text-red-500">
+                    <ChevronDown className="h-4 w-4 text-destructive" />
+                    <h3 className="text-sm font-medium text-destructive">Süresi Geçmiş Görevler</h3>
+                    <span className="text-xs text-destructive">
                       {getOverdueTasksByProject(projectId).length}
                     </span>
                   </div>
@@ -692,12 +692,12 @@ export default function ProjectDetailPage() {
           {/* Bölümsüz Görevler Accordion */}
           {tasksWithoutSection.length > 0 && (
             <AccordionItem key="tasks-without-section" value="tasks-without-section" className="border-none overflow-visible">
-              <AccordionTrigger className="px-4 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg border-b border-amber-200 dark:border-amber-800 mb-1 transition-colors hover:no-underline w-full bg-amber-50 dark:bg-amber-950/20">
+              <AccordionTrigger className="px-4 py-2 hover:bg-secondary/10 rounded-lg border-b border-secondary/20 mb-1 transition-colors hover:no-underline w-full bg-secondary/10">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-3 flex-1">
-                    <ChevronDown className="h-4 w-4 text-amber-600" />
-                    <h3 className="text-sm font-medium text-amber-700 dark:text-amber-400">Bölümsüz Görevler</h3>
-                    <span className="text-xs text-amber-600 dark:text-amber-500">
+                    <ChevronDown className="h-4 w-4 text-secondary" />
+                    <h3 className="text-sm font-medium text-secondary-foreground">Bölümsüz Görevler</h3>
+                    <span className="text-xs text-secondary">
                       {tasksWithoutSection.length}
                     </span>
                   </div>
@@ -882,7 +882,7 @@ export default function ProjectDetailPage() {
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-3 overflow-visible">
                   {sectionTasks.length === 0 ? (
-                    <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                    <div className="text-center p-6 border-2 border-dashed border-muted rounded-lg">
                       <p className="text-muted-foreground mb-2">Bu bölümde henüz görev yok</p>
                       <Button 
                         variant="outline" 

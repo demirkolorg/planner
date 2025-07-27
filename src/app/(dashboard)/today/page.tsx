@@ -15,6 +15,57 @@ import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 
 type ViewMode = 'simple' | 'project' | 'tag' | 'priority'
 
+interface TaskWithRelations {
+  id: string
+  title: string
+  description?: string
+  completed: boolean
+  priority: string
+  dueDate?: string
+  isPinned: boolean
+  parentTaskId?: string
+  projectId: string
+  sectionId?: string
+  userId: string
+  createdAt: string
+  updatedAt: string
+  level?: number
+  project?: {
+    id: string
+    name: string
+    emoji?: string
+  }
+  section?: {
+    id: string
+    name: string
+  }
+  tags?: Array<{
+    id: string
+    taskId: string
+    tagId: string
+    tag: {
+      id: string
+      name: string
+      color: string
+    }
+  }>
+  reminders?: Array<{
+    id: string
+    taskId: string
+    datetime: Date
+    message?: string
+    isActive: boolean
+  }>
+  subTasks?: Array<{
+    id: string
+    title: string
+    completed: boolean
+    priority: string
+    createdAt: string
+    updatedAt: string
+  }>
+}
+
 export default function TodayPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('simple')
@@ -33,7 +84,7 @@ export default function TodayPage() {
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
-  const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [editingTask, setEditingTask] = useState<TaskWithRelations | null>(null)
   
   const { 
     tasks,
@@ -179,7 +230,7 @@ export default function TodayPage() {
   }
 
   // Handler functions
-  const handleEditTask = useCallback((task: any) => {
+  const handleEditTask = useCallback((task: TaskWithRelations) => {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
@@ -310,11 +361,11 @@ export default function TodayPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
               <Sun className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Bugün
               </h1>
               <p className="text-muted-foreground">
@@ -326,11 +377,11 @@ export default function TodayPage() {
           {/* Mini Stats - Centered */}
           <div className="flex items-center space-x-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600">{remainingToday}</div>
+              <div className="text-2xl font-bold text-primary">{remainingToday}</div>
               <div className="text-xs text-muted-foreground">yapılacak</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{completedToday}</div>
+              <div className="text-2xl font-bold text-accent">{completedToday}</div>
               <div className="text-xs text-muted-foreground">tamamlandı</div>
             </div>
             <div className="text-center">
@@ -394,7 +445,7 @@ export default function TodayPage() {
           </div>
           <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
               style={{ 
                 width: `${totalToday + completedToday > 0 ? (completedToday / (totalToday + completedToday)) * 100 : 0}%` 
               }}
@@ -549,8 +600,8 @@ export default function TodayPage() {
           ) : (
             /* Empty State */
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <CheckCircle2 className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 dark:from-primary/10 dark:to-accent/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <CheckCircle2 className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Bugün için görev yok
@@ -566,8 +617,8 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByProject()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Folder className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 dark:from-primary/10 dark:to-accent/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Folder className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Bugün için görev yok
@@ -652,8 +703,8 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByPriority()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Flag className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 dark:from-primary/10 dark:to-accent/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Flag className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Bugün için görev yok
@@ -665,11 +716,11 @@ export default function TodayPage() {
           ) : (
             Object.entries(groupTasksByPriority()).map(([priority, group]) => {
               const priorityColors = {
-                'CRITICAL': 'bg-red-100 dark:bg-red-900/20',
-                'HIGH': 'bg-orange-100 dark:bg-orange-900/20',
-                'MEDIUM': 'bg-yellow-100 dark:bg-yellow-900/20',
-                'LOW': 'bg-blue-100 dark:bg-blue-900/20',
-                'NONE': 'bg-gray-100 dark:bg-gray-900/20'
+                'CRITICAL': 'bg-destructive/10 dark:bg-destructive/5',
+                'HIGH': 'bg-primary/10 dark:bg-primary/5',
+                'MEDIUM': 'bg-secondary/20 dark:bg-secondary/10',
+                'LOW': 'bg-muted/50 dark:bg-muted/20',
+                'NONE': 'bg-muted/30 dark:bg-muted/10'
               }
               const priorityIcons = {
                 'CRITICAL': '🔴',
@@ -745,8 +796,8 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByTag()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/20 dark:to-orange-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Tag className="h-10 w-10 text-amber-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 dark:from-primary/10 dark:to-accent/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Tag className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Bugün için görev yok
@@ -836,21 +887,21 @@ export default function TodayPage() {
       {/* Tamamlanan Görevler */}
       {completedTodayTasks.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent/10 dark:bg-accent/5 border border-accent/20 dark:border-accent/10">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-md bg-green-100 dark:bg-green-800/50 flex items-center justify-center shadow-sm">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div className="w-8 h-8 rounded-md bg-accent/20 dark:bg-accent/10 flex items-center justify-center shadow-sm">
+                <CheckCircle2 className="h-4 w-4 text-accent dark:text-accent" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-green-700 dark:text-green-300">
+                <h2 className="text-sm font-medium text-accent dark:text-accent">
                   Tamamlanan Görevler
                 </h2>
-                <p className="text-xs text-green-600 dark:text-green-400">
+                <p className="text-xs text-accent dark:text-accent">
                   Bugün tamamlandı
                 </p>
               </div>
             </div>
-            <div className="px-2 py-1 rounded-lg bg-green-600 dark:bg-green-500 text-white text-sm font-semibold min-w-[24px] text-center">
+            <div className="px-2 py-1 rounded-lg bg-accent text-accent-foreground text-sm font-semibold min-w-[24px] text-center">
               {completedTodayTasks.length}
             </div>
           </div>

@@ -193,11 +193,11 @@ export default function BoardPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg">
-              <Pin className="h-7 w-7 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-destructive flex items-center justify-center shadow-lg">
+              <Pin className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">
                 Pano
               </h1>
               <p className="text-muted-foreground">
@@ -209,15 +209,15 @@ export default function BoardPage() {
           {/* Mini Stats - Centered */}
           <div className="flex items-center space-x-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{pinnedToday}</div>
+              <div className="text-2xl font-bold text-primary">{pinnedToday}</div>
               <div className="text-xs text-muted-foreground">bugün</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{pinnedThisWeek}</div>
+              <div className="text-2xl font-bold text-destructive">{pinnedThisWeek}</div>
               <div className="text-xs text-muted-foreground">bu hafta</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-pink-600">{pinnedThisMonth}</div>
+              <div className="text-2xl font-bold text-accent">{pinnedThisMonth}</div>
               <div className="text-xs text-muted-foreground">bu ay</div>
             </div>
             <div className="text-center">
@@ -272,7 +272,7 @@ export default function BoardPage() {
 
       {/* Progress Bar - Pinned Tasks Overview */}
       {totalPinned > 0 && (
-        <div className="bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-900/50 dark:to-red-800/50 border border-orange-200/50 dark:border-orange-700/30 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-primary/5 to-destructive/5 border border-primary/20 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Toplam Sabitlenmiş</span>
             <span className="text-sm text-muted-foreground">
@@ -281,35 +281,35 @@ export default function BoardPage() {
           </div>
           <div className="grid grid-cols-3 gap-4 mt-3">
             <div className="text-center">
-              <div className="w-full h-2 bg-orange-200 dark:bg-orange-700 rounded-full overflow-hidden mb-1">
+              <div className="w-full h-2 bg-primary/20 rounded-full overflow-hidden mb-1">
                 <div 
-                  className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-500"
                   style={{ width: '100%' }}
                 />
               </div>
-              <div className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+              <div className="text-xs text-primary font-medium">
                 Bugün: {pinnedToday}
               </div>
             </div>
             <div className="text-center">
-              <div className="w-full h-2 bg-red-200 dark:bg-red-700 rounded-full overflow-hidden mb-1">
+              <div className="w-full h-2 bg-destructive/20 rounded-full overflow-hidden mb-1">
                 <div 
-                  className="h-full bg-gradient-to-r from-red-400 to-red-500 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-destructive to-destructive rounded-full transition-all duration-500"
                   style={{ width: '100%' }}
                 />
               </div>
-              <div className="text-xs text-red-600 dark:text-red-400 font-medium">
+              <div className="text-xs text-destructive font-medium">
                 Bu Hafta: {pinnedThisWeek}
               </div>
             </div>
             <div className="text-center">
-              <div className="w-full h-2 bg-pink-200 dark:bg-pink-700 rounded-full overflow-hidden mb-1">
+              <div className="w-full h-2 bg-accent/20 rounded-full overflow-hidden mb-1">
                 <div 
-                  className="h-full bg-gradient-to-r from-pink-400 to-pink-500 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-accent to-accent rounded-full transition-all duration-500"
                   style={{ width: '100%' }}
                 />
               </div>
-              <div className="text-xs text-pink-600 dark:text-pink-400 font-medium">
+              <div className="text-xs text-accent font-medium">
                 Bu Ay: {pinnedThisMonth}
               </div>
             </div>
@@ -323,21 +323,21 @@ export default function BoardPage() {
           {/* Pin edilmiş Görevler */}
           {pinnedTasks.length > 0 ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50">
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-md bg-orange-100 dark:bg-orange-800/50 flex items-center justify-center shadow-sm">
-                    <Pin className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shadow-sm">
+                    <Pin className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                    <h2 className="text-sm font-medium text-primary">
                       Sabitlenmiş Görevler
                     </h2>
-                    <p className="text-xs text-orange-600 dark:text-orange-400">
+                    <p className="text-xs text-primary">
                       Önemli görevlerin panosi
                     </p>
                   </div>
                 </div>
-                <div className="px-2 py-1 rounded-lg bg-orange-600 dark:bg-orange-500 text-white text-sm font-semibold min-w-[24px] text-center">
+                <div className="px-2 py-1 rounded-lg bg-primary text-primary-foreground text-sm font-semibold min-w-[24px] text-center">
                   {pinnedTasks.length}
                 </div>
               </div>
@@ -402,13 +402,13 @@ export default function BoardPage() {
           ) : (
             /* Empty State */
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-100 to-red-200 dark:from-orange-900/20 dark:to-red-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Pin className="h-10 w-10 text-orange-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-destructive/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Pin className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Henüz sabitlenmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Önemli görevleri sabitle ve panonda görüntüle. Hızlı eriş, öncelikli işleri takip et!
               </p>
             </div>
@@ -419,13 +419,13 @@ export default function BoardPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByProject()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-100 to-red-200 dark:from-orange-900/20 dark:to-red-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Folder className="h-10 w-10 text-orange-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-destructive/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Folder className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Henüz sabitlenmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Hiçbir projede sabitlenmiş görev bulunmuyor.
               </p>
             </div>
@@ -437,11 +437,11 @@ export default function BoardPage() {
                     <div className="flex items-center space-x-2.5">
                       <div>
                         {group.project.emoji ? (
-                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                          <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shadow-sm">
                             <span className="text-sm">{group.project.emoji}</span>
                           </div>
                         ) : (
-                          <div className="w-8 h-8 rounded-md bg-primary shadow-sm" />
+                          <div className="w-8 h-8 rounded-md bg-muted shadow-sm" />
                         )}
                       </div>
                       <div>
@@ -533,13 +533,13 @@ export default function BoardPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByPriority()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-100 to-red-200 dark:from-orange-900/20 dark:to-red-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Flag className="h-10 w-10 text-orange-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-destructive/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Flag className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Henüz sabitlenmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Hiçbir öncelik seviyesinde sabitlenmiş görev bulunmuyor.
               </p>
             </div>
@@ -559,7 +559,7 @@ export default function BoardPage() {
                     <div className="group flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 border border-border hover:bg-muted/80 transition-all duration-200 hover:shadow-sm cursor-pointer">
                       <div className="flex items-center space-x-2.5">
                         <div>
-                          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shadow-sm">
+                          <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shadow-sm">
                             <span className="text-sm">{priorityIcons[priority as keyof typeof priorityIcons]}</span>
                           </div>
                         </div>
@@ -644,13 +644,13 @@ export default function BoardPage() {
         <div className="space-y-6">
           {Object.entries(groupTasksByTag()).length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-100 to-red-200 dark:from-orange-900/20 dark:to-red-800/20 flex items-center justify-center shadow-lg mx-auto mb-6">
-                <Tag className="h-10 w-10 text-orange-600" />
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-destructive/10 flex items-center justify-center shadow-lg mx-auto mb-6">
+                <Tag className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Henüz sabitlenmiş görev yok
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto">
                 Hiçbir etikette sabitlenmiş görev bulunmuyor.
               </p>
             </div>

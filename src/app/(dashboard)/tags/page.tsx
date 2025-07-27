@@ -1,12 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { PiTagSimpleFill } from "react-icons/pi"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, Search, Clock, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { NewTagModal } from "@/components/modals/new-tag-modal"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { MoveTaskModal } from "@/components/modals/move-task-modal"
+import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
+import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { useTagStore } from "@/store/tagStore"
+import { useTaskStore } from "@/store/taskStore"
+import { useProjectStore } from "@/store/projectStore"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 
 export default function TagsPage() {
@@ -15,11 +29,190 @@ export default function TagsPage() {
   const [editingTag, setEditingTag] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tagToDelete, setTagToDelete] = useState<{id: string, name: string} | null>(null)
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState<"date" | "priority" | "project">("date")
+  const [filterBy, setFilterBy] = useState<"all" | "pending" | "completed">("all")
+  
+  // Modal states
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalContext, setTaskModalContext] = useState<{
+    project?: { id: string; name: string; emoji?: string }
+    section?: { id: string; name: string; projectId: string }
+    parentTaskId?: string
+    parentTaskTitle?: string
+  }>({})
+  const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
+  const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
+  const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
+  const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  
   const { tags, isLoading, error, fetchTags, createTag, updateTag, deleteTag, clearError } = useTagStore()
+  const { 
+    fetchTasksByTag, 
+    getTasksByTag,
+    toggleTaskComplete,
+    updateTask,
+    deleteTask: deleteTaskFromStore,
+    toggleTaskPin,
+    updateTaskTags,
+    updateTaskReminders,
+    showCompletedTasks,
+    toggleShowCompletedTasks,
+    getCompletedTasksCountByTag,
+    getPendingTasksCountByTag,
+    addSubTask,
+    cloneTask,
+    moveTask,
+    fetchTasks
+  } = useTaskStore()
+  const { projects, fetchProjects } = useProjectStore()
+
+  // Seçilen tag'in görevlerini al
+  const selectedTasks = selectedTagId ? getTasksByTag(selectedTagId) : []
+  const selectedTag = selectedTagId ? tags.find(tag => tag.id === selectedTagId) : null
+
+  // Arama ve filtreleme
+  const filteredTasks = selectedTasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         task.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesFilter = filterBy === "all" || 
+                         (filterBy === "pending" && !task.completed) ||
+                         (filterBy === "completed" && task.completed)
+    
+    const matchesCompletedSetting = showCompletedTasks || !task.completed
+    
+    return matchesSearch && matchesFilter && matchesCompletedSetting
+  })
+
+  // Sıralama
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    switch (sortBy) {
+      case "priority":
+        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1, NONE: 0 }
+        return priorityOrder[b.priority as keyof typeof priorityOrder] - 
+               priorityOrder[a.priority as keyof typeof priorityOrder]
+      case "project":
+        const projectA = projects.find(p => p.id === a.projectId)?.name || ""
+        const projectB = projects.find(p => p.id === b.projectId)?.name || ""
+        return projectA.localeCompare(projectB)
+      case "date":
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    }
+  })
+
+  // Handler functions
+  const handleEditTask = useCallback((task: Task) => {
+    setEditingTask(task)
+    setIsTaskModalOpen(true)
+  }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    const task = selectedTasks.find(t => t.id === taskId)
+    if (task) {
+      const subTaskCount = task.subTasks?.length || 0
+      setTaskToDelete({ id: taskId, title: task.title, subTaskCount })
+      setIsTaskDeleteDialogOpen(true)
+    }
+  }, [selectedTasks])
+
+  const handleCloneTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await cloneTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskCloneModalOpen(false)
+      setTaskToClone(null)
+      if (selectedTagId) {
+        await fetchTasksByTag(selectedTagId)
+      }
+    } catch (error) {
+      console.error('Failed to clone task:', error)
+    }
+  }, [cloneTask, fetchTasksByTag, selectedTagId])
+
+  const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
+    try {
+      await moveTask(taskId, targetProjectId, targetSectionId)
+      setIsTaskMoveModalOpen(false)
+      setTaskToMove(null)
+      if (selectedTagId) {
+        await fetchTasksByTag(selectedTagId)
+      }
+    } catch (error) {
+      console.error('Failed to move task:', error)
+    }
+  }, [moveTask, fetchTasksByTag, selectedTagId])
+
+  const handleAddSubTask = useCallback((parentTaskId: string) => {
+    const parentTask = selectedTasks.find(t => t.id === parentTaskId)
+    const project = parentTask ? projects.find(p => p.id === parentTask.projectId) : null
+    
+    const section = parentTask?.sectionId ? {
+      id: parentTask.sectionId,
+      name: 'Varsayılan',
+      projectId: parentTask.projectId
+    } : {
+      id: 'default',
+      name: 'Varsayılan',
+      projectId: project?.id || ''
+    }
+    
+    setTaskModalContext({
+      project: project ? { id: project.id, name: project.name, emoji: project.emoji } : undefined,
+      section: section,
+      parentTaskId: parentTaskId,
+      parentTaskTitle: parentTask?.title
+    })
+    setIsTaskModalOpen(true)
+  }, [selectedTasks, projects])
+
+  const handleCopyTask = useCallback((taskId: string) => {
+    const taskToCopy = selectedTasks.find(t => t.id === taskId)
+    if (taskToCopy) {
+      setTaskToClone({
+        id: taskId,
+        title: taskToCopy.title,
+        projectId: taskToCopy.projectId,
+        sectionId: undefined
+      })
+      setIsTaskCloneModalOpen(true)
+    }
+  }, [selectedTasks])
+
+  const handleMoveTaskModal = useCallback((taskId: string) => {
+    const taskToMoveItem = selectedTasks.find(t => t.id === taskId)
+    if (taskToMoveItem) {
+      setTaskToMove({
+        id: taskId,
+        title: taskToMoveItem.title,
+        projectId: taskToMoveItem.projectId,
+        sectionId: undefined
+      })
+      setIsTaskMoveModalOpen(true)
+    }
+  }, [selectedTasks])
 
   useEffect(() => {
     fetchTags()
-  }, [fetchTags])
+    fetchProjects()
+  }, [fetchTags, fetchProjects])
+
+  useEffect(() => {
+    if (selectedTagId) {
+      fetchTasksByTag(selectedTagId)
+    }
+  }, [selectedTagId, fetchTasksByTag])
+
+  // İlk tag'i otomatik seç
+  useEffect(() => {
+    if (tags.length > 0 && !selectedTagId) {
+      setSelectedTagId(tags[0].id)
+    }
+  }, [tags, selectedTagId])
 
   const handleCreateTag = async (name: string, color: string) => {
     try {
@@ -46,167 +239,280 @@ export default function TagsPage() {
   const confirmDeleteTag = async () => {
     if (tagToDelete) {
       await deleteTag(tagToDelete.id)
+      if (selectedTagId === tagToDelete.id) {
+        setSelectedTagId(null)
+      }
       setTagToDelete(null)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <PiTagSimpleFill className="h-8 w-8 text-amber-600" />
-          <div>
-            <h1 className="text-3xl font-bold">Etiketler</h1>
-            <p className="text-muted-foreground">
-              Görev etiketlerinizi yönetin
-            </p>
+    <>
+      <div className="flex h-[calc(100vh-120px)] gap-6">
+        {/* Sol sütun - Tag listesi (20% genişlik) */}
+        <div className="w-1/5 flex flex-col space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <PiTagSimpleFill className="h-6 w-6 text-amber-600" />
+              <h1 className="text-xl font-bold">Etiketler</h1>
+            </div>
+            <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-1">
+              <Plus className="h-3 w-3" />
+            </Button>
           </div>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Yeni Etiket
-        </Button>
-      </div>
 
-      {error && (
-        <div className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 rounded-lg">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={clearError}
-            className="mt-2"
-          >
-            Kapat
-          </Button>
-        </div>
-      )}
+          {error && (
+            <div className="p-3 border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 rounded-lg">
+              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearError}
+                className="mt-1 h-6 text-xs"
+              >
+                Kapat
+              </Button>
+            </div>
+          )}
 
-      {isLoading && (
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      )}
+          {/* Tag listesi */}
+          <div className="flex-1 overflow-y-auto space-y-2">
+            {isLoading && (
+              <div className="flex items-center justify-center p-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            )}
 
-      {!isLoading && tags.length === 0 && (
-        <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <PiTagSimpleFill className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Henüz etiket yok</h3>
-          <p className="text-muted-foreground mb-4">İlk etiketinizi oluşturun</p>
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Yeni Etiket
-          </Button>
-        </div>
-      )}
+            {!isLoading && tags.length === 0 && (
+              <div className="text-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                <PiTagSimpleFill className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">Henüz etiket yok</p>
+                <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-1">
+                  <Plus className="h-3 w-3" />
+                  Yeni Etiket
+                </Button>
+              </div>
+            )}
 
-      {!isLoading && tags.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {tags.map((tag) => (
-            <div 
-              key={tag.id} 
-              className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 border border-gray-100/30 dark:border-gray-800/30 hover:border-gray-200/50 dark:hover:border-gray-700/50 transition-all duration-300 cursor-pointer hover:shadow-xl hover:shadow-gray-200/20 dark:hover:shadow-gray-900/20 hover:-translate-y-1"
-              onClick={() => router.push(`/tags/${tag.id}`)}
-              style={{
-                background: `linear-gradient(135deg, ${tag.color}08 0%, ${tag.color}02 100%)`
-              }}
-            >
-              {/* Glow Effect */}
+            {!isLoading && tags.length > 0 && tags.map((tag) => (
               <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  background: `radial-gradient(circle at 50% 0%, ${tag.color}15 0%, transparent 70%)`
-                }}
-              />
-              
-              {/* Animated Border */}
-              <div 
-                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  background: `linear-gradient(45deg, ${tag.color}20, transparent, ${tag.color}20)`,
-                  padding: '1px',
-                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  maskComposite: 'exclude'
-                }}
-              />
-
-              <div className="relative p-8">
-                <div className="flex flex-col items-center text-center space-y-6">
-                  {/* Icon with animated background */}
-                  <div className="relative">
+                key={tag.id} 
+                className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  selectedTagId === tag.id 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' 
+                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+                onClick={() => setSelectedTagId(tag.id)}
+                style={selectedTagId === tag.id ? {
+                  background: `linear-gradient(135deg, ${tag.color}10 0%, ${tag.color}05 100%)`
+                } : {}}
+              >
+                <div className="p-3">
+                  <div className="flex items-center space-x-2">
                     <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
                       style={{ 
-                        background: `linear-gradient(135deg, ${tag.color}20 0%, ${tag.color}40 100%)`,
-                        boxShadow: `0 8px 32px ${tag.color}30`
+                        background: `linear-gradient(135deg, ${tag.color}20 0%, ${tag.color}40 100%)`
                       }}
                     >
                       <PiTagSimpleFill
-                        className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12"
+                        className="w-4 h-4"
                         style={{ color: tag.color }}
                       />
                     </div>
-                    {/* Pulse animation */}
-                    <div 
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 animate-pulse"
-                      style={{ 
-                        background: `radial-gradient(circle, ${tag.color}30 0%, transparent 70%)`
-                      }}
-                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm truncate">{tag.name}</h3>
+                      <div 
+                        className="px-2 py-1 rounded text-xs font-medium mt-1 inline-block"
+                        style={{ 
+                          backgroundColor: `${tag.color}15`,
+                          color: tag.color
+                        }}
+                      >
+                        {tag._count?.tasks || 0} görev
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <h3 className="font-bold text-xl text-gray-900 dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                      {tag.name}
-                    </h3>
-                    <div 
-                      className="px-4 py-2 rounded-full text-sm font-semibold border shadow-sm transition-all duration-300 group-hover:shadow-md"
-                      style={{ 
-                        backgroundColor: `${tag.color}15`,
-                        borderColor: `${tag.color}30`,
-                        color: tag.color
+                  {/* Action buttons */}
+                  <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingTag(tag.id)
                       }}
+                      className="h-6 w-6 rounded-md bg-white/80 dark:bg-gray-700/80 shadow-sm"
                     >
-                      {tag._count?.tasks || 0} görev
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteTag(tag.id, tag.name)
+                      }}
+                      className="h-6 w-6 rounded-md bg-red-50/80 dark:bg-red-900/30 text-red-600 shadow-sm"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sağ sütun - Seçilen tag'in görevleri (80% genişlik) */}
+        <div className="flex-1 flex flex-col space-y-4">
+          {selectedTag ? (
+            <>
+              {/* Seçilen tag header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: selectedTag.color + '20' }}>
+                    <PiTagSimpleFill
+                      className="w-6 h-6"
+                      style={{ color: selectedTag.color }}
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedTag.name}</h2>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <span className="flex items-center space-x-1 text-green-600 dark:text-green-400">
+                        <Check className="h-3 w-3" />
+                        <span>{selectedTagId ? getCompletedTasksCountByTag(selectedTagId) : 0} tamamlandı</span>
+                      </span>
+                      <span className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                        <Clock className="h-3 w-3" />
+                        <span>{selectedTagId ? getPendingTasksCountByTag(selectedTagId) : 0} bekleyen</span>
+                      </span>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Action buttons with glass effect */}
-                <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingTag(tag.id)
-                    }}
-                    className="h-9 w-9 rounded-xl backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border border-white/20 hover:bg-white/90 dark:hover:bg-gray-700/90 shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteTag(tag.id, tag.name)
-                    }}
-                    className="h-9 w-9 rounded-xl backdrop-blur-md bg-red-50/70 dark:bg-red-900/30 border border-red-200/50 hover:bg-red-100/90 dark:hover:bg-red-900/60 text-red-600 hover:text-red-700 shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              {/* Filtreler ve arama */}
+              <div className="bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 rounded-xl p-4 backdrop-blur-sm">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Görevlerde ara..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-9 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Select value={sortBy} onValueChange={(value: "date" | "priority" | "project") => setSortBy(value)}>
+                      <SelectTrigger className="w-40 h-9 rounded-lg">
+                        <SelectValue placeholder="Sıralama" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">📅 Tarihe göre</SelectItem>
+                        <SelectItem value="priority">🔥 Önceliğe göre</SelectItem>
+                        <SelectItem value="project">📁 Projeye göre</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={filterBy} onValueChange={(value: "all" | "pending" | "completed") => setFilterBy(value)}>
+                      <SelectTrigger className="w-32 h-9 rounded-lg">
+                        <SelectValue placeholder="Filtrele" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">🔍 Tümü</SelectItem>
+                        <SelectItem value="pending">⏳ Bekleyen</SelectItem>
+                        <SelectItem value="completed">✅ Tamamlanan</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button
+                      variant={showCompletedTasks ? "default" : "outline"}
+                      size="sm"
+                      onClick={toggleShowCompletedTasks}
+                      className="h-9 px-4 rounded-lg"
+                    >
+                      {showCompletedTasks ? "✅ Gizle" : "👀 Göster"}
+                    </Button>
+                  </div>
                 </div>
+              </div>
 
-                {/* Decorative elements */}
-                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: tag.color }} />
-                <div className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full opacity-40 group-hover:opacity-80 transition-opacity" style={{ backgroundColor: tag.color }} />
+              {/* Görev listesi */}
+              <div className="flex-1 overflow-y-auto">
+                {sortedTasks.length === 0 ? (
+                  <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                    <PiTagSimpleFill className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      {searchQuery || filterBy !== "all" 
+                        ? "Arama kriterlerine uygun görev bulunamadı" 
+                        : "Bu etiketle ilişkili görev yok"
+                      }
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {searchQuery || filterBy !== "all"
+                        ? "Farklı arama terimleri veya filtreler deneyebilirsin"
+                        : "Henüz bu etiketle işaretlenmiş görev bulunmuyor"
+                      }
+                    </p>
+                  </div>
+                ) : (
+                  <HierarchicalTaskList
+                    tasks={sortedTasks}
+                    onToggleComplete={toggleTaskComplete}
+                    onUpdate={updateTask}
+                    onDelete={handleDeleteTask}
+                    onPin={toggleTaskPin}
+                    onAddSubTask={handleAddSubTask}
+                    onEdit={handleEditTask}
+                    onCopy={handleCopyTask}
+                    onMove={handleMoveTaskModal}
+                    onUpdateTags={async (taskId, tagIds) => {
+                      try {
+                        await updateTaskTags(taskId, tagIds)
+                      } catch (error) {
+                        console.error('Failed to update tags:', error)
+                      }
+                    }}
+                    onUpdatePriority={async (taskId, priority) => {
+                      try {
+                        await updateTask(taskId, { priority })
+                      } catch (error) {
+                        console.error('Failed to update priority:', error)
+                      }
+                    }}
+                    onUpdateReminders={async (taskId, reminders) => {
+                      try {
+                        await updateTaskReminders(taskId, reminders)
+                      } catch (error) {
+                        console.error('Failed to update reminders:', error)
+                      }
+                    }}
+                    showTreeConnectors={true}
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <PiTagSimpleFill className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Bir etiket seçin</h3>
+                <p className="text-muted-foreground">
+                  Sol taraftan bir etiket seçerek görevlerini görebilirsiniz
+                </p>
               </div>
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </div>
 
+      {/* Modals */}
       <NewTagModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -236,6 +542,79 @@ export default function TagsPage() {
         cancelText="İptal"
         variant="destructive"
       />
-    </div>
+
+      {/* Task Modals */}
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false)
+          setTaskModalContext({})
+          setEditingTask(null)
+        }}
+        onTaskCreated={async (newTask) => {
+          try {
+            if (taskModalContext.parentTaskId) {
+              await addSubTask(taskModalContext.parentTaskId, newTask)
+            }
+            if (selectedTagId) {
+              await fetchTasksByTag(selectedTagId)
+            }
+            setIsTaskModalOpen(false)
+            setTaskModalContext({})
+          } catch (error) {
+            console.error('Failed to create task:', error)
+          }
+        }}
+        defaultProject={taskModalContext.project}
+        defaultSection={taskModalContext.section}
+        parentTaskId={taskModalContext.parentTaskId}
+        parentTaskTitle={taskModalContext.parentTaskTitle}
+        editingTask={editingTask}
+      />
+
+      <TaskDeleteDialog
+        isOpen={isTaskDeleteDialogOpen}
+        onClose={() => {
+          setIsTaskDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onConfirm={async () => {
+          if (taskToDelete) {
+            try {
+              await deleteTaskFromStore(taskToDelete.id)
+              if (selectedTagId) {
+                await fetchTasksByTag(selectedTagId)
+              }
+              setIsTaskDeleteDialogOpen(false)
+              setTaskToDelete(null)
+            } catch (error) {
+              console.error('Failed to delete task:', error)
+            }
+          }
+        }}
+        task={taskToDelete}
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskCloneModalOpen}
+        onClose={() => {
+          setIsTaskCloneModalOpen(false)
+          setTaskToClone(null)
+        }}
+        onMove={handleCloneTask}
+        task={taskToClone}
+        mode="clone"
+      />
+
+      <MoveTaskModal
+        isOpen={isTaskMoveModalOpen}
+        onClose={() => {
+          setIsTaskMoveModalOpen(false)
+          setTaskToMove(null)
+        }}
+        onMove={handleMoveTask}
+        task={taskToMove}
+      />
+    </>
   )
 }
