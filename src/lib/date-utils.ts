@@ -1,5 +1,33 @@
 // Date utilities for safe date string conversion
 
+// Bitiş tarihine kalan süreyi hesapla
+export function getTimeUntilDue(dueDate: string | Date | undefined): string | null {
+  if (!dueDate) return null
+  
+  const due = toSafeDate(dueDate)
+  if (!due) return null
+  
+  const now = new Date()
+  const diffMs = due.getTime() - now.getTime()
+  
+  // Geçmiş tarih ise null döndür
+  if (diffMs < 0) return null
+  
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  
+  if (diffDays > 0) {
+    return `${diffDays} gün kaldı`
+  } else if (diffHours > 0) {
+    return `${diffHours} saat kaldı`
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes} dakika kaldı`
+  } else {
+    return "Bitiyor!"
+  }
+}
+
 export function toSafeDateString(date: Date | string | undefined): string | undefined {
   if (!date) return undefined
   if (typeof date === 'string') return date
@@ -89,7 +117,17 @@ export function getOverdueMessage(daysOverdue: number): string {
   return `${daysOverdue} gün gecikme`
 }
 
-export function getDueDateMessage(status: TaskDateStatus): string {
+export function getDueDateMessage(status: TaskDateStatus, priority?: string, dueDate?: string | Date): string {
+  const isHighPriority = priority === 'CRITICAL' || priority === 'HIGH'
+  
+  // Kritik/yüksek öncelikli görevler için her zaman detaylı süre göster
+  if (isHighPriority && dueDate) {
+    const timeLeft = getTimeUntilDue(dueDate)
+    if (timeLeft) {
+      return timeLeft
+    }
+  }
+  
   switch (status.status) {
     case 'overdue':
       return getOverdueMessage(status.daysOverdue)
@@ -104,6 +142,7 @@ export function getDueDateMessage(status: TaskDateStatus): string {
       return ''
   }
 }
+
 
 export function getDateStatusColor(status: TaskDateStatus['status']): string {
   switch (status) {

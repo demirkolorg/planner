@@ -22,13 +22,6 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
       updatedAt: Date
     }
   }>
-  reminders?: Array<{
-    id: string
-    taskId: string
-    datetime: Date
-    message?: string
-    isActive: boolean
-  }>
   subTasks?: TaskWithRelations[]
   project?: {
     id: string
@@ -66,11 +59,6 @@ interface TaskStore {
   toggleTaskPin: (taskId: string) => Promise<void>
   addSubTask: (parentTaskId: string, taskData: CreateTaskRequest) => Promise<void>
   updateTaskTags: (taskId: string, tagIds: string[]) => Promise<void>
-  updateTaskReminders: (taskId: string, reminders: Array<{
-    datetime: Date
-    message?: string
-    isActive?: boolean
-  }>) => Promise<void>
   
   // Utility methods
   getTasksByProject: (projectId: string) => TaskWithRelations[]
@@ -968,40 +956,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  updateTaskReminders: async (taskId: string, reminders: Array<{
-    datetime: Date
-    message?: string
-    isActive?: boolean
-  }>) => {
-    set({ error: null })
-    try {
-      const response = await fetch(`/api/tasks/${taskId}/reminders`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reminders }),
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update task reminders')
-      }
-      
-      const updatedTask = await response.json()
-      
-      // Update task in store
-      set(state => ({
-        tasks: state.tasks.map(task => 
-          task.id === taskId ? { ...task, ...updatedTask } : task
-        )
-      }))
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
-      throw error
-    }
-  },
 
   toggleShowCompletedTasks: () => {
     set(state => ({ showCompletedTasks: !state.showCompletedTasks }))

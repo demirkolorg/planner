@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Bell, Calendar, AlertTriangle, Folder, MessageCircle } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { TaskTimelineModal } from "../modals/task-timeline-modal"
@@ -45,13 +45,6 @@ interface TaskWithRelations {
       color: string
     }
   }>
-  reminders?: Array<{
-    id: string
-    taskId: string
-    datetime: Date
-    message?: string
-    isActive: boolean
-  }>
   subTasks?: Array<{
     id: string
     title: string
@@ -73,7 +66,6 @@ interface TaskCardProps {
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
-  onUpdateReminders?: (taskId: string, reminders: string[]) => void
   onEdit?: (task: TaskWithRelations) => void
   onComment?: (taskId: string, taskTitle: string) => void
   className?: string
@@ -97,7 +89,6 @@ export function TaskCard({
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
-  onUpdateReminders,
   onEdit,
   onComment,
   className,
@@ -259,7 +250,7 @@ export function TaskCard({
 
   // Date status hesapla
   const dateStatus = getTaskDateStatus(task.dueDate)
-  const dueDateMessage = getDueDateMessage(dateStatus)
+  const dueDateMessage = getDueDateMessage(dateStatus, task.priority, task.dueDate)
 
   // Gradient background helper
   const getDateAlertGradient = () => {
@@ -494,32 +485,6 @@ export function TaskCard({
                   </p>
                 </TooltipContent>
               </Tooltip>
-              {/* Reminders Icon and Count */}
-              {task.reminders && task.reminders.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Bell className="h-4 w-4" />
-                      <span className="text-xs">{task.reminders.length}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="space-y-1">
-                      <p className="font-medium">Hatırlatıcılar:</p>
-                      {task.reminders.map((reminder, index) => (
-                        <p key={index} className="text-xs">
-                          {new Date(reminder.datetime).toLocaleString('tr-TR', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      ))}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
             </h4>
           </div>
 
@@ -639,39 +604,6 @@ export function TaskCard({
                   )}
                 </div>
 
-                {/* Reminders */}
-                {task.reminders && task.reminders.length > 0 && (
-                  <div className={`flex items-center space-x-2 ${isTaskCompleted ? 'opacity-50' : ''}`}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center space-x-1 cursor-default">
-                          <span>🔔</span>
-                          <span>{task.reminders.length}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Hatırlatıcılar'}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <div className="flex flex-wrap gap-1">
-                      {task.reminders.map((reminder, index) => (
-                        <span 
-                          key={index} 
-                          className={`text-xs bg-secondary/50 dark:bg-secondary/20 text-secondary-foreground px-1 py-0.5 rounded cursor-default ${
-                            isTaskCompleted ? 'opacity-75' : ''
-                          }`}
-                        >
-                          {new Date(reminder.datetime).toLocaleString('tr-TR', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 
                 {/* Project and Section Info */}
                 {(task.project || task.section) && (
@@ -712,7 +644,6 @@ export function TaskCard({
                 onAddSubTask={onAddSubTask}
                 onUpdateTags={onUpdateTags}
                 onUpdatePriority={onUpdatePriority}
-                onUpdateReminders={onUpdateReminders}
                 onPin={onPin}
                 onDelete={onDelete}
                 onCopy={onCopy}

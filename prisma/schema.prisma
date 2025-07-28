@@ -59,7 +59,6 @@ model Task {
   userId       String
   user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags         TaskTag[]
-  reminders    Reminder[]
   activities   TaskActivity[]
   comments     Comment[]
   createdAt    DateTime       @default(now())
@@ -100,16 +99,6 @@ model TaskTag {
   @@unique([taskId, tagId])
 }
 
-model Reminder {
-  id        String   @id @default(cuid())
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  datetime  DateTime
-  message   String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 
 model TaskActivity {
   id          String   @id @default(cuid())

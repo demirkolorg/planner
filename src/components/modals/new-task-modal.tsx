@@ -12,7 +12,6 @@ import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 import { TagPicker } from "@/components/ui/tag-picker"
-import { ReminderPicker } from "@/components/ui/reminder-picker"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -55,13 +54,6 @@ interface NewTaskModalProps {
         color: string
       }
     }>
-    reminders?: Array<{
-      id: string
-      taskId: string
-      datetime: Date
-      message?: string
-      isActive: boolean
-    }>
   }
 }
 
@@ -80,9 +72,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
-  const [reminders, setReminders] = useState<string[]>([])
   const { tags, fetchTags, createTag } = useTagStore()
-  const { updateTaskTags, updateTaskReminders } = useTaskStore()
+  const { updateTaskTags } = useTaskStore()
   const { createTask, updateTask, getTaskById } = useTaskStore()
   const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -127,23 +118,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         
         setSelectedDateTime(editingTask.dueDate || null)
         setSelectedTags(editingTask.tags?.map(t => t.tag.name) || [])
-        setReminders(editingTask.reminders?.map(r => {
-          const date = new Date(r.datetime)
-          const day = date.getDate()
-          const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-                              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
-          const month = monthNames[date.getMonth()]
-          const year = date.getFullYear()
-          const time = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-          return `${day} ${month} ${year} ${time}`
-        }) || [])
       } else {
         // Yeni görev modunda temiz başla
         setTitle("")
         setDescription("")
         setSelectedTags([])
         setSelectedPriority("Yok")
-        setReminders([])
         setSelectedDateTime(null)
       }
       
@@ -381,28 +361,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     setIsSubmitting(true)
 
     try {
-      // Hatırlatıcı tarihlerini düzenle
-      const formattedReminders = reminders.map(reminder => {
-        // "19 Temmuz 2025 14:30" formatından Date string'e çevir
-        const parts = reminder.split(' ')
-        if (parts.length >= 4) {
-          const day = parts[0]
-          const monthName = parts[1]
-          const year = parts[2]
-          const time = parts[3]
-          
-          const monthMap: Record<string, string> = {
-            'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04',
-            'Mayıs': '05', 'Haziran': '06', 'Temmuz': '07', 'Ağustos': '08',
-            'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
-          }
-          
-          const month = monthMap[monthName] || '01'
-          const dateStr = `${year}-${month}-${day.padStart(2, '0')}`
-          return `${dateStr}T${time}:00`
-        }
-        return reminder
-      })
 
       if (editingTask) {
         // Düzenleme modu: mevcut görevi güncelle
@@ -427,14 +385,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           updatePromises.push(updateTaskTags(editingTask.id, tagIds))
         }
         
-        // Hatırlatıcıları güncelle
-        if (formattedReminders.length > 0) {
-          const reminderData = formattedReminders.map(reminder => ({
-            datetime: new Date(reminder),
-            isActive: true
-          }))
-          updatePromises.push(updateTaskReminders(editingTask.id, reminderData))
-        }
         
         // Tüm işlemleri paralel bekle
         await Promise.all(updatePromises)
@@ -454,7 +404,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           priority: selectedPriority,
           dueDate: finalDueDate || undefined,
           tags: selectedTags,
-          reminders: formattedReminders,
           ...(parentTaskId && { parentTaskId })
         }
 
@@ -524,9 +473,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setSelectedDateTime(suggestion.dueDate)
       }
       
-      if (suggestion.reminders && suggestion.reminders.length > 0) {
-        setReminders(suggestion.reminders)
-      }
       
       setAiPrompt("yap")
     } catch (error) {
@@ -1005,21 +951,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 </TooltipContent>
               </Tooltip>
               
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <ReminderPicker
-                    selectedReminders={reminders}
-                    onRemindersChange={setReminders}
-                    parentTaskDueDate={parentTaskId ? (() => {
-                      const parentTask = getTaskById(parentTaskId)
-                      return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
-                    })() : editingTask && selectedDateTime ? new Date(selectedDateTime) : null}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Hatırlatıcılar</p>
-                </TooltipContent>
-              </Tooltip>
             </div>
           </div>
 
@@ -1242,18 +1173,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
               </div>
             </section>
 
-            {/* Hatırlatıcı */}
-            <section className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-secondary-foreground">🔔</span>
-                <h3 className="font-medium text-secondary-foreground">Hatırlatıcılar</h3>
-              </div>
-              <div className="text-sm text-muted-foreground space-y-2 pl-6">
-                <p>• Çan ikonu ile hatırlatıcı ekleyebilirsiniz</p>
-                <p>• Birden fazla hatırlatıcı ayarlayabilirsiniz</p>
-                <p>• Hatırlatıcılar belirlenen zamanda bildirim gönderir</p>
-              </div>
-            </section>
           </div>
         </DialogContent>
       </Dialog>

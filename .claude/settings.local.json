@@ -36,7 +36,9 @@
       "Bash(bun remove:*)",
       "Bash(timeout:*)",
       "Bash(grep:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(fuser:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

@@ -18,7 +18,6 @@ export interface Task {
   userId: string
   user?: User
   tags?: TaskTag[]
-  reminders?: Reminder[]
   createdAt: Date
   updatedAt: Date
   _count?: {
@@ -42,18 +41,6 @@ export interface TaskTag {
   tagId: string
   tag?: Tag
 }
-
-export interface Reminder {
-  id: string
-  taskId: string
-  task?: Task
-  datetime: Date
-  message?: string
-  isActive: boolean
-  createdAt: Date
-  updatedAt: Date
-}
-
 
 export interface Tag {
   id: string
@@ -111,7 +98,6 @@ export interface CreateTaskRequest {
   priority?: string
   dueDate?: string  // ISO date string
   tags?: string[]   // Tag names
-  reminders?: string[] // DateTime strings
   parentTaskId?: string // For sub-tasks
 }
 
@@ -119,7 +105,6 @@ export interface CreateTaskResponse extends Task {
   project: Project
   section: Section
   tags: Array<TaskTag & { tag: Tag }>
-  reminders: Reminder[]
 }
 
 // Priority mapping

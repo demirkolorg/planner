@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Calendar, Clock, X, Star, ChevronRight, ChevronLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,22 +55,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
     }
   }, [initialDateTime])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        if (!isModal) {
-          handleSave()
-        } else {
-          onCancel()
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [selectedDate, selectedTime, isModal, onCancel, handleSave])
-
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!selectedDate) {
       onSave(null)
       return
@@ -161,7 +146,22 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
         message: "Geçersiz tarih formatı. Lütfen DD.MM.YYYY formatında girin."
       })
     }
-  }
+  }, [selectedDate, selectedTime, onSave, parentTaskDueDate])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (!isModal) {
+          handleSave()
+        } else {
+          onCancel()
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isModal, onCancel, handleSave])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

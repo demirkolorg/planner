@@ -4,7 +4,7 @@ import {
   Plus, 
   Tag, 
   Flag, 
-  Bell, 
+ 
   Pin, 
   MoreHorizontal,
   Trash2,
@@ -25,7 +25,6 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
-import { ReminderSelector } from "./reminder-selector"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import type { Task } from "@/types/task"
 
@@ -44,22 +43,10 @@ interface TaskCardActionsProps {
         color: string
       }
     }>
-    reminders?: Array<{
-      id: string
-      taskId: string
-      datetime: Date
-      message?: string
-      isActive: boolean
-    }>
   }
   onAddSubTask?: (taskId: string) => void
   onUpdateTags?: (taskId: string, tagIds: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
-  onUpdateReminders?: (taskId: string, reminders: Array<{
-    datetime: Date
-    message?: string
-    isActive?: boolean
-  }>) => void
   onPin?: (taskId: string) => void
   onDelete?: (taskId: string) => void
   onCopy?: (taskId: string) => void
@@ -78,13 +65,6 @@ interface TaskCardActionsProps {
         color: string
       }
     }>
-    reminders?: Array<{
-      id: string
-      taskId: string
-      datetime: Date
-      message?: string
-      isActive: boolean
-    }>
   }) => void
   onTimeline?: (taskId: string, taskTitle: string) => void
   onComment?: (taskId: string, taskTitle: string) => void
@@ -96,7 +76,6 @@ export function TaskCardActions({
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
-  onUpdateReminders,
   onPin,
   onDelete,
   onCopy,
@@ -138,13 +117,6 @@ export function TaskCardActions({
     onUpdatePriority?.(task.id, priority)
   }
 
-  const handleUpdateReminders = (reminders: Array<{
-    datetime: Date
-    message?: string
-    isActive?: boolean
-  }>) => {
-    onUpdateReminders?.(task.id, reminders)
-  }
 
   const handlePin = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -263,36 +235,6 @@ export function TaskCardActions({
           }
         />
 
-        {/* Reminder Selector */}
-        <ReminderSelector
-          taskReminders={task.reminders}
-          onUpdateReminders={isTaskCompleted ? undefined : handleUpdateReminders}
-          dropdownPosition={isFirstInSection ? 'bottom' : 'top'}
-          taskDueDate={task.dueDate ? new Date(task.dueDate) : null}
-          disabled={isTaskCompleted}
-          trigger={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 relative"
-                  disabled={isTaskCompleted}
-                >
-                  <Bell className="h-3 w-3" />
-                  {task.reminders && task.reminders.length > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
-                      {task.reminders.length}
-                    </span>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Hatırlatıcı ekle'}</p>
-              </TooltipContent>
-            </Tooltip>
-          }
-        />
 
         {/* Timeline */}
         <Tooltip>
