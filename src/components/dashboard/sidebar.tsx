@@ -209,9 +209,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           <div className="px-4 pt-2 pb-3">
             <div className="flex gap-2">
               <Button
-                variant="ghost"
                 size="sm"
-                className="flex-1 px-3 py-2 text-primary hover:bg-primary/10 font-bold"
+                className="flex-1 px-3 py-2 font-medium"
                 onClick={() => setIsTaskModalOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -334,9 +333,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="ghost"
                   size="icon"
-                  className="w-full h-9 text-primary hover:bg-primary/10"
+                  className="w-full h-9"
                   onClick={() => setIsTaskModalOpen(true)}
                 >
                   <Plus className="h-4 w-4" />
