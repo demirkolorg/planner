@@ -32,7 +32,6 @@ export const ROUTES = {
   TASKS: '/tasks',
   PROFILE: '/profile',
   SETTINGS: '/settings',
-  NOTIFICATIONS: '/notifications',
 } as const;
 
 // Validation

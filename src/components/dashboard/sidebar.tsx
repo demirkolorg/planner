@@ -27,7 +27,6 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { CircularProgress } from "@/components/ui/circular-progress"
 import { useRouter } from "next/navigation"
-import { NotificationIcon } from "@/components/notifications/notification-icon"
 
 const cardItems = [
   { 
@@ -451,7 +450,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               >
                 {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-              <NotificationIcon />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -523,16 +521,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               </TooltipContent>
             </Tooltip>
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="h-9 w-9">
-                  <NotificationIcon />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Bildirimler</p>
-              </TooltipContent>
-            </Tooltip>
             
             <Tooltip>
               <TooltipTrigger asChild>

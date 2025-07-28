@@ -23,7 +23,6 @@ model User {
   taskActivities   TaskActivity[]
   projectActivities ProjectActivity[]
   comments         Comment[]
-  notifications    InAppNotification[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 }
@@ -108,7 +107,6 @@ model Reminder {
   datetime  DateTime
   message   String?
   isActive  Boolean  @default(true)
-  notified  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -156,19 +154,4 @@ model ProjectActivity {
   createdAt   DateTime @default(now())
 }
 
-model InAppNotification {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       String   // "REMINDER", "TASK_DUE", "TASK_OVERDUE", "SYSTEM"
-  title      String
-  message    String
-  priority   String   @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "URGENT"
-  isRead     Boolean  @default(false)
-  taskId     String?
-  reminderId String?
-  metadata   Json?    // Ek bilgiler için JSON field
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
 

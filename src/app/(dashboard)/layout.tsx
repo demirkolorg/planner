@@ -6,7 +6,6 @@ import { useAuthStore } from "@/store/authStore"
 import { useTaskStore } from "@/store/taskStore"
 import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
-import { useReminderCheck, useReminderCheckOnFocus } from "@/hooks/useReminderCheck"
 
 export default function DashboardLayout({
   children,
@@ -18,10 +17,6 @@ export default function DashboardLayout({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
-
-  // Hatırlatıcı kontrol sistemini başlat
-  useReminderCheck({ enabled: isAuthenticated })
-  useReminderCheckOnFocus()
 
   useEffect(() => {
     // Zustand persist hydration'ı bekle

@@ -436,7 +436,7 @@ export default function ProjectDetailPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center space-x-1">
-                      <Check className="h-3 w-3 text-accent" />
+                      <Check className="h-3 w-3 text-green-500" />
                       <span>{getCompletedTasksCount(projectId)}</span>
                     </div>
                   </TooltipTrigger>
