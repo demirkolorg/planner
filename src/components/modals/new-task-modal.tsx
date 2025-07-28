@@ -92,14 +92,18 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     message: ""
   })
 
+  // Modal açıldığında sadece bir kez data fetch et
   useEffect(() => {
     if (isOpen) {
-      // Optimistic: sadece gerekli fetch'leri yap
-      Promise.allSettled([
-        tags.length === 0 ? fetchTags() : Promise.resolve(),
-        projects.length === 0 ? fetchProjects() : Promise.resolve()
-      ])
-      
+      // Sadece store boşsa fetch et
+      if (tags.length === 0) fetchTags()
+      if (projects.length === 0) fetchProjects()
+    }
+  }, [isOpen]) // Sadece isOpen dependency'si
+
+  // Modal açıldığında form state'ini initialize et
+  useEffect(() => {
+    if (isOpen) {
       if (editingTask) {
         // Düzenleme modunda mevcut verileri yükle
         setTitle(editingTask.title)
@@ -137,7 +141,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setIsAILoading(false)
       setAiPrompt("yap")
     }
-  }, [isOpen, editingTask, tags.length, projects.length, fetchTags, fetchProjects])
+  }, [isOpen, editingTask]) // tags.length, projects.length kaldırıldı
 
   // Store'dan sections al
   const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []

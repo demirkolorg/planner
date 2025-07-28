@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { useTaskStore } from "@/store/taskStore"
+import { useProjectStore } from "@/store/projectStore"
 import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
@@ -13,11 +14,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated } = useAuthStore()
-  const { fetchTasks } = useTaskStore()
+  const { isAuthenticated, user } = useAuthStore()
+  const { fetchTasks, tasks } = useTaskStore()
+  const { fetchProjects } = useProjectStore()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const lastUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     // Zustand persist hydration'ı bekle
@@ -25,14 +28,46 @@ export default function DashboardLayout({
       if (!isAuthenticated) {
         router.push(ROUTES.LOGIN)
       } else {
-        // Kullanıcı giriş yapmışsa görevleri yükle
-        await fetchTasks()
+        // Kullanıcı değişti mi kontrol et
+        const currentUserId = user?.id || null
+        if (lastUserIdRef.current !== currentUserId) {
+          // Farklı kullanıcı - store'ları temizle ve yeniden yükle
+          console.log('Kullanıcı değişti, store temizleniyor...', {
+            previous: lastUserIdRef.current,
+            current: currentUserId
+          })
+          
+          // Store'ları temizle
+          useTaskStore.setState({
+            tasks: [],
+            isLoading: false,
+            error: null,
+            showCompletedTasks: false
+          })
+          
+          useProjectStore.setState({
+            projects: [],
+            sections: [],
+            isLoading: false,
+            error: null
+          })
+          
+          lastUserIdRef.current = currentUserId
+        }
+        
+        // Kullanıcı giriş yapmışsa ve store boşsa verileri yükle
+        if (tasks.length === 0) {
+          await Promise.all([
+            fetchTasks(),
+            fetchProjects()
+          ])
+        }
       }
       setIsLoading(false)
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, router, fetchTasks])
+  }, [isAuthenticated, user?.id, router, fetchTasks, fetchProjects, tasks.length])
 
   if (isLoading) {
     return <SplashScreen message="Dashboard yükleniyor..." />

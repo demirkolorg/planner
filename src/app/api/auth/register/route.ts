@@ -30,11 +30,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Email doğrulanmış mı kontrol et
+    const validOTP = await db.emailOTP.findFirst({
+      where: {
+        email,
+        type: 'VERIFICATION',
+        used: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (!validOTP) {
+      return NextResponse.json(
+        { error: 'Email adresi doğrulanmamış. Lütfen önce email adresinizi doğrulayın.' },
+        { status: 400 }
+      );
+    }
+
     const existingUser = await db.user.findUnique({
       where: { email }
     });
 
-    if (existingUser) {
+    if (existingUser && existingUser.emailVerified) {
       return NextResponse.json(
         { error: MESSAGES.ERROR.EMAIL_ALREADY_EXISTS },
         { status: 409 }
@@ -52,6 +71,7 @@ export async function POST(request: NextRequest) {
           lastName,
           email,
           password: hashedPassword,
+          emailVerified: true, // OTP doğrulaması tamamlandığı için
         },
       });
 
@@ -70,6 +90,15 @@ export async function POST(request: NextRequest) {
           name: "Genel",
           projectId: defaultProject.id,
           order: 0,
+        },
+      });
+
+      // Default "Kişisel" etiketini oluştur
+      await tx.tag.create({
+        data: {
+          name: "Kişisel",
+          color: "#3B82F6", // Mavi renk
+          userId: user.id,
         },
       });
 

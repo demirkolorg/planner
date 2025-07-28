@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/store/authStore"
 import { API_ROUTES, ROUTES, VALIDATION, MESSAGES } from "@/lib/constants"
 import { Loader2, Mail, Lock, Eye, EyeOff, Chrome, User } from "lucide-react"
+import { OTPVerification } from "@/components/auth/otp-verification"
 
 export function RegisterForm({
   className,
@@ -28,8 +28,9 @@ export function RegisterForm({
   const [apiError, setApiError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
+  const [step, setStep] = useState<'form' | 'otp' | 'success'>('form');
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
   const router = useRouter();
-  const { login } = useAuthStore();
   
   // Form alanlarını günceller
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,14 +80,46 @@ export function RegisterForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Form gönderim işlemini yönetir
-  const handleSubmit = async (e: React.FormEvent) => {
+  // OTP gönderme işlemini yönetir
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
 
+    setIsSendingOTP(true);
+    setApiError('');
+    
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          firstName: formData.firstName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'OTP gönderilemedi');
+      }
+
+      // OTP gönderildi, doğrulama adımına geç
+      setStep('otp');
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : 'OTP gönderilemedi');
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  // OTP doğrulandıktan sonra kayıt işlemini tamamla
+  const handleOTPVerified = async () => {
     setIsSubmitting(true);
     setApiError('');
     
@@ -110,19 +143,91 @@ export function RegisterForm({
         throw new Error(data.error || MESSAGES.ERROR.GENERIC_ERROR);
       }
 
-      // Başarılı kayıt - kullanıcıyı otomatik login yap ve ana sayfaya yönlendir
-      login(data.user);
-      router.push(ROUTES.HOME);
+      // Başarılı kayıt - login sayfasına yönlendir
+      router.push(ROUTES.LOGIN);
     } catch (error) {
       setApiError(error instanceof Error ? error.message : MESSAGES.ERROR.GENERIC_ERROR);
+      // Hata durumunda form adımına geri dön
+      setStep('form');
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  // OTP adımında geri dön
+  const handleBackToForm = () => {
+    setStep('form');
+    setApiError('');
+  };
+  
+  // OTP yeniden gönder
+  const handleResendOTP = async () => {
+    setIsSendingOTP(true);
+    setApiError('');
+    
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          firstName: formData.firstName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'OTP gönderilemedi');
+      }
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : 'OTP gönderilemedi');
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  // OTP adımındaysa OTP bileşenini göster
+  if (step === 'otp') {
+    return (
+      <div className={cn("space-y-6", className)} {...props}>
+        {/* API Hatası */}
+        {apiError && (
+          <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <p className="text-sm text-red-600 dark:text-red-400">{apiError}</p>
+            </div>
+          </div>
+        )}
+
+        <OTPVerification
+          email={formData.email}
+          firstName={formData.firstName}
+          onVerified={handleOTPVerified}
+          onResend={handleResendOTP}
+        />
+
+        {/* Geri dön butonu */}
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            onClick={handleBackToForm}
+            disabled={isSubmitting}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            ← Forma Geri Dön
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className={cn("space-y-6", className)} {...props}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSendOTP} className="space-y-6">
         {/* API Hatası */}
         {apiError && (
           <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
@@ -154,7 +259,7 @@ export function RegisterForm({
                     ? 'border-red-500 focus-visible:ring-red-500 bg-red-50/50 dark:bg-red-900/10' 
                     : 'focus-visible:ring-primary/20 focus-visible:border-primary'
                 )}
-                disabled={isSubmitting}
+                disabled={isSendingOTP}
                 required
               />
             </div>
@@ -185,7 +290,7 @@ export function RegisterForm({
                     ? 'border-red-500 focus-visible:ring-red-500 bg-red-50/50 dark:bg-red-900/10' 
                     : 'focus-visible:ring-primary/20 focus-visible:border-primary'
                 )}
-                disabled={isSubmitting}
+                disabled={isSendingOTP}
                 required
               />
             </div>
@@ -251,14 +356,14 @@ export function RegisterForm({
                     ? 'border-red-500 focus-visible:ring-red-500 bg-red-50/50 dark:bg-red-900/10' 
                     : 'focus-visible:ring-primary/20 focus-visible:border-primary'
                 )}
-                disabled={isSubmitting}
+                disabled={isSendingOTP}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                disabled={isSubmitting}
+                disabled={isSendingOTP}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -290,14 +395,14 @@ export function RegisterForm({
                     ? 'border-red-500 focus-visible:ring-red-500 bg-red-50/50 dark:bg-red-900/10' 
                     : 'focus-visible:ring-primary/20 focus-visible:border-primary'
                 )}
-                disabled={isSubmitting}
+                disabled={isSendingOTP}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowRePassword(!showRePassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                disabled={isSubmitting}
+                disabled={isSendingOTP}
               >
                 {showRePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -316,15 +421,15 @@ export function RegisterForm({
           <Button 
             type="submit" 
             className="w-full h-12 text-base font-medium transition-all duration-200 hover:shadow-lg hover:shadow-primary/25" 
-            disabled={isSubmitting}
+            disabled={isSendingOTP}
           >
-            {isSubmitting ? (
+            {isSendingOTP ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Hesap Oluşturuluyor...</span>
+                <span>Doğrulama Kodu Gönderiliyor...</span>
               </div>
             ) : (
-              'Hesap Oluştur'
+              'Email Doğrulama Kodu Gönder'
             )}
           </Button>
           
@@ -341,7 +446,7 @@ export function RegisterForm({
             variant="outline" 
             className="w-full h-12 text-base font-medium border-2 transition-all duration-200 hover:bg-accent hover:shadow-md" 
             type="button" 
-            disabled={isSubmitting}
+            disabled={isSendingOTP}
           >
             <Chrome className="mr-2 h-4 w-4" />
             Google ile Kayıt Ol

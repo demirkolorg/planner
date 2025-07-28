@@ -17,14 +17,30 @@ model User {
   lastName         String
   email            String            @unique
   password         String
+  emailVerified    Boolean           @default(false)
   projects         Project[]
   tasks            Task[]
   tags             Tag[]
   taskActivities   TaskActivity[]
   projectActivities ProjectActivity[]
   comments         Comment[]
+  otps             EmailOTP[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+}
+
+model EmailOTP {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  type      String   // "VERIFICATION", "RESET_PASSWORD"
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@index([email, type])
 }
 
 model Project {

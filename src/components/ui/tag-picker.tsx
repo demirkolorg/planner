@@ -53,9 +53,33 @@ export function TagPicker({ selectedTags, onTagsChange, trigger, className, drop
   const handleCreateTag = async () => {
     if (tagSearchInput.trim() && !tags.find(tag => tag.name.toLowerCase() === tagSearchInput.trim().toLowerCase())) {
       const newTag = tagSearchInput.trim()
+      
+      // Random renk listesi
+      const colors = [
+        "#3B82F6", // Mavi
+        "#EF4444", // Kırmızı
+        "#10B981", // Yeşil
+        "#F59E0B", // Turuncu
+        "#8B5CF6", // Mor
+        "#EC4899", // Pembe
+        "#06B6D4", // Cyan
+        "#84CC16", // Lime
+        "#F97316", // Orange
+        "#6366F1", // Indigo
+        "#14B8A6", // Teal
+        "#F43F5E", // Rose
+        "#A855F7", // Violet
+        "#22C55E", // Emerald
+        "#3B82F6", // Blue
+        "#8B5CF6"  // Purple
+      ]
+      
+      // Rastgele renk seç
+      const randomColor = colors[Math.floor(Math.random() * colors.length)]
+      
       try {
         // Create tag in backend and add to store
-        await createTag(newTag, "#3b82f6") // Default blue color
+        await createTag(newTag, randomColor)
         const newTags = [...selectedTags, newTag]
         onTagsChange(newTags)
         setTagSearchInput("")
