@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore"
 import { useTaskStore } from "@/store/taskStore"
 import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
+import { SplashScreen } from "@/components/ui/splash-screen"
 
 export default function DashboardLayout({
   children,
@@ -34,25 +35,11 @@ export default function DashboardLayout({
   }, [isAuthenticated, router, fetchTasks])
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Planner</h1>
-          <p className="text-muted-foreground">Yükleniyor...</p>
-        </div>
-      </div>
-    )
+    return <SplashScreen message="Dashboard yükleniyor..." />
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Planner</h1>
-          <p className="text-muted-foreground">Yönlendiriliyor...</p>
-        </div>
-      </div>
-    )
+    return <SplashScreen message="Yönlendiriliyor..." />
   }
 
   return (
