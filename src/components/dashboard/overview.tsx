@@ -330,7 +330,7 @@ export function DashboardOverview() {
         {/* New Task Button */}
         <Button 
           onClick={() => setIsTaskModalOpen(true)}
-          className="px-6 h-12 text-base text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          className="px-6 h-12 text-base"
         >
           <Plus className="h-5 w-5 mr-2" />
           Yeni Görev

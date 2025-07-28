@@ -27,6 +27,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { CircularProgress } from "@/components/ui/circular-progress"
 import { useRouter } from "next/navigation"
+import { NotificationIcon } from "@/components/notifications/notification-icon"
 
 const cardItems = [
   { 
@@ -209,9 +210,9 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           <div className="px-4 pt-2 pb-3">
             <div className="flex gap-2">
               <Button
-                variant="default"
+                variant="ghost"
                 size="sm"
-                className="flex-1 px-3 py-2"
+                className="flex-1 px-3 py-2 text-primary hover:bg-primary/10 font-bold"
                 onClick={() => setIsTaskModalOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -334,9 +335,9 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="default"
+                  variant="ghost"
                   size="icon"
-                  className="w-full h-9"
+                  className="w-full h-9 text-primary hover:bg-primary/10"
                   onClick={() => setIsTaskModalOpen(true)}
                 >
                   <Plus className="h-4 w-4" />
@@ -450,6 +451,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               >
                 {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
+              <NotificationIcon />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -518,6 +520,17 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p>{theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="h-9 w-9">
+                  <NotificationIcon />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Bildirimler</p>
               </TooltipContent>
             </Tooltip>
             

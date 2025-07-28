@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { ToastContainer } from "@/components/ui/toast";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -33,7 +32,6 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <ToastContainer />
           </ThemeProvider>
         </QueryProvider>
       </body>

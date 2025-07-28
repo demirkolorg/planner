@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import type { Task, CreateTaskRequest, CreateTaskResponse } from '@/types/task'
-import { useToastStore } from './toastStore'
 import { getTaskDateStatus, isTaskDueInCurrentWeek } from '@/lib/date-utils'
 
 interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueDate' | 'tags'> {
@@ -164,9 +163,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   fetchTasksByTag: async (tagId: string) => {
     set({ error: null })
     try {
+      console.log('Fetching tasks for tag:', tagId)
       const response = await fetch(`/api/tags/${tagId}/tasks`)
+      console.log('Response status:', response.status)
       if (!response.ok) {
-        throw new Error('Failed to fetch tag tasks')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('API error:', errorData)
+        throw new Error(errorData.error || 'Failed to fetch tag tasks')
       }
       const tasks = await response.json()
       
@@ -360,17 +363,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       })
 
       // Başarı mesajı göster
-      useToastStore.getState().addToast({
-        message: "Görev başarıyla klonlandı",
-        type: "success"
-      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
       set({ error: errorMessage })
-      useToastStore.getState().addToast({
-        message: errorMessage,
-        type: "error"
-      })
       throw error
     }
   },
@@ -423,18 +418,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         return { tasks: updatedTasks }
       })
 
-      // Başarı mesajı göster
-      useToastStore.getState().addToast({
-        message: "Görev başarıyla taşındı",
-        type: "success"
-      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred'
       set({ error: errorMessage })
-      useToastStore.getState().addToast({
-        message: errorMessage,
-        type: "error"
-      })
       throw error
     }
   },
@@ -452,10 +438,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       if (children.length > 0) {
         const hasIncompleteChildren = children.some(child => !child.completed)
         if (hasIncompleteChildren) {
-          useToastStore.getState().addToast({
-            message: "Önce alt görevleri tamamlayın",
-            type: "warning"
-          })
           return
         }
       }
@@ -511,38 +493,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }))
     }
     
-    // Show toast notification when task is completed
-    if (willBeCompleted) {
-      useToastStore.getState().addToast({
-        message: "Görevi tamamladınız",
-        action: {
-          label: "Geri al",
-          onClick: async () => {
-            // Use get() again to access current state and updateTask method
-            await get().updateTask(id, { completed: false })
-            
-            // Geri alma işleminde de parent task'ın subTasks array'ini güncelle
-            const currentState = get()
-            const taskToUndo = currentState.tasks.find(t => t.id === id)
-            if (taskToUndo?.parentTaskId) {
-              set(prevState => ({
-                tasks: prevState.tasks.map(t => {
-                  if (t.id === taskToUndo.parentTaskId) {
-                    // Parent task'ın subTasks array'ini güncelle
-                    const updatedSubTasks = t.subTasks?.map(subTask => 
-                      subTask.id === id ? { ...subTask, completed: false } : subTask
-                    ) || []
-                    return { ...t, subTasks: updatedSubTasks }
-                  }
-                  return t
-                })
-              }))
-            }
-          }
-        },
-        duration: 6000 // 6 seconds to give time for undo
-      })
-    }
   },
 
   // Utility methods
