@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -26,6 +26,27 @@ import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { TaskCard } from "@/components/task/task-card"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
+
+type SortOption = 
+  | 'due-date-asc'      // Bitiş Tarihi - Yaklaşanlar Önce
+  | 'due-date-desc'     // Bitiş Tarihi - Uzak Olanlar Önce  
+  | 'created-desc'      // Oluşturulma Tarihi - En Yeni Önce
+  | 'created-asc'       // Oluşturulma Tarihi - En Eski Önce
+  | 'priority-desc'     // Öncelik - Yüksekten Düşüğe
+  | 'priority-asc'      // Öncelik - Düşükten Yükseğe
+  | 'title-asc'         // Alfabetik - A'dan Z'ye
+  | 'title-desc'        // Alfabetik - Z'den A'ya
+
+const SORT_OPTIONS = [
+  { value: 'due-date-asc', label: 'Bitiş Tarihi - Yaklaşanlar Önce' },
+  { value: 'due-date-desc', label: 'Bitiş Tarihi - Uzak Olanlar Önce' },
+  { value: 'created-desc', label: 'Oluşturulma Tarihi - En Yeni Önce' },
+  { value: 'created-asc', label: 'Oluşturulma Tarihi - En Eski Önce' },
+  { value: 'priority-desc', label: 'Öncelik - Yüksekten Düşüğe' },
+  { value: 'priority-asc', label: 'Öncelik - Düşükten Yükseğe' },
+  { value: 'title-asc', label: 'Alfabetik - A\'dan Z\'ye' },
+  { value: 'title-desc', label: 'Alfabetik - Z\'den A\'ya' },
+] as const
 
 interface Project extends Omit<ProjectType, 'createdAt' | 'updatedAt'> {
   createdAt: string
@@ -66,6 +87,7 @@ export default function ProjectDetailPage() {
   const [isTaskDeleteDialogOpen, setIsTaskDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string; subTaskCount: number } | null>(null)
   const [isTaskMoveModalOpen, setIsTaskMoveModalOpen] = useState(false)
+  const [sortOption, setSortOption] = useState<SortOption>('created-desc')
   const [taskToMove, setTaskToMove] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
@@ -206,12 +228,67 @@ export default function ProjectDetailPage() {
     }
   }, [projectId, fetchSections, fetchTasksByProject, projects])
 
+  // Sıralama fonksiyonu
+  const sortTasks = useCallback((tasks: any[], sortOption: SortOption) => {
+    const priorityOrder = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1, 'NONE': 0 }
+    
+    return [...tasks].sort((a, b) => {
+      switch (sortOption) {
+        case 'due-date-asc':
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+          
+        case 'due-date-desc':
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()
+          
+        case 'created-desc':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          
+        case 'created-asc':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          
+        case 'priority-desc':
+          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0)
+          
+        case 'priority-asc':
+          return (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0)
+          
+        case 'title-asc':
+          return a.title.localeCompare(b.title, 'tr')
+          
+        case 'title-desc':
+          return b.title.localeCompare(a.title, 'tr')
+          
+        default:
+          return 0
+      }
+    })
+  }, [])
+
   // TaskStore'dan proje görevlerini al
-  const tasks = getTasksByProject(projectId)
+  const allTasks = getTasksByProject(projectId)
   // ProjectStore'dan proje section'larını al
   const sections = getSectionsByProject(projectId)
-  // Bölümsüz görevleri al
-  const tasksWithoutSection = getTasksWithoutSection(projectId)
+  
+  // Sıralanmış görevleri al
+  const tasks = useMemo(() => sortTasks(allTasks, sortOption), [allTasks, sortOption, sortTasks])
+  
+  // Bölüm görevlerini sıralı al
+  const getSortedTasksBySection = useCallback((sectionId: string) => {
+    const sectionTasks = getTasksBySection(sectionId)
+    return sortTasks(sectionTasks, sortOption)
+  }, [getTasksBySection, sortTasks, sortOption])
+  
+  // Bölümsüz görevleri sıralı al
+  const getSortedTasksWithoutSection = useCallback(() => {
+    const tasksWithoutSection = getTasksWithoutSection(projectId)
+    return sortTasks(tasksWithoutSection, sortOption)
+  }, [getTasksWithoutSection, projectId, sortTasks, sortOption])
 
   useEffect(() => {
     // İlk yükleme sırasında cache kontrolü yap
@@ -249,12 +326,13 @@ export default function ProjectDetailPage() {
         sectionsToOpen.push('overdue-tasks')
       }
       // Bölümsüz görevler varsa onu da aç
-      if (tasksWithoutSection.length > 0) {
+      const sortedTasksWithoutSection = getSortedTasksWithoutSection()
+      if (sortedTasksWithoutSection.length > 0) {
         sectionsToOpen.push('tasks-without-section')
       }
       setOpenSections(sectionsToOpen)
     }
-  }, [sectionIds.length, getOverdueTasksCountByProject, projectId, tasksWithoutSection.length]) // openSections.length kaldırıldı - infinite loop prevention
+  }, [sectionIds.length, getOverdueTasksCountByProject, projectId, getSortedTasksWithoutSection]) // openSections.length kaldırıldı - infinite loop prevention
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -550,6 +628,29 @@ export default function ProjectDetailPage() {
               />
             </div>
             
+            {/* Sıralama Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                {SORT_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSortOption(option.value as SortOption)}
+                    className={sortOption === option.value ? "bg-accent" : ""}
+                  >
+                    {option.label}
+                    {sortOption === option.value && (
+                      <Check className="h-4 w-4 ml-auto" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button
               variant="outline"
               size="sm"
@@ -634,7 +735,7 @@ export default function ProjectDetailPage() {
           <div className="h-32 bg-muted rounded-lg animate-pulse" />
           <div className="h-28 bg-muted rounded-lg animate-pulse" />
         </div>
-      ) : sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 && tasksWithoutSection.length === 0 ? (
+      ) : sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 && getSortedTasksWithoutSection().length === 0 ? (
         <div className="text-center p-8 border-2 border-dashed border-muted rounded-lg">
           <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
             {project.emoji ? (
@@ -733,7 +834,7 @@ export default function ProjectDetailPage() {
           )}
 
           {/* Bölümsüz Görevler Accordion */}
-          {tasksWithoutSection.length > 0 && (
+          {getSortedTasksWithoutSection().length > 0 && (
             <AccordionItem key="tasks-without-section" value="tasks-without-section" className="border-none overflow-visible">
               <AccordionTrigger className="px-4 py-2 hover:bg-secondary/10 rounded-lg border-b border-secondary/20 mb-1 transition-colors hover:no-underline w-full bg-secondary/10">
                 <div className="flex items-center justify-between w-full">
@@ -741,18 +842,18 @@ export default function ProjectDetailPage() {
                     <ChevronDown className="h-4 w-4 text-secondary" />
                     <h3 className="text-sm font-medium text-secondary-foreground">Bölümsüz Görevler</h3>
                     <span className="text-xs text-secondary">
-                      {tasksWithoutSection.length}
+                      {getSortedTasksWithoutSection().length}
                     </span>
                   </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pt-1 pb-3 overflow-visible">
                 <HierarchicalTaskList
-                  tasks={tasksWithoutSection}
+                  tasks={getSortedTasksWithoutSection()}
                   onToggleComplete={toggleTaskComplete}
                   onUpdate={updateTask}
                   onDelete={(taskId) => {
-                    const taskToDelete = tasksWithoutSection.find(t => t.id === taskId)
+                    const taskToDelete = getSortedTasksWithoutSection().find(t => t.id === taskId)
                     if (taskToDelete) {
                       const subTaskCount = taskToDelete.subTasks?.length || 0
                       setTaskToDelete({ 
@@ -766,7 +867,7 @@ export default function ProjectDetailPage() {
                   onPin={toggleTaskPin}
                   onEdit={handleEditTask}
                   onCopy={(taskId) => {
-                    const taskToClone = tasksWithoutSection.find(t => t.id === taskId)
+                    const taskToClone = getSortedTasksWithoutSection().find(t => t.id === taskId)
                     if (taskToClone) {
                       setTaskToClone({
                         id: taskId,
@@ -778,7 +879,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   onMove={(taskId) => {
-                    const taskToMove = tasksWithoutSection.find(t => t.id === taskId)
+                    const taskToMove = getSortedTasksWithoutSection().find(t => t.id === taskId)
                     if (taskToMove) {
                       setTaskToMove({
                         id: taskId,
@@ -790,7 +891,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   onAddSubTask={(parentTaskId) => {
-                    const parentTask = tasksWithoutSection.find(t => t.id === parentTaskId)
+                    const parentTask = getSortedTasksWithoutSection().find(t => t.id === parentTaskId)
                     setTaskModalContext({
                       project: { id: project.id, name: project.name, emoji: project.emoji },
                       section: undefined, // Bölümsüz görevler için section undefined
@@ -836,7 +937,7 @@ export default function ProjectDetailPage() {
           )}
           
           {sections.map((section) => {
-            const sectionTasks = getTasksBySection(section.id)
+            const sectionTasks = getSortedTasksBySection(section.id)
             const isOpen = openSections.includes(section.id)
             
             return (
