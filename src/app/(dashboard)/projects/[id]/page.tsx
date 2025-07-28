@@ -155,16 +155,26 @@ export default function ProjectDetailPage() {
 
   const fetchProjectData = useCallback(async () => {
     try {
-      setIsLoading(true)
+      // Store'da proje varsa header için hemen yükle
+      const existingProject = projects.find(p => p.id === projectId)
+      if (existingProject) {
+        setProject(existingProject)
+      }
+
+      // Store'da bu projenin sections/tasks'ı var mı kontrol et
+      const { sections: allSections = [] } = useProjectStore.getState()
+      const { tasks: allTasks = [] } = useTaskStore.getState()
       
-      // Store'da data varsa hemen loading'i kapat
-      const hasExistingData = projects.find(p => p.id === projectId)
-      if (hasExistingData) {
-        setProject(hasExistingData)
-        setIsLoading(false)
+      const hasProjectSections = allSections.some(s => s.projectId === projectId)
+      const hasProjectTasks = allTasks.some(t => t.projectId === projectId)
+      const hasExistingData = existingProject && (hasProjectSections || hasProjectTasks)
+
+      // Sadece cache'de veri yoksa loading göster
+      if (!hasExistingData) {
+        setIsLoading(true)
       }
       
-      // Tüm API çağrılarını paralel yap
+      // Tüm API çağrılarını paralel yap (arka planda güncelleme için)
       const [projectResponse, sectionsResult, tasksResult] = await Promise.allSettled([
         fetch(`/api/projects/${projectId}`),
         fetchSections(projectId),
@@ -175,7 +185,7 @@ export default function ProjectDetailPage() {
       if (projectResponse.status === 'fulfilled' && projectResponse.value.ok) {
         const projectData = await projectResponse.value.json()
         setProject(projectData)
-      } else if (!hasExistingData) {
+      } else if (!existingProject) {
         throw new Error('Proje bulunamadı')
       }
 
@@ -187,6 +197,7 @@ export default function ProjectDetailPage() {
         console.warn('Tasks yüklenemedi:', tasksResult.reason)
       }
 
+      // Loading'i kapat
       setIsLoading(false)
     } catch (error) {
       console.error('Proje verileri alınırken hata oluştu:', error)
@@ -203,8 +214,28 @@ export default function ProjectDetailPage() {
   const tasksWithoutSection = getTasksWithoutSection(projectId)
 
   useEffect(() => {
+    // İlk yükleme sırasında cache kontrolü yap
+    const existingProject = projects.find(p => p.id === projectId)
+    
+    // Proje store'da varsa hemen set et
+    if (existingProject) {
+      setProject(existingProject)
+      
+      // Bu projenin sections/tasks'ları daha önce yüklenmiş mi kontrol et
+      const { sections: allSections = [] } = useProjectStore.getState()
+      const { tasks: allTasks = [] } = useTaskStore.getState()
+      
+      const hasProjectSections = allSections.some(s => s.projectId === projectId)
+      const hasProjectTasks = allTasks.some(t => t.projectId === projectId)
+      
+      // En azından sections veya tasks yüklenmişse loading'i kapat
+      if (hasProjectSections || hasProjectTasks) {
+        setIsLoading(false)
+      }
+    }
+    
     fetchProjectData()
-  }, [projectId, fetchProjectData])
+  }, [projectId])
 
   // Section ID'lerini memoize et
   const sectionIds = useMemo(() => sections.map(s => s.id), [sections])
@@ -383,15 +414,8 @@ export default function ProjectDetailPage() {
     setIsEditingNotes(false)
   }
 
-  if (isLoading && !project) {
-    return (
-      <div className="container mx-auto p-6">
-        <ProjectSkeleton />
-      </div>
-    )
-  }
-
-  if (error || !project) {
+  // Header için hemen yükle, sadece project bulunamazsa hata göster
+  if (error || (!project && !isLoading)) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
@@ -403,11 +427,12 @@ export default function ProjectDetailPage() {
           <h1 className="text-2xl font-bold">Proje Bulunamadı</h1>
         </div>
         <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-lg">
-          <p className="text-destructive">{error}</p>
+          <p className="text-destructive">{error || 'Proje yüklenemedi'}</p>
         </div>
       </div>
     )
   }
+
 
   return (
     <TooltipProvider>
@@ -424,174 +449,192 @@ export default function ProjectDetailPage() {
           
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              {project.emoji ? (
+              {project?.emoji ? (
                 <span className="text-xl">{project.emoji}</span>
-              ) : (
+              ) : project ? (
                 <div className="w-6 h-6 rounded-full bg-primary" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-muted animate-pulse" />
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{project.name}</h1>
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center space-x-1">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>{getCompletedTasksCount(projectId)}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Tamamlanan görevler</p>
-                  </TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center space-x-1">  
-                      <Clock className="h-3 w-3 text-primary" />
-                      <span>{getPendingTasksCount(projectId)}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Bekleyen görevler</p>
-                  </TooltipContent>
-                </Tooltip>
-                
-                {getOverdueTasksCountByProject(projectId) > 0 && (
+              <h1 className="text-2xl font-bold">
+                {project?.name || (
+                  <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+                )}
+              </h1>
+              {project && (
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center space-x-1">
-                        <TriangleAlert className="h-3 w-3 text-destructive" />
-                        <span className="text-destructive font-medium">{getOverdueTasksCountByProject(projectId)}</span>
+                        <Check className="h-3 w-3 text-green-500" />
+                        <span>{getCompletedTasksCount(projectId)}</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Süresi geçmiş görevler</p>
+                      <p>Tamamlanan görevler</p>
                     </TooltipContent>
                   </Tooltip>
-                )}
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ 
-                          width: `${((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100}%` 
-                        }}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Tamamlanma oranı</p>
-                  </TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-xs font-medium">
-                      {Math.round(((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100)}%
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Tamamlanma yüzdesi</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center space-x-1">  
+                        <Clock className="h-3 w-3 text-primary" />
+                        <span>{getPendingTasksCount(projectId)}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Bekleyen görevler</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  {getOverdueTasksCountByProject(projectId) > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-1">
+                          <TriangleAlert className="h-3 w-3 text-destructive" />
+                          <span className="text-destructive font-medium">{getOverdueTasksCountByProject(projectId)}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Süresi geçmiş görevler</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary rounded-full transition-all"
+                          style={{ 
+                            width: `${((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Tamamlanma oranı</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs font-medium">
+                        {Math.round(((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100)}%
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Tamamlanma yüzdesi</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center space-x-3">
-          {/* Tamamlananları Göster/Gizle Switch */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="show-completed" className="text-sm text-muted-foreground">
-              Tamamlananlar
-            </label>
-            <Switch
-              id="show-completed"
-              checked={showCompletedTasks}
-              onCheckedChange={toggleShowCompletedTasks}
-            />
+        {project && (
+          <div className="flex items-center space-x-3">
+            {/* Tamamlananları Göster/Gizle Switch */}
+            <div className="flex items-center space-x-2">
+              <label htmlFor="show-completed" className="text-sm text-muted-foreground">
+                Tamamlananlar
+              </label>
+              <Switch
+                id="show-completed"
+                checked={showCompletedTasks}
+                onCheckedChange={toggleShowCompletedTasks}
+              />
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // İlk bölümü default section olarak seç
+                const firstSection = sections.length > 0 ? sections[0] : undefined
+                setTaskModalContext({
+                  project: { id: project.id, name: project.name, emoji: project.emoji },
+                  section: firstSection ? { id: firstSection.id, name: firstSection.name, projectId: project.id } : undefined
+                })
+                setIsTaskModalOpen(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Görev
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  İşlemler
+                  <MoreVertical className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={() => setIsSectionModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Bölüm Ekle
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Projeyi Düzenle
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsTimelineModalOpen(true)}>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Proje Zaman Çizelgesi
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Projeyi Sil
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              // İlk bölümü default section olarak seç
-              const firstSection = sections.length > 0 ? sections[0] : undefined
-              setTaskModalContext({
-                project: { id: project.id, name: project.name, emoji: project.emoji },
-                section: firstSection ? { id: firstSection.id, name: firstSection.name, projectId: project.id } : undefined
-              })
-              setIsTaskModalOpen(true)
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Görev
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                İşlemler
-                <MoreVertical className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={() => setIsSectionModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Bölüm Ekle
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Projeyi Düzenle
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsTimelineModalOpen(true)}>
-                <Clock className="h-4 w-4 mr-2" />
-                Proje Zaman Çizelgesi
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Projeyi Sil
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        )}
       </div>
 
       {/* Proje Notları */}
-      {isEditingNotes ? (
-        <Input
-          value={notesValue}
-          onChange={(e) => handleNotesChange(e.target.value)}
-          onBlur={handleBlurNotes}
-          placeholder="Projeyle ilgili not girin..."
-          className="text-sm"
-          autoFocus
-        />
-      ) : (
-        <div 
-          className="min-h-[32px] cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center"
-          onClick={handleStartEditingNotes}
-        >
-          {project.notes ? (
-            <p className="flex-1">{project.notes}</p>
-          ) : (
-            <p className="italic flex-1">Projeyle ilgili not girin...</p>
-          )}
-        </div>
+      {project && (
+        isEditingNotes ? (
+          <Input
+            value={notesValue}
+            onChange={(e) => handleNotesChange(e.target.value)}
+            onBlur={handleBlurNotes}
+            placeholder="Projeyle ilgili not girin..."
+            className="text-sm"
+            autoFocus
+          />
+        ) : (
+          <div 
+            className="min-h-[32px] cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center"
+            onClick={handleStartEditingNotes}
+          >
+            {project.notes ? (
+              <p className="flex-1">{project.notes}</p>
+            ) : (
+              <p className="italic flex-1">Projeyle ilgili not girin...</p>
+            )}
+          </div>
+        )
       )}
 
       {/* Bölümler ve Görevler */}
-      {sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 && tasksWithoutSection.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          <div className="h-24 bg-muted rounded-lg animate-pulse" />
+          <div className="h-32 bg-muted rounded-lg animate-pulse" />
+          <div className="h-28 bg-muted rounded-lg animate-pulse" />
+        </div>
+      ) : sections.length === 0 && getOverdueTasksByProject(projectId).length === 0 && tasksWithoutSection.length === 0 ? (
         <div className="text-center p-8 border-2 border-dashed border-muted rounded-lg">
           <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
             {project.emoji ? (
@@ -881,7 +924,12 @@ export default function ProjectDetailPage() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-3 overflow-visible">
-                  {sectionTasks.length === 0 ? (
+                  {isLoading ? (
+                    <div className="space-y-3">
+                      <div className="h-16 bg-muted rounded-lg animate-pulse" />
+                      <div className="h-16 bg-muted rounded-lg animate-pulse" />
+                    </div>
+                  ) : sectionTasks.length === 0 ? (
                     <div className="text-center p-6 border-2 border-dashed border-muted rounded-lg">
                       <p className="text-muted-foreground mb-2">Bu bölümde henüz görev yok</p>
                       <Button 
