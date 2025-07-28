@@ -52,7 +52,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 tag: true
               }
             },
-            reminders: true,
             subTasks: {
               include: {
                 tags: {
@@ -60,12 +59,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                     tag: true
                   }
                 },
-                reminders: true
               }
             }
           }
         },
-        reminders: true,
         _count: {
           select: {
             comments: true

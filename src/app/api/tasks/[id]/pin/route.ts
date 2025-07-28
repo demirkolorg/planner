@@ -41,7 +41,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             tag: true
           }
         },
-        reminders: true,
         subTasks: {
           include: {
             tags: {
@@ -49,8 +48,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 tag: true
               }
             },
-            reminders: true,
-          }
+              }
         },
         project: true,
         section: true

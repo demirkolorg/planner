@@ -45,14 +45,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             }
           }
         },
-        reminders: {
-          select: {
-            id: true,
-            datetime: true,
-            message: true,
-            isActive: true
-          }
-        },
         section: {
           select: {
             id: true,

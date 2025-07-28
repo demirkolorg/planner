@@ -22,7 +22,6 @@ interface CreateTaskRequest {
   priority?: string
   dueDate?: string  // ISO date string
   tags?: string[]  // Tag name'leri
-  reminders?: string[]  // DateTime string'leri
   parentTaskId?: string  // Alt görev için parent task ID'si
 }
 
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
       priority = "Yok",
       dueDate,
       tags = [],
-      reminders = [],
       parentTaskId
     } = body
 
@@ -123,7 +121,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Transaction ile task, tag ilişkileri ve reminder'ları oluştur
+    // Transaction ile task ve tag ilişkilerini oluştur
     const result = await db.$transaction(async (tx) => {
       // Task oluştur
       const task = await tx.task.create({
@@ -162,17 +160,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Reminder'ları oluştur
-      if (reminders.length > 0) {
-        const reminderData = reminders.map(reminderDateTime => ({
-          taskId: task.id,
-          datetime: new Date(reminderDateTime)
-        }))
-
-        await tx.reminder.createMany({
-          data: reminderData
-        })
-      }
 
       // Task'ı ilişkili verilerle birlikte döndür
       const result = await tx.task.findUnique({
@@ -185,15 +172,13 @@ export async function POST(request: NextRequest) {
               tag: true
             }
           },
-          reminders: true,
           subTasks: {
             include: {
               tags: {
                 include: {
                   tag: true
                 }
-              },
-              reminders: true,
+              }
             }
           }
         }
@@ -265,7 +250,6 @@ export async function GET(request: NextRequest) {
             tag: true
           }
         },
-        reminders: true,
         subTasks: {
           include: {
             tags: {
@@ -273,7 +257,6 @@ export async function GET(request: NextRequest) {
                 tag: true
               }
             },
-            reminders: true,
           }
         },
         _count: {

@@ -31,8 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           include: {
             tag: true
           }
-        },
-        reminders: true
+        }
       }
     })
 
@@ -51,8 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           include: {
             tag: true
           }
-        },
-        reminders: true
+        }
       }
     })
 
@@ -84,17 +82,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         })
       }
 
-      // Hatırlatıcıları klonla
-      if (originalTask.reminders && originalTask.reminders.length > 0) {
-        await tx.reminder.createMany({
-          data: originalTask.reminders.map(reminder => ({
-            taskId: newTask.id,
-            datetime: reminder.datetime,
-            message: reminder.message,
-            isActive: reminder.isActive
-          }))
-        })
-      }
 
       // Alt görevleri recursively klonla
       if (subTasks && subTasks.length > 0) {
@@ -124,17 +111,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             })
           }
 
-          // Alt görev hatırlatıcılarını klonla
-          if (subTask.reminders && subTask.reminders.length > 0) {
-            await tx.reminder.createMany({
-              data: subTask.reminders.map(reminder => ({
-                taskId: clonedSubTask.id,
-                datetime: reminder.datetime,
-                message: reminder.message,
-                isActive: reminder.isActive
-              }))
-            })
-          }
         }
       }
 
@@ -147,15 +123,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               tag: true
             }
           },
-          reminders: true,
           subTasks: {
             include: {
               tags: {
                 include: {
                   tag: true
                 }
-              },
-              reminders: true
+              }
             }
           },
           section: true

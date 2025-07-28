@@ -129,15 +129,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             tag: true
           }
         },
-        reminders: true,
         subTasks: {
           include: {
             tags: {
               include: {
                 tag: true
               }
-            },
-            reminders: true,
+            }
           }
         },
         section: true
@@ -270,15 +268,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             tag: true
           }
         },
-        reminders: true,
         subTasks: {
           include: {
             tags: {
               include: {
                 tag: true
               }
-            },
-            reminders: true,
+            }
           }
         },
         section: true

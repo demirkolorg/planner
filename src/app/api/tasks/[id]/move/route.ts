@@ -83,7 +83,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               tag: true
             }
           },
-          reminders: true,
           subTasks: {
             include: {
               tags: {
@@ -91,7 +90,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                   tag: true
                 }
               },
-              reminders: true
             }
           },
           section: true
