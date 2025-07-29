@@ -25,6 +25,7 @@ export default function RootLayout({
     <html lang="tr" suppressHydrationWarning>
       <body
         className={`${poppins.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
         <QueryProvider>
           <ThemeProvider

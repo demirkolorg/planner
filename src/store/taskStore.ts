@@ -444,18 +444,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }
     }
     
-    // Eğer child task complete ediliyor ve parent varsa, parent durumunu kontrol et
-    if (willBeCompleted && task.parentTaskId) {
-      const siblings = state.tasks.filter(t => t.parentTaskId === task.parentTaskId)
-      const allSiblingsCompleted = siblings.every(sibling => 
-        sibling.id === id ? true : sibling.completed
-      )
-      
-      // Tüm siblings complete ise parent'ı da complete et
-      if (allSiblingsCompleted) {
-        await state.updateTask(task.parentTaskId, { completed: true })
-      }
-    }
+    // Alt görevler tamamlandığında ana görevi otomatik tamamlama - kaldırıldı
+    // Kullanıcı ana görevi manuel olarak tamamlamalıdır
     
     // Eğer child task incomplete ediliyor ve parent complete ise, parent'ı da incomplete et
     if (!willBeCompleted && task.parentTaskId) {

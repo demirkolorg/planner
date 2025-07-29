@@ -172,9 +172,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       case "Gecikmiş":
         return getOverdueTasks().length
       case "Bu Hafta":
-        const count = getCurrentWeekTasksCount()
-        console.log('Sidebar - Current week tasks count:', count)
-        return count
+        return getCurrentWeekTasksCount()
       case "Tamamlandı":
         return getTotalCompletedTasksCount()
       case "Etiketler":

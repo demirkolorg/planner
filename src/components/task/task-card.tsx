@@ -76,6 +76,8 @@ interface TaskCardProps {
   isExpanded?: boolean
   hasChildren?: boolean
   onToggleExpanded?: () => void
+  // Highlight için prop
+  isHighlighted?: boolean
 }
 
 
@@ -98,7 +100,9 @@ export function TaskCard({
   // Hiyerarşik görünüm props
   isExpanded: externalIsExpanded,
   hasChildren: externalHasChildren,
-  onToggleExpanded: externalOnToggleExpanded
+  onToggleExpanded: externalOnToggleExpanded,
+  // Highlight prop
+  isHighlighted = false
 }: TaskCardProps) {
   // İç expansion state (eski davranış için fallback)
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
@@ -124,6 +128,7 @@ export function TaskCard({
   
   // Proje sayfasında mı kontrol et
   const isOnProjectPage = pathname.startsWith('/projects/') && pathname.includes(task.projectId)
+  
   
   
   const handleToggleComplete = async () => {
@@ -298,6 +303,7 @@ export function TaskCard({
         <div
           className={cn(
             "flex items-center p-2 transition-colors",
+            isHighlighted && "animate-pulse bg-yellow-400 dark:bg-yellow-400 shadow-lg shadow-yellow-500",
             isExpanded
               ? "hover:bg-accent/50 rounded-t-lg"
               : "hover:bg-accent/50 rounded-lg"
@@ -390,7 +396,7 @@ export function TaskCard({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link 
-                        href={`/projects/${task.projectId}`}
+                        href={`/projects/${task.projectId}?highlight=${task.id}`}
                         className={cn(
                           "flex-shrink-0 transition-opacity duration-200",
                           isHovered ? "opacity-100" : "opacity-0"

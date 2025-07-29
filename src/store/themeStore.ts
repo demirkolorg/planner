@@ -106,7 +106,7 @@ export const useThemeStore = create<ThemeState>()(
               body.classList.remove(cls)
             })
             
-            // Yeni tema sınıfını ekle
+            // Yeni tema sınıfını ekle - sadece client-side'da
             const newThemeClass = `theme-${state.colorTheme}`
             root.classList.add(newThemeClass)
             body.classList.add(newThemeClass)
@@ -123,9 +123,8 @@ export const useThemeStore = create<ThemeState>()(
             }
           }
           
-          // İlk render'da hemen uygula, sonra da bir kez daha garanti için
-          applyThemes()
-          requestAnimationFrame(applyThemes)
+          // Hydration mismatch'ini önlemek için sadece client-side'da uygula
+          setTimeout(applyThemes, 0)
         }
       },
     }

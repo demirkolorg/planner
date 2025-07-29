@@ -24,6 +24,7 @@ interface TaskItemProps {
   onUpdateReminders?: (taskId: string, reminders: string[]) => void
   onEdit?: (task: TaskWithHierarchy) => void
   onComment?: (taskId: string, taskTitle: string) => void
+  isHighlighted?: boolean
 }
 
 export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
@@ -44,6 +45,7 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
   onUpdateReminders,
   onEdit,
   onComment,
+  isHighlighted,
   ...props
 }, ref) => {
   const level = task.level || 0
@@ -100,6 +102,8 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
           isExpanded={isExpanded}
           hasChildren={hasChildren}
           onToggleExpanded={onToggleExpanded}
+          // Highlight state
+          isHighlighted={isHighlighted}
         />
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown, Calendar, CalendarClock, Zap, Hash, SortAsc, SortDesc, CalendarDays } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -61,7 +61,9 @@ interface Project extends Omit<ProjectType, 'createdAt' | 'updatedAt'> {
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const projectId = params.id as string
+  const [highlightTaskId, setHighlightTaskId] = useState<string | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -313,6 +315,33 @@ export default function ProjectDetailPage() {
     
     fetchProjectData()
   }, [projectId])
+
+  // Highlight task effect - görevler yüklendikten sonra çalışsın
+  useEffect(() => {
+    const highlightParam = searchParams.get('highlight')
+    
+    // Görevler yüklenmiş ve highlight parametresi varsa
+    if (highlightParam && !isLoading) {
+      // Kısa bir gecikme ile highlight'ı aktif et (DOM'un render olması için)
+      const highlightTimer = setTimeout(() => {
+        setHighlightTaskId(highlightParam)
+        
+        // 3 saniye sonra highlight'ı kaldır
+        const clearTimer = setTimeout(() => {
+          setHighlightTaskId(null)
+          
+          // URL'den highlight parametresini temizle
+          const url = new URL(window.location.href)
+          url.searchParams.delete('highlight')
+          router.replace(url.pathname + url.search)
+        }, 3000)
+        
+        return () => clearTimeout(clearTimer)
+      }, 100) // 100ms gecikme
+      
+      return () => clearTimeout(highlightTimer)
+    }
+  }, [searchParams, router, isLoading])
 
   // Section ID'lerini memoize et
   const sectionIds = useMemo(() => sections.map(s => s.id), [sections])
@@ -857,6 +886,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to move task:', error)
                     }
                   }}
+                  highlightTaskId={highlightTaskId}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -960,6 +990,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to move task:', error)
                     }
                   }}
+                  highlightTaskId={highlightTaskId}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -1120,7 +1151,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onAddSubTask={(parentTaskId) => {
-                        const parentTask = sectionTasks.find(t => t.id === parentTaskId)
+                        const parentTask = sectionTasks.find(t => t.id === taskId)
                         setTaskModalContext({
                           project: { id: project.id, name: project.name, emoji: project.emoji },
                           section: { id: section.id, name: section.name, projectId: project.id },
@@ -1160,6 +1191,7 @@ export default function ProjectDetailPage() {
                           console.error('Failed to move task:', error)
                         }
                       }}
+                      highlightTaskId={highlightTaskId}
                     />
                   )}
                 </AccordionContent>

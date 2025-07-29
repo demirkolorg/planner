@@ -21,6 +21,7 @@ interface HierarchicalTaskListProps {
   onComment?: (taskId: string, taskTitle: string) => void
   className?: string
   showTreeConnectors?: boolean
+  highlightTaskId?: string | null
 }
 
 export function HierarchicalTaskList({
@@ -38,7 +39,8 @@ export function HierarchicalTaskList({
   onEdit,
   onComment,
   className = "",
-  showTreeConnectors = true
+  showTreeConnectors = true,
+  highlightTaskId
 }: HierarchicalTaskListProps) {
   // Expand/collapse state management
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set())
@@ -118,6 +120,7 @@ export function HierarchicalTaskList({
             onUpdateReminders={onUpdateReminders}
             onEdit={onEdit}
             onComment={onComment}
+            isHighlighted={highlightTaskId === task.id}
           />
         )
       })}
