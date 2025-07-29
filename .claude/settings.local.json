@@ -38,7 +38,8 @@
       "Bash(grep:*)",
       "Bash(npx tsc:*)",
       "Bash(fuser:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(del test-google-ai.js)"
     ],
     "deny": []
   }

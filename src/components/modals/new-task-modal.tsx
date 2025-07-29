@@ -552,14 +552,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         // TagStore'u güncelle (yeni etiketler eklenmişse)
         await fetchTags()
         
-        // Başarı mesajı göster
-        const tagCount = data.tags.length
-        const source = data.source === 'ai' ? 'AI tarafından' : 'sistem tarafından'
-        setAlertConfig({
-          isOpen: true,
-          title: "🤖 AI Etiket Önerileri",
-          message: `${tagCount} adet etiket ${source} önerildi ve seçildi: ${data.tags.map((tag: any) => tag.name).join(', ')}`
-        })
+        // Başarı mesajı gösterme
       }
     } catch (error) {
       console.error('Tag suggestion error:', error)
@@ -751,65 +744,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
               placeholder="Yapılacak adı"
               onKeyDown={handleKeyDown}
               autoFocus
-              className="pr-10"
             />
-            {title.trim() && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleImproveTitle}
-                    disabled={isTitleAILoading}
-                    className="absolute top-1/2 right-2 -translate-y-1/2 h-6 w-6 p-0"
-                  >
-                    <div className="relative">
-                      <Sparkles 
-                        className={`h-3 w-3 transition-all duration-300 ${
-                          isTitleAILoading 
-                            ? 'text-primary animate-pulse scale-110' 
-                            : 'text-primary hover:scale-110'
-                        }`}
-                        style={{
-                          animation: isTitleAILoading 
-                            ? 'sparkle 1.5s ease-in-out infinite' 
-                            : undefined
-                        }}
-                      />
-                      {/* Sparkle effect for title */}
-                      {isTitleAILoading && (
-                        <div className="absolute -inset-2 opacity-75 pointer-events-none">
-                          <div 
-                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
-                            style={{ 
-                              animation: 'twinkle 2s ease-in-out infinite',
-                              animationDelay: '0s' 
-                            }} 
-                          />
-                          <div 
-                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-primary/40 rounded-full"
-                            style={{ 
-                              animation: 'twinkle 2s ease-in-out infinite',
-                              animationDelay: '0.7s' 
-                            }} 
-                          />
-                          <div 
-                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-primary/80 rounded-full"
-                            style={{ 
-                              animation: 'twinkle 2s ease-in-out infinite',
-                              animationDelay: '1.4s' 
-                            }} 
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isTitleAILoading ? 'AI başlığı geliştiriyor...' : 'AI ile başlığı geliştir'}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
           </div>
 
           {/* Description Input */}
@@ -920,13 +855,46 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     disabled={isTagAILoading || !title.trim()}
                     className="h-6 w-6 p-0 ml-1"
                   >
-                    <Brain 
-                      className={`h-3 w-3 ${
-                        isTagAILoading 
-                          ? 'text-primary animate-pulse' 
-                          : 'text-muted-foreground hover:text-primary'
-                      }`}
-                    />
+                    <div className="relative">
+                      <Sparkles 
+                        className={`h-3 w-3 transition-all duration-300 ${
+                          isTagAILoading 
+                            ? 'text-primary animate-pulse scale-110' 
+                            : 'text-muted-foreground hover:text-primary hover:scale-110'
+                        }`}
+                        style={{
+                          animation: isTagAILoading 
+                            ? 'sparkle 1.5s ease-in-out infinite' 
+                            : undefined
+                        }}
+                      />
+                      {/* Sparkle effect for tag suggestion */}
+                      {isTagAILoading && (
+                        <div className="absolute -inset-2 opacity-75 pointer-events-none">
+                          <div 
+                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-primary/40 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0.7s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-primary/80 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '1.4s' 
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </div>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -949,13 +917,46 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     disabled={isTagAILoading || !title.trim()}
                     className="h-6 w-6 p-0"
                   >
-                    <Brain 
-                      className={`h-3 w-3 ${
-                        isTagAILoading 
-                          ? 'text-primary animate-pulse' 
-                          : 'text-muted-foreground hover:text-primary'
-                      }`}
-                    />
+                    <div className="relative">
+                      <Sparkles 
+                        className={`h-3 w-3 transition-all duration-300 ${
+                          isTagAILoading 
+                            ? 'text-primary animate-pulse scale-110' 
+                            : 'text-muted-foreground hover:text-primary hover:scale-110'
+                        }`}
+                        style={{
+                          animation: isTagAILoading 
+                            ? 'sparkle 1.5s ease-in-out infinite' 
+                            : undefined
+                        }}
+                      />
+                      {/* Sparkle effect for tag suggestion */}
+                      {isTagAILoading && (
+                        <div className="absolute -inset-2 opacity-75 pointer-events-none">
+                          <div 
+                            className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -top-0.5 -right-1 w-0.5 h-0.5 bg-primary/40 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '0.7s' 
+                            }} 
+                          />
+                          <div 
+                            className="absolute -bottom-0.5 -left-0.5 w-0.5 h-0.5 bg-primary/80 rounded-full"
+                            style={{ 
+                              animation: 'twinkle 2s ease-in-out infinite',
+                              animationDelay: '1.4s' 
+                            }} 
+                          />
+                        </div>
+                      )}
+                    </div>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -10,42 +9,36 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-enum UserRole {
-  ADMIN
-  USER
-}
-
 model User {
-  id               String            @id @default(cuid())
-  firstName        String
-  lastName         String
-  email            String            @unique
-  password         String
-  role             UserRole          @default(USER)
-  emailVerified    Boolean           @default(false)
-  projects         Project[]
-  tasks            Task[]
-  tags             Tag[]
-  taskActivities   TaskActivity[]
+  id                String            @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String            @unique
+  password          String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  emailVerified     Boolean           @default(false)
+  role              UserRole          @default(USER)
+  comments          Comment[]
+  otps              EmailOTP[]
+  projects          Project[]
   projectActivities ProjectActivity[]
-  comments         Comment[]
-  otps             EmailOTP[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  tags              Tag[]
+  tasks             Task[]
+  taskActivities    TaskActivity[]
 }
 
 model EmailOTP {
   id        String   @id @default(cuid())
   email     String
   code      String
-  type      String   // "VERIFICATION", "RESET_PASSWORD"
+  type      String
   expiresAt DateTime
   used      Boolean  @default(false)
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([email, type])
 }
 
@@ -55,12 +48,12 @@ model Project {
   emoji      String?
   notes      String?
   userId     String
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks      Task[]
-  sections   Section[]
-  activities ProjectActivity[]
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities ProjectActivity[]
+  sections   Section[]
+  tasks      Task[]
 }
 
 model Task {
@@ -72,30 +65,30 @@ model Task {
   dueDate      DateTime?
   isPinned     Boolean        @default(false)
   parentTaskId String?
-  parentTask   Task?          @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
-  subTasks     Task[]         @relation("SubTasks")
   projectId    String
-  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   sectionId    String?
-  section      Section?       @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   userId       String
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags         TaskTag[]
-  activities   TaskActivity[]
-  comments     Comment[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  comments     Comment[]
+  parentTask   Task?          @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subTasks     Task[]         @relation("SubTasks")
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  section      Section?       @relation(fields: [sectionId], references: [id])
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities   TaskActivity[]
+  tags         TaskTag[]
 }
 
 model Section {
   id        String   @id @default(cuid())
   name      String
   projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tasks     Task[]
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
 }
 
 model Tag {
@@ -103,66 +96,68 @@ model Tag {
   name      String
   color     String
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks     TaskTag[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     TaskTag[]
+
   @@unique([name, userId])
 }
 
 model TaskTag {
   id     String @id @default(cuid())
   taskId String
-  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   tagId  String
   tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
   @@unique([taskId, tagId])
 }
-
 
 model TaskActivity {
   id          String   @id @default(cuid())
   taskId      String
-  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  actionType  String   // "created", "updated", "completed", "priority_changed", "tag_added", "tag_removed", "moved", "deleted", "comment_added", "comment_deleted"
+  actionType  String
   oldValue    String?
   newValue    String?
   description String
   createdAt   DateTime @default(now())
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
   id        String    @id @default(cuid())
   content   String
   taskId    String
-  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   parentId  String?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("CommentReplies")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProjectActivity {
   id          String   @id @default(cuid())
   projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  actionType  String   // "project_created", "project_updated", "project_deleted", "section_created", "section_moved", "section_deleted", "task_created", "task_completed", "task_uncompleted"
-  entityType  String   // "project", "section", "task"
-  entityId    String?  // ID of section or task if applicable
-  entityName  String?  // Name of section or task for easier display
+  actionType  String
+  entityType  String
+  entityId    String?
+  entityName  String?
   oldValue    String?
   newValue    String?
   description String
   createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
+enum UserRole {
+  ADMIN
+  USER
+}

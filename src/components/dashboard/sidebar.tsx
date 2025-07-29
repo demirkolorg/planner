@@ -117,8 +117,11 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
 
   const handleCreateProject = async (name: string, emoji: string) => {
     try {
-      await createProject(name, emoji)
-    } catch {
+      const newProject = await createProject(name, emoji)
+      // Proje detay sayfasına yönlendir
+      router.push(`/projects/${newProject.id}`)
+    } catch (error) {
+      console.error('Error creating project:', error)
     }
   }
 

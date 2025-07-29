@@ -1,7 +1,7 @@
 // AI yardımcı fonksiyonları
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY!)
 
 export interface AITaskSuggestion {
   title: string
@@ -109,48 +109,47 @@ export async function generateTaskSuggestion(
     
     const contextStr = context.length > 0 ? `${context.join(', ')} için ` : ''
     
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{
-          role: 'user',
-          content: `${contextStr}"${prompt}" ile ilgili kısa ve net bir görev başlığı ve açıklama oluştur. Türkçe olsun. JSON formatında döndür: {"title": "görev başlığı", "description": "görev açıklaması"}`
-        }],
-        max_tokens: 200,
-        temperature: 0.7
-      })
-    })
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    
+    const aiPrompt = `Sen bir görev yönetimi uzmanısın. ${contextStr}Verilen talep için profesyonel bir görev oluştur.
 
-    if (!response.ok) {
-      throw new Error(`AI API hatası: ${response.status}`)
-    }
+TALEP: "${prompt}"
 
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content
+KURALLLAR:
+- Görev başlığı: Net, somut ve aksiyona yönelik (maksimum 60 karakter)
+- Açıklama: Detaylı ama kısa, ne yapılacağını açıkla (maksimum 150 karakter)  
+- Türkçe kullan
+- JSON formatında döndür
+
+YANIT FORMATI:
+{"title": "Görev başlığı", "description": "Görev açıklaması"}
+
+ÖRNEKİER:
+Talep: "web sitesi tasarımı" → {"title": "Web sitesi tasarımını tamamla", "description": "Modern ve responsive bir web sitesi tasarımı oluştur, kullanıcı deneyimini optimize et"}
+Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "description": "Geçen ayın satış ve performans verilerini analiz ederek detaylı rapor oluştur"}`
+
+    const result = await model.generateContent(aiPrompt)
+
+    const content = result.response.text()
 
     if (!content) {
       throw new Error('AI yanıtı alınamadı')
     }
 
     // JSON parse et
-    let result
+    let parsedResult
     try {
       // AI yanıtından JSON'u çıkarmaya çalış
       const jsonMatch = content.match(/\{[^{}]*\}/)
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0])
+        parsedResult = JSON.parse(jsonMatch[0])
       } else {
         // JSON bulunamazsa fallback
-        result = { title: prompt, description: `${prompt} ile ilgili görev` }
+        parsedResult = { title: prompt, description: `${prompt} ile ilgili görev` }
       }
     } catch (parseError) {
       // Parse edilemezse fallback
-      result = { title: prompt, description: `${prompt} ile ilgili görev` }
+      parsedResult = { title: prompt, description: `${prompt} ile ilgili görev` }
     }
     
     // Rastgele ekstra özellikler oluştur
@@ -160,8 +159,8 @@ export async function generateTaskSuggestion(
     const randomReminders = getRandomReminders(randomDueDate, parentTaskDueDate)
     
     return {
-      title: result.title || prompt,
-      description: result.description || 'AI tarafından oluşturulan görev açıklaması',
+      title: parsedResult.title || prompt,
+      description: parsedResult.description || 'AI tarafından oluşturulan görev açıklaması',
       priority: randomPriority,
       tags: randomTags,
       dueDate: randomDueDate,
@@ -187,29 +186,26 @@ export async function generateTaskSuggestion(
 
 export async function improveBrief(brief: string): Promise<string> {
   try {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{
-          role: 'user',
-          content: `Bu görev açıklamasını daha detaylı ve anlaşılır hale getir: "${brief}". Türkçe olsun ve kısa tut.`
-        }],
-        max_tokens: 150,
-        temperature: 0.6
-      })
-    })
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    
+    const result = await model.generateContent(
+      `Sen bir görev yönetimi uzmanısın. Verilen görev açıklamasını geliştir.
 
-    if (!response.ok) {
-      throw new Error(`AI API hatası: ${response.status}`)
-    }
+MEVCUT AÇIKLAMA: "${brief}"
 
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content
+KURALLLAR:
+- Daha detaylı ve net açıklama yap
+- Ne yapılacağını somut şekilde belirt  
+- Türkçe kullan ve profesyonel ol
+- Maksimum 200 karakter
+- Sadece iyileştirilmiş açıklamayı döndür
+
+ÖRNEK:
+Girdi: "rapor yaz" → Çıktı: "Aylık satış verilerini analiz ederek kapsamlı performans raporu hazırla, grafik ve tablolarla destekle"
+Girdi: "toplantı yap" → Çıktı: "Proje ilerleyişi hakkında ekip toplantısı düzenle, güncel durumu paylaş ve sonraki adımları belirle"`
+    )
+
+    const content = result.response.text()
 
     return content || brief
   } catch (error) {
@@ -223,35 +219,28 @@ export async function improveTitle(title: string): Promise<string> {
   }
 
   try {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{
-          role: 'user',
-          content: `Bu görev başlığını daha net ve profesyonel hale getir: "${title}". 
-          Önemli kurallar:
-          - Türkçe olsun
-          - Maksimum 50 karakter
-          - Net ve anlaşılır
-          - Aksiyona yönelik (fiil ile başla)
-          - Sadece düzeltilmiş başlığı döndür, başka açıklama ekleme`
-        }],
-        max_tokens: 50,
-        temperature: 0.5
-      })
-    })
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    
+    const result = await model.generateContent(
+      `Sen bir görev yönetimi uzmanısın. Verilen görev başlığını iyileştir.
 
-    if (!response.ok) {
-      throw new Error(`AI API hatası: ${response.status}`)
-    }
+MEVCUT BAŞLIK: "${title}"
 
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content?.trim()
+KURALLLAR:
+- Aksiyona yönelik başlık oluştur (fiil ile başla)
+- Net, somut ve profesyonel ol
+- Türkçe kullan
+- Maksimum 50 karakter  
+- Sadece iyileştirilmiş başlığı döndür
+
+ÖRNEKLER:
+Girdi: "rapor" → Çıktı: "Aylık raporunu tamamla"
+Girdi: "toplantı" → Çıktı: "Ekip toplantısını düzenle"  
+Girdi: "web sitesi" → Çıktı: "Web sitesi tasarımını bitir"
+Girdi: "alışveriş" → Çıktı: "Haftalık alışverişi yap"`
+    )
+
+    const content = result.response.text().trim()
 
     return content || title
   } catch (error) {

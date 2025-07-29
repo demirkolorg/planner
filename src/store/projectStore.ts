@@ -33,7 +33,7 @@ interface ProjectStore {
   
   // Project Actions
   fetchProjects: () => Promise<void>
-  createProject: (name: string, emoji: string) => Promise<void>
+  createProject: (name: string, emoji: string) => Promise<Project>
   updateProject: (id: string, name: string, emoji: string) => Promise<void>
   deleteProject: (id: string) => Promise<void>
   
@@ -94,6 +94,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       set(state => ({
         projects: [...state.projects, newProject]
       }))
+      
+      return newProject
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'An error occurred' })
       throw error

@@ -2,55 +2,42 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { db } from "@/lib/db"
-import Groq from "groq-sdk"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 interface SuggestTagsRequest {
   title: string
   description?: string
 }
 
-// GROQ AI ile gerçek etiket önerisi
+// Google AI ile gerçek etiket önerisi
 async function generateTagsWithAI(title: string, description?: string): Promise<string[]> {
   try {
-    const groq = new Groq({
-      apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
-    })
+    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY!)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
-    const prompt = `
-Bir görev yönetimi uygulaması için etiket önerisi yapmanı istiyorum.
+    const prompt = `Sen bir görev yönetimi uzmanısın. Verilen görev bilgilerine göre en uygun etiketleri öner.
 
-Görev Başlığı: "${title}"
-${description ? `Görev Açıklaması: "${description}"` : ''}
+GÖREV BİLGİSİ:
+Başlık: "${title}"
+${description ? `Açıklama: "${description}"` : ''}
 
-Kurallar:
-1. Bu görev için en uygun 1-3 adet etiket öner
-2. Etiketler Türkçe olmalı
-3. Kısa ve açıklayıcı olmalı (maksimum 2 kelime)
-4. Sadece etiket isimlerini döndür, başka hiçbir şey yazma
-5. Her etiketi yeni satıra yaz
-6. Noktalama işareti kullanma
+TENİMAT KURALLARI:
+- 1-3 adet etiket öner (fazla değil)  
+- Türkçe ve kısa olsun (max 2 kelime)
+- Görevin kategorisini ve önemini yansıtsın
+- Sadece etiket isimlerini yaz, başka açıklama yapma
+- Her etiket ayrı satırda olsun
 
-Örnek etiketler: İş, Kişisel, Acil, Sağlık, Ev İşleri, Finans, Eğitim, Spor, Teknoloji, Tasarım, Araştırma, Sosyal, Seyahat, Okuma, Alışveriş
+ÖRNEK ETİKETLER:
+İş, Kişisel, Acil, Sağlık, Ev İşleri, Finans, Eğitim, Spor, Teknoloji, Tasarım, Araştırma, Sosyal, Seyahat, Okuma, Alışveriş, Toplantı, Yazılım, Proje
 
-Yanıt formatı:
-EtiketAdı1
-EtiketAdı2
-EtiketAdı3
-`
+YANIT FORMATI (örnek):
+İş
+Acil
+Teknoloji`
 
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama3-8b-8192",
-      temperature: 0.3,
-      max_tokens: 100,
-    })
-
-    const response = chatCompletion.choices[0]?.message?.content?.trim()
+    const result = await model.generateContent(prompt)
+    const response = result.response.text().trim()
     
     if (!response) {
       throw new Error('AI yanıt vermedi')
@@ -66,13 +53,13 @@ EtiketAdı3
     return tags.length > 0 ? tags : ['Genel']
     
   } catch (error) {
-    console.error('GROQ API error:', error)
+    console.error('Google AI API error:', error)
     // Fallback: Basit kelime analizi
     return generateFallbackTags(title, description)
   }
 }
 
-// Fallback etiket önerisi (GROQ başarısız olursa)
+// Fallback etiket önerisi (Google AI başarısız olursa)
 function generateFallbackTags(title: string, description?: string): string[] {
   const content = `${title} ${description || ''}`.toLowerCase()
   
@@ -122,7 +109,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 })
     }
 
-    // GROQ AI ile etiket önerilerini al
+    // Google AI ile etiket önerilerini al
     const suggestedTagNames = await generateTagsWithAI(title, description)
     
     // Önerilen etiketleri veritabanında oluştur veya bul
