@@ -4,7 +4,7 @@ import { STORAGE_KEYS, THEME } from '@/lib/constants'
 
 export type Theme = typeof THEME[keyof typeof THEME]
 
-export type ColorTheme = 'default' | 'nature' | 'amber' | 'boldtech' | 'supabase' | 'quantum'
+export type ColorTheme = 'default' | 'nature' | 'amber' | 'boldtech' | 'supabase' | 'quantum' | 'perpetuity' | 'yellow' | 'red' | 'rose' | 'orange' | 'green' | 'blue' | 'violet'
 
 interface ThemeState {
   theme: Theme
@@ -50,7 +50,7 @@ export const useThemeStore = create<ThemeState>()(
         const body = document.body
         
         // Mevcut tema sınıflarını hem root hem body'den temizle
-        const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase','theme-quantum']
+        const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet']
         
         themeClasses.forEach(cls => {
           root.classList.remove(cls)
@@ -87,28 +87,42 @@ export const useThemeStore = create<ThemeState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state && typeof window !== 'undefined') {
-          // Sayfa yüklendiğinde tema uygula
-          const root = document.documentElement
-          const effectiveTheme = state.theme === THEME.SYSTEM ? state.getSystemTheme() : state.theme
-          
-          root.classList.remove(THEME.LIGHT, THEME.DARK)
-          root.classList.add(effectiveTheme)
-          root.setAttribute('data-theme', effectiveTheme)
-          root.style.colorScheme = effectiveTheme
-          
-          // Renk temasını uygula
-          state.applyColorTheme(state.colorTheme)
-          
-          // System tema değişikliklerini dinle
-          if (state.theme === THEME.SYSTEM) {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-            const handleChange = () => {
-              if (state.theme === THEME.SYSTEM) {
-                state.setTheme(THEME.SYSTEM) // Yeniden uygula
+          // Hydration tamamlandıktan sonra temaları uygula
+          setTimeout(() => {
+            // Sayfa yüklendiğinde tema uygula
+            const root = document.documentElement
+            const body = document.body
+            const effectiveTheme = state.theme === THEME.SYSTEM ? state.getSystemTheme() : state.theme
+            
+            root.classList.remove(THEME.LIGHT, THEME.DARK)
+            root.classList.add(effectiveTheme)
+            root.setAttribute('data-theme', effectiveTheme)
+            root.style.colorScheme = effectiveTheme
+            
+            // Renk temasını uygula - body'den default tema sınıfını kaldır
+            const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet']
+            
+            themeClasses.forEach(cls => {
+              root.classList.remove(cls)
+              body.classList.remove(cls)
+            })
+            
+            // Yeni tema sınıfını ekle
+            const newThemeClass = `theme-${state.colorTheme}`
+            root.classList.add(newThemeClass)
+            body.classList.add(newThemeClass)
+            
+            // System tema değişikliklerini dinle
+            if (state.theme === THEME.SYSTEM) {
+              const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+              const handleChange = () => {
+                if (state.theme === THEME.SYSTEM) {
+                  state.setTheme(THEME.SYSTEM) // Yeniden uygula
+                }
               }
+              mediaQuery.addEventListener('change', handleChange)
             }
-            mediaQuery.addEventListener('change', handleChange)
-          }
+          }, 0)
         }
       },
     }

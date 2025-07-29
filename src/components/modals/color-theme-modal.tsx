@@ -66,6 +66,70 @@ const colorThemes: {
     primaryColor: '#ff6bef',
     secondaryColor: '#46204f',
     accentColor: '#5a1f5d'
+  },
+  {
+    id: 'perpetuity',
+    name: 'Perpetuity',
+    description: 'Sakin mavi tonları teması',
+    primaryColor: '#4a90c2',
+    secondaryColor: '#e8f2f7',
+    accentColor: '#2563eb'
+  },
+  {
+    id: 'yellow',
+    name: 'Yellow',
+    description: 'Parlak sarı tonları teması',
+    primaryColor: '#fbbf24',
+    secondaryColor: '#fffbeb',
+    accentColor: '#f59e0b'
+  },
+  {
+    id: 'red',
+    name: 'Red',
+    description: 'Güçlü kırmızı tonları teması',
+    primaryColor: '#dc2626',
+    secondaryColor: '#fef2f2',
+    accentColor: '#b91c1c'
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    description: 'Zarif pembe tonları teması',
+    primaryColor: '#e11d48',
+    secondaryColor: '#fff1f2',
+    accentColor: '#be185d'
+  },
+  {
+    id: 'orange',
+    name: 'Orange',
+    description: 'Canlı turuncu tonları teması',
+    primaryColor: '#ea580c',
+    secondaryColor: '#fff7ed',
+    accentColor: '#c2410c'
+  },
+  {
+    id: 'green',
+    name: 'Green',
+    description: 'Taze yeşil tonları teması',
+    primaryColor: '#16a34a',
+    secondaryColor: '#f0fdf4',
+    accentColor: '#15803d'
+  },
+  {
+    id: 'blue',
+    name: 'Blue',
+    description: 'Sakin mavi tonları teması',
+    primaryColor: '#2563eb',
+    secondaryColor: '#eff6ff',
+    accentColor: '#1d4ed8'
+  },
+  {
+    id: 'violet',
+    name: 'Violet',
+    description: 'Mistik mor tonları teması',
+    primaryColor: '#7c3aed',
+    secondaryColor: '#f5f3ff',
+    accentColor: '#6d28d9'
   }
 
 ]
@@ -79,62 +143,67 @@ export function ColorThemeModal({ isOpen, onClose }: ColorThemeModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0">
-        <DialogHeader className="px-6 py-4 border-b border-border">
+      <DialogContent className="sm:max-w-4xl max-h-[80vh] p-0 gap-0">
+        <DialogHeader className="px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
           <div className="flex items-center gap-2">
             <Palette className="h-5 w-5 text-primary" />
-            <DialogTitle className="text-lg font-semibold">Renk Teması</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Renk Teması Seçin</DialogTitle>
           </div>
         </DialogHeader>
         
-        <div className="p-6">
-          <div className="grid gap-3">
+        <div className="p-6 overflow-y-auto max-h-[60vh] scrollbar-thin-hover">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {colorThemes.map((theme) => (
               <div
                 key={theme.id}
                 className={cn(
-                  "group relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md",
+                  "group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02]",
                   colorTheme === theme.id 
-                    ? "border-primary bg-primary/5 shadow-sm" 
-                    : "border-border hover:border-primary/30 hover:bg-accent/30"
+                    ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/20" 
+                    : "border-border hover:border-primary/40 hover:bg-accent/50"
                 )}
                 onClick={() => handleThemeSelect(theme.id)}
               >
+                {/* Selected indicator */}
+                {colorTheme === theme.id && (
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                    <Check className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                )}
+                
                 {/* Color Preview */}
-                <div className="flex gap-1.5">
+                <div className="flex justify-center gap-1 mb-3">
                   <div 
-                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: theme.primaryColor }}
                   />
                   <div 
-                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: theme.secondaryColor }}
                   />
                   <div 
-                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: theme.accentColor }}
                   />
                 </div>
                 
                 {/* Theme Info */}
-                <div className="flex-1">
-                  <h4 className="font-semibold text-base">{theme.name}</h4>
-                  <p className="text-sm text-muted-foreground">{theme.description}</p>
+                <div className="text-center">
+                  <h4 className="font-semibold text-sm mb-1">{theme.name}</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{theme.description}</p>
                 </div>
                 
-                {/* Check Icon */}
-                <div className="flex-shrink-0">
-                  {colorTheme === theme.id ? (
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  ) : (
-                    <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/50 transition-colors" />
-                  )}
-                </div>
+                {/* Hover effect overlay */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
               </div>
             ))}
           </div>
+        </div>
+        
+        <div className="px-6 py-3 border-t border-border bg-muted/30">
+          <p className="text-xs text-center text-muted-foreground">
+            Tema seçimi anında uygulanır
+          </p>
         </div>
       </DialogContent>
     </Dialog>
