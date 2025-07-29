@@ -387,7 +387,7 @@ export function DashboardOverview() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {/* Ana İstatistik Kartları */}
         {mainStats.map((stat) => (
-          <Card key={stat.title} className="relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group hover:scale-105">
+          <Card key={stat.title} className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-primary/30">
             {/* Gradient Background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor} opacity-10 group-hover:opacity-15 transition-opacity duration-300`} />
             
@@ -399,7 +399,7 @@ export function DashboardOverview() {
             <CardContent className="relative p-3">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className={`inline-flex p-2 rounded-xl ${stat.bgColor} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
+                  <div className={`inline-flex p-2 rounded-xl ${stat.bgColor} transition-colors duration-300`}>
                     <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
                   <div className="text-right">
@@ -433,7 +433,7 @@ export function DashboardOverview() {
         ))}
 
         {/* Yüksek Öncelik Kartı */}
-        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group hover:scale-105">
+        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-purple-500/30">
           {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 group-hover:from-purple-500/15 group-hover:to-indigo-500/15 transition-all duration-300" />
           
@@ -445,7 +445,7 @@ export function DashboardOverview() {
           <CardContent className="relative p-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="inline-flex p-2 rounded-xl bg-purple-100 dark:bg-purple-900/20 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                <div className="inline-flex p-2 rounded-xl bg-purple-100 dark:bg-purple-900/20 transition-colors duration-300">
                   <BarChart3 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="text-right">
@@ -483,7 +483,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* İlerleme Kartı */}
-        <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group hover:scale-105">
+        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-green-500/30">
           {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 group-hover:from-green-500/15 group-hover:to-emerald-500/15 transition-all duration-300" />
           
@@ -495,7 +495,7 @@ export function DashboardOverview() {
           <CardContent className="relative p-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="inline-flex p-2 rounded-xl bg-green-100 dark:bg-green-900/20 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                <div className="inline-flex p-2 rounded-xl bg-green-100 dark:bg-green-900/20 transition-colors duration-300">
                   <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="text-right">
