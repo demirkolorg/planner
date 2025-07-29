@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info } from "lucide-react"
+import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain } from "lucide-react"
 import { generateTaskSuggestion, improveBrief, improveTitle } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DateTimePicker } from "../shared/date-time-picker"
@@ -80,6 +80,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [isAILoading, setIsAILoading] = useState(false)
   const [isTitleAILoading, setIsTitleAILoading] = useState(false)
   const [isDescriptionAILoading, setIsDescriptionAILoading] = useState(false)
+  const [isTagAILoading, setIsTagAILoading] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("yap")
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const [alertConfig, setAlertConfig] = useState<{
@@ -513,6 +514,65 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }
   }
 
+  const handleAISuggestTags = async () => {
+    if (!title.trim()) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Başlık Gerekli",
+        message: "AI etiket önerisi için önce bir başlık girmelisiniz."
+      })
+      return
+    }
+    
+    setIsTagAILoading(true)
+    try {
+      const response = await fetch('/api/ai/suggest-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim() || undefined
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Etiket önerisi alınamadı')
+      }
+      
+      const data = await response.json()
+      
+      if (data.tags && data.tags.length > 0) {
+        // Önerilen etiketleri mevcut etiketlerle birleştir
+        const newTagNames = data.tags.map((tag: { name: string }) => tag.name)
+        const uniqueTags = [...new Set([...selectedTags, ...newTagNames])]
+        setSelectedTags(uniqueTags)
+        
+        // TagStore'u güncelle (yeni etiketler eklenmişse)
+        await fetchTags()
+        
+        // Başarı mesajı göster
+        const tagCount = data.tags.length
+        const source = data.source === 'ai' ? 'AI tarafından' : 'sistem tarafından'
+        setAlertConfig({
+          isOpen: true,
+          title: "🤖 AI Etiket Önerileri",
+          message: `${tagCount} adet etiket ${source} önerildi ve seçildi: ${data.tags.map((tag: any) => tag.name).join(', ')}`
+        })
+      }
+    } catch (error) {
+      console.error('Tag suggestion error:', error)
+      setAlertConfig({
+        isOpen: true,
+        title: "Hata",
+        message: "AI etiket önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
+      })
+    } finally {
+      setIsTagAILoading(false)
+    }
+  }
+
   const handleQuickAIGenerate = async () => {
     setIsAILoading(true)
     try {
@@ -832,7 +892,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
           {/* Selected Tags */}
           {selectedTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
               {selectedTags.map((tagName) => {
                 const tag = tags.find(t => t.name === tagName)
                 const tagColor = tag?.color || "#3b82f6"
@@ -849,6 +909,59 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   </div>
                 )
               })}
+              
+              {/* AI Etiket Önerisi Butonu */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAISuggestTags}
+                    disabled={isTagAILoading || !title.trim()}
+                    className="h-6 w-6 p-0 ml-1"
+                  >
+                    <Brain 
+                      className={`h-3 w-3 ${
+                        isTagAILoading 
+                          ? 'text-primary animate-pulse' 
+                          : 'text-muted-foreground hover:text-primary'
+                      }`}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isTagAILoading ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
+          
+          {/* AI Etiket Butonu - Etiket yoksa */}
+          {selectedTags.length === 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Etiket yok</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAISuggestTags}
+                    disabled={isTagAILoading || !title.trim()}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Brain 
+                      className={`h-3 w-3 ${
+                        isTagAILoading 
+                          ? 'text-primary animate-pulse' 
+                          : 'text-muted-foreground hover:text-primary'
+                      }`}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isTagAILoading ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
 

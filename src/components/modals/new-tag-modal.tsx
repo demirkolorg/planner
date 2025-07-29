@@ -10,7 +10,7 @@ import EmojiPicker from "emoji-picker-react"
 const colorOptions = [
   "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", 
   "#8b5cf6", "#f59e0b", "#10b981", "#f472b6", "#ec4899", "#be123c",
-  "#84cc16", "#06b6d4", "#6366f1", "#8b5cf6", "#d97706", "#059669",
+  "#84cc16", "#14b8a6", "#6366f1", "#a855f7", "#d97706", "#059669",
   "#0ea5e9", "#7c3aed"
 ]
 

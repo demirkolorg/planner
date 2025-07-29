@@ -23,6 +23,7 @@ interface CreateTaskRequest {
   dueDate?: string  // ISO date string
   tags?: string[]  // Tag name'leri
   parentTaskId?: string  // Alt görev için parent task ID'si
+  requiresCompletionNote?: boolean  // Bitirme notu gerekli mi?
 }
 
 export async function POST(request: NextRequest) {
@@ -45,7 +46,8 @@ export async function POST(request: NextRequest) {
       priority = "Yok",
       dueDate,
       tags = [],
-      parentTaskId
+      parentTaskId,
+      requiresCompletionNote = false
     } = body
 
     if (!title || !projectId || !sectionId) {
@@ -133,7 +135,8 @@ export async function POST(request: NextRequest) {
           projectId,
           sectionId: finalSectionId,
           userId: decoded.userId,
-          parentTaskId
+          parentTaskId,
+          requiresCompletionNote
         }
       })
 

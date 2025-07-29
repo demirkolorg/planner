@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
           lastName,
           email,
           password: hashedPassword,
+          role: 'USER', // Varsayılan rol
           emailVerified: true, // OTP doğrulaması tamamlandığı için
         },
       });
