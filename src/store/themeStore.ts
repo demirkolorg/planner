@@ -88,8 +88,7 @@ export const useThemeStore = create<ThemeState>()(
       onRehydrateStorage: () => (state) => {
         if (state && typeof window !== 'undefined') {
           // Hydration tamamlandıktan sonra temaları uygula
-          setTimeout(() => {
-            // Sayfa yüklendiğinde tema uygula
+          const applyThemes = () => {
             const root = document.documentElement
             const body = document.body
             const effectiveTheme = state.theme === THEME.SYSTEM ? state.getSystemTheme() : state.theme
@@ -99,7 +98,7 @@ export const useThemeStore = create<ThemeState>()(
             root.setAttribute('data-theme', effectiveTheme)
             root.style.colorScheme = effectiveTheme
             
-            // Renk temasını uygula - body'den default tema sınıfını kaldır
+            // Renk temasını uygula
             const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet']
             
             themeClasses.forEach(cls => {
@@ -122,7 +121,11 @@ export const useThemeStore = create<ThemeState>()(
               }
               mediaQuery.addEventListener('change', handleChange)
             }
-          }, 0)
+          }
+          
+          // İlk render'da hemen uygula, sonra da bir kez daha garanti için
+          applyThemes()
+          requestAnimationFrame(applyThemes)
         }
       },
     }

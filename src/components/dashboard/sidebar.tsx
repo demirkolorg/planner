@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -10,7 +10,7 @@ import { FaRegStar, FaStar, FaRegCheckCircle, FaCheckCircle } from "react-icons/
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
@@ -98,6 +98,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
+  const [showCompletedProjects, setShowCompletedProjects] = useState(true)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
   const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
@@ -134,16 +135,34 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     // Task creation logic will be added later
   }
 
-  // Projeleri sırala - Gelen Kutusu en üste
+  // Proje tamamlanma kontrolü
+  const isProjectCompleted = useCallback((projectId: string) => {
+    const projectTasks = tasks.filter(task => task.projectId === projectId)
+    
+    // Hiç görev yoksa tamamlandı sayılmaz
+    if (projectTasks.length === 0) return false
+    
+    // En az 1 görev var ve tüm görevler tamamlanmışsa proje tamamlandı
+    return projectTasks.every(task => task.completed)
+  }, [tasks])
+
+  // Projeleri sırala ve filtrele
   const sortedProjects = useMemo(() => {
-    return [...projects].sort((a, b) => {
+    let filteredProjects = [...projects]
+    
+    // Tamamlanan projeleri gizle seçeneği aktifse filtrele
+    if (!showCompletedProjects) {
+      filteredProjects = filteredProjects.filter(project => !isProjectCompleted(project.id))
+    }
+    
+    return filteredProjects.sort((a, b) => {
       // Gelen Kutusu her zaman en üstte olsun
       if (a.name === "Gelen Kutusu") return -1
       if (b.name === "Gelen Kutusu") return 1
       // Diğer projeler alfabetik sırada
       return a.name.localeCompare(b.name, 'tr')
     })
-  }, [projects])
+  }, [projects, showCompletedProjects, isProjectCompleted])
 
   // Dinamik sayıları hesapla
   const getDynamicCount = (itemName: string) => {
@@ -268,10 +287,37 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           <div className="px-4 pb-2 pt-4">
             <div className="flex items-center justify-between mb-3 px-2 border-b border-gray-300 dark:border-gray-600 pb-2 text-primary">
               <h3 className="text-sm font-medium ">Projeler</h3>
-              <Plus 
-                className="h-4 w-4 cursor-pointer" 
-                onClick={() => setIsProjectModalOpen(true)}
-              />
+              <div className="flex items-center space-x-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="h-4 w-4 cursor-pointer hover:opacity-70 transition-opacity"
+                      onClick={() => setShowCompletedProjects(!showCompletedProjects)}
+                    >
+                      {showCompletedProjects ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{showCompletedProjects ? "Tamamlanan projeleri gizle" : "Tamamlanan projeleri göster"}</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Plus 
+                      className="h-4 w-4 cursor-pointer hover:opacity-70 transition-opacity" 
+                      onClick={() => setIsProjectModalOpen(true)}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Yeni Proje Ekle</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           </div>
           

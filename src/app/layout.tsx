@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body
-        className={`${poppins.variable} font-sans antialiased theme-default`}
+        className={`${poppins.variable} font-sans antialiased`}
       >
         <QueryProvider>
           <ThemeProvider

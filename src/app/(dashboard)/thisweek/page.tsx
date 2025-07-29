@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Pin, CheckCircle2, Circle } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Pin, CheckCircle2, Circle, AlertTriangle, Timer } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
@@ -11,6 +11,7 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type ViewMode = 'week' | 'month'
 
@@ -169,6 +170,20 @@ export default function ScheduledPage() {
     return date.toDateString() === today.toDateString()
   }
 
+  // Bugün'ün geçerli görünümde olup olmadığını kontrol et
+  const isTodayInCurrentView = () => {
+    const today = new Date()
+    
+    if (viewMode === 'week') {
+      const weekDays = getWeekDays(currentDate)
+      return weekDays.some(day => isToday(day))
+    } else {
+      // Ay görünümü için - aynı ay ve yılda mı?
+      return today.getMonth() === currentDate.getMonth() && 
+             today.getFullYear() === currentDate.getFullYear()
+    }
+  }
+
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentDate.getMonth()
   }
@@ -323,7 +338,8 @@ export default function ScheduledPage() {
   }, [fetchTasks, fetchProjects, fetchTags])
 
   return (
-    <div className="flex flex-col h-full">
+    <TooltipProvider>
+      <div className="flex flex-col h-full">
       {/* Header with View Modes - Fixed */}
       <div className="space-y-4 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -342,6 +358,11 @@ export default function ScheduledPage() {
                 {viewMode === 'week' && (
                   <p className="text-xs text-muted-foreground">
                     {currentDate.getFullYear()} yılının {getWeekNumber(currentDate)}. haftası
+                  </p>
+                )}
+                {viewMode === 'month' && (
+                  <p className="text-xs text-muted-foreground">
+                    {currentDate.getFullYear()} yılının {currentDate.getMonth() + 1}. ayı
                   </p>
                 )}
               </div>
@@ -376,7 +397,7 @@ export default function ScheduledPage() {
               </Button>
               
               <Button
-                variant="outline"
+                variant={isTodayInCurrentView() ? "default" : "secondary"}
                 size="sm"
                 onClick={goToToday}
                 className="px-4"
@@ -549,6 +570,14 @@ export default function ScheduledPage() {
                 const completedTasks = dayTasks.filter(task => task.completed)
                 const pendingTasks = dayTasks.filter(task => !task.completed)
                 
+                // Gecikmiş görevler (bugünden önce ve tamamlanmamış)
+                const today = new Date()
+                const dayMidnight = new Date(day.getFullYear(), day.getMonth(), day.getDate())
+                const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                const overdueTasks = dayTasks.filter(task => 
+                  !task.completed && dayMidnight < todayMidnight
+                )
+                
                 return (
                   <div
                     key={day.toISOString()}
@@ -567,45 +596,64 @@ export default function ScheduledPage() {
                       {day.getDate()}
                     </div>
                     
-                    {/* Görevler */}
-                    <div className="space-y-1">
-                      {pendingTasks.slice(0, 2).map((task) => {
-                        const project = projects.find(p => p.id === task.projectId)
-                        return (
-                          <div
-                            key={task.id}
-                            className="text-xs p-1.5 rounded bg-violet-50 dark:bg-violet-900/20 border-l-2 border-violet-500 hover:shadow-sm transition-all cursor-pointer"
-                            title={task.title}
-                          >
-                            <div className="flex items-center space-x-1 mb-0.5">
-                              {project?.emoji && (
-                                <span className="text-xs">{project.emoji}</span>
-                              )}
-                              {task.isPinned && (
-                                <Pin className="h-2 w-2 text-orange-500 fill-current" />
-                              )}
-                              {task.completed ? (
-                                <CheckCircle2 className="h-2 w-2 text-green-600 ml-auto" />
-                              ) : (
-                                <Circle className="h-2 w-2 text-muted-foreground ml-auto" />
-                              )}
-                            </div>
-                            <span className={`block truncate font-medium ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                              {task.title}
-                            </span>
-                          </div>
-                        )
-                      })}
-                      
-                      {pendingTasks.length > 2 && (
-                        <div className="text-xs text-muted-foreground text-center">
-                          +{pendingTasks.length - 2}
+                    {/* Görev İstatistikleri */}
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-1">
+                      {dayTasks.length === 0 ? (
+                        <div className="text-xs text-muted-foreground/50">
+                          Görev yok
                         </div>
-                      )}
-                      
-                      {completedTasks.length > 0 && (
-                        <div className="text-xs text-green-600 dark:text-green-400 text-center">
-                          ✓{completedTasks.length}
+                      ) : (
+                        <div className="space-y-1">
+                          {/* Gecikmiş görevler */}
+                          {overdueTasks.length > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center space-x-1 cursor-pointer">
+                                  <AlertTriangle className="w-3 h-3 text-red-500" />
+                                  <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                                    {overdueTasks.length}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Gecikmiş görevler</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {/* Bekleyen görevler (gecikmiş olmayanlar) */}
+                          {(pendingTasks.length - overdueTasks.length) > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center space-x-1 cursor-pointer">
+                                  <Timer className="w-3 h-3 text-orange-500" />
+                                  <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                                    {pendingTasks.length - overdueTasks.length}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Bekleyen görevler</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          
+                          {/* Tamamlanan görevler */}
+                          {completedTasks.length > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center space-x-1 cursor-pointer">
+                                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                                  <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                                    {completedTasks.length}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Tamamlanan görevler</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                       )}
                     </div>
@@ -697,6 +745,7 @@ export default function ScheduledPage() {
         taskTitle={commentsModalTask?.title || ''}
         isTaskCompleted={commentsModalTask?.completed || false}
       />
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }
