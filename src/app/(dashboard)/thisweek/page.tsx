@@ -333,7 +333,7 @@ export default function ScheduledPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-500 bg-clip-text text-transparent">
-                Zamanlanmış
+                Bu Hafta
               </h1>
               <div className="space-y-1">
                 <p className="text-muted-foreground">

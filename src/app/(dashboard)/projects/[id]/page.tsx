@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown, Calendar, CalendarClock, Zap, Hash, SortAsc, SortDesc, CalendarDays } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -30,22 +30,22 @@ import type { Project as ProjectType, Section as SectionType } from "@/types/tas
 type SortOption = 
   | 'due-date-asc'      // Bitiş Tarihi - Yaklaşanlar Önce
   | 'due-date-desc'     // Bitiş Tarihi - Uzak Olanlar Önce  
-  | 'created-desc'      // Oluşturulma Tarihi - En Yeni Önce
-  | 'created-asc'       // Oluşturulma Tarihi - En Eski Önce
+  | 'created-desc'      // Oluşturma Tarihi - En Yeni Önce
+  | 'created-asc'       // Oluşturma Tarihi - En Eski Önce
   | 'priority-desc'     // Öncelik - Yüksekten Düşüğe
   | 'priority-asc'      // Öncelik - Düşükten Yükseğe
   | 'title-asc'         // Alfabetik - A'dan Z'ye
   | 'title-desc'        // Alfabetik - Z'den A'ya
 
 const SORT_OPTIONS = [
-  { value: 'due-date-asc', label: 'Bitiş Tarihi - Yaklaşanlar Önce' },
-  { value: 'due-date-desc', label: 'Bitiş Tarihi - Uzak Olanlar Önce' },
-  { value: 'created-desc', label: 'Oluşturulma Tarihi - En Yeni Önce' },
-  { value: 'created-asc', label: 'Oluşturulma Tarihi - En Eski Önce' },
-  { value: 'priority-desc', label: 'Öncelik - Yüksekten Düşüğe' },
-  { value: 'priority-asc', label: 'Öncelik - Düşükten Yükseğe' },
-  { value: 'title-asc', label: 'Alfabetik - A\'dan Z\'ye' },
-  { value: 'title-desc', label: 'Alfabetik - Z\'den A\'ya' },
+  { value: 'created-desc', label: 'Oluşturma Tarihi - En Yeni Önce', icon: CalendarDays },
+  { value: 'created-asc', label: 'Oluşturma Tarihi - En Eski Önce', icon: CalendarDays },
+  { value: 'due-date-asc', label: 'Bitiş Tarihi - Yaklaşanlar Önce', icon: Calendar },
+  { value: 'due-date-desc', label: 'Bitiş Tarihi - Uzak Olanlar Önce', icon: Calendar },
+  { value: 'priority-desc', label: 'Öncelik - Yüksekten Düşüğe', icon: Zap },
+  { value: 'priority-asc', label: 'Öncelik - Düşükten Yükseğe', icon: Zap },
+  { value: 'title-asc', label: 'Alfabetik - A\'dan Z\'ye', icon: SortAsc },
+  { value: 'title-desc', label: 'Alfabetik - Z\'den A\'ya', icon: SortDesc },
 ] as const
 
 interface Project extends Omit<ProjectType, 'createdAt' | 'updatedAt'> {
@@ -630,26 +630,58 @@ export default function ProjectDetailPage() {
             
             {/* Sıralama Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sıralama Seçenekleri</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-80">
                 {SORT_OPTIONS.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setSortOption(option.value as SortOption)}
                     className={sortOption === option.value ? "bg-accent" : ""}
                   >
-                    {option.label}
+                    <option.icon className="h-4 w-4 mr-3 text-muted-foreground" />
+                    <span className="flex-1">{option.label}</span>
                     {sortOption === option.value && (
-                      <Check className="h-4 w-4 ml-auto" />
+                      <Check className="h-4 w-4 ml-2 text-primary" />
                     )}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsTimelineModalOpen(true)}
+                >
+                  <Clock className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Proje Zaman Çizelgesi</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSectionModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Bölüm
+            </Button>
             
             <Button
               variant="outline"
@@ -669,25 +701,22 @@ export default function ProjectDetailPage() {
             </Button>
             
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  İşlemler
-                  <MoreVertical className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem onClick={() => setIsSectionModalOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Bölüm Ekle
-                </DropdownMenuItem>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Proje Ayarları</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
                   <Edit className="h-4 w-4 mr-2" />
                   Projeyi Düzenle
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsTimelineModalOpen(true)}>
-                  <Clock className="h-4 w-4 mr-2" />
-                  Proje Zaman Çizelgesi
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 

@@ -337,18 +337,18 @@ export function DashboardOverview() {
         </Button>
       </div>
 
-      {/* Compact Stats Cards - 5 columns */}
-      <div className="grid gap-4 grid-cols-5">
+      {/* Minimal Stats Cards */}
+      <div className="grid gap-2 grid-cols-2 md:grid-cols-5">
         {mainStats.map((stat) => (
-          <Card key={stat.title} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+          <Card key={stat.title} className="hover:shadow-sm transition-shadow">
+            <CardContent className="p-2">
+              <div className="flex items-center space-x-2">
+                <div className={`p-1 rounded ${stat.bgColor}`}>
+                  <stat.icon className={`h-3 w-3 ${stat.color}`} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground truncate">
                     {stat.title}
                   </p>
                 </div>
@@ -357,18 +357,18 @@ export function DashboardOverview() {
           </Card>
         ))}
         
-        {/* 5th stat - Priority Distribution */}
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/5">
-                <BarChart3 className="h-4 w-4 text-indigo-600" />
+        {/* Priority Distribution */}
+        <Card className="hover:shadow-sm transition-shadow">
+          <CardContent className="p-2">
+            <div className="flex items-center space-x-2">
+              <div className="p-1 rounded bg-primary/10 dark:bg-primary/5">
+                <BarChart3 className="h-3 w-3 text-indigo-600" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="text-xl font-bold">
                   {stats.priorityStats.CRITICAL + stats.priorityStats.HIGH}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   Yüksek Öncelik
                 </p>
               </div>
@@ -377,20 +377,17 @@ export function DashboardOverview() {
         </Card>
       </div>
 
-      {/* Motivational Quote Card - Compact */}
+      {/* Motivational Quote Card - Ultra Compact */}
       <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border-indigo-200 dark:border-indigo-800">
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 shadow-sm flex-shrink-0">
-              <Lightbulb className="h-4 w-4 text-white" />
+        <CardContent className="p-2">
+          <div className="flex items-center space-x-2">
+            <div className="p-1 rounded bg-gradient-to-r from-indigo-500 to-purple-500 flex-shrink-0">
+              <Lightbulb className="h-3 w-3 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <blockquote className="text-sm font-medium text-indigo-900 dark:text-indigo-100 leading-snug mb-1 line-clamp-2">
-                "{todaysQuote.quote}"
+              <blockquote className="text-xs font-medium text-indigo-900 dark:text-indigo-100 leading-tight line-clamp-1">
+                "{todaysQuote.quote}" — {todaysQuote.author}
               </blockquote>
-              <cite className="text-xs text-indigo-600 dark:text-indigo-300 font-medium">
-                — {todaysQuote.author}
-              </cite>
             </div>
           </div>
         </CardContent>
@@ -526,7 +523,7 @@ export function DashboardOverview() {
               </div>
               <div className="flex items-center space-x-2">
                 <Link 
-                  href="/scheduled" 
+                  href="/thisweek" 
                   className="text-xs font-medium text-blue-600 hover:text-blue-500"
                 >
                   Tümünü Gör →

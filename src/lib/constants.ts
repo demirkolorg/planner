@@ -22,7 +22,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/',
   TODAY: '/today',
-  SCHEDULED: '/scheduled',
+  SCHEDULED: '/thisweek',
   BOARD: '/board',
   SEARCH: '/search',
   TAGS: '/tags',

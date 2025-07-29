@@ -40,16 +40,7 @@ const cardItems = [
     href: ROUTES.TODAY 
   },
   { 
-    name: "Gecikmiş", 
-    count: null, 
-    icon: CalendarX, 
-    activeIcon: CalendarX, 
-    color: "bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/50 dark:to-rose-950/50 text-red-700 dark:text-red-300 border-red-200/50 dark:border-red-800/50", 
-    activeColor: "bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/70 dark:to-rose-900/70 text-red-800 dark:text-red-200 border-red-300/70 dark:border-red-700/70 shadow-lg shadow-red-500/10", 
-    href: ROUTES.OVERDUE 
-  },
-  { 
-    name: "Zamanlanmış", 
+    name: "Bu Hafta", 
     count: 3, 
     icon: RiCalendarScheduleLine, 
     activeIcon: RiCalendarScheduleFill, 
@@ -65,6 +56,15 @@ const cardItems = [
     color: "bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950/50 dark:to-lime-950/50 text-green-700 dark:text-green-300 border-green-200/50 dark:border-green-800/50", 
     activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-900/70 dark:to-lime-900/70 text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/70 shadow-lg shadow-green-500/10", 
     href: ROUTES.COMPLETED 
+  },
+  { 
+    name: "Gecikmiş", 
+    count: null, 
+    icon: CalendarX, 
+    activeIcon: CalendarX, 
+    color: "bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/50 dark:to-rose-950/50 text-red-700 dark:text-red-300 border-red-200/50 dark:border-red-800/50", 
+    activeColor: "bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/70 dark:to-rose-900/70 text-red-800 dark:text-red-200 border-red-300/70 dark:border-red-700/70 shadow-lg shadow-red-500/10", 
+    href: ROUTES.OVERDUE 
   },
   { 
     name: "Etiketler", 
@@ -152,7 +152,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         return getTasksDueToday().length
       case "Gecikmiş":
         return getOverdueTasks().length
-      case "Zamanlanmış":
+      case "Bu Hafta":
         const count = getCurrentWeekTasksCount()
         console.log('Sidebar - Current week tasks count:', count)
         return count
