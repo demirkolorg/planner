@@ -92,30 +92,34 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Proje oluşturma aktivitesi
+      // Proje oluşturma aktivitesi - transaction içinde
       try {
-        await createProjectActivity({
-          projectId: project.id,
-          userId: decoded.userId,
-          actionType: ProjectActivityTypes.PROJECT_CREATED,
-          entityType: "project",
-          description: `Proje oluşturuldu: "${project.name}"`
+        await tx.projectActivity.create({
+          data: {
+            projectId: project.id,
+            userId: decoded.userId,
+            actionType: ProjectActivityTypes.PROJECT_CREATED,
+            entityType: "project",
+            description: `Proje oluşturuldu: "${project.name}"`
+          }
         })
         console.log("Project creation activity logged successfully")
       } catch (activityError) {
         console.error("Error logging project creation activity:", activityError)
       }
 
-      // Default section oluşturma aktivitesi
+      // Default section oluşturma aktivitesi - transaction içinde
       try {
-        await createProjectActivity({
-          projectId: project.id,
-          userId: decoded.userId,
-          actionType: ProjectActivityTypes.SECTION_CREATED,
-          entityType: "section",
-          entityId: defaultSection.id,
-          entityName: defaultSection.name,
-          description: `Bölüm oluşturuldu: "${defaultSection.name}"`
+        await tx.projectActivity.create({
+          data: {
+            projectId: project.id,
+            userId: decoded.userId,
+            actionType: ProjectActivityTypes.SECTION_CREATED,
+            entityType: "section",
+            entityId: defaultSection.id,
+            entityName: defaultSection.name,
+            description: `Bölüm oluşturuldu: "${defaultSection.name}"`
+          }
         })
         console.log("Section creation activity logged successfully")
       } catch (activityError) {
