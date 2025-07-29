@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { syncTaskToCalendar } from "@/lib/google-calendar"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -239,6 +240,11 @@ export async function POST(request: NextRequest) {
         entityId: result.id,
         entityName: result.title,
         description: `Görev oluşturuldu: "${result.title}"`
+      })
+
+      // Google Calendar'a sync et (asyncronous - hata durumunda task oluşturma başarısız olmaz)
+      syncTaskToCalendar(decoded.userId, result, 'CREATE').catch(error => {
+        console.error('Calendar sync hatası (task oluşturma):', error)
       })
     }
 

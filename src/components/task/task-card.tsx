@@ -236,12 +236,12 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       month: 'short'
     })
 
-    // Eğer saat 00:00 ise sadece tarihi göster
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-
-    if (hours === 0 && minutes === 0) {
-      return dateStr
+    // All-day event tespiti: UTC'de 00:00:00 ise all-day event'tir
+    const originalDateString = dateString
+    const isAllDayEvent = originalDateString.includes('T00:00:00.000Z')
+    
+    if (isAllDayEvent) {
+      return `${dateStr} (Tam Gün)`
     }
 
     const timeStr = date.toLocaleTimeString('tr-TR', {

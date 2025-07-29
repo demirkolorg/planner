@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createTaskActivity, TaskActivityTypes, getActivityDescription, getPriorityDisplayName } from "@/lib/task-activity"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { syncTaskToCalendar } from "@/lib/google-calendar"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -177,6 +178,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // Google Calendar'a sync et (eğer önemli değişiklikler varsa)
+    const shouldSync = changes.some(change => 
+      [TaskActivityTypes.TITLE_CHANGED, TaskActivityTypes.DESCRIPTION_CHANGED, 
+       TaskActivityTypes.PRIORITY_CHANGED, TaskActivityTypes.DUE_DATE_CHANGED].includes(change.type)
+    )
+    
+    if (shouldSync) {
+      syncTaskToCalendar(decoded.userId, updatedTask, 'UPDATE').catch(error => {
+        console.error('Calendar sync hatası (task güncelleme):', error)
+      })
+    }
+
     return NextResponse.json(updatedTask)
   } catch (error) {
     console.error("Error updating task:", error)
@@ -235,6 +248,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       await tx.task.delete({
         where: { id }
       })
+    })
+
+    // Google Calendar'dan sync et
+    syncTaskToCalendar(decoded.userId, existingTask, 'DELETE').catch(error => {
+      console.error('Calendar sync hatası (task silme):', error)
     })
 
     return NextResponse.json({ success: true })

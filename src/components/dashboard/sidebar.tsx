@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -99,6 +99,9 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const [showCompletedProjects, setShowCompletedProjects] = useState(true)
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false)
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
   const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
@@ -113,7 +116,29 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     ]).catch(error => {
       console.error('Failed to fetch sidebar data:', error)
     })
+
+    // Google Calendar durumunu kontrol et
+    checkGoogleCalendarStatus()
   }, [fetchProjects, fetchTags, fetchTasks])
+
+  // Google Calendar durumunu kontrol et
+  const checkGoogleCalendarStatus = async () => {
+    try {
+      const response = await fetch('/api/google/auth/status')
+      const data = await response.json()
+      
+      if (data.success && data.connected) {
+        setGoogleCalendarConnected(true)
+        setLastSyncAt(data.integration?.lastSyncAt || null)
+      } else {
+        setGoogleCalendarConnected(false)
+        setLastSyncAt(null)
+      }
+    } catch (error) {
+      console.error('Google Calendar durum kontrol hatası:', error)
+      setGoogleCalendarConnected(false)
+    }
+  }
 
   const handleCreateProject = async (name: string, emoji: string) => {
     try {
@@ -136,6 +161,31 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
 
   const handleCreateTask = () => {
     // Task creation logic will be added later
+  }
+
+  // Google Calendar Sync
+  const handleGoogleCalendarSync = async () => {
+    if (isSyncing) return
+
+    setIsSyncing(true)
+    try {
+      const response = await fetch('/api/google/sync/bidirectional', {
+        method: 'POST'
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setLastSyncAt(new Date().toISOString())
+        // Sidebar'daki verileri yenile
+        await Promise.all([
+          fetchTasks(),
+          fetchProjects()
+        ])
+      }
+    } catch (error) {
+      console.error('Sync hatası:', error)
+    }
+    setIsSyncing(false)
   }
 
   // Proje tamamlanma kontrolü
@@ -486,7 +536,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         {isOpen ? (
           <>
             {/* Action Buttons Row */}
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center justify-center space-x-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -514,6 +564,35 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 <Palette className="h-4 w-4" />
               </Button>
               
+              {/* Google Calendar Sync Button */}
+              {googleCalendarConnected && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleGoogleCalendarSync}
+                      disabled={isSyncing}
+                      className="h-9 w-9"
+                    >
+                      <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-center">
+                      <p className="font-medium">Google Calendar Sync</p>
+                      {lastSyncAt ? (
+                        <p className="text-xs text-muted-foreground">
+                          Son sync: {new Date(lastSyncAt).toLocaleString('tr-TR')}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Henüz sync yapılmamış</p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-9 w-9 rounded-full">
@@ -531,6 +610,12 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                     <Link href="/profile" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       Profil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Ayarlar
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
@@ -593,6 +678,35 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 <p>Renk Teması</p>
               </TooltipContent>
             </Tooltip>
+
+            {/* Google Calendar Sync Button - Collapsed */}
+            {googleCalendarConnected && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleGoogleCalendarSync}
+                    disabled={isSyncing}
+                    className="h-9 w-9"
+                  >
+                    <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="text-center">
+                    <p className="font-medium">Google Calendar Sync</p>
+                    {lastSyncAt ? (
+                      <p className="text-xs text-muted-foreground">
+                        Son sync: {new Date(lastSyncAt).toLocaleString('tr-TR')}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Henüz sync yapılmamış</p>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
             
             
             <Tooltip>
@@ -614,6 +728,12 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                       <Link href="/profile" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Profil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Ayarlar
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">

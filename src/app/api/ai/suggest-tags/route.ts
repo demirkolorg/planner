@@ -2,19 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { db } from "@/lib/db"
-import { GoogleGenerativeAI } from "@google/generative-ai"
 
 interface SuggestTagsRequest {
   title: string
   description?: string
 }
 
-// Google AI ile gerçek etiket önerisi
+// Cerebras AI ile gerçek etiket önerisi
 async function generateTagsWithAI(title: string, description?: string): Promise<string[]> {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-
     const prompt = `Sen bir görev yönetimi uzmanısın. Verilen görev bilgilerine göre en uygun etiketleri öner.
 
 GÖREV BİLGİSİ:
@@ -36,30 +32,53 @@ YANIT FORMATI (örnek):
 Acil
 Teknoloji`
 
-    const result = await model.generateContent(prompt)
-    const response = result.response.text().trim()
+    const response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.CEREBRAS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "llama3.1-8b",
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 100,
+        temperature: 0.7
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Cerebras API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
     
-    if (!response) {
+    if (!content) {
       throw new Error('AI yanıt vermedi')
     }
 
     // Yanıtı satır satır ayır ve temizle
-    const tags = response
+    const tags = content.trim()
       .split('\n')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0 && !tag.includes(':') && !tag.includes('.'))
+      .map((tag: string) => tag.trim())
+      .filter((tag: string) => tag.length > 0 && !tag.includes(':') && !tag.includes('.'))
       .slice(0, 3) // Maksimum 3 etiket
 
     return tags.length > 0 ? tags : ['Genel']
     
   } catch (error) {
-    console.error('Google AI API error:', error)
+    console.error('Cerebras AI API error:', error)
     // Fallback: Basit kelime analizi
     return generateFallbackTags(title, description)
   }
 }
 
-// Fallback etiket önerisi (Google AI başarısız olursa)
+// Fallback etiket önerisi (Cerebras AI başarısız olursa)
 function generateFallbackTags(title: string, description?: string): string[] {
   const content = `${title} ${description || ''}`.toLowerCase()
   
@@ -109,7 +128,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 })
     }
 
-    // Google AI ile etiket önerilerini al
+    // Cerebras AI ile etiket önerilerini al
     const suggestedTagNames = await generateTagsWithAI(title, description)
     
     // Önerilen etiketleri veritabanında oluştur veya bul

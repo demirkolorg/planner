@@ -49,7 +49,9 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
       })
       
       setSelectedDate(dateStr)
-      if (date.getHours() !== 0 || date.getMinutes() !== 0) {
+      // All-day event tespiti: UTC'de 00:00:00 ise all-day event'tir
+      const isAllDayEvent = initialDateTime.includes('T00:00:00.000Z')
+      if (!isAllDayEvent) {
         setSelectedTime(timeStr)
       }
     }
@@ -80,6 +82,8 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
       
       // Date object oluştur
       let date: Date
+      let isAllDay = false
+      
       if (selectedTime) {
         const [hours, minutes] = selectedTime.split(':')
         if (!hours || !minutes || hours.length !== 2 || minutes.length !== 2) {
@@ -92,7 +96,9 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
         }
         date = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum)
       } else {
-        date = new Date(yearNum, monthNum - 1, dayNum, 0, 0, 0)
+        // Saat seçilmediğinde all-day event olarak işaretle
+        date = new Date(yearNum, monthNum - 1, dayNum)
+        isAllDay = true
       }
 
       // Check if date is valid
@@ -103,7 +109,13 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
       // Geçmiş tarih kontrolü
       const today = new Date()
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      if (date < todayStart) {
+      
+      // All-day event için sadece gün kontrolü yap
+      const dateToCheck = isAllDay 
+        ? new Date(date.getFullYear(), date.getMonth(), date.getDate())
+        : date
+        
+      if (dateToCheck < todayStart) {
         setAlertConfig({
           isOpen: true,
           title: "Geçersiz Tarih",
@@ -114,8 +126,12 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
 
       // Parent task bitiş tarihi kontrolü
       if (parentTaskDueDate) {
-        // Eğer parent task'ın saati 00:00 ise, gün sonuna kadar (23:59) izin ver
-        const parentTaskEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+        // Parent task all-day mı kontrol et
+        const parentDueDateString = parentTaskDueDate.toISOString()
+        const isParentAllDay = parentDueDateString.includes('T00:00:00.000Z')
+        
+        // Eğer parent task all-day ise, gün sonuna kadar (23:59) izin ver
+        const parentTaskEndOfDay = isParentAllDay
           ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
           : parentTaskDueDate
         
@@ -138,7 +154,16 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
       }
 
       // ISO string olarak gönder
-      onSave(date.toISOString())
+      // All-day event için özel format
+      if (isAllDay) {
+        // YYYY-MM-DD formatında UTC all-day event olarak döndür
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        onSave(`${year}-${month}-${day}T00:00:00.000Z`)
+      } else {
+        onSave(date.toISOString())
+      }
     } catch (error) {
       setAlertConfig({
         isOpen: true,

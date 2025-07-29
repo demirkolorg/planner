@@ -270,12 +270,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         month: 'short'
       })
       
-      // Eğer saat 00:00 ise sadece tarihi göster
-      const hours = date.getHours()
-      const minutes = date.getMinutes()
+      // All-day event tespiti: UTC'de 00:00:00 ise all-day event'tir
+      const isAllDayEvent = selectedDateTime.includes('T00:00:00.000Z')
       
-      if (hours === 0 && minutes === 0) {
-        return dateStr
+      if (isAllDayEvent) {
+        return `${dateStr} (Tam Gün)`
       }
       
       const timeStr = date.toLocaleTimeString('tr-TR', {

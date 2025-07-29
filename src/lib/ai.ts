@@ -1,7 +1,28 @@
-// AI yardımcı fonksiyonları
-import { GoogleGenerativeAI } from "@google/generative-ai"
+// AI yardımcı fonksiyonları - Cerebras API kullanıyor
 
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY!)
+const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1"
+
+// Client-side'da çalışacak şekilde API çağrısı yapalım
+async function makeCerebrasRequest(prompt: string, maxTokens: number = 200): Promise<string> {
+  const response = await fetch('/api/ai/cerebras', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      maxTokens
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`AI API error: ${response.status} - ${error}`)
+  }
+
+  const data = await response.json()
+  return data.content
+}
 
 export interface AITaskSuggestion {
   title: string
@@ -109,8 +130,6 @@ export async function generateTaskSuggestion(
     
     const contextStr = context.length > 0 ? `${context.join(', ')} için ` : ''
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-    
     const aiPrompt = `Sen bir görev yönetimi uzmanısın. ${contextStr}Verilen talep için profesyonel bir görev oluştur.
 
 TALEP: "${prompt}"
@@ -128,13 +147,7 @@ YANIT FORMATI:
 Talep: "web sitesi tasarımı" → {"title": "Web sitesi tasarımını tamamla", "description": "Modern ve responsive bir web sitesi tasarımı oluştur, kullanıcı deneyimini optimize et"}
 Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "description": "Geçen ayın satış ve performans verilerini analiz ederek detaylı rapor oluştur"}`
 
-    const result = await model.generateContent(aiPrompt)
-
-    const content = result.response.text()
-
-    if (!content) {
-      throw new Error('AI yanıtı alınamadı')
-    }
+    const content = await makeCerebrasRequest(aiPrompt, 200)
 
     // JSON parse et
     let parsedResult
@@ -167,15 +180,23 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
       reminders: randomReminders
     }
   } catch (error) {
-    // Fallback olarak basit sonuç döndür
+    console.error('Cerebras AI error:', error)
+    // Fallback olarak akıllı sonuç döndür
     const fallbackPriority = getRandomPriority()
     const fallbackTags = getRandomTags(availableTags)
     const fallbackDueDate = getRandomDueDate(parentTaskDueDate)
     const fallbackReminders = getRandomReminders(fallbackDueDate, parentTaskDueDate)
     
+    // Daha akıllı fallback title oluştur
+    const smartTitle = prompt.includes(' ') 
+      ? `${prompt.charAt(0).toUpperCase() + prompt.slice(1)}ı tamamla`
+      : `${prompt.charAt(0).toUpperCase() + prompt.slice(1)} görevini yap`
+    
+    const smartDescription = `${projectName ? `${projectName} projesi kapsamında ` : ''}${prompt} ile ilgili detaylı planlama yap ve gerekli adımları belirle`
+    
     return {
-      title: prompt,
-      description: `${projectName ? `${projectName} projesi için ` : ''}${prompt} ile ilgili görev`,
+      title: smartTitle,
+      description: smartDescription,
       priority: fallbackPriority,
       tags: fallbackTags,
       dueDate: fallbackDueDate,
@@ -186,10 +207,7 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
 
 export async function improveBrief(brief: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-    
-    const result = await model.generateContent(
-      `Sen bir görev yönetimi uzmanısın. Verilen görev açıklamasını geliştir.
+    const aiPrompt = `Sen bir görev yönetimi uzmanısın. Verilen görev açıklamasını geliştir.
 
 MEVCUT AÇIKLAMA: "${brief}"
 
@@ -203,12 +221,11 @@ KURALLLAR:
 ÖRNEK:
 Girdi: "rapor yaz" → Çıktı: "Aylık satış verilerini analiz ederek kapsamlı performans raporu hazırla, grafik ve tablolarla destekle"
 Girdi: "toplantı yap" → Çıktı: "Proje ilerleyişi hakkında ekip toplantısı düzenle, güncel durumu paylaş ve sonraki adımları belirle"`
-    )
 
-    const content = result.response.text()
-
+    const content = await makeCerebrasRequest(aiPrompt, 150)
     return content || brief
   } catch (error) {
+    console.error('Cerebras AI error:', error)
     return brief
   }
 }
@@ -219,10 +236,7 @@ export async function improveTitle(title: string): Promise<string> {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-    
-    const result = await model.generateContent(
-      `Sen bir görev yönetimi uzmanısın. Verilen görev başlığını iyileştir.
+    const aiPrompt = `Sen bir görev yönetimi uzmanısın. Verilen görev başlığını iyileştir.
 
 MEVCUT BAŞLIK: "${title}"
 
@@ -238,13 +252,11 @@ Girdi: "rapor" → Çıktı: "Aylık raporunu tamamla"
 Girdi: "toplantı" → Çıktı: "Ekip toplantısını düzenle"  
 Girdi: "web sitesi" → Çıktı: "Web sitesi tasarımını bitir"
 Girdi: "alışveriş" → Çıktı: "Haftalık alışverişi yap"`
-    )
 
-    const content = result.response.text().trim()
-
+    const content = await makeCerebrasRequest(aiPrompt, 50)
     return content || title
   } catch (error) {
-    console.error('Title improvement error:', error)
+    console.error('Cerebras AI error:', error)
     return title
   }
 }
