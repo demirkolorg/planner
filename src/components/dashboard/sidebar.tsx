@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -18,6 +18,7 @@ import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { ColorThemeModal } from "@/components/modals/color-theme-modal"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,6 +97,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const router = useRouter()
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
   const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
@@ -448,6 +450,14 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               >
                 {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsColorThemeModalOpen(true)}
+                className="h-9 w-9"
+              >
+                <Palette className="h-4 w-4" />
+              </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -519,6 +529,22 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               </TooltipContent>
             </Tooltip>
             
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsColorThemeModalOpen(true)}
+                  className="h-9 w-9"
+                >
+                  <Palette className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Renk Teması</p>
+              </TooltipContent>
+            </Tooltip>
+            
             
             <Tooltip>
               <TooltipTrigger asChild>
@@ -572,6 +598,11 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
         onSave={handleCreateTask}
+      />
+      
+      <ColorThemeModal
+        isOpen={isColorThemeModalOpen}
+        onClose={() => setIsColorThemeModalOpen(false)}
       />
       </div>
     </TooltipProvider>

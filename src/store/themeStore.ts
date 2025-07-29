@@ -4,18 +4,24 @@ import { STORAGE_KEYS, THEME } from '@/lib/constants'
 
 export type Theme = typeof THEME[keyof typeof THEME]
 
+export type ColorTheme = 'default' | 'nature' | 'amber' | 'boldtech' | 'supabase' | 'quantum'
+
 interface ThemeState {
   theme: Theme
+  colorTheme: ColorTheme
   setTheme: (theme: Theme) => void
+  setColorTheme: (colorTheme: ColorTheme) => void
   toggleTheme: () => void
   getSystemTheme: () => Theme
   getEffectiveTheme: () => Theme
+  applyColorTheme: (colorTheme: ColorTheme) => void
 }
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       theme: THEME.SYSTEM,
+      colorTheme: 'default',
       
       setTheme: (theme: Theme) => {
         set({ theme })
@@ -30,6 +36,31 @@ export const useThemeStore = create<ThemeState>()(
         // next-themes uyumluluğu için
         root.setAttribute('data-theme', effectiveTheme)
         root.style.colorScheme = effectiveTheme
+      },
+
+      setColorTheme: (colorTheme: ColorTheme) => {
+        set({ colorTheme })
+        get().applyColorTheme(colorTheme)
+      },
+
+      applyColorTheme: (colorTheme: ColorTheme) => {
+        if (typeof window === 'undefined') return
+        
+        const root = document.documentElement
+        const body = document.body
+        
+        // Mevcut tema sınıflarını hem root hem body'den temizle
+        const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase','theme-quantum']
+        
+        themeClasses.forEach(cls => {
+          root.classList.remove(cls)
+          body.classList.remove(cls)
+        })
+        
+        // Yeni tema sınıfını hem root hem body'ye ekle
+        const newThemeClass = `theme-${colorTheme}`
+        root.classList.add(newThemeClass)
+        body.classList.add(newThemeClass)
       },
       
       toggleTheme: () => {
@@ -52,6 +83,7 @@ export const useThemeStore = create<ThemeState>()(
       name: STORAGE_KEYS.THEME_STORAGE,
       partialize: (state) => ({
         theme: state.theme,
+        colorTheme: state.colorTheme,
       }),
       onRehydrateStorage: () => (state) => {
         if (state && typeof window !== 'undefined') {
@@ -63,6 +95,9 @@ export const useThemeStore = create<ThemeState>()(
           root.classList.add(effectiveTheme)
           root.setAttribute('data-theme', effectiveTheme)
           root.style.colorScheme = effectiveTheme
+          
+          // Renk temasını uygula
+          state.applyColorTheme(state.colorTheme)
           
           // System tema değişikliklerini dinle
           if (state.theme === THEME.SYSTEM) {
