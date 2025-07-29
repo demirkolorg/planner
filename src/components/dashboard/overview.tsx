@@ -396,11 +396,11 @@ export function DashboardOverview() {
             <div className={`absolute -top-2 -right-2 w-8 h-8 ${stat.bgColor} rounded-full opacity-20 group-hover:opacity-30 transition-opacity duration-300`} />
             <div className={`absolute -bottom-1 -left-1 w-6 h-6 ${stat.bgColor} rounded-full opacity-15 group-hover:opacity-25 transition-opacity duration-300`} />
             
-            <CardContent className="relative p-5">
-              <div className="space-y-3">
+            <CardContent className="relative p-3">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className={`inline-flex p-3 rounded-xl ${stat.bgColor} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                  <div className={`inline-flex p-2 rounded-xl ${stat.bgColor} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
                   <div className="text-right">
                     <div className={`text-xs font-semibold ${stat.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -410,15 +410,15 @@ export function DashboardOverview() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold tracking-tight mb-1 group-hover:text-primary transition-colors duration-300">
+                  <div className="text-2xl font-bold tracking-tight mb-1 group-hover:text-primary transition-colors duration-300">
                     {stat.value}
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">
                     {stat.title}
                   </p>
                 </div>
                 {/* Progress Indicator */}
-                <div className="pt-2">
+                <div className="pt-1">
                   <div className="flex items-center justify-between text-xs mb-1">
                     <span className="text-muted-foreground">İlerleme</span>
                     <span className="font-medium">{Math.round((stats.completedTasks / Math.max(stats.totalTasks, 1)) * 100)}%</span>
@@ -442,11 +442,11 @@ export function DashboardOverview() {
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-500/20 rounded-full group-hover:bg-purple-500/30 transition-colors duration-300" />
           <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-indigo-500/15 rounded-full group-hover:bg-indigo-500/25 transition-colors duration-300" />
           
-          <CardContent className="relative p-5">
-            <div className="space-y-3">
+          <CardContent className="relative p-3">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="inline-flex p-3 rounded-xl bg-purple-100 dark:bg-purple-900/20 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                  <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="inline-flex p-2 rounded-xl bg-purple-100 dark:bg-purple-900/20 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <BarChart3 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="text-right">
                   <div className={`text-xs font-semibold ${(stats.priorityStats.CRITICAL + stats.priorityStats.HIGH) > 0 ? 'text-red-500' : 'text-green-500'}`}>
@@ -456,15 +456,15 @@ export function DashboardOverview() {
                 </div>
               </div>
               <div>
-                <div className="text-3xl font-bold tracking-tight mb-1 group-hover:text-purple-600 transition-colors duration-300">
+                <div className="text-2xl font-bold tracking-tight mb-1 group-hover:text-purple-600 transition-colors duration-300">
                   {stats.priorityStats.CRITICAL + stats.priorityStats.HIGH}
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-xs font-medium text-muted-foreground">
                   Yüksek Öncelik
                 </p>
               </div>
               {/* Priority Breakdown */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-red-600 font-medium">{stats.priorityStats.CRITICAL} Kritik</span>
                   <span className="text-orange-600 font-medium">{stats.priorityStats.HIGH} Yüksek</span>
@@ -492,11 +492,11 @@ export function DashboardOverview() {
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500/20 rounded-full group-hover:bg-green-500/30 transition-colors duration-300" />
           <div className="absolute -bottom-1 -left-1 w-6 h-6 bg-emerald-500/15 rounded-full group-hover:bg-emerald-500/25 transition-colors duration-300" />
           
-          <CardContent className="relative p-5">
-            <div className="space-y-3">
+          <CardContent className="relative p-3">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="inline-flex p-3 rounded-xl bg-green-100 dark:bg-green-900/20 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                  <Target className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="inline-flex p-2 rounded-xl bg-green-100 dark:bg-green-900/20 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                  <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="text-right">
                   <div className={`text-xs font-semibold ${stats.weeklyTaskGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -506,15 +506,15 @@ export function DashboardOverview() {
                 </div>
               </div>
               <div>
-                <div className="text-3xl font-bold tracking-tight mb-1 text-green-600 dark:text-green-400 group-hover:text-green-700 transition-colors duration-300">
+                <div className="text-2xl font-bold tracking-tight mb-1 text-green-600 dark:text-green-400 group-hover:text-green-700 transition-colors duration-300">
                   {Math.round((stats.completedTasks / Math.max(stats.totalTasks, 1)) * 100)}%
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-xs font-medium text-muted-foreground">
                   Tamamlanma Oranı
                 </p>
               </div>
               {/* Circular Progress */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <div className="flex items-center justify-between text-xs mb-2">
                   <span className="text-muted-foreground">Bu ay hedef</span>
                   <span className="font-medium text-green-600">{Math.min(100, Math.round((stats.completedTasks / Math.max(stats.totalTasks, 1)) * 100) + 20)}%</span>
