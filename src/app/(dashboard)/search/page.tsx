@@ -67,6 +67,7 @@ export default function SearchPage() {
     addSubTask,
     cloneTask,
     moveTask,
+    refreshTaskCommentCount,
   } = useTaskStore()
   
   const { projects } = useProjectStore()
@@ -943,6 +944,11 @@ export default function SearchPage() {
         taskId={commentsModalTask?.id || ''}
         taskTitle={commentsModalTask?.title || ''}
         isTaskCompleted={commentsModalTask?.completed || false}
+        onCommentAdded={() => {
+          if (commentsModalTask?.id) {
+            refreshTaskCommentCount(commentsModalTask.id)
+          }
+        }}
       />
     </div>
   )

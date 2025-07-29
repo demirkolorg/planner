@@ -51,9 +51,10 @@ interface TaskCommentsModalProps {
   taskId: string
   taskTitle: string
   isTaskCompleted?: boolean
+  onCommentAdded?: () => void
 }
 
-export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCompleted = false }: TaskCommentsModalProps) {
+export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCompleted = false, onCommentAdded }: TaskCommentsModalProps) {
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
@@ -102,6 +103,8 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
         const comment = await response.json()
         setComments(prev => [comment, ...prev])
         setNewComment("")
+        // Parent component'e yorum eklendiğini bildir
+        onCommentAdded?.()
       } else {
         console.error("Failed to add comment")
       }
@@ -156,6 +159,8 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
           [parentId]: ""
         }))
         setReplyingTo(null)
+        // Parent component'e yorum eklendiğini bildir
+        onCommentAdded?.()
       } else {
         console.error("Failed to add reply")
       }

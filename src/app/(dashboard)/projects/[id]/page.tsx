@@ -174,7 +174,8 @@ export default function ProjectDetailPage() {
     getCompletedTasksCount,
     getPendingTasksCount,
     getOverdueTasksByProject,
-    getOverdueTasksCountByProject
+    getOverdueTasksCountByProject,
+    refreshTaskCommentCount
   } = useTaskStore()
 
   const fetchProjectData = useCallback(async () => {
@@ -1359,6 +1360,11 @@ export default function ProjectDetailPage() {
         taskId={commentsModalTask?.id || ''}
         taskTitle={commentsModalTask?.title || ''}
         isTaskCompleted={commentsModalTask?.completed || false}
+        onCommentAdded={() => {
+          if (commentsModalTask?.id) {
+            refreshTaskCommentCount(commentsModalTask.id)
+          }
+        }}
       />
 
       {/* Proje Timeline Modal'ı */}

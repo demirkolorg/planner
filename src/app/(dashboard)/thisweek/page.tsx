@@ -49,6 +49,7 @@ export default function ScheduledPage() {
     addSubTask,
     cloneTask,
     moveTask,
+    refreshTaskCommentCount,
   } = useTaskStore()
   
   const { projects, fetchProjects } = useProjectStore()
@@ -740,6 +741,11 @@ export default function ScheduledPage() {
         taskId={commentsModalTask?.id || ''}
         taskTitle={commentsModalTask?.title || ''}
         isTaskCompleted={commentsModalTask?.completed || false}
+        onCommentAdded={() => {
+          if (commentsModalTask?.id) {
+            refreshTaskCommentCount(commentsModalTask.id)
+          }
+        }}
       />
       </div>
     </TooltipProvider>

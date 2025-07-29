@@ -59,6 +59,7 @@ interface TaskStore {
   toggleTaskPin: (taskId: string) => Promise<void>
   addSubTask: (parentTaskId: string, taskData: CreateTaskRequest) => Promise<void>
   updateTaskTags: (taskId: string, tagIds: string[]) => Promise<void>
+  refreshTaskCommentCount: (taskId: string) => Promise<void>
   
   // Utility methods
   getTasksByProject: (projectId: string) => TaskWithRelations[]
@@ -1143,5 +1144,30 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   getTotalCompletedTasksCount: () => {
     const { tasks } = get()
     return tasks.filter(task => task.completed).length
+  },
+
+  refreshTaskCommentCount: async (taskId: string) => {
+    try {
+      // Task'ın güncel comment count'unu API'den al
+      const response = await fetch(`/api/tasks/${taskId}/comments`)
+      if (response.ok) {
+        const comments = await response.json()
+        // Ana yorumları ve reply'ları say
+        const totalComments = comments.reduce((total: number, comment: any) => {
+          return total + 1 + (comment.replies?.length || 0)
+        }, 0)
+        
+        // Task'ı güncelle
+        set(state => ({
+          tasks: state.tasks.map(task => 
+            task.id === taskId 
+              ? { ...task, _count: { ...task._count, comments: totalComments } }
+              : task
+          )
+        }))
+      }
+    } catch (error) {
+      console.error('Error refreshing task comment count:', error)
+    }
   }
 }))
