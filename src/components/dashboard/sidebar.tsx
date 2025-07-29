@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, Settings, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -522,12 +522,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                       Profil
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Ayarlar
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
                     <LogOut className="h-4 w-4" />
                     Çıkış Yap
@@ -609,12 +603,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                       <Link href="/profile" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Profil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        Ayarlar
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">

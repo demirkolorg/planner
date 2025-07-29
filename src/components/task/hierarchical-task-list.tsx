@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { TaskItem } from "./task-item"
 import { buildTaskHierarchy, flattenHierarchy } from "@/lib/task-hierarchy"
 import type { Task } from "@/types/task"
@@ -22,6 +22,7 @@ interface HierarchicalTaskListProps {
   className?: string
   showTreeConnectors?: boolean
   highlightTaskId?: string | null
+  expandTaskId?: string | null
 }
 
 export function HierarchicalTaskList({
@@ -40,10 +41,38 @@ export function HierarchicalTaskList({
   onComment,
   className = "",
   showTreeConnectors = true,
-  highlightTaskId
+  highlightTaskId,
+  expandTaskId
 }: HierarchicalTaskListProps) {
   // Expand/collapse state management
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set())
+  
+  // Expand task effect - parent'ları da expand et
+  useEffect(() => {
+    if (expandTaskId) {
+      const taskToExpand = tasks.find(t => t.id === expandTaskId)
+      if (taskToExpand) {
+        const expandedIds = new Set<string>()
+        
+        // Target task'ı expand et
+        expandedIds.add(expandTaskId)
+        
+        // Parent'ları bulup expand et
+        let currentParentId = taskToExpand.parentTaskId
+        while (currentParentId) {
+          expandedIds.add(currentParentId)
+          const parentTask = tasks.find(t => t.id === currentParentId)
+          currentParentId = parentTask?.parentTaskId
+        }
+        
+        setExpandedTaskIds(prev => {
+          const newSet = new Set(prev)
+          expandedIds.forEach(id => newSet.add(id))
+          return newSet
+        })
+      }
+    }
+  }, [expandTaskId, tasks])
   
   // Hiyerarşik task yapısını oluştur
   const hierarchicalTasks = useMemo(() => {
@@ -121,6 +150,7 @@ export function HierarchicalTaskList({
             onEdit={onEdit}
             onComment={onComment}
             isHighlighted={highlightTaskId === task.id}
+            forceExpand={expandTaskId === task.id}
           />
         )
       })}

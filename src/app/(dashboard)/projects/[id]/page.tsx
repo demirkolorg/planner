@@ -63,7 +63,7 @@ export default function ProjectDetailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const projectId = params.id as string
-  const [highlightTaskId, setHighlightTaskId] = useState<string | null>(null)
+  const [expandTaskId, setExpandTaskId] = useState<string | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -317,30 +317,23 @@ export default function ProjectDetailPage() {
     fetchProjectData()
   }, [projectId])
 
-  // Highlight task effect - görevler yüklendikten sonra çalışsın
+  // Expand task effect - görevler yüklendikten sonra çalışsın
   useEffect(() => {
     const highlightParam = searchParams.get('highlight')
     
     // Görevler yüklenmiş ve highlight parametresi varsa
     if (highlightParam && !isLoading) {
-      // Kısa bir gecikme ile highlight'ı aktif et (DOM'un render olması için)
-      const highlightTimer = setTimeout(() => {
-        setHighlightTaskId(highlightParam)
+      // Kısa bir gecikme ile expand'i aktif et (DOM'un render olması için)
+      const expandTimer = setTimeout(() => {
+        setExpandTaskId(highlightParam)
         
-        // 3 saniye sonra highlight'ı kaldır
-        const clearTimer = setTimeout(() => {
-          setHighlightTaskId(null)
-          
-          // URL'den highlight parametresini temizle
-          const url = new URL(window.location.href)
-          url.searchParams.delete('highlight')
-          router.replace(url.pathname + url.search)
-        }, 3000)
-        
-        return () => clearTimeout(clearTimer)
-      }, 100) // 100ms gecikme
+        // URL'den highlight parametresini temizle
+        const url = new URL(window.location.href)
+        url.searchParams.delete('highlight')
+        router.replace(url.pathname + url.search)
+      }, 200) // 200ms gecikme - expand animasyonu için biraz daha uzun
       
-      return () => clearTimeout(highlightTimer)
+      return () => clearTimeout(expandTimer)
     }
   }, [searchParams, router, isLoading])
 
@@ -887,7 +880,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to move task:', error)
                     }
                   }}
-                  highlightTaskId={highlightTaskId}
+                  expandTaskId={null} // Gecikmiş bölümünde expand etme
                 />
               </AccordionContent>
             </AccordionItem>
@@ -991,7 +984,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to move task:', error)
                     }
                   }}
-                  highlightTaskId={highlightTaskId}
+                  expandTaskId={null} // Bölümsüz görevlerde expand etme
                 />
               </AccordionContent>
             </AccordionItem>
@@ -1192,7 +1185,7 @@ export default function ProjectDetailPage() {
                           console.error('Failed to move task:', error)
                         }
                       }}
-                      highlightTaskId={highlightTaskId}
+                      expandTaskId={expandTaskId}
                     />
                   )}
                 </AccordionContent>

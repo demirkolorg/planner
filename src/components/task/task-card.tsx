@@ -78,11 +78,13 @@ interface TaskCardProps {
   onToggleExpanded?: () => void
   // Highlight için prop
   isHighlighted?: boolean
+  // Force expand için prop
+  forceExpand?: boolean
 }
 
 
 
-export function TaskCard({
+export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   task,
   onToggleComplete,
   onUpdate,
@@ -102,8 +104,10 @@ export function TaskCard({
   hasChildren: externalHasChildren,
   onToggleExpanded: externalOnToggleExpanded,
   // Highlight prop
-  isHighlighted = false
-}: TaskCardProps) {
+  isHighlighted = false,
+  // Force expand prop
+  forceExpand = false
+}, ref) => {
   // İç expansion state (eski davranış için fallback)
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
@@ -122,6 +126,22 @@ export function TaskCard({
   React.useEffect(() => {
     setOptimisticCompleted(task.completed)
   }, [task.completed])
+  
+  // Force expand useEffect with scroll
+  React.useEffect(() => {
+    if (forceExpand && externalIsExpanded === undefined) {
+      setInternalIsExpanded(true)
+      // Scroll to element after expansion
+      setTimeout(() => {
+        if (ref && typeof ref === 'object' && ref.current) {
+          ref.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          })
+        }
+      }, 100) // Small delay to allow expansion animation
+    }
+  }, [forceExpand, externalIsExpanded, ref])
   
   // Görünen completed değeri (optimistic veya gerçek)
   const displayCompleted = optimisticCompleted
@@ -286,6 +306,7 @@ export function TaskCard({
   return (
     <TooltipProvider>
       <div 
+        ref={ref}
         className={cn(
           "rounded-lg transition-all duration-200",
           task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
@@ -707,4 +728,6 @@ export function TaskCard({
       />
     </TooltipProvider>
   )
-}
+})
+
+TaskCard.displayName = "TaskCard"

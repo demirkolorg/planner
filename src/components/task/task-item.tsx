@@ -25,6 +25,7 @@ interface TaskItemProps {
   onEdit?: (task: TaskWithHierarchy) => void
   onComment?: (taskId: string, taskTitle: string) => void
   isHighlighted?: boolean
+  forceExpand?: boolean
 }
 
 export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
@@ -46,6 +47,7 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
   onEdit,
   onComment,
   isHighlighted,
+  forceExpand,
   ...props
 }, ref) => {
   const level = task.level || 0
@@ -104,6 +106,8 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
           onToggleExpanded={onToggleExpanded}
           // Highlight state
           isHighlighted={isHighlighted}
+          // Force expand state
+          forceExpand={forceExpand}
         />
       </div>
     </div>

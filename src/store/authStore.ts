@@ -7,6 +7,8 @@ export interface User {
   firstName: string
   lastName: string
   email: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface AuthState {
@@ -15,6 +17,7 @@ interface AuthState {
   login: (user: User) => void
   logout: () => Promise<void>
   setUser: (user: User) => void
+  updateProfile: (updates: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -91,6 +94,9 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       setUser: (user: User) => set({ user, isAuthenticated: true }),
+      updateProfile: (updates: Partial<User>) => set((state) => ({
+        user: state.user ? { ...state.user, ...updates } : null
+      })),
     }),
     {
       name: STORAGE_KEYS.AUTH_STORAGE,
