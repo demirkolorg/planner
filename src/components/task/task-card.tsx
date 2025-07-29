@@ -1,7 +1,9 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink } from "lucide-react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { TaskTimelineModal } from "../modals/task-timeline-modal"
@@ -105,6 +107,8 @@ export function TaskCard({
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
   const [isToggling, setIsToggling] = useState(false)
   const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed)
+  const [isHovered, setIsHovered] = useState(false)
+  const pathname = usePathname()
 
   // External prop'lar varsa onları kullan, yoksa internal state'i kullan
   const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
@@ -117,6 +121,9 @@ export function TaskCard({
   
   // Görünen completed değeri (optimistic veya gerçek)
   const displayCompleted = optimisticCompleted
+  
+  // Proje sayfasında mı kontrol et
+  const isOnProjectPage = pathname.startsWith('/projects/') && pathname.includes(task.projectId)
   
   
   const handleToggleComplete = async () => {
@@ -273,16 +280,20 @@ export function TaskCard({
 
   return (
     <TooltipProvider>
-      <div className={cn(
-        "rounded-lg transition-all duration-200",
-        task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
-        isExpanded
-          ? "bg-secondary rounded-t-lg"
-          : "hover:bg-secondary rounded-lg",
-        // Date alert gradient (only when collapsed)
+      <div 
+        className={cn(
+          "rounded-lg transition-all duration-200",
+          task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
+          isExpanded
+            ? "bg-secondary rounded-t-lg"
+            : "hover:bg-secondary rounded-lg",
+          // Date alert gradient (only when collapsed)
         !isExpanded && getDateAlertGradient(),
         className
-      )}>
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Header - Always Visible */}
         <div
           className={cn(
@@ -371,7 +382,30 @@ export function TaskCard({
               "font-medium text-xs truncate flex items-center gap-3 task-title",
               displayCompleted && "line-through text-muted-foreground"
             )}>
-              <span className="flex-1 min-w-0 truncate">{task.title}</span>
+              <div className="flex items-center gap-1 flex-1 min-w-0">
+                <span className="truncate">{task.title}</span>
+                
+                {/* Project Link Button - Only show on hover and not on project page */}
+                {isHovered && !isOnProjectPage && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link 
+                        href={`/projects/${task.projectId}`}
+                        className={cn(
+                          "flex-shrink-0 transition-opacity duration-200",
+                          isHovered ? "opacity-100" : "opacity-0"
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Projeye git</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
               
               {/* Due Date Icon with Overdue Warning */}
               {task.dueDate && (
