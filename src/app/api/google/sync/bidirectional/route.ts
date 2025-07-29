@@ -88,23 +88,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. CALENDAR → PLANNER SYNC (Yeni özellik)
+    // 2. CALENDAR → PLANNER SYNC (Optimize edilmiş versiyon)
     const calendar = createCalendarClient(accessToken)
     
     // Seçili takvimlerden event'leri al
     const selectedCalendarIds = integration.calendarIds || [integration.calendarId || 'primary']
     let allEvents: any[] = []
     
-    // Son 7 gün içindeki eventleri al (tüm seçili takvimlerden)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    // Incremental sync: Son sync zamanından itibaren al (performans için)
+    const lastSyncTime = integration.lastSyncAt 
+      ? new Date(integration.lastSyncAt.getTime() - 5 * 60 * 1000) // 5 dakika buffer
+      : new Date(Date.now() - 24 * 60 * 60 * 1000) // Varsayılan: 1 gün önce
     
     for (const calendarId of selectedCalendarIds) {
       try {
         const eventsResponse = await calendar.events.list({
           calendarId,
-          timeMin: sevenDaysAgo,
+          timeMin: lastSyncTime.toISOString(),
           singleEvents: true,
-          orderBy: 'updated'
+          orderBy: 'updated',
+          maxResults: 100 // Arttırıldı çünkü incremental sync kullanıyoruz
         })
         
         const calendarEvents = eventsResponse.data.items || []
@@ -123,115 +126,152 @@ export async function POST(request: NextRequest) {
     const events = allEvents
     results.calendarToTasks.total = events.length
 
-    for (const event of events) {
-      try {
-        // Bu event zaten sync edilmiş bir task'a ait mi?
-        const existingTaskEvent = await db.taskCalendarEvent.findUnique({
-          where: { googleEventId: event.id },
-          include: { task: true }
+    if (events.length > 0) {
+      // Batch database operations - tüm event ID'lerini bir seferde sorgula
+      const eventIds = events.map(event => event.id)
+      const existingTaskEvents = await db.taskCalendarEvent.findMany({
+        where: { 
+          googleEventId: { in: eventIds }
+        },
+        include: { task: true }
+      })
+
+      // ID'ye göre hızlı erişim için Map oluştur
+      const existingEventsMap = new Map()
+      existingTaskEvents.forEach(taskEvent => {
+        existingEventsMap.set(taskEvent.googleEventId, taskEvent)
+      })
+
+      // Gelen Kutusu projesi ve section'ı önceden al
+      let inboxProject = await db.project.findFirst({
+        where: { 
+          userId,
+          name: 'Gelen Kutusu'
+        }
+      })
+
+      if (!inboxProject) {
+        inboxProject = await db.project.create({
+          data: {
+            name: 'Gelen Kutusu',
+            emoji: '📥',
+            userId
+          }
         })
+      }
 
-        if (existingTaskEvent) {
-          // Mevcut task'ı güncelle
+      let defaultSection = await db.section.findFirst({
+        where: { projectId: inboxProject.id }
+      })
+
+      if (!defaultSection) {
+        defaultSection = await db.section.create({
+          data: {
+            name: 'Genel',
+            projectId: inboxProject.id,
+            order: 0
+          }
+        })
+      }
+
+      // Batch operations için arrays
+      const tasksToUpdate: any[] = []
+      const tasksToCreate: any[] = []
+      const taskEventsToCreate: any[] = []
+      const tasksToDelete: string[] = []
+
+      // Event'leri işle ve batch operations'a hazırla
+      for (const event of events) {
+        try {
+          const existingTaskEvent = existingEventsMap.get(event.id)
           const eventData = convertCalendarEventToTask(event)
-          
-          // Event silinmiş mi?
-          if (event.status === 'cancelled') {
-            await db.task.delete({
-              where: { id: existingTaskEvent.task.id }
-            })
-            results.calendarToTasks.synced++
+
+          if (existingTaskEvent) {
+            // Mevcut task güncelleme veya silme
+            if (event.status === 'cancelled') {
+              tasksToDelete.push(existingTaskEvent.task.id)
+            } else {
+              tasksToUpdate.push({
+                id: existingTaskEvent.task.id,
+                data: {
+                  title: eventData.title,
+                  description: eventData.description,
+                  priority: eventData.priority,
+                  dueDate: eventData.dueDate ? new Date(eventData.dueDate) : null,
+                }
+              })
+            }
           } else {
-            // Task'ı güncelle
-            await db.task.update({
-              where: { id: existingTaskEvent.task.id },
-              data: {
-                title: eventData.title,
-                description: eventData.description,
-                priority: eventData.priority,
-                dueDate: eventData.dueDate ? new Date(eventData.dueDate) : null,
-              }
-            })
-
-            // All-day event güncellemesi log
-            if (eventData.isAllDay) {
-              console.log(`All-day event updated task: ${eventData.title} (${eventData.originalEventType})`)
+            // Yeni task oluşturma
+            if (event.status !== 'cancelled') {
+              const taskId = `temp_${Date.now()}_${Math.random()}`
+              tasksToCreate.push({
+                tempId: taskId,
+                data: {
+                  title: eventData.title,
+                  description: eventData.description,
+                  priority: eventData.priority,
+                  dueDate: eventData.dueDate ? new Date(eventData.dueDate) : null,
+                  userId,
+                  projectId: inboxProject.id,
+                  sectionId: defaultSection.id,
+                },
+                eventId: event.id,
+                calendarId: event._sourceCalendarId || selectedCalendarIds[0]
+              })
             }
-
-            results.calendarToTasks.synced++
           }
-        } else {
-          // Yeni task oluştur
-          const eventData = convertCalendarEventToTask(event)
-          
-          // "Gelen Kutusu" projesini bul veya oluştur
-          let inboxProject = await db.project.findFirst({
-            where: { 
-              userId,
-              name: 'Gelen Kutusu'
-            }
+        } catch (error) {
+          results.calendarToTasks.failed++
+          results.calendarToTasks.errors.push(`Event ${event.summary}: Veri hazırlama hatası`)
+        }
+      }
+
+      // Batch operations'ı çalıştır
+      try {
+        // 1. Task güncellemeleri
+        for (const taskUpdate of tasksToUpdate) {
+          await db.task.update({
+            where: { id: taskUpdate.id },
+            data: taskUpdate.data
           })
+          results.calendarToTasks.synced++
+        }
 
-          if (!inboxProject) {
-            // Gelen Kutusu projesi yoksa oluştur
-            inboxProject = await db.project.create({
-              data: {
-                name: 'Gelen Kutusu',
-                emoji: '📥',
-                userId
-              }
-            })
-          }
-
-          // Varsayılan section'ı bul veya oluştur
-          let defaultSection = await db.section.findFirst({
-            where: { projectId: inboxProject.id }
+        // 2. Task silmeleri
+        if (tasksToDelete.length > 0) {
+          await db.task.deleteMany({
+            where: { id: { in: tasksToDelete } }
           })
+          results.calendarToTasks.synced += tasksToDelete.length
+        }
 
-          if (!defaultSection) {
-            defaultSection = await db.section.create({
-              data: {
-                name: 'Genel',
-                projectId: inboxProject.id,
-                order: 0
-              }
-            })
-          }
-
-          // Yeni task oluştur
+        // 3. Yeni task'lar oluştur
+        for (const taskToCreate of tasksToCreate) {
           const newTask = await db.task.create({
-            data: {
-              title: eventData.title,
-              description: eventData.description,
-              priority: eventData.priority,
-              dueDate: eventData.dueDate ? new Date(eventData.dueDate) : null,
-              userId,
-              projectId: inboxProject.id,
-              sectionId: defaultSection.id,
-            }
+            data: taskToCreate.data
           })
-
-          // isAllDay bilgisini task'a ekle (geçici olarak description'da saklayabiliriz)
-          if (eventData.isAllDay) {
-            console.log(`All-day event converted to task: ${newTask.title} (${eventData.originalEventType})`)
-          }
 
           // TaskCalendarEvent kaydı oluştur
           await db.taskCalendarEvent.create({
             data: {
               taskId: newTask.id,
-              googleEventId: event.id,
-              calendarId: event._sourceCalendarId || selectedCalendarIds[0],
+              googleEventId: taskToCreate.eventId,
+              calendarId: taskToCreate.calendarId,
               syncStatus: 'SYNCED',
               lastSyncAt: new Date(),
             }
           })
-
+          
           results.calendarToTasks.synced++
         }
+
+        console.log(`📊 Calendar->Planner Sync Stats: ${tasksToUpdate.length} updated, ${tasksToDelete.length} deleted, ${tasksToCreate.length} created`)
+        
       } catch (error) {
-        results.calendarToTasks.failed++
-        results.calendarToTasks.errors.push(`Event ${event.summary}: Beklenmeyen hata`)
+        console.error('Batch operations error:', error)
+        results.calendarToTasks.failed += events.length
+        results.calendarToTasks.errors.push('Batch operations başarısız')
       }
     }
 
