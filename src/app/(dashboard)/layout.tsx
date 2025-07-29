@@ -8,6 +8,8 @@ import { useProjectStore } from "@/store/projectStore"
 import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
+import { QuickTaskModal } from "@/components/modals/quick-task-modal"
+import { useCtrlK } from "@/hooks/use-keyboard-shortcut"
 
 export default function DashboardLayout({
   children,
@@ -20,7 +22,15 @@ export default function DashboardLayout({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   const lastUserIdRef = useRef<string | null>(null)
+
+  // Ctrl+K shortcut
+  useCtrlK(() => {
+    if (isAuthenticated) {
+      setIsQuickTaskModalOpen(true)
+    }
+  })
 
   useEffect(() => {
     // Zustand persist hydration'ı bekle
@@ -88,6 +98,12 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+      
+      {/* Quick Task Modal */}
+      <QuickTaskModal
+        isOpen={isQuickTaskModalOpen}
+        onClose={() => setIsQuickTaskModalOpen(false)}
+      />
     </div>
   )
 }

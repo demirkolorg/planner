@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { PiTagSimpleFill } from "react-icons/pi"
-import { Plus, Edit, Trash2, Search, Clock, Check } from "lucide-react"
+import { Plus, Edit, Trash2, Search, Clock, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -30,6 +30,7 @@ export default function TagsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tagToDelete, setTagToDelete] = useState<{id: string, name: string} | null>(null)
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
+  const [tagSearchQuery, setTagSearchQuery] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<"date" | "priority" | "project">("date")
   const [filterBy, setFilterBy] = useState<"all" | "pending" | "completed">("all")
@@ -70,6 +71,11 @@ export default function TagsPage() {
     fetchTasks
   } = useTaskStore()
   const { projects, fetchProjects } = useProjectStore()
+
+  // Etiket arama filtresi
+  const filteredTags = tags.filter(tag => 
+    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase())
+  )
 
   // Seçilen tag'in görevlerini al
   const selectedTasks = selectedTagId ? getTasksByTag(selectedTagId) : []
@@ -209,10 +215,14 @@ export default function TagsPage() {
 
   // İlk tag'i otomatik seç
   useEffect(() => {
-    if (tags.length > 0 && !selectedTagId) {
-      setSelectedTagId(tags[0].id)
+    if (filteredTags.length > 0 && !selectedTagId) {
+      setSelectedTagId(filteredTags[0].id)
     }
-  }, [tags, selectedTagId])
+    // Eğer seçili tag filtrelenmiş listede yoksa, boş seç
+    if (selectedTagId && !filteredTags.find(tag => tag.id === selectedTagId)) {
+      setSelectedTagId(filteredTags.length > 0 ? filteredTags[0].id : null)
+    }
+  }, [filteredTags, selectedTagId])
 
   const handleCreateTag = async (name: string, color: string) => {
     try {
@@ -262,6 +272,27 @@ export default function TagsPage() {
             </Button>
           </div>
 
+          {/* Etiket arama kutusu */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Etiketlerde ara..."
+              value={tagSearchQuery}
+              onChange={(e) => setTagSearchQuery(e.target.value)}
+              className={`pl-10 h-9 text-sm ${tagSearchQuery ? 'pr-10' : ''}`}
+            />
+            {tagSearchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTagSearchQuery("")}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-5 w-5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+
           {error && (
             <div className="p-3 border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800 rounded-lg">
               <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
@@ -277,7 +308,7 @@ export default function TagsPage() {
           )}
 
           {/* Tag listesi */}
-          <div className="flex-1 overflow-y-auto space-y-2">
+          <div className="flex-1 overflow-y-auto space-y-1">
             {isLoading && (
               <div className="flex items-center justify-center p-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -295,10 +326,17 @@ export default function TagsPage() {
               </div>
             )}
 
-            {!isLoading && tags.length > 0 && tags.map((tag) => (
+            {!isLoading && filteredTags.length === 0 && tags.length > 0 && (
+              <div className="text-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+                <Search className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Arama sonucu bulunamadı</p>
+              </div>
+            )}
+
+            {!isLoading && filteredTags.length > 0 && filteredTags.map((tag) => (
               <div 
                 key={tag.id} 
-                className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                className={`group relative overflow-hidden rounded-md border cursor-pointer transition-all duration-200 hover:shadow-sm ${
                   selectedTagId === tag.id 
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' 
                     : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -308,35 +346,29 @@ export default function TagsPage() {
                   background: `linear-gradient(135deg, ${tag.color}10 0%, ${tag.color}05 100%)`
                 } : {}}
               >
-                <div className="p-3">
+                <div className="p-2">
                   <div className="flex items-center space-x-2">
                     <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
                       style={{ 
-                        background: `linear-gradient(135deg, ${tag.color}20 0%, ${tag.color}40 100%)`
+                        background: `linear-gradient(135deg, ${tag.color}25 0%, ${tag.color}45 100%)`
                       }}
                     >
                       <PiTagSimpleFill
-                        className="w-4 h-4"
+                        className="w-3 h-3"
                         style={{ color: tag.color }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm truncate">{tag.name}</h3>
-                      <div 
-                        className="px-2 py-1 rounded text-xs font-medium mt-1 inline-block"
-                        style={{ 
-                          backgroundColor: `${tag.color}15`,
-                          color: tag.color
-                        }}
-                      >
+                      <h3 className="font-medium text-xs truncate">{tag.name}</h3>
+                      <div className="text-xs text-muted-foreground mt-0.5">
                         {tag._count?.tasks || 0} görev
                       </div>
                     </div>
                   </div>
 
                   {/* Action buttons */}
-                  <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-1.5 right-1.5 flex space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -344,9 +376,9 @@ export default function TagsPage() {
                         e.stopPropagation()
                         setEditingTag(tag.id)
                       }}
-                      className="h-6 w-6 rounded-md bg-white/80 dark:bg-gray-700/80 shadow-sm"
+                      className="h-5 w-5 rounded-sm bg-white/90 dark:bg-gray-700/90 shadow-sm"
                     >
-                      <Edit className="h-3 w-3" />
+                      <Edit className="h-2.5 w-2.5" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -355,9 +387,9 @@ export default function TagsPage() {
                         e.stopPropagation()
                         handleDeleteTag(tag.id, tag.name)
                       }}
-                      className="h-6 w-6 rounded-md bg-red-50/80 dark:bg-red-900/30 text-red-600 shadow-sm"
+                      className="h-5 w-5 rounded-sm bg-red-50/90 dark:bg-red-900/40 text-red-600 shadow-sm"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-2.5 w-2.5" />
                     </Button>
                   </div>
                 </div>

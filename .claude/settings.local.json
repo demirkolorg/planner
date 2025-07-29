@@ -39,7 +39,9 @@
       "Bash(npx tsc:*)",
       "Bash(fuser:*)",
       "Bash(true)",
-      "Bash(del test-google-ai.js)"
+      "Bash(del test-google-ai.js)",
+      "WebFetch(domain:inference-docs.cerebras.ai)",
+      "WebFetch(domain:www.cerebras.ai)"
     ],
     "deny": []
   }

@@ -373,14 +373,25 @@ export function DashboardOverview() {
           </div>
         </div>
 
-        {/* New Task Button */}
-        <Button 
-          onClick={() => setIsTaskModalOpen(true)}
-          className="px-6 h-12 text-base"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Yeni Görev
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex items-center space-x-3">
+          {/* Quick Task Hint */}
+          <div className="px-3 py-1.5 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200/50 dark:border-purple-800/50 rounded-lg">
+            <div className="flex items-center text-xs text-purple-700 dark:text-purple-300">
+              <kbd className="px-1.5 py-0.5 text-xs bg-purple-200 dark:bg-purple-800 rounded mr-2">Ctrl+K</kbd>
+              hızlı görev ekle
+            </div>
+          </div>
+          
+          {/* New Task Button */}
+          <Button 
+            onClick={() => setIsTaskModalOpen(true)}
+            className="px-6 h-12 text-base"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Yeni Görev
+          </Button>
+        </div>
       </div>
 
       {/* Modern Stats Cards - Single Row */}

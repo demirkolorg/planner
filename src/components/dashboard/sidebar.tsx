@@ -249,6 +249,14 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 </Button>
               </Link>
             </div>
+            
+            {/* Hızlı görev ekleme bildirimi */}
+            <div className="mt-2 px-2 py-1.5 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200/50 dark:border-purple-800/50 rounded-lg">
+              <div className="flex items-center text-xs text-purple-700 dark:text-purple-300">
+                <kbd className="px-1.5 py-0.5 text-xs bg-purple-200 dark:bg-purple-800 rounded mr-2">Ctrl+K</kbd>
+                ile hızlı görev ekle
+              </div>
+            </div>
           </div>
 
           {/* Navigation Cards */}

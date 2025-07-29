@@ -116,7 +116,6 @@ export async function POST(request: NextRequest) {
           parsedDueDate = undefined
         }
       } catch (error) {
-        console.error('Invalid dueDate format:', error)
         parsedDueDate = undefined
       }
     }
@@ -139,16 +138,40 @@ export async function POST(request: NextRequest) {
 
       // Tag ilişkilerini oluştur
       if (tags.length > 0) {
-        // Tag'leri bul (kullanıcıya ait)
-        const userTags = await tx.tag.findMany({
+        // Önce mevcut tag'leri bul
+        const existingTags = await tx.tag.findMany({
           where: {
             name: { in: tags },
             userId: decoded.userId
           }
         })
-
+        
+        // Eksik olan tag'leri tespit et
+        const existingTagNames = existingTags.map(tag => tag.name)
+        const missingTagNames = tags.filter(tagName => !existingTagNames.includes(tagName))
+        
+        // Rastgele renkler
+        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316']
+        
+        // Eksik tag'leri oluştur
+        const newTags = []
+        for (const tagName of missingTagNames) {
+          const randomColor = colors[Math.floor(Math.random() * colors.length)]
+          const newTag = await tx.tag.create({
+            data: {
+              name: tagName,
+              color: randomColor,
+              userId: decoded.userId
+            }
+          })
+          newTags.push(newTag)
+        }
+        
+        // Tüm tag'leri birleştir
+        const allTags = [...existingTags, ...newTags]
+        
         // TaskTag ilişkilerini oluştur
-        const taskTagData = userTags.map(tag => ({
+        const taskTagData = allTags.map(tag => ({
           taskId: task.id,
           tagId: tag.id
         }))
@@ -221,7 +244,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    console.error("Error creating task:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -272,7 +294,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tasks)
   } catch (error) {
-    console.error("Error fetching tasks:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
