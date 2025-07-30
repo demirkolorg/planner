@@ -195,19 +195,20 @@ export async function POST(request: NextRequest) {
         existingEventsMap.set(taskEvent.googleEventId, taskEvent)
       })
 
-      // Gelen Kutusu projesi ve section'ı önceden al
+      // Planner Takvimi projesi ve section'ı önceden al
       let inboxProject = await db.project.findFirst({
         where: { 
           userId,
-          name: 'Gelen Kutusu'
+          name: 'Planner Takvimi'
         }
       })
 
       if (!inboxProject) {
         inboxProject = await db.project.create({
           data: {
-            name: 'Gelen Kutusu',
-            emoji: '📥',
+            name: 'Planner Takvimi',
+            emoji: '📅',
+            notes: '🔄 Google Calendar ile otomatik senkronize olan özel proje. Google Calendar\'daki etkinlikler buraya görev olarak aktarılır.',
             userId
           }
         })

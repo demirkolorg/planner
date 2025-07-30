@@ -191,11 +191,11 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     }
     
     return filteredProjects.sort((a, b) => {
-      // Özel proje sıralaması: Hızlı Notlar, Gelen Kutusu, diğerleri
+      // Özel proje sıralaması: Planner Takvimi, Hızlı Notlar, diğerleri
+      if (a.name === "Planner Takvimi") return -1
+      if (b.name === "Planner Takvimi") return 1
       if (a.name === "Hızlı Notlar") return -1
       if (b.name === "Hızlı Notlar") return 1
-      if (a.name === "Gelen Kutusu") return -1
-      if (b.name === "Gelen Kutusu") return 1
       // Diğer projeler alfabetik sırada
       return a.name.localeCompare(b.name, 'tr')
     })

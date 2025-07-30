@@ -94,16 +94,17 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Default "Gelen Kutusu" projesini oluştur
+      // Default "Planner Takvimi" projesini oluştur
       const inboxProject = await tx.project.create({
         data: {
-          name: "Gelen Kutusu",
-          emoji: "📥",
+          name: "Planner Takvimi",
+          emoji: "📅",
+          notes: "🔄 Google Calendar ile otomatik senkronize olan özel proje. Google Calendar'daki etkinlikler buraya görev olarak aktarılır.",
           userId: user.id,
         },
       });
 
-      // "Gelen Kutusu" için "Genel" bölümü oluştur
+      // "Planner Takvimi" için "Genel" bölümü oluştur
       await tx.section.create({
         data: {
           name: "Genel",

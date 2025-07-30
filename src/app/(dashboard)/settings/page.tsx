@@ -7,7 +7,8 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calendar, Settings, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Calendar, Settings, Loader2, CheckCircle, AlertCircle, User, Bell, Shield, Palette } from 'lucide-react'
 import { NotificationDialog } from '@/components/ui/notification-dialog'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { ManualEventWarning } from '@/components/settings/manual-event-warning'
@@ -429,275 +430,397 @@ export default function SettingsPage() {
     setIsLoading(false)
   }
 
-  return (<>
-    <div className="max-w-4xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Google Calendar Entegrasyonu
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Görevlerinizi Google Calendar ile senkronize edin
-        </p>
-      </div>
+  // Tab konfigürasyonu
+  const tabs = [
+    {
+      id: 'google-calendar',
+      name: 'Google Calendar',
+      icon: Calendar,
+      description: 'Takvim entegrasyonu ve senkronizasyon ayarları'
+    },
+    {
+      id: 'profile',
+      name: 'Profil',
+      icon: User,
+      description: 'Hesap bilgileri ve kişisel ayarlar'
+    },
+    {
+      id: 'notifications',
+      name: 'Bildirimler',
+      icon: Bell,
+      description: 'Bildirim tercihleri ve uyarılar'
+    },
+    {
+      id: 'appearance',
+      name: 'Görünüm',
+      icon: Palette,
+      description: 'Tema ve görünüm ayarları'
+    },
+    {
+      id: 'privacy',
+      name: 'Gizlilik',
+      icon: Shield,
+      description: 'Güvenlik ve gizlilik ayarları'
+    }
+  ]
 
-      {/* Ana İçerik */}
-      <div className="space-y-6">
-        {/* 1. Bağlantı Durumu */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className={`w-3 h-3 rounded-full ${isInitialLoading ? 'bg-gray-400' : isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+  return (
+    <>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  {isInitialLoading ? 'Kontrol ediliyor...' : isConnected ? 'Google Calendar\'a bağlı' : 'Bağlantı yok'}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {isInitialLoading ? 'Bağlantı durumu kontrol ediliyor' : isConnected ? 'Senkronizasyon aktif' : 'Bağlantı kurulması gerekiyor'}
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                  <Settings className="h-8 w-8" />
+                  Ayarlar
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  Hesap ayarlarınızı ve entegrasyonlarınızı yönetin
                 </p>
               </div>
             </div>
-            
-            {isInitialLoading ? (
-              <Button disabled variant="secondary">
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Yükleniyor
-              </Button>
-            ) : isConnected ? (
-              <Button
-                variant="outline"
-                onClick={handleDisconnectGoogle}
-                disabled={isLoading}
-              >
-                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Bağlantıyı Kes
-              </Button>
-            ) : (
-              <Button
-                onClick={handleConnectGoogle}
-                disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Google Calendar'ı Bağla
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* 2. Bağlı Durumda Gösterilen İçerik */}
-        {!isInitialLoading && isConnected && integration && (
-          <>
-            {/* Planner Takvimi Durumu */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Planner Takvimi</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Görevlerinizin yazıldığı özel takvim
-                  </p>
-                </div>
-                {integration.plannerCalendarCreated ? (
-                  <div className="flex items-center space-x-3">
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                      ✓ Aktif
-                    </Badge>
-                    {integration.plannerCalendarId && (
-                      <a
-                        href={`https://calendar.google.com/calendar/embed?src=${integration.plannerCalendarId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm underline"
+        {/* Tabs */}
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <Tabs defaultValue="google-calendar" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <TabsTrigger key={tab.id} value={tab.id} className="flex items-center space-x-2">
+                    <Icon className="h-4 w-4" />
+                    <span>{tab.name}</span>
+                  </TabsTrigger>
+                )
+              })}
+            </TabsList>
+
+            {/* Google Calendar Tab */}
+            <TabsContent value="google-calendar" className="mt-6">
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Takvim entegrasyonu ve senkronizasyon ayarları
+                </p>
+              </div>
+              <div className="space-y-6">
+                {/* 1. Bağlantı Durumu */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-3 h-3 rounded-full ${isInitialLoading ? 'bg-gray-400' : isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {isInitialLoading ? 'Kontrol ediliyor...' : isConnected ? 'Google Calendar\'a bağlı' : 'Bağlantı yok'}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {isInitialLoading ? 'Bağlantı durumu kontrol ediliyor' : isConnected ? 'Senkronizasyon aktif' : 'Bağlantı kurulması gerekiyor'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {isInitialLoading ? (
+                      <Button disabled variant="secondary">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Yükleniyor
+                      </Button>
+                    ) : isConnected ? (
+                      <Button
+                        variant="outline"
+                        onClick={handleDisconnectGoogle}
+                        disabled={isLoading}
                       >
-                        Google Calendar'da Aç
-                      </a>
+                        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Bağlantıyı Kes
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleConnectGoogle}
+                        disabled={isLoading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Google Calendar'ı Bağla
+                      </Button>
                     )}
                   </div>
-                ) : (
-                  <Button
-                    onClick={handleCreatePlannerCalendar}
-                    disabled={isCreatingPlannerCalendar}
-                    size="sm"
-                  >
-                    {isCreatingPlannerCalendar ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : null}
-                    Takvimi Oluştur
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Senkronizasyon Kontrolleri */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Senkronizasyon</h3>
-              
-              {/* Otomatik Sync */}
-              <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Otomatik Senkronizasyon</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Görevler otomatik olarak takvime eklenir</p>
-                </div>
-                <Switch
-                  checked={integration?.syncEnabled || false}
-                  onCheckedChange={(checked) => {
-                    if (integration) {
-                      setIntegration({
-                        ...integration,
-                        syncEnabled: checked
-                      })
-                    }
-                  }}
-                />
-              </div>
-              
-              {/* Manuel Sync */}
-              <div className="flex items-center justify-between pt-4">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Manuel Senkronizasyon</p>
-                  {(globalLastSyncAt || integration?.lastSyncAt) ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Son sync: {new Date(globalLastSyncAt || integration!.lastSyncAt).toLocaleString('tr-TR')}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Henüz senkronizasyon yapılmamış
-                    </p>
-                  )}
-                </div>
-                <Button
-                  onClick={handleManualSync}
-                  disabled={globalIsSyncing}
-                  variant="outline"
-                >
-                  {globalIsSyncing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {globalIsSyncing ? 'Senkronize ediliyor...' : 'Şimdi Senkronize Et'}
-                </Button>
-              </div>
-
-              {/* Sync İstatistikleri */}
-              {syncStats && (
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{syncStats.synced}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Senkronize</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{syncStats.pending}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Beklemede</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">{syncStats.error}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Hata</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Takvim Seçimi */}
-            {calendars.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <div className="mb-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                    Okunacak Takvimler
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Bu takvimlerden event'ler Planner'a görev olarak aktarılacak (isteğe bağlı)
-                  </p>
                 </div>
 
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {calendars
-                    .filter(cal => !cal.isPlannerCalendar)
-                    .map((calendar) => (
-                    <label
-                      key={calendar.id}
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedReadOnlyCalendarIds.includes(calendar.id)}
-                        onChange={() => handleReadOnlyCalendarToggle(calendar.id)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {calendar.name}
-                          </span>
-                          {calendar.primary && (
-                            <Badge variant="secondary" className="text-xs">Ana</Badge>
-                          )}
-                        </div>
-                        {calendar.description && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {calendar.description}
+                {/* 2. Bağlı Durumda Gösterilen İçerik */}
+                {!isInitialLoading && isConnected && integration && (
+                  <>
+                    {/* Planner Takvimi Durumu */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Planner Takvimi</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Görevlerinizin yazıldığı özel takvim
                           </p>
+                        </div>
+                        {integration.plannerCalendarCreated ? (
+                          <div className="flex items-center space-x-3">
+                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                              ✓ Aktif
+                            </Badge>
+                            {integration.plannerCalendarId && (
+                              <a
+                                href={`https://calendar.google.com/calendar/embed?src=${integration.plannerCalendarId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm underline"
+                              >
+                                Google Calendar'da Aç
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={handleCreatePlannerCalendar}
+                            disabled={isCreatingPlannerCalendar}
+                            size="sm"
+                          >
+                            {isCreatingPlannerCalendar ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : null}
+                            Takvimi Oluştur
+                          </Button>
                         )}
                       </div>
-                    </label>
-                  ))}
-                </div>
+                    </div>
 
-                {selectedReadOnlyCalendarIds.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <Button
-                      onClick={handleSaveReadOnlyCalendars}
-                      disabled={isUpdatingCalendars}
-                      className="w-full"
-                    >
-                      {isUpdatingCalendars && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Seçimi Kaydet ({selectedReadOnlyCalendarIds.length} takvim)
-                    </Button>
-                  </div>
+                    {/* Senkronizasyon Kontrolleri */}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Senkronizasyon</h3>
+                      
+                      {/* Otomatik Sync */}
+                      <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Otomatik Senkronizasyon</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Görevler otomatik olarak takvime eklenir</p>
+                        </div>
+                        <Switch
+                          checked={integration?.syncEnabled || false}
+                          onCheckedChange={(checked) => {
+                            if (integration) {
+                              setIntegration({
+                                ...integration,
+                                syncEnabled: checked
+                              })
+                            }
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Manuel Sync */}
+                      <div className="flex items-center justify-between pt-4">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Manuel Senkronizasyon</p>
+                          {(globalLastSyncAt || integration?.lastSyncAt) ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Son sync: {new Date(globalLastSyncAt || integration!.lastSyncAt).toLocaleString('tr-TR')}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Henüz senkronizasyon yapılmamış
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          onClick={handleManualSync}
+                          disabled={globalIsSyncing}
+                          variant="outline"
+                        >
+                          {globalIsSyncing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          {globalIsSyncing ? 'Senkronize ediliyor...' : 'Şimdi Senkronize Et'}
+                        </Button>
+                      </div>
+
+                      {/* Sync İstatistikleri */}
+                      {syncStats && (
+                        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{syncStats.synced}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">Senkronize</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{syncStats.pending}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">Beklemede</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{syncStats.error}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">Hata</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Takvim Seçimi */}
+                    {calendars.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <div className="mb-4">
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                            Okunacak Takvimler
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Bu takvimlerden event'ler Planner'a görev olarak aktarılacak (isteğe bağlı)
+                          </p>
+                        </div>
+
+                        <div className="space-y-3 max-h-60 overflow-y-auto">
+                          {calendars
+                            .filter(cal => !cal.isPlannerCalendar)
+                            .map((calendar) => (
+                            <label
+                              key={calendar.id}
+                              className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedReadOnlyCalendarIds.includes(calendar.id)}
+                                onChange={() => handleReadOnlyCalendarToggle(calendar.id)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium text-gray-900 dark:text-white">
+                                    {calendar.name}
+                                  </span>
+                                  {calendar.primary && (
+                                    <Badge variant="secondary" className="text-xs">Ana</Badge>
+                                  )}
+                                </div>
+                                {calendar.description && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {calendar.description}
+                                  </p>
+                                )}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+
+                        {selectedReadOnlyCalendarIds.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <Button
+                              onClick={handleSaveReadOnlyCalendars}
+                              disabled={isUpdatingCalendars}
+                              className="w-full"
+                            >
+                              {isUpdatingCalendars && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                              Seçimi Kaydet ({selectedReadOnlyCalendarIds.length} takvim)
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Nasıl Çalışır */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                        💡 Nasıl Çalışır?
+                      </h3>
+                      <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                        <p>
+                          <strong>📝 Planner → Google:</strong> Görevleriniz otomatik olarak "Planner Takvimi"ne yazılır
+                        </p>
+                        <p>
+                          <strong>📅 Google → Planner:</strong> Seçtiğiniz takvimlerden event'ler Planner'a görev olarak aktarılır
+                        </p>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
-            )}
+            </TabsContent>
 
-            {/* Nasıl Çalışır */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
-                💡 Nasıl Çalışır?
-              </h3>
-              <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-                <p>
-                  <strong>📝 Planner → Google:</strong> Görevleriniz otomatik olarak "Planner Takvimi"ne yazılır
-                </p>
-                <p>
-                  <strong>📅 Google → Planner:</strong> Seçtiğiniz takvimlerden event'ler Planner'a görev olarak aktarılır
+            {/* Profile Tab */}
+            <TabsContent value="profile" className="mt-6">
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Hesap bilgileri ve kişisel ayarlar
                 </p>
               </div>
-            </div>
-          </>
-        )}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+                <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Profil Ayarları</h3>
+                <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
+              </div>
+            </TabsContent>
+
+            {/* Notifications Tab */}
+            <TabsContent value="notifications" className="mt-6">
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Bildirim tercihleri ve uyarılar
+                </p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+                <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Bildirim Ayarları</h3>
+                <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
+              </div>
+            </TabsContent>
+
+            {/* Appearance Tab */}
+            <TabsContent value="appearance" className="mt-6">
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Tema ve görünüm ayarları
+                </p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+                <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Görünüm Ayarları</h3>
+                <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
+              </div>
+            </TabsContent>
+
+            {/* Privacy Tab */}
+            <TabsContent value="privacy" className="mt-6">
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Güvenlik ve gizlilik ayarları
+                </p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+                <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Gizlilik Ayarları</h3>
+                <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-    </div>
 
-    {/* Notification Modal */}
-    <NotificationDialog
-      isOpen={notificationModal.isOpen}
-      onClose={closeNotification}
-      title={notificationModal.title}
-      message={notificationModal.message}
-      type={notificationModal.type}
-    />
+      {/* Notification Modal */}
+      <NotificationDialog
+        isOpen={notificationModal.isOpen}
+        onClose={closeNotification}
+        title={notificationModal.title}
+        message={notificationModal.message}
+        type={notificationModal.type}
+      />
 
-    {/* Confirmation Modal */}
-    <ConfirmationDialog
-      isOpen={confirmationModal.isOpen}
-      onClose={closeConfirmation}
-      onConfirm={confirmationModal.onConfirm}
-      title={confirmationModal.title}
-      message={confirmationModal.message}
-      confirmText="Evet"
-      cancelText="İptal"
-    />
-  </>
+      {/* Confirmation Modal */}
+      <ConfirmationDialog
+        isOpen={confirmationModal.isOpen}
+        onClose={closeConfirmation}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        confirmText="Evet"
+        cancelText="İptal"
+      />
+    </>
   )
 }
