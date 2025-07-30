@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         googleAccountId: true,
-        calendarId: true,
+        calendarIds: true, // Backward compatibility
+        plannerCalendarId: true,
+        plannerCalendarCreated: true,
+        readOnlyCalendarIds: true,
         syncEnabled: true,
         lastSyncAt: true,
         createdAt: true,
@@ -44,7 +47,11 @@ export async function GET(request: NextRequest) {
       integration: {
         id: integration.id,
         googleAccountId: integration.googleAccountId,
-        calendarId: integration.calendarId,
+        calendarId: integration.calendarIds?.[0] || 'primary', // Backward compatibility
+        calendarIds: integration.calendarIds,
+        plannerCalendarId: integration.plannerCalendarId,
+        plannerCalendarCreated: integration.plannerCalendarCreated,
+        readOnlyCalendarIds: integration.readOnlyCalendarIds,
         syncEnabled: integration.syncEnabled,
         lastSyncAt: integration.lastSyncAt,
         connectedAt: integration.createdAt,

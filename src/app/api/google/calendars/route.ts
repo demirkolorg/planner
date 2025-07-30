@@ -62,10 +62,14 @@ export async function GET(request: NextRequest) {
         foregroundColor: cal.foregroundColor,
         accessRole: cal.accessRole,
         selected: cal.selected !== false, // Kullanıcının seçili takvimi
-        timeZone: cal.timeZone
+        timeZone: cal.timeZone,
+        isPlannerCalendar: cal.id === integration.plannerCalendarId // Planner Takvimi mi?
       }))
       .sort((a, b) => {
-        // Primary takvimi en üste koy
+        // Planner Takvimi'ni en üste koy
+        if (a.isPlannerCalendar) return -1
+        if (b.isPlannerCalendar) return 1
+        // Primary takvimi ikinci sıraya koy
         if (a.primary) return -1
         if (b.primary) return 1
         // Sonra alfabetik sırala
@@ -75,7 +79,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       calendars: formattedCalendars,
-      selectedCalendarIds: integration.calendarIds || [integration.calendarId || 'primary'] // Backward compatibility
+      selectedReadOnlyCalendarIds: integration.readOnlyCalendarIds || [],
+      plannerCalendarId: integration.plannerCalendarId,
+      plannerCalendarCreated: integration.plannerCalendarCreated,
+      // Backward compatibility
+      selectedCalendarIds: integration.calendarIds || []
     })
 
   } catch (error) {

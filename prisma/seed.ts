@@ -7,7 +7,7 @@ async function main() {
   console.log('🌱 Veritabanı seed işlemi başlatılıyor...')
 
   // Admin kullanıcısı: admin@planner.com
-  const hashedPassword = await bcrypt.hash('admin123', 12)
+  const hashedPassword = await bcrypt.hash('admin@planner.com', 12)
   
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@planner.com' },

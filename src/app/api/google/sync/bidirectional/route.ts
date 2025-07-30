@@ -48,7 +48,30 @@ export async function POST(request: NextRequest) {
       calendarToTasks: { total: 0, synced: 0, failed: 0, errors: [] as string[] }
     }
 
-    // 1. PLANNER → CALENDAR SYNC (Mevcut sync)
+    // 1. PLANNER → PLANNER CALENDAR SYNC (Sadece Planner Takvimi'ne yaz)
+    // Önce Planner Takvimi'nin mevcut olduğundan emin ol
+    if (!integration.plannerCalendarCreated || !integration.plannerCalendarId) {
+      // Planner Takvimi yoksa oluştur
+      const { createPlannerCalendar } = await import('@/lib/google-calendar')
+      const plannerCalendarId = await createPlannerCalendar(accessToken)
+      
+      if (plannerCalendarId) {
+        await db.googleCalendarIntegration.update({
+          where: { userId },
+          data: {
+            plannerCalendarId,
+            plannerCalendarCreated: true
+          }
+        })
+        integration.plannerCalendarId = plannerCalendarId
+        integration.plannerCalendarCreated = true
+        console.log(`✅ Planner Takvimi otomatik oluşturuldu: ${plannerCalendarId}`)
+      } else {
+        results.tasksToCalendar.errors.push('Planner Takvimi oluşturulamadı - Google Calendar yetkilendirmesi yenilenmeli')
+        console.log('⚠️ Planner Takvimi oluşturulamadı - scope yetkilendirmesi eksik olabilir')
+      }
+    }
+
     const tasks = await db.task.findMany({
       where: {
         userId,
@@ -88,38 +111,50 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. CALENDAR → PLANNER SYNC (Optimize edilmiş versiyon)
+    // 2. READ-ONLY CALENDARS → PLANNER SYNC (Sadece okunacak takvimlerden)
     const calendar = createCalendarClient(accessToken)
     
-    // Seçili takvimlerden event'leri al
-    const selectedCalendarIds = integration.calendarIds || [integration.calendarId || 'primary']
+    // Sadece readOnly takvimlerden event'leri al (Planner Takvimi hariç)
+    const readOnlyCalendarIds = integration.readOnlyCalendarIds || []
     let allEvents: any[] = []
     
-    // Incremental sync: Son sync zamanından itibaren al (performans için)
-    const lastSyncTime = integration.lastSyncAt 
-      ? new Date(integration.lastSyncAt.getTime() - 5 * 60 * 1000) // 5 dakika buffer
-      : new Date(Date.now() - 24 * 60 * 60 * 1000) // Varsayılan: 1 gün önce
-    
-    for (const calendarId of selectedCalendarIds) {
-      try {
-        const eventsResponse = await calendar.events.list({
-          calendarId,
-          timeMin: lastSyncTime.toISOString(),
-          singleEvents: true,
-          orderBy: 'updated',
-          maxResults: 100 // Arttırıldı çünkü incremental sync kullanıyoruz
-        })
+    if (readOnlyCalendarIds.length === 0) {
+      console.log('📋 Hiç okunacak takvim seçilmemiş, Calendar → Planner sync atlanıyor')
+      results.calendarToTasks.total = 0
+    } else {
+      // Incremental sync: Son sync zamanından itibaren al (performans için)
+      const lastSyncTime = integration.lastSyncAt 
+        ? new Date(integration.lastSyncAt.getTime() - 5 * 60 * 1000) // 5 dakika buffer
+        : new Date(Date.now() - 24 * 60 * 60 * 1000) // Varsayılan: 1 gün önce
+      
+      for (const calendarId of readOnlyCalendarIds) {
+        // Planner Takvimi'ni atla (double check)
+        if (calendarId === integration.plannerCalendarId) {
+          console.log(`⚠️ Planner Takvimi (${calendarId}) readOnly listesinde, atlanıyor`)
+          continue
+        }
         
-        const calendarEvents = eventsResponse.data.items || []
-        // Her event'e hangi takvimden geldiğini işaretle
-        calendarEvents.forEach(event => {
-          event._sourceCalendarId = calendarId
-        })
-        
-        allEvents = allEvents.concat(calendarEvents)
-      } catch (error) {
-        console.error(`Error fetching events from calendar ${calendarId}:`, error)
-        results.calendarToTasks.errors.push(`Takvim ${calendarId} event'leri alınamadı`)
+        try {
+          const eventsResponse = await calendar.events.list({
+            calendarId,
+            timeMin: lastSyncTime.toISOString(),
+            singleEvents: true,
+            orderBy: 'updated',
+            maxResults: 100 // Arttırıldı çünkü incremental sync kullanıyoruz
+          })
+          
+          const calendarEvents = eventsResponse.data.items || []
+          // Her event'e hangi takvimden geldiğini işaretle
+          calendarEvents.forEach(event => {
+            event._sourceCalendarId = calendarId
+          })
+          
+          allEvents = allEvents.concat(calendarEvents)
+          console.log(`📅 ${calendarId} takviminden ${calendarEvents.length} event alındı`)
+        } catch (error) {
+          console.error(`Error fetching events from calendar ${calendarId}:`, error)
+          results.calendarToTasks.errors.push(`Takvim ${calendarId} event'leri alınamadı`)
+        }
       }
     }
 
@@ -217,7 +252,7 @@ export async function POST(request: NextRequest) {
                   sectionId: defaultSection.id,
                 },
                 eventId: event.id,
-                calendarId: event._sourceCalendarId || selectedCalendarIds[0]
+                calendarId: event._sourceCalendarId || readOnlyCalendarIds[0]
               })
             }
           }

@@ -26,16 +26,18 @@ export const useThemeStore = create<ThemeState>()(
       setTheme: (theme: Theme) => {
         set({ theme })
         
-        // DOM manipülasyonu
-        const root = document.documentElement
-        const effectiveTheme = theme === THEME.SYSTEM ? get().getSystemTheme() : theme
-        
-        root.classList.remove(THEME.LIGHT, THEME.DARK)
-        root.classList.add(effectiveTheme)
-        
-        // next-themes uyumluluğu için
-        root.setAttribute('data-theme', effectiveTheme)
-        root.style.colorScheme = effectiveTheme
+        // DOM manipülasyonu - sadece client-side'da
+        if (typeof window !== 'undefined') {
+          const root = document.documentElement
+          const effectiveTheme = theme === THEME.SYSTEM ? get().getSystemTheme() : theme
+          
+          root.classList.remove(THEME.LIGHT, THEME.DARK)
+          root.classList.add(effectiveTheme)
+          
+          // next-themes uyumluluğu için
+          root.setAttribute('data-theme', effectiveTheme)
+          root.style.colorScheme = effectiveTheme
+        }
       },
 
       setColorTheme: (colorTheme: ColorTheme) => {
@@ -81,24 +83,28 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: STORAGE_KEYS.THEME_STORAGE,
+      // Hem tema hem renk temasını localStorage'a kaydet
       partialize: (state) => ({
         theme: state.theme,
         colorTheme: state.colorTheme,
       }),
+      // Hydration sonrası tema uygulama
       onRehydrateStorage: () => (state) => {
         if (state && typeof window !== 'undefined') {
-          // Hydration tamamlandıktan sonra temaları uygula
-          const applyThemes = () => {
+          // Hydration mismatch'ini önlemek için DOM ready'de uygula
+          const applyStoredThemes = () => {
+            // Dark/Light tema uygulaması
             const root = document.documentElement
             const body = document.body
             const effectiveTheme = state.theme === THEME.SYSTEM ? state.getSystemTheme() : state.theme
             
+            // Mevcut tema sınıflarını temizle
             root.classList.remove(THEME.LIGHT, THEME.DARK)
             root.classList.add(effectiveTheme)
             root.setAttribute('data-theme', effectiveTheme)
             root.style.colorScheme = effectiveTheme
             
-            // Renk temasını uygula
+            // Renk teması uygulaması
             const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet']
             
             themeClasses.forEach(cls => {
@@ -106,7 +112,6 @@ export const useThemeStore = create<ThemeState>()(
               body.classList.remove(cls)
             })
             
-            // Yeni tema sınıfını ekle - sadece client-side'da
             const newThemeClass = `theme-${state.colorTheme}`
             root.classList.add(newThemeClass)
             body.classList.add(newThemeClass)
@@ -114,17 +119,29 @@ export const useThemeStore = create<ThemeState>()(
             // System tema değişikliklerini dinle
             if (state.theme === THEME.SYSTEM) {
               const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-              const handleChange = () => {
+              const handleSystemThemeChange = () => {
                 if (state.theme === THEME.SYSTEM) {
-                  state.setTheme(THEME.SYSTEM) // Yeniden uygula
+                  const newSystemTheme = state.getSystemTheme()
+                  root.classList.remove(THEME.LIGHT, THEME.DARK)
+                  root.classList.add(newSystemTheme)
+                  root.setAttribute('data-theme', newSystemTheme)
+                  root.style.colorScheme = newSystemTheme
                 }
               }
-              mediaQuery.addEventListener('change', handleChange)
+              
+              // Listener'ı temizle ve yeniden ekle
+              mediaQuery.removeEventListener('change', handleSystemThemeChange)
+              mediaQuery.addEventListener('change', handleSystemThemeChange)
             }
           }
           
-          // Hydration mismatch'ini önlemek için sadece client-side'da uygula
-          setTimeout(applyThemes, 0)
+          // DOM hazır olduktan sonra uygula
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyStoredThemes)
+          } else {
+            // DOM zaten hazır
+            setTimeout(applyStoredThemes, 0)
+          }
         }
       },
     }

@@ -3,8 +3,7 @@ import { OAuth2Client } from 'google-auth-library'
 
 // Google Calendar API scopes
 export const GOOGLE_CALENDAR_SCOPES = [
-  'https://www.googleapis.com/auth/calendar.events',
-  'https://www.googleapis.com/auth/calendar.readonly', // Takvim listesi için gerekli
+  'https://www.googleapis.com/auth/calendar', // Tam takvim erişimi (events + calendar management)
   'https://www.googleapis.com/auth/userinfo.email'
 ]
 
@@ -23,6 +22,78 @@ export function createCalendarClient(accessToken: string) {
   oauth2Client.setCredentials({ access_token: accessToken })
   
   return google.calendar({ version: 'v3', auth: oauth2Client })
+}
+
+// Planner Takvimi oluştur
+export async function createPlannerCalendar(accessToken: string): Promise<string | null> {
+  try {
+    const calendar = createCalendarClient(accessToken)
+    
+    const calendarResource = {
+      summary: 'Planner Takvimi',
+      description: 'Planner uygulamasından otomatik senkronize edilen görevler. Bu takvimi silmeyin.',
+      timeZone: 'Europe/Istanbul',
+      // Planner'a özgü renk (mavi)
+      colorId: '1' // Blue
+    }
+
+    const response = await calendar.calendars.insert({
+      requestBody: calendarResource
+    })
+
+    if (response.data.id) {
+      console.log(`✅ Planner Takvimi oluşturuldu: ${response.data.id}`)
+      return response.data.id
+    }
+
+    return null
+  } catch (error) {
+    console.error('Planner Takvimi oluşturma hatası:', error)
+    return null
+  }
+}
+
+// Planner Takvimi'nin var olup olmadığını kontrol et
+export async function checkPlannerCalendarExists(accessToken: string, calendarId: string): Promise<boolean> {
+  try {
+    const calendar = createCalendarClient(accessToken)
+    
+    const response = await calendar.calendars.get({
+      calendarId
+    })
+
+    return !!response.data
+  } catch (error) {
+    console.error('Planner Takvimi kontrol hatası:', error)
+    return false
+  }
+}
+
+// "Planner Takvimi" isminde takvim var mı kontrol et ve ID'sini döndür
+export async function findPlannerCalendarByName(accessToken: string): Promise<string | null> {
+  try {
+    const calendar = createCalendarClient(accessToken)
+    
+    const calendarsResponse = await calendar.calendarList.list()
+    const calendars = calendarsResponse.data.items || []
+    
+    // "Planner Takvimi" isminde takvim bul
+    const plannerCalendar = calendars.find(cal => 
+      cal.summary === 'Planner Takvimi' && 
+      (cal.accessRole === 'owner' || cal.accessRole === 'writer')
+    )
+    
+    if (plannerCalendar) {
+      console.log(`✅ Mevcut Planner Takvimi bulundu: ${plannerCalendar.id}`)
+      return plannerCalendar.id!
+    }
+    
+    console.log('🔍 Planner Takvimi bulunamadı')
+    return null
+  } catch (error) {
+    console.error('Planner Takvimi arama hatası:', error)
+    return null
+  }
 }
 
 // Task'ı Calendar Event'e dönüştür
@@ -334,19 +405,19 @@ export async function syncTaskToCalendar(
 
     let result = { success: false, eventId: undefined as string | undefined, error: undefined as string | undefined }
 
-    // Primary calendar ID'yi belirle (backward compatibility için)
-    const primaryCalendarId = integration.calendarIds?.[0] || integration.calendarId || 'primary'
+    // Planner Takvimi ID'sini kullan
+    const plannerCalendarId = integration.plannerCalendarId || 'primary'
 
     switch (action) {
       case 'CREATE':
-        const eventId = await createCalendarEvent(accessToken, primaryCalendarId, task)
+        const eventId = await createCalendarEvent(accessToken, plannerCalendarId, task)
         if (eventId) {
           // TaskCalendarEvent kaydı oluştur
           await db.taskCalendarEvent.create({
             data: {
               taskId: task.id,
               googleEventId: eventId,
-              calendarId: primaryCalendarId,
+              calendarId: plannerCalendarId,
               syncStatus: 'SYNCED',
               lastSyncAt: new Date(),
             }
@@ -366,7 +437,7 @@ export async function syncTaskToCalendar(
         if (existingEvent) {
           const updateSuccess = await updateCalendarEvent(
             accessToken,
-            existingEvent.calendarId || primaryCalendarId,
+            existingEvent.calendarId || plannerCalendarId,
             existingEvent.googleEventId,
             task
           )
@@ -394,13 +465,13 @@ export async function syncTaskToCalendar(
           }
         } else {
           // Event yoksa yeni oluştur
-          const newEventId = await createCalendarEvent(accessToken, primaryCalendarId, task)
+          const newEventId = await createCalendarEvent(accessToken, plannerCalendarId, task)
           if (newEventId) {
             await db.taskCalendarEvent.create({
               data: {
                 taskId: task.id,
                 googleEventId: newEventId,
-                calendarId: primaryCalendarId,
+                calendarId: plannerCalendarId,
                 syncStatus: 'SYNCED',
                 lastSyncAt: new Date(),
               }
@@ -420,7 +491,7 @@ export async function syncTaskToCalendar(
         if (eventToDelete) {
           const deleteSuccess = await deleteCalendarEvent(
             accessToken,
-            eventToDelete.calendarId || primaryCalendarId,
+            eventToDelete.calendarId || plannerCalendarId,
             eventToDelete.googleEventId
           )
 
@@ -521,7 +592,7 @@ export async function performBulkSync(userId: string): Promise<{
     // Calendar event'lerini al
     const calendar = createCalendarClient(accessToken)
     const eventsResponse = await calendar.events.list({
-      calendarId: integration.calendarId,
+      calendarId: integration.plannerCalendarId || integration.calendarIds?.[0] || 'primary',
       timeMin: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // Son 30 gün
       singleEvents: true,
       orderBy: 'updated'
@@ -576,7 +647,7 @@ export async function performBulkSync(userId: string): Promise<{
               })
             } else if (resolution.winner === 'TASK') {
               // Task wins - calendar'ı güncelle
-              await updateCalendarEvent(accessToken, integration.calendarId, task.calendarEvent.googleEventId, task)
+              await updateCalendarEvent(accessToken, integration.plannerCalendarId || integration.calendarIds?.[0] || 'primary', task.calendarEvent.googleEventId, task)
             }
             
             stats.conflicts++

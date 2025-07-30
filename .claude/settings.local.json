@@ -41,7 +41,9 @@
       "Bash(true)",
       "Bash(del test-google-ai.js)",
       "WebFetch(domain:inference-docs.cerebras.ai)",
-      "WebFetch(domain:www.cerebras.ai)"
+      "WebFetch(domain:www.cerebras.ai)",
+      "Bash(rg:*)",
+      "Bash(tskill:*)"
     ],
     "deny": []
   }
