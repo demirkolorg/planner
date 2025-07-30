@@ -48,6 +48,24 @@ export async function POST(request: NextRequest) {
       calendarToTasks: { total: 0, synced: 0, failed: 0, errors: [] as string[] }
     }
 
+    // MANUEL EVENT KONTROLÜ (Planner Takvimi koruması)
+    if (integration.plannerCalendarId) {
+      try {
+        const { detectManualEvents, updatePlannerCalendarWarning } = await import('@/lib/planner-calendar-protection')
+        const manualEventCheck = await detectManualEvents(accessToken, integration.plannerCalendarId, userId)
+        
+        if (manualEventCheck.hasManualEvents) {
+          console.warn(`⚠️ Planner Takvimi'nde ${manualEventCheck.manualEvents.length} manuel event tespit edildi`)
+          results.warnings = manualEventCheck.warnings
+          
+          // Takvim açıklamasını güncelle
+          await updatePlannerCalendarWarning(accessToken, integration.plannerCalendarId, manualEventCheck.manualEvents.length)
+        }
+      } catch (error) {
+        console.error('Manuel event kontrolü hatası:', error)
+      }
+    }
+
     // 1. PLANNER → PLANNER CALENDAR SYNC (Sadece Planner Takvimi'ne yaz)
     // Önce Planner Takvimi'nin mevcut olduğundan emin ol
     if (!integration.plannerCalendarCreated || !integration.plannerCalendarId) {

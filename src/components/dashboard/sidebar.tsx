@@ -16,6 +16,7 @@ import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
+import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { ColorThemeModal } from "@/components/modals/color-theme-modal"
@@ -99,14 +100,12 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const [showCompletedProjects, setShowCompletedProjects] = useState(true)
-  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false)
-  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null)
-  const [isSyncing, setIsSyncing] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
   const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
+  const { isConnected: googleCalendarConnected, lastSyncAt, isSyncing, setLastSyncAt, setIsSyncing, updateSyncStatus } = useGoogleCalendarStore()
 
   useEffect(() => {
     Promise.all([
@@ -118,27 +117,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     })
 
     // Google Calendar durumunu kontrol et
-    checkGoogleCalendarStatus()
-  }, [fetchProjects, fetchTags, fetchTasks])
-
-  // Google Calendar durumunu kontrol et
-  const checkGoogleCalendarStatus = async () => {
-    try {
-      const response = await fetch('/api/google/auth/status')
-      const data = await response.json()
-      
-      if (data.success && data.connected) {
-        setGoogleCalendarConnected(true)
-        setLastSyncAt(data.integration?.lastSyncAt || null)
-      } else {
-        setGoogleCalendarConnected(false)
-        setLastSyncAt(null)
-      }
-    } catch (error) {
-      console.error('Google Calendar durum kontrol hatası:', error)
-      setGoogleCalendarConnected(false)
-    }
-  }
+    updateSyncStatus()
+  }, [fetchProjects, fetchTags, fetchTasks, updateSyncStatus])
 
   const handleCreateProject = async (name: string, emoji: string) => {
     try {
@@ -175,7 +155,9 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       const data = await response.json()
 
       if (data.success) {
-        setLastSyncAt(new Date().toISOString())
+        const newSyncTime = new Date().toISOString()
+        setLastSyncAt(newSyncTime)
+        
         // Sidebar'daki verileri yenile
         await Promise.all([
           fetchTasks(),
@@ -209,7 +191,9 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
     }
     
     return filteredProjects.sort((a, b) => {
-      // Gelen Kutusu her zaman en üstte olsun
+      // Özel proje sıralaması: Hızlı Notlar, Gelen Kutusu, diğerleri
+      if (a.name === "Hızlı Notlar") return -1
+      if (b.name === "Hızlı Notlar") return 1
       if (a.name === "Gelen Kutusu") return -1
       if (b.name === "Gelen Kutusu") return 1
       // Diğer projeler alfabetik sırada

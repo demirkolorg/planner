@@ -76,8 +76,26 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Default "Hızlı Notlar" projesini oluştur
+      const quickNotesProject = await tx.project.create({
+        data: {
+          name: "Hızlı Notlar",
+          emoji: "📝",
+          userId: user.id,
+        },
+      });
+
+      // "Hızlı Notlar" için "Genel" bölümü oluştur
+      await tx.section.create({
+        data: {
+          name: "Genel",
+          projectId: quickNotesProject.id,
+          order: 0,
+        },
+      });
+
       // Default "Gelen Kutusu" projesini oluştur
-      const defaultProject = await tx.project.create({
+      const inboxProject = await tx.project.create({
         data: {
           name: "Gelen Kutusu",
           emoji: "📥",
@@ -85,11 +103,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Default "Genel" bölümünü oluştur
+      // "Gelen Kutusu" için "Genel" bölümü oluştur
       await tx.section.create({
         data: {
           name: "Genel",
-          projectId: defaultProject.id,
+          projectId: inboxProject.id,
           order: 0,
         },
       });

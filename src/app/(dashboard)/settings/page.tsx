@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Settings, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { NotificationDialog } from '@/components/ui/notification-dialog'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import { ManualEventWarning } from '@/components/settings/manual-event-warning'
+import { useGoogleCalendarStore } from '@/store/googleCalendarStore'
 
 interface GoogleIntegration {
   id: string
@@ -42,7 +44,8 @@ interface GoogleCalendar {
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
-  const [isSyncing, setIsSyncing] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true) // İlk yükleme durumu
+  const { lastSyncAt: globalLastSyncAt, isSyncing: globalIsSyncing, setIsSyncing, setLastSyncAt, updateSyncStatus, isConnected: globalIsConnected } = useGoogleCalendarStore()
   const [integration, setIntegration] = useState<GoogleIntegration | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [syncStats, setSyncStats] = useState<SyncStats | null>(null)
@@ -106,6 +109,7 @@ export default function SettingsPage() {
     setConfirmationModal(prev => ({ ...prev, isOpen: false }))
   }
 
+
   // Google Calendar durumunu kontrol et
   const checkGoogleStatus = async () => {
     try {
@@ -137,12 +141,22 @@ export default function SettingsPage() {
       }
     } catch (_error) {
       console.error('Google durum kontrol hatası:', error)
+    } finally {
+      setIsInitialLoading(false) // İlk yükleme tamamlandı
     }
   }
 
   // Sayfa yüklendiğinde durumu kontrol et
   useEffect(() => {
     checkGoogleStatus()
+    updateSyncStatus() // Global store'u güncelle
+    
+    // Maksimum 5 saniye sonra loading'i kapat (timeout)
+    const loadingTimeout = setTimeout(() => {
+      if (isInitialLoading) {
+        setIsInitialLoading(false)
+      }
+    }, 5000)
     
     // URL parametrelerini kontrol et ve mesaj göster
     const urlParams = new URLSearchParams(window.location.search)
@@ -197,7 +211,12 @@ export default function SettingsPage() {
     if (success || error) {
       window.history.replaceState({}, '', '/settings')
     }
-  }, [])
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(loadingTimeout)
+    }
+  }, [updateSyncStatus])
 
   // Google Calendar bağla
   const handleConnectGoogle = async () => {
@@ -228,6 +247,8 @@ export default function SettingsPage() {
 
   // Manuel senkronizasyon (İki yönlü)
   const handleManualSync = async () => {
+    if (globalIsSyncing) return
+
     setIsSyncing(true)
     try {
       const response = await fetch('/api/google/sync/bidirectional', {
@@ -236,9 +257,19 @@ export default function SettingsPage() {
       const data = await response.json()
 
       if (data.success) {
+        const newSyncTime = new Date().toISOString()
+        setLastSyncAt(newSyncTime)
+        
         const { tasksToCalendar, calendarToTasks } = data.results
         const totalErrors = tasksToCalendar.failed + calendarToTasks.failed
         const hasErrors = totalErrors > 0
+        
+        // Sync istatistiklerini güncelle
+        setSyncStats({
+          synced: tasksToCalendar.synced + calendarToTasks.synced,
+          pending: 0, // Bidirectional sync sonrası bekleyen olmaz
+          error: totalErrors
+        })
         
         showNotification(
           'Senkronizasyon Tamamlandı',
@@ -399,327 +430,253 @@ export default function SettingsPage() {
   }
 
   return (<>
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Settings className="h-8 w-8" />
-          Ayarlar
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Google Calendar Entegrasyonu
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Hesap ayarlarınızı ve entegrasyonlarınızı yönetin
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          Görevlerinizi Google Calendar ile senkronize edin
         </p>
       </div>
 
-      <Separator />
-
-      {/* Google Calendar Entegrasyonu */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Google Calendar Entegrasyonu
-          </CardTitle>
-          <CardDescription>
-            Görevlerinizi Google Calendar ile senkronize edin
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Bağlantı Durumu */}
+      {/* Ana İçerik */}
+      <div className="space-y-6">
+        {/* 1. Bağlantı Durumu */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Bağlantı Durumu:</span>
-              {isConnected ? (
-                <Badge variant="default" className="flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  Bağlı
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Bağlı Değil
-                </Badge>
-              )}
+            <div className="flex items-center space-x-4">
+              <div className={`w-3 h-3 rounded-full ${isInitialLoading ? 'bg-gray-400' : isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  {isInitialLoading ? 'Kontrol ediliyor...' : isConnected ? 'Google Calendar\'a bağlı' : 'Bağlantı yok'}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {isInitialLoading ? 'Bağlantı durumu kontrol ediliyor' : isConnected ? 'Senkronizasyon aktif' : 'Bağlantı kurulması gerekiyor'}
+                </p>
+              </div>
             </div>
-
-            {/* Bağlan/Bağlantıyı Kes Butonu */}
-            {isConnected ? (
+            
+            {isInitialLoading ? (
+              <Button disabled variant="secondary">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Yükleniyor
+              </Button>
+            ) : isConnected ? (
               <Button
-                variant="destructive"
+                variant="outline"
                 onClick={handleDisconnectGoogle}
                 disabled={isLoading}
               >
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Bağlantıyı Kes
               </Button>
             ) : (
               <Button
                 onClick={handleConnectGoogle}
                 disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Google Calendar'ı Bağla
               </Button>
             )}
           </div>
+        </div>
 
-          {/* Entegrasyon Detayları */}
-          {isConnected && integration && (
-            <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
-              <div className="text-sm">
-                <span className="font-medium">Google Hesap ID:</span>{' '}
-                {integration.googleAccountId}
-              </div>
-              <div className="text-sm">
-                <span className="font-medium">Takvim ID:</span>{' '}
-                {integration.calendarId}
-              </div>
-              <div className="text-sm">
-                <span className="font-medium">Bağlantı Tarihi:</span>{' '}
-                {new Date(integration.connectedAt).toLocaleDateString('tr-TR')}
-              </div>
-              {integration.lastSyncAt && (
-                <div className="text-sm">
-                  <span className="font-medium">Son Senkronizasyon:</span>{' '}
-                  {new Date(integration.lastSyncAt).toLocaleDateString('tr-TR')}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* DEBUG BİLGİSİ */}
-          {isConnected && (
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
-              <p><strong>Debug:</strong></p>
-              <p>İsConnected: {isConnected.toString()}</p>
-              <p>Calendars Count: {calendars.length}</p>
-              <p>Selected Calendar IDs: [{selectedCalendarIds.join(', ')}]</p>
-              {calendars.length > 0 && (
+        {/* 2. Bağlı Durumda Gösterilen İçerik */}
+        {!isInitialLoading && isConnected && integration && (
+          <>
+            {/* Planner Takvimi Durumu */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p>Calendars:</p>
-                  <ul>
-                    {calendars.map(cal => (
-                      <li key={cal.id}>• {cal.name} ({cal.id})</li>
-                    ))}
-                  </ul>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Planner Takvimi</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Görevlerinizin yazıldığı özel takvim
+                  </p>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Planner Takvimi Durumu */}
-          {isConnected && integration && (
-            <>
-              {/* Planner Takvimi Bilgi Kartı */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <h3 className="font-medium text-blue-900 dark:text-blue-100">Planner Takvimi</h3>
-                      {integration.plannerCalendarCreated ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                          ✓ Oluşturuldu
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
-                          Bekleniyor
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                      Planner görevleriniz otomatik olarak bu takvime yazılır. Diğer uygulamalarla çakışmaz.
-                    </p>
+                {integration.plannerCalendarCreated ? (
+                  <div className="flex items-center space-x-3">
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                      ✓ Aktif
+                    </Badge>
                     {integration.plannerCalendarId && (
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={`https://calendar.google.com/calendar/embed?src=${integration.plannerCalendarId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:text-blue-800 underline dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          Google Calendar'da Aç
-                        </a>
-                      </div>
+                      <a
+                        href={`https://calendar.google.com/calendar/embed?src=${integration.plannerCalendarId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm underline"
+                      >
+                        Google Calendar'da Aç
+                      </a>
                     )}
                   </div>
-                  {!integration.plannerCalendarCreated && (
-                    <Button
-                      onClick={handleCreatePlannerCalendar}
-                      disabled={isCreatingPlannerCalendar}
-                      size="sm"
-                    >
-                      {isCreatingPlannerCalendar && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      Oluştur
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Okunacak Takvimler Seçimi */}
-              {calendars.length > 0 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Okunacak Takvimler (Google Calendar → Planner)
-                    </label>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Bu takvimlerden event'ler Planner'a görev olarak aktarılır
-                    </p>
-                  </div>
-
-                  {/* Takvim Seçim Listesi */}
-                  <div className="space-y-2 max-h-48 overflow-y-auto border dark:border-gray-700 rounded-lg p-3">
-                    {calendars
-                      .filter(cal => !cal.isPlannerCalendar) // Planner Takvimi'ni filtrele
-                      .map((calendar) => (
-                      <label
-                        key={calendar.id}
-                        className="flex items-center space-x-3 cursor-pointer hover:bg-muted/50 p-2 rounded"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedReadOnlyCalendarIds.includes(calendar.id)}
-                          onChange={() => handleReadOnlyCalendarToggle(calendar.id)}
-                          className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2"
-                        />
-                        <div className="flex items-center gap-2 flex-1">
-                          {calendar.primary && (
-                            <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 px-1 rounded">Ana</span>
-                          )}
-                          <span className="font-medium">{calendar.name}</span>
-                          {calendar.description && (
-                            <span className="text-xs text-muted-foreground">({calendar.description})</span>
-                          )}
-                        </div>
-                        <div 
-                          className="w-4 h-4 rounded-full border dark:border-gray-600" 
-                          style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
-                        />
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* Seçilen Okunacak Takvimler */}
-                  {selectedReadOnlyCalendarIds.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium mb-2">Seçilen Okunacak Takvimler:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedReadOnlyCalendarIds.map((calendarId) => {
-                          const calendar = calendars.find(cal => cal.id === calendarId)
-                          return calendar ? (
-                            <Badge key={calendarId} variant="secondary" className="flex items-center gap-1">
-                              <div 
-                                className="w-2 h-2 rounded-full" 
-                                style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
-                              />
-                              {calendar.name}
-                              <button
-                                onClick={() => handleReadOnlyCalendarToggle(calendarId)}
-                                className="ml-1 hover:bg-muted rounded-full w-4 h-4 flex items-center justify-center"
-                              >
-                                ×
-                              </button>
-                            </Badge>
-                          ) : null
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Kaydet Butonu */}
+                ) : (
                   <Button
-                    onClick={handleSaveReadOnlyCalendars}
-                    disabled={isUpdatingCalendars}
-                    className="w-full"
+                    onClick={handleCreatePlannerCalendar}
+                    disabled={isCreatingPlannerCalendar}
+                    size="sm"
                   >
-                    {isUpdatingCalendars && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Okunacak Takvim Seçimini Kaydet ({selectedReadOnlyCalendarIds.length} takvim)
+                    {isCreatingPlannerCalendar ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : null}
+                    Takvimi Oluştur
                   </Button>
+                )}
+              </div>
+            </div>
 
-                  <p className="text-xs text-muted-foreground">
-                    Bu takvimlerden event'ler Planner'a task olarak aktarılır. İsteğe bağlı.
-                  </p>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between">
+            {/* Senkronizasyon Kontrolleri */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Senkronizasyon</h3>
+              
+              {/* Otomatik Sync */}
+              <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
                 <div>
-                  <p className="font-medium">Otomatik Senkronizasyon</p>
-                  <p className="text-sm text-muted-foreground">
-                    Görevler otomatik olarak takvime eklenir
-                  </p>
+                  <p className="font-medium text-gray-900 dark:text-white">Otomatik Senkronizasyon</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Görevler otomatik olarak takvime eklenir</p>
                 </div>
                 <Switch
-                  checked={integration.syncEnabled}
+                  checked={integration?.syncEnabled || false}
                   onCheckedChange={(checked) => {
-                    // TODO: Sync ayarını güncelle
-                    setIntegration({
-                      ...integration,
-                      syncEnabled: checked
-                    })
+                    if (integration) {
+                      setIntegration({
+                        ...integration,
+                        syncEnabled: checked
+                      })
+                    }
                   }}
                 />
+              </div>
+              
+              {/* Manuel Sync */}
+              <div className="flex items-center justify-between pt-4">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">Manuel Senkronizasyon</p>
+                  {(globalLastSyncAt || integration?.lastSyncAt) ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Son sync: {new Date(globalLastSyncAt || integration!.lastSyncAt).toLocaleString('tr-TR')}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Henüz senkronizasyon yapılmamış
+                    </p>
+                  )}
+                </div>
+                <Button
+                  onClick={handleManualSync}
+                  disabled={globalIsSyncing}
+                  variant="outline"
+                >
+                  {globalIsSyncing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {globalIsSyncing ? 'Senkronize ediliyor...' : 'Şimdi Senkronize Et'}
+                </Button>
               </div>
 
               {/* Sync İstatistikleri */}
               {syncStats && (
-                <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{syncStats.synced}</div>
-                    <div className="text-sm text-muted-foreground">Senkronize</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{syncStats.pending}</div>
-                    <div className="text-sm text-muted-foreground">Beklemede</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">{syncStats.error}</div>
-                    <div className="text-sm text-muted-foreground">Hata</div>
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{syncStats.synced}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Senkronize</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{syncStats.pending}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Beklemede</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">{syncStats.error}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Hata</div>
+                    </div>
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Manuel Sync Butonu */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">İki Yönlü Manuel Senkronizasyon</p>
-                  <p className="text-sm text-muted-foreground">
-                    Planner ↔ Calendar arasında tam sync
+            {/* Takvim Seçimi */}
+            {calendars.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                    Okunacak Takvimler
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Bu takvimlerden event'ler Planner'a görev olarak aktarılacak (isteğe bağlı)
                   </p>
                 </div>
-                <Button
-                  onClick={handleManualSync}
-                  disabled={isSyncing}
-                  variant="outline"
-                >
-                  {isSyncing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  {isSyncing ? 'Senkronize Ediliyor...' : 'Şimdi Senkronize Et'}
-                </Button>
+
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {calendars
+                    .filter(cal => !cal.isPlannerCalendar)
+                    .map((calendar) => (
+                    <label
+                      key={calendar.id}
+                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedReadOnlyCalendarIds.includes(calendar.id)}
+                        onChange={() => handleReadOnlyCalendarToggle(calendar.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {calendar.name}
+                          </span>
+                          {calendar.primary && (
+                            <Badge variant="secondary" className="text-xs">Ana</Badge>
+                          )}
+                        </div>
+                        {calendar.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {calendar.description}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {selectedReadOnlyCalendarIds.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      onClick={handleSaveReadOnlyCalendars}
+                      disabled={isUpdatingCalendars}
+                      className="w-full"
+                    >
+                      {isUpdatingCalendars && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Seçimi Kaydet ({selectedReadOnlyCalendarIds.length} takvim)
+                    </Button>
+                  </div>
+                )}
               </div>
+            )}
 
-            </>
-          )}
-
-          {/* Bilgi Notu */}
-          <div className="text-sm text-muted-foreground p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
-            <p className="font-medium mb-1">💡 Nasıl Çalışır?</p>
-            <div className="space-y-2">
-              <p>
-                <strong>📝 Planner → Google:</strong> Görevleriniz otomatik "Planner Takvimi"ne yazılır
-              </p>
-              <p>
-                <strong>📅 Google → Planner:</strong> Seçtiğiniz takvimlerden event'ler Planner'a aktarılır
-              </p>
-              <p className="text-yellow-800 dark:text-yellow-200 bg-yellow-100 dark:bg-yellow-500/20 p-2 rounded text-xs">
-                <strong>⚠️ Önemli:</strong> Eğer Planner Takvimi oluşturulamıyorsa, Google Calendar 
-                bağlantınızı yenilemeniz gerekebilir (yeni yetkiler eklendi).
-              </p>
+            {/* Nasıl Çalışır */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                💡 Nasıl Çalışır?
+              </h3>
+              <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                <p>
+                  <strong>📝 Planner → Google:</strong> Görevleriniz otomatik olarak "Planner Takvimi"ne yazılır
+                </p>
+                <p>
+                  <strong>📅 Google → Planner:</strong> Seçtiğiniz takvimlerden event'ler Planner'a görev olarak aktarılır
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      
+          </>
+        )}
+      </div>
     </div>
 
     {/* Notification Modal */}

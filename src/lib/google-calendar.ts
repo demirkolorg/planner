@@ -31,10 +31,10 @@ export async function createPlannerCalendar(accessToken: string): Promise<string
     
     const calendarResource = {
       summary: 'Planner Takvimi',
-      description: 'Planner uygulamasından otomatik senkronize edilen görevler. Bu takvimi silmeyin.',
+      description: '⚠️ OTOMATIK TAKVIM - MANUEL DÜZENLEME YAPMAYIN\n\nBu takvim Planner uygulaması tarafından otomatik olarak yönetilir.\n• Manuel event eklemeyin\n• Mevcut event\'leri düzenlemeyin\n• Bu takvimi silmeyin\n\nTüm değişiklikler Planner uygulamasından yapılmalıdır.',
       timeZone: 'Europe/Istanbul',
-      // Planner'a özgü renk (mavi)
-      colorId: '1' // Blue
+      // Planner'a özgü renk (turuncu - uyarı rengi)
+      colorId: '6' // Orange
     }
 
     const response = await calendar.calendars.insert({
