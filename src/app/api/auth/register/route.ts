@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: "Hızlı Notlar",
           emoji: "📝",
+          notes: "Günlük notlarınız, ani fikirleriniz ve hatırlatmalarınız için hızlı erişim alanı. Aklınıza gelen her şeyi buraya kaydedebilirsiniz.",
           userId: user.id,
         },
       });
