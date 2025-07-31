@@ -9,6 +9,7 @@ import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
+import { ToastNotification } from "@/components/ui/toast-notification"
 import { useCtrlK } from "@/hooks/use-keyboard-shortcut"
 
 export default function DashboardLayout({
@@ -104,6 +105,9 @@ export default function DashboardLayout({
         isOpen={isQuickTaskModalOpen}
         onClose={() => setIsQuickTaskModalOpen(false)}
       />
+      
+      {/* Toast Notifications */}
+      <ToastNotification />
     </div>
   )
 }

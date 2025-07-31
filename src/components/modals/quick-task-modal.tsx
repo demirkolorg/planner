@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Sparkles, Loader2, Zap } from "lucide-react"
-import { analyzeQuickTask, type QuickTaskAnalysis } from "@/lib/ai-quick-task"
+import { Sparkles, Zap } from "lucide-react"
+import { analyzeQuickTask } from "@/lib/ai-quick-task"
 import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useTagStore } from "@/store/tagStore"
@@ -17,8 +17,6 @@ interface QuickTaskModalProps {
 
 export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
   const [input, setInput] = useState("")
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysis, setAnalysis] = useState<QuickTaskAnalysis | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   
   const { projects, createProject, fetchProjects } = useProjectStore()
@@ -46,8 +44,6 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
   useEffect(() => {
     if (!isOpen) {
       setInput("")
-      setAnalysis(null)
-      setIsAnalyzing(false)
     }
   }, [isOpen])
 
@@ -83,20 +79,27 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
 
 
   const handleSubmit = async () => {
-    if (!input.trim() || isAnalyzing) return
+    if (!input.trim()) return
 
-    setIsAnalyzing(true)
+    const taskTitle = input.trim() // Kullanıcının yazdığı veri direkt başlık olsun
     
+    // Modal'ı hemen kapat
+    onClose()
+    
+    // Arka planda işlemleri yap
+    processQuickTask(taskTitle)
+  }
+
+  const processQuickTask = async (title: string) => {
     try {
-      // AI analizi yap
-      const analysis = await analyzeQuickTask(input.trim())
-      setAnalysis(analysis)
-      
       // Hızlı Notlar projesini hazırla
       const quickNotesProject = await getOrCreateQuickNotesProject()
       if (!quickNotesProject || !quickNotesProject.id) {
         throw new Error('Hızlı Notlar projesi oluşturulamadı')
       }
+
+      // AI analizi arka planda yap (başlık hariç diğer veriler için)
+      const analysis = await analyzeQuickTask(title)
       
       // Etiketleri hazırla (sadece isim olarak)
       const tagNames = analysis.tags || []
@@ -110,29 +113,44 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
         'NONE': 'Yok'
       }
       
-      // Görevi oluştur
+      // Görevi oluştur - Başlık kullanıcının yazdığı, açıklama AI'dan
       const taskData = {
-        title: analysis.title,
-        description: analysis.description,
+        title: title, // Kullanıcının yazdığı direkt başlık
+        description: analysis.description, // AI'dan genişletilmiş açıklama
         projectId: quickNotesProject.id,
-        sectionId: 'default', // Varsayılan bölüm kullan
+        sectionId: 'default',
         priority: priorityMap[analysis.priority] || 'Orta',
         dueDate: analysis.dueDate || undefined,
-        tags: tagNames // Tag isimlerini geç, backend otomatik oluşturacak
+        tags: tagNames
       }
       
-      const newTask = await createTask(taskData)
+      await createTask(taskData)
       
-      // Hemen kapat - hızlı işlem için
-      onClose()
+      // Başarı bildirimi göster
+      showSuccessNotification()
       
     } catch (error) {
-      setAnalysis(null)
-      
-      // Hata mesajını göster
-      alert(`Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`)
-    } finally {
-      setIsAnalyzing(false)
+      // Hata bildirimi göster
+      showErrorNotification(error instanceof Error ? error.message : 'Bilinmeyen hata')
+    }
+  }
+
+  const showSuccessNotification = () => {
+    // Basit toast benzeri bildirim için window global'ına ekliyoruz
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('quickTaskSuccess', {
+        detail: { message: 'Hızlı not eklendi! 📝' }
+      })
+      window.dispatchEvent(event)
+    }
+  }
+
+  const showErrorNotification = (errorMessage: string) => {
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('quickTaskError', {
+        detail: { message: `Hata: ${errorMessage}` }
+      })
+      window.dispatchEvent(event)
     }
   }
 
@@ -174,46 +192,23 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Örn: acil toplantı hazırlığı yap yarın"
-              className={`pr-12 h-12 text-base transition-all duration-200 ${
-                isAnalyzing 
-                  ? 'border-purple-300 bg-purple-50/50 dark:bg-purple-900/10' 
-                  : 'focus:border-purple-400'
-              }`}
-              disabled={isAnalyzing}
+              className="pr-12 h-12 text-base transition-all duration-200 focus:border-purple-400"
             />
             
-            {/* AI Button */}
+            {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!input.trim() || isAnalyzing}
+              disabled={!input.trim()}
               size="sm"
               className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:opacity-50"
             >
-              {isAnalyzing ? (
-                <div className="flex items-center space-x-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span className="text-xs">AI</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-1">
-                  <Sparkles className="h-3 w-3" />
-                  <span className="text-xs">AI</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-1">
+                <Sparkles className="h-3 w-3" />
+                <span className="text-xs">Ekle</span>
+              </div>
             </Button>
           </div>
 
-          {/* Loading State */}
-          {isAnalyzing && (
-            <div className="flex items-center justify-center space-x-2 py-4">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-              <span className="text-sm text-muted-foreground ml-3">AI analiz ediyor...</span>
-            </div>
-          )}
 
 
           {/* Shortcuts */}
