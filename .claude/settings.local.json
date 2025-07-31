@@ -43,7 +43,8 @@
       "WebFetch(domain:inference-docs.cerebras.ai)",
       "WebFetch(domain:www.cerebras.ai)",
       "Bash(rg:*)",
-      "Bash(tskill:*)"
+      "Bash(tskill:*)",
+      "Bash(set NODE_ENV=production)"
     ],
     "deny": []
   }
