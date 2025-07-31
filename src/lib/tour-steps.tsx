@@ -1,3 +1,4 @@
+import React from 'react'
 import { StepType } from '@reactour/tour'
 
 export const onboardingSteps: StepType[] = [
@@ -209,36 +210,10 @@ export const tourConfig = {
   rounded: 8,
   maskSpace: 5,
   disableInteraction: false,
-  disableKeyboardNavigation: ['esc'],
   showCloseButton: true,
   showNavigation: true,
   showBadge: true,
   showDots: true,
   scrollSmooth: true,
-  className: 'planner-tour',
-  styles: {
-    popover: (base: any) => ({
-      ...base,
-      '--reactour-accent': 'hsl(var(--primary))',
-      borderRadius: '12px',
-      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-      backdropFilter: 'blur(16px)',
-      border: '1px solid hsl(var(--border))',
-      backgroundColor: 'hsl(var(--background))',
-      color: 'hsl(var(--foreground))'
-    }),
-    maskArea: (base: any) => ({
-      ...base,
-      borderRadius: '8px'
-    }),
-    mask: (base: any) => ({
-      ...base,
-      backgroundColor: 'rgba(0, 0, 0, 0.4)'
-    }),
-    badge: (base: any) => ({
-      ...base,
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))'
-    })
-  }
+  className: 'planner-tour'
 }

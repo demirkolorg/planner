@@ -1,5 +1,6 @@
 "use client"
 
+import React from 'react'
 import { TourProvider, useTour } from '@reactour/tour'
 import { Button } from '@/components/ui/button'
 import { useTourStore } from '@/store/tourStore'
