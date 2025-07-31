@@ -89,8 +89,11 @@ export const useAuthStore = create<AuthState>()(
             error: null
           })
           
-          // LocalStorage'ı temizle
-          localStorage.clear()
+          // Sadece kullanıcıya özel store'ları temizle, tema ayarlarını koru
+          localStorage.removeItem(STORAGE_KEYS.AUTH_STORAGE)
+          localStorage.removeItem('google-calendar-store')
+          
+          // Diğer kullanıcı verilerini de temizle (task ve project store'ları zaten yukarıda resetleniyor)
         }
       },
       setUser: (user: User) => set({ user, isAuthenticated: true }),
