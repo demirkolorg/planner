@@ -2,8 +2,12 @@ import { RegisterForm } from "@/components/auth/register-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Users, Shield, Zap } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { BRAND_SLOGANS } from "@/lib/constants";
 
 export default function RegisterPage() {
+  // Rastgele slogan seç
+  const randomSlogan = BRAND_SLOGANS[Math.floor(Math.random() * BRAND_SLOGANS.length)]
+  
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       {/* Sol Panel - Branding */}
@@ -23,34 +27,38 @@ export default function RegisterPage() {
           
           <div className="space-y-4 max-w-md">
             <h2 className="text-2xl font-semibold text-foreground/90">
-              Planner Ailesine Katılın
+              {randomSlogan}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Binlerce kullanıcının tercih ettiği modern proje yönetim platformuna hoş geldiniz. 
-              Ücretsiz hesabınızı oluşturun ve hemen başlayın.
+              Projenizin dijital ağaçkakanı olun. Büyük hedefleri küçük, yönetilebilir "tık"lara bölün ve kararlı vuruşlarla başarıya ulaşın.
             </p>
+            <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg border border-primary/20">
+              <p className="text-sm text-muted-foreground font-medium">
+                "En büyük başarılar, kararlı vuruşların eseridir."
+              </p>
+            </div>
           </div>
           
           <div className="space-y-4 max-w-md">
             <div className="flex items-center space-x-3 p-4 bg-white/10 dark:bg-gray-800/10 rounded-lg backdrop-blur-sm">
               <Users className="h-6 w-6 text-primary" />
               <div className="text-left">
-                <h3 className="font-semibold text-sm">Takım Çalışması</h3>
-                <p className="text-xs text-muted-foreground">Ekibinizle kolayca işbirliği yapın</p>
+                <h3 className="font-semibold text-sm">Ritmik İş Akışı</h3>
+                <p className="text-xs text-muted-foreground">Her tık, hedefe bir adım daha yakın</p>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-white/10 dark:bg-gray-800/10 rounded-lg backdrop-blur-sm">
               <Shield className="h-6 w-6 text-primary" />
               <div className="text-left">
-                <h3 className="font-semibold text-sm">Güvenli</h3>
-                <p className="text-xs text-muted-foreground">Verileriniz güvende, 256-bit şifreleme</p>
+                <h3 className="font-semibold text-sm">Odaklanmış Yaklaşım</h3>
+                <p className="text-xs text-muted-foreground">Dağınıklığı değil, hedefi yönetin</p>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-4 bg-white/10 dark:bg-gray-800/10 rounded-lg backdrop-blur-sm">
               <Zap className="h-6 w-6 text-primary" />
               <div className="text-left">
-                <h3 className="font-semibold text-sm">Hızlı Başlangıç</h3>
-                <p className="text-xs text-muted-foreground">Dakikalar içinde kurulum tamamla</p>
+                <h3 className="font-semibold text-sm">Net Vuruşlar</h3>
+                <p className="text-xs text-muted-foreground">Büyük projeler, küçük adımlarla</p>
               </div>
             </div>
           </div>

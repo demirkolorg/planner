@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/ui/logo"
+import { BRAND_SLOGANS } from "@/lib/constants"
 
 interface SplashScreenProps {
   className?: string
@@ -11,6 +12,11 @@ interface SplashScreenProps {
 
 export function SplashScreen({ className, message = "Yükleniyor..." }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(false)
+  const [randomSlogan] = useState(() => {
+    // Her splash screen açıldığında rastgele bir slogan seç
+    const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
+    return BRAND_SLOGANS[randomIndex]
+  })
 
   useEffect(() => {
     // Fade-in efekti için kısa bir gecikme
@@ -63,8 +69,8 @@ export function SplashScreen({ className, message = "Yükleniyor..." }: SplashSc
           <p className="text-lg text-muted-foreground animate-pulse">
             {message}
           </p>
-          <p className="text-sm text-muted-foreground/70">
-            Verimlilik yolculuğunuz başlıyor...
+          <p className="text-sm text-muted-foreground/70 font-medium">
+            {randomSlogan}
           </p>
         </div>
 

@@ -84,3 +84,47 @@ export const BRAND_COLORS = DESIGN_TOKEN_BRAND_COLORS
 
 // Legacy support
 export const BRAND_COLOR = '#f59e0b'; // Deprecated: use BRAND_COLORS.PRIMARY
+
+// Marka Sloganları - Ağaçkakan Metaforu
+export const BRAND_SLOGANS = [
+  // Ana Slogan
+  "Hedefe Tık Tık.",
+  
+  // Odak ve Verimlilik Vurgulu
+  "Büyük Projeler, Net Vuruşlar.",
+  "Projenin Ritmi, Başarının Sesi.",
+  "Odağınızı bulun, gerisini Planner halletsin.",
+  "Dağınıklığı değil, hedefi yönetin.",
+  
+  // Metaforu Doğrudan Kullanan
+  "Projenizin Ağaçkakanı.",
+  "En zor projeleri bile tık tık bitirin.",
+  "Tek tek görevler, büyük başarılar.",
+  
+  // Motivasyon ve Başarı Odaklı
+  "Görevleri Değil, Geleceği Şekillendir.",
+  "Adım adım değil, vuruş vuruş başarıya.",
+  "Projeler tamamlanır, eserler ortaya çıkar.",
+  
+  // Ek Motivasyon Sloganları
+  "Her tık, hedefe bir adım daha yakın.",
+  "Kararlı vuruşların gücünü keşfedin.",
+  "Ritminizi bulun, başarınızı yaratın.",
+] as const
+
+// Marka Anlatımı
+export const BRAND_STORY = `En büyük projeler, en sağlam ağaç gövdeleri gibidir. İlk bakışta heybetli, aşılmaz ve karmaşık görünürler. Nereden başlayacağınızı bilemez, o devasa hedef karşısında enerjinizi nereye odaklayacağınızı kestiremezsiniz.
+
+Doğada ise bu sorunun bir ustası var: Ağaçkakan.
+
+Ağaçkakan, hedefini belirler ve tek bir noktaya odaklanır. Dikkati dağılmaz. Her vuruşu (tık!), bir öncekiyle aynı ritim ve kararlılıktadır. Tek bir vuruş ağacı devirmez, ama binlerce ritmik ve odaklanmış vuruş, en sert kabuğu bile delerek amaca ulaşır: bir yuva inşa etmek, bir hedefe varmak.
+
+Planner, projenizin dijital ağaçkakanıdır.
+
+Biz, o devasa projeyi sizin için yönetilebilir "tık"lara, yani net ve sıralı görevlere bölüyoruz. Planner ile ekibiniz, dikkatini dağıtan yüzlerce daldan sıyrılıp, projenin özüne, yani o tek ve önemli noktaya odaklanır.
+
+Her bir görev, hedefe yönelik net bir vuruştur. Her "tamamlandı" işareti, projenizin ritmini oluşturan sestir. Planner, dağınıklığı ortadan kaldırır, ekibinizi aynı ritimde odaklar ve her bir "tık" ile hedefinize ne kadar yaklaştığınızı size gösterir.
+
+Bizimle sadece görevleri tamamlamazsınız; sabırla, odaklanarak ve doğru ritimle kendi başarınızı inşa edersiniz.
+
+Çünkü en büyük başarılar, kararlı vuruşların eseridir.`

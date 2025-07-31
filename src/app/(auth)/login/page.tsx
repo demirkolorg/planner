@@ -1,8 +1,12 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Logo } from "@/components/ui/logo";
+import { BRAND_SLOGANS, BRAND_STORY } from "@/lib/constants";
 
 export default function LoginPage() {
+  // Rastgele slogan seç
+  const randomSlogan = BRAND_SLOGANS[Math.floor(Math.random() * BRAND_SLOGANS.length)]
+  
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       {/* Sol Panel - Branding */}
@@ -22,12 +26,16 @@ export default function LoginPage() {
           
           <div className="space-y-4 max-w-md">
             <h2 className="text-2xl font-semibold text-foreground/90">
-              Görevlerinizi Organize Edin
+              {randomSlogan}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Projelerinizi yönetin, görevlerinizi takip edin ve verimliliğinizi artırın. 
-              Modern ve kullanıcı dostu arayüzümüzle iş akışınızı optimize edin.
+              En büyük projeler, en sağlam ağaç gövdeleri gibidir. Planner ile her projeyi yönetilebilir "tık"lara bölün ve hedefinize odaklanarak başarıya ulaşın.
             </p>
+            <div className="p-4 bg-primary/10 rounded-lg border-l-4 border-primary">
+              <p className="text-sm text-muted-foreground italic">
+                "Ağaçkakan gibi kararlı ve odaklı olun. Her tık, hedefe bir adım daha yakın."
+              </p>
+            </div>
           </div>
           
           <div className="grid grid-cols-3 gap-4 mt-8 max-w-md">

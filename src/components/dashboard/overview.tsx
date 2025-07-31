@@ -21,6 +21,8 @@ import {
   Plus,
   Lightbulb
 } from "lucide-react"
+import { useState as useRandomSlogan } from "react"
+import { BRAND_SLOGANS } from "@/lib/constants"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { TaskCard } from "@/components/task/task-card"
@@ -47,6 +49,12 @@ export function DashboardOverview() {
     moveTask,
   } = useTaskStore()
   const { projects, fetchProjects } = useProjectStore()
+  
+  // Rastgele slogan seç (session boyunca sabit kalır)
+  const [randomSlogan] = useRandomSlogan(() => {
+    const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
+    return BRAND_SLOGANS[randomIndex]
+  })
 
   // Modal states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
@@ -367,8 +375,8 @@ export function DashboardOverview() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Anasayfa
             </h1>
-            <p className="text-muted-foreground">
-              Proje ve görevlerinizin genel görünümü
+            <p className="text-muted-foreground font-medium">
+              {randomSlogan}
             </p>
           </div>
         </div>
@@ -638,7 +646,7 @@ export function DashboardOverview() {
             <div className="text-center py-8 text-muted-foreground">
               <CalendarCheck className="h-12 w-12 mx-auto mb-3 text-orange-300" />
               <p className="text-sm font-medium">Bugün için bekleyen görev yok</p>
-              <p className="text-xs mt-1">Harika! Bugün için tüm görevlerin tamamlandı 🎉</p>
+              <p className="text-xs mt-1">Harika! Ritminizi korudunuz. Tık tık hedefe ulaşın! 🎯</p>
             </div>
           )}
         </div>
@@ -750,7 +758,7 @@ export function DashboardOverview() {
                     <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-200" />
                   </div>
                 ) : (
-                  todaysQuote.quote
+                  "Her bir tık, hedefinize bir adım daha yaklaşmanız demektir. Ağaçkakan gibi kararlı ve odaklı olun. Büyük projeler, sabırlı ve ritmik vuruşlarla gerçeğe dönüşür."
                 )}
               </blockquote>
             </div>
@@ -759,7 +767,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-center space-x-2 pt-2">
               <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-indigo-300 to-transparent" />
               <cite className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 not-italic">
-                {todaysQuote.author}
+                Planner Ağaçkakanı
               </cite>
               <div className="w-8 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent" />
             </div>
