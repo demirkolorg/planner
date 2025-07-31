@@ -146,7 +146,7 @@ export default function SettingsPage() {
         }
       }
     } catch (_error) {
-      console.error('Google durum kontrol hatası:', error)
+      console.error('Google durum kontrol hatası:', _error)
     } finally {
       setIsInitialLoading(false) // İlk yükleme tamamlandı
     }
