@@ -230,14 +230,14 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       <div className="flex h-14 items-center justify-between px-2 text-primary">
         {isOpen ? (
           <Link href={ROUTES.DASHBOARD} className="flex items-center pl-2 hover:opacity-80 transition-opacity">
-            <FolderKanban className="h-7 w-7 mr-3 text-primary" />
+            <img src="/logo/logo.svg" alt="Planner Logo" className="h-7 w-7 mr-3 text-primary" />
             <h1 className="text-xl font-bold">Planner</h1>
           </Link>
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
               <Link href={ROUTES.DASHBOARD} className="flex-1 flex items-center justify-center hover:opacity-80 transition-opacity">
-                <FolderKanban className="h-7 w-7 text-primary" />
+                <img src="/logo/logo.svg" alt="Planner Logo" className="h-7 w-7 text-primary" />
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right">

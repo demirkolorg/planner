@@ -15,7 +15,7 @@ export default function LoginPage() {
         <div className="relative z-10 text-center space-y-6 px-8">
           <div className="flex items-center justify-center space-x-3">
             <div className="p-3 bg-primary/20 rounded-2xl">
-              <CalendarDays className="h-8 w-8 text-primary" />
+              <img src="/logo/logo.svg" alt="Planner Logo" className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-4xl font-bold text-foreground">Planner</h1>
           </div>
@@ -56,7 +56,7 @@ export default function LoginPage() {
         
         {/* Mobile Logo */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center space-x-2">
-          <CalendarDays className="h-6 w-6 text-primary" />
+          <img src="/logo/logo.svg" alt="Planner Logo" className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold">Planner</span>
         </div>
         

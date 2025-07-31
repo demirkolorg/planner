@@ -26,14 +26,17 @@ export function SplashScreen({ className, message = "Yükleniyor..." }: SplashSc
     )}>
       <div className="text-center space-y-8 px-4">
         {/* Logo/Brand */}
-        <div className="relative">
-          <h1 className={cn(
-            "text-6xl md:text-7xl font-bold",
-            "bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent",
-            "splash-logo"
-          )}>
-            Planner
-          </h1>
+        <div className="relative flex flex-col items-center">
+          <div className="flex items-center space-x-4 mb-2">
+            <img src="/logo/logo.svg" alt="Planner Logo" className="h-16 w-16 md:h-20 md:w-20 text-primary" />
+            <h1 className={cn(
+              "text-6xl md:text-7xl font-bold",
+              "bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent",
+              "splash-logo"
+            )}>
+              Planner
+            </h1>
+          </div>
           
           {/* Decorative elements */}
           <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full animate-ping opacity-75" />
