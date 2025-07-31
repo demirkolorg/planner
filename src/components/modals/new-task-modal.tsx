@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain } from "lucide-react"
+import { X, Calendar, Clock, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain } from "lucide-react"
 import { generateTaskSuggestion, improveBrief, improveTitle } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
-import { DateTimePicker } from "../shared/date-time-picker"
+import { DatePicker } from "../shared/date-picker"
+import { TimePicker } from "../shared/time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 import { TagPicker } from "@/components/ui/tag-picker"
 import { useTagStore } from "@/store/tagStore"
@@ -67,7 +68,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [projectSearchInput, setProjectSearchInput] = useState("")
   const [sectionSearchInput, setSectionSearchInput] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [selectedDateTime, setSelectedDateTime] = useState<string | null>(null)
+  const [showTimePicker, setShowTimePicker] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null) // DD.MM.YYYY format
+  const [selectedTime, setSelectedTime] = useState<string | null>(null) // HH:MM format
   const [parentTask, setParentTask] = useState<Task | null>(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -121,7 +124,19 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         const mappedPriority = priorityMapping[editingTask.priority] || editingTask.priority
         setSelectedPriority(mappedPriority)
         
-        setSelectedDateTime(editingTask.dueDate || null)
+        // DueDate'i tarih ve saat olarak ayır
+        if (editingTask.dueDate) {
+          const date = new Date(editingTask.dueDate)
+          const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
+          setSelectedDate(dateStr)
+          
+          // All-day event değilse saati de set et
+          const isAllDayEvent = editingTask.dueDate.includes('T00:00:00.000Z')
+          if (!isAllDayEvent) {
+            const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+            setSelectedTime(timeStr)
+          }
+        }
         setSelectedTags(editingTask.tags?.map(t => t.tag.name) || [])
       } else {
         // Yeni görev modunda temiz başla
@@ -129,7 +144,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setDescription("")
         setSelectedTags([])
         setSelectedPriority("Yok")
-        setSelectedDateTime(null)
+        setSelectedDate(null)
+        setSelectedTime(null)
       }
       
       // UI state'leri reset et
@@ -138,6 +154,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setShowProjectPicker(false)
       setShowSectionPicker(false)
       setShowDatePicker(false)
+      setShowTimePicker(false)
       setIsSubmitting(false)
       setIsAILoading(false)
       setAiPrompt("yap")
@@ -220,71 +237,67 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }
   }, [isOpen, projects, selectedProject, fetchSections, getSectionsByProject, defaultProject, defaultSection, parentTaskId, editingTask, getTaskById])
 
-  const handleDateTimeSave = (dateTime: string | null) => {
-    // Parent task validasyonu
-    if (parentTaskId && dateTime) {
-      const parentTask = getTaskById(parentTaskId)
-      if (parentTask?.dueDate) {
-        const parentDueDate = new Date(parentTask.dueDate)
-        const selectedDate = new Date(dateTime)
-        
-        // Eğer parent task'ın saati 00:00 ise, gün sonuna kadar (23:59) izin ver
-        const parentTaskEndOfDay = parentDueDate.getHours() === 0 && parentDueDate.getMinutes() === 0
-          ? new Date(parentDueDate.getFullYear(), parentDueDate.getMonth(), parentDueDate.getDate(), 23, 59, 59)
-          : parentDueDate
-        
-        if (selectedDate > parentTaskEndOfDay) {
-          const parentDueDateWithTime = parentDueDate.getHours() === 0 && parentDueDate.getMinutes() === 0
-            ? parentDueDate.toLocaleDateString('tr-TR')
-            : `${parentDueDate.toLocaleDateString('tr-TR')} ${parentDueDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`
-          
-          const selectedDateDisplay = new Date(dateTime).toLocaleDateString('tr-TR') + 
-            (new Date(dateTime).getHours() !== 0 || new Date(dateTime).getMinutes() !== 0 
-              ? ` ${new Date(dateTime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}` 
-              : '')
-          
-          setAlertConfig({
-            isOpen: true,
-            title: "Tarih Sınırı Aşıldı",
-            message: `Alt görevin bitiş tarihi (${selectedDateDisplay}), üst görevin bitiş tarihinden (${parentDueDateWithTime}) sonra olamaz.`
-          })
-          return
-        }
-      }
-    }
+  const handleDateSave = (date: string | null) => {
+    setSelectedDate(date)
+    setShowDatePicker(false)
+  }
+
+  const handleDateCancel = () => {
+    setShowDatePicker(false)
+  }
+
+  const handleTimeSave = (time: string | null) => {
+    setSelectedTime(time)
+    setShowTimePicker(false)
+  }
+
+  const handleTimeCancel = () => {
+    setShowTimePicker(false)
+  }
+
+  // Tarih ve saati birleştirerek ISO string oluştur
+  const combineDateTime = (): string | null => {
+    if (!selectedDate) return null
     
-    setSelectedDateTime(dateTime)
-    setShowDatePicker(false)
+    try {
+      // DD.MM.YYYY formatını parse et
+      const [day, month, year] = selectedDate.split('.')
+      const dayNum = parseInt(day)
+      const monthNum = parseInt(month)
+      const yearNum = parseInt(year)
+      
+      if (selectedTime) {
+        // Saat var - tam tarih-saat
+        const [hours, minutes] = selectedTime.split(':')
+        const hoursNum = parseInt(hours)
+        const minutesNum = parseInt(minutes)
+        const date = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum)
+        return date.toISOString()
+      } else {
+        // Saat yok - all-day event
+        return `${yearNum}-${monthNum.toString().padStart(2, '0')}-${dayNum.toString().padStart(2, '0')}T00:00:00.000Z`
+      }
+    } catch (error) {
+      return null
+    }
   }
 
-  const handleDateTimeCancel = () => {
-    setShowDatePicker(false)
-  }
 
-
-  const getDisplayDateTime = () => {
-    if (selectedDateTime) {
-      const date = new Date(selectedDateTime)
-      const dateStr = date.toLocaleDateString('tr-TR', {
+  const getDisplayDate = () => {
+    if (selectedDate) {
+      // DD.MM.YYYY formatından display formatına dönüştür
+      const [day, month, year] = selectedDate.split('.')
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      return date.toLocaleDateString('tr-TR', {
         day: 'numeric',
         month: 'short'
       })
-      
-      // All-day event tespiti: UTC'de 00:00:00 ise all-day event'tir
-      const isAllDayEvent = selectedDateTime.includes('T00:00:00.000Z')
-      
-      if (isAllDayEvent) {
-        return `${dateStr} (Tam Gün)`
-      }
-      
-      const timeStr = date.toLocaleTimeString('tr-TR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-      
-      return `${dateStr} ${timeStr}`
     }
-    return "Zamanla"
+    return "Tarih Seç"
+  }
+
+  const getDisplayTime = () => {
+    return selectedTime || "Saat Seç"
   }
 
   const handleTagsChange = (newTags: string[]) => {
@@ -374,7 +387,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           projectId: selectedProject.id,
           sectionId: selectedSection.id,
           priority: selectedPriority,
-          dueDate: selectedDateTime || undefined,
+          dueDate: combineDateTime() || undefined,
         }
 
         // Tüm update işlemlerini paralel yap
@@ -395,8 +408,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       } else {
         // Yeni görev modu: yeni görev oluştur  
         // Eğer parent task'ın due date'i var ve kullanıcı tarih seçmemişse, otomatik ata
-        let finalDueDate = selectedDateTime
-        if (!selectedDateTime && parentTask?.dueDate) {
+        let finalDueDate = combineDateTime()
+        if (!finalDueDate && parentTask?.dueDate) {
           finalDueDate = parentTask.dueDate
         }
         
@@ -474,7 +487,17 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       }
       
       if (suggestion.dueDate) {
-        setSelectedDateTime(suggestion.dueDate)
+        // Suggestion'dan gelen ISO string'i tarih ve saat olarak ayır
+        const date = new Date(suggestion.dueDate)
+        const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
+        setSelectedDate(dateStr)
+        
+        // All-day event değilse saati de set et
+        const isAllDayEvent = suggestion.dueDate.includes('T00:00:00.000Z')
+        if (!isAllDayEvent) {
+          const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+          setSelectedTime(timeStr)
+        }
       }
       
       
@@ -609,7 +632,17 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       
       // Tarih ata (parent task yoksa veya parent'ın tarihi yoksa)
       if (suggestion.dueDate && !parentTask?.dueDate) {
-        setSelectedDateTime(suggestion.dueDate)
+        // Suggestion'dan gelen ISO string'i tarih ve saat olarak ayır
+        const date = new Date(suggestion.dueDate)
+        const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
+        setSelectedDate(dateStr)
+        
+        // All-day event değilse saati de set et
+        const isAllDayEvent = suggestion.dueDate.includes('T00:00:00.000Z')
+        if (!isAllDayEvent) {
+          const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+          setSelectedTime(timeStr)
+        }
       }
       
     } catch (error) {
@@ -967,53 +1000,100 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between">
-            <div className="relative group flex items-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDatePicker(!showDatePicker)}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                {getDisplayDateTime()}
-              </Button>
-              {selectedDateTime && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedDateTime(null)
-                        setShowDatePicker(false)
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Tarih/Saati Temizle</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              {/* Date Time Picker Dropdown */}
-              {showDatePicker && (
-                <div className="absolute top-full left-0 mt-1 z-50">
-                  <DateTimePicker
-                    initialDateTime={selectedDateTime}
-                    onSave={handleDateTimeSave}
-                    onCancel={handleDateTimeCancel}
-                    isModal={true}
-                    parentTaskDueDate={parentTaskId ? (() => {
-                      const parentTask = getTaskById(parentTaskId)
-                      return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
-                    })() : null}
-                  />
-                </div>
-              )}
+            <div className="flex items-center space-x-2">
+              {/* Date Button */}
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {getDisplayDate()}
+                </Button>
+                {selectedDate && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedDate(null)
+                          setShowDatePicker(false)
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Tarihi Temizle</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                
+                {/* Date Picker Dropdown */}
+                {showDatePicker && (
+                  <div className="absolute top-full left-0 mt-1 z-50">
+                    <DatePicker
+                      initialDate={selectedDate}
+                      onSave={handleDateSave}
+                      onCancel={handleDateCancel}
+                      isModal={true}
+                      parentTaskDueDate={parentTaskId ? (() => {
+                        const parentTask = getTaskById(parentTaskId)
+                        return parentTask?.dueDate ? new Date(parentTask.dueDate) : null
+                      })() : null}
+                    />
+                  </div>
+                )}
+              </div>
 
+              {/* Time Button */}
+              <div className="relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTimePicker(!showTimePicker)}
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  {getDisplayTime()}
+                </Button>
+                {selectedTime && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedTime(null)
+                          setShowTimePicker(false)
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Saati Temizle</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                
+                {/* Time Picker Dropdown */}
+                {showTimePicker && (
+                  <div className="absolute top-full left-0 mt-1 z-50">
+                    <TimePicker
+                      initialTime={selectedTime}
+                      onSave={handleTimeSave}
+                      onCancel={handleTimeCancel}
+                      isModal={true}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
