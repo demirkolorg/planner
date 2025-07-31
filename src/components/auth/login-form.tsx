@@ -199,7 +199,8 @@ export function LoginForm({
             )}
           </Button>
           
-          <div className="relative">
+{/* TODO: Google OAuth entegrasyonu yapılacak */}
+          {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-muted-foreground/20" />
             </div>
@@ -216,7 +217,7 @@ export function LoginForm({
           >
             <Chrome className="mr-2 h-4 w-4" />
             Google ile Giriş Yap
-          </Button>
+          </Button> */}
         </div>
       </form>
 
