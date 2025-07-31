@@ -51,6 +51,7 @@ export default function SettingsPage() {
   const [isConnected, setIsConnected] = useState(false)
   const [syncStats, setSyncStats] = useState<SyncStats | null>(null)
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]) // backward compatibility
   const [selectedReadOnlyCalendarIds, setSelectedReadOnlyCalendarIds] = useState<string[]>([])
   const [isUpdatingCalendars, setIsUpdatingCalendars] = useState(false)
   const [isCreatingPlannerCalendar, setIsCreatingPlannerCalendar] = useState(false)
