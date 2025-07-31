@@ -331,8 +331,8 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
     const viewportHeight = window.innerHeight
     
     // Estimated editor dimensions (can be adjusted as needed)
-    const editorWidth = 256 // min-w-64 = 16rem = 256px
-    const editorHeight = 320 // Approximate height
+    const editorWidth = 320 // min-w-80 = 20rem = 320px
+    const editorHeight = 360 // Approximate height
     
     let { x, y } = position
     
@@ -357,8 +357,8 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
   }
 
   const containerClass = isModal 
-    ? "w-64 bg-background border rounded-lg shadow-lg p-3 min-w-64" 
-    : "fixed bg-background border rounded-lg shadow-lg p-3 min-w-64 z-[100]"
+    ? "w-80 bg-background border rounded-lg shadow-lg p-3 min-w-80" 
+    : "fixed bg-background border rounded-lg shadow-lg p-3 min-w-80 z-[100]"
 
   return (
     <div 
@@ -442,91 +442,183 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium">{getMonthName(currentMonth)} {currentYear}</span>
-                <div className="flex space-x-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handlePreviousMonth()
-                    }}
-                  >
-                    <ChevronLeft className="h-3 w-3" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleNextMonth()
-                    }}
-                  >
-                    <ChevronRight className="h-3 w-3" />
-                  </Button>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePreviousMonth()
+                  }}
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleNextMonth()
+                  }}
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
               </div>
               <div className="w-8"></div>
             </div>
 
-            {/* Calendar Grid */}
-            <div className="space-y-2">
-              {/* Days of week */}
-              <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground text-center">
-                <div>Pzt</div>
-                <div>Sal</div>
-                <div>Çşb</div>
-                <div>Per</div>
-                <div>Cum</div>
-                <div>Cts</div>
-                <div>Pzr</div>
+            {/* Dual Calendar Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Current Month */}
+              <div className="space-y-2">
+                <div className="text-center">
+                  <span className="text-sm font-medium">{getMonthName(currentMonth)} {currentYear}</span>
+                </div>
+                
+                {/* Days of week */}
+                <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground text-center">
+                  <div>P</div>
+                  <div>S</div>
+                  <div>Ç</div>
+                  <div>P</div>
+                  <div>C</div>
+                  <div>C</div>
+                  <div>P</div>
+                </div>
+
+                {/* Calendar dates */}
+                <div className="grid grid-cols-7 gap-1">
+                  {/* Empty cells for first week padding */}
+                  {Array.from({ length: new Date(currentYear, currentMonth, 1).getDay() === 0 ? 6 : new Date(currentYear, currentMonth, 1).getDay() - 1 }, (_, i) => (
+                    <div key={`empty-${i}`} className="h-7 w-7"></div>
+                  ))}
+                  
+                  {Array.from({ length: getDaysInMonth(currentMonth, currentYear) }, (_, i) => i + 1).map((day) => {
+                    const today = new Date()
+                    const currentDate = new Date(currentYear, currentMonth, day)
+                    const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                    
+                    // Parent task bitiş tarihi kontrolü
+                    let isAfterParentDueDate = false
+                    if (parentTaskDueDate) {
+                      const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+                        ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+                        : parentTaskDueDate
+                      
+                      isAfterParentDueDate = currentDate > parentEndOfDay
+                    }
+                    
+                    const isDisabled = isPastDate || isAfterParentDueDate
+                    const isSelected = selectedDate?.startsWith(`${day.toString().padStart(2, '0')}.${(currentMonth + 1).toString().padStart(2, '0')}`)
+                    
+                    return (
+                      <Button
+                        key={day}
+                        variant={isSelected ? "default" : "ghost"}
+                        size="sm"
+                        className={`h-7 w-7 text-xs ${
+                          isPastDate 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : isAfterParentDueDate 
+                            ? 'opacity-60 cursor-not-allowed bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
+                            : ''
+                        }`}
+                        disabled={isDisabled}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!isDisabled) {
+                            handleCalendarDateSelect(day)
+                          }
+                        }}
+                      >
+                        {day}
+                      </Button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {/* Calendar dates */}
-              <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: getDaysInMonth(currentMonth, currentYear) }, (_, i) => i + 1).map((day) => {
-                  const today = new Date()
-                  const currentDate = new Date(currentYear, currentMonth, day)
-                  const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+              {/* Next Month */}
+              <div className="space-y-2">
+                <div className="text-center">
+                  <span className="text-sm font-medium">
+                    {currentMonth === 11 ? getMonthName(0) : getMonthName(currentMonth + 1)} {currentMonth === 11 ? currentYear + 1 : currentYear}
+                  </span>
+                </div>
+                
+                {/* Days of week */}
+                <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground text-center">
+                  <div>P</div>
+                  <div>S</div>
+                  <div>Ç</div>
+                  <div>P</div>
+                  <div>C</div>
+                  <div>C</div>
+                  <div>P</div>
+                </div>
+
+                {/* Calendar dates */}
+                <div className="grid grid-cols-7 gap-1">
+                  {/* Empty cells for first week padding */}
+                  {(() => {
+                    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1
+                    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear
+                    const firstDayOfWeek = new Date(nextYear, nextMonth, 1).getDay()
+                    return Array.from({ length: firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1 }, (_, i) => (
+                      <div key={`empty-next-${i}`} className="h-7 w-7"></div>
+                    ))
+                  })()}
                   
-                  // Parent task bitiş tarihi kontrolü
-                  let isAfterParentDueDate = false
-                  if (parentTaskDueDate) {
-                    const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
-                      ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
-                      : parentTaskDueDate
-                    
-                    isAfterParentDueDate = currentDate > parentEndOfDay
-                  }
-                  
-                  const isDisabled = isPastDate || isAfterParentDueDate
-                  
-                  return (
-                    <Button
-                      key={day}
-                      variant={selectedDate?.startsWith(`${day.toString().padStart(2, '0')}.${(currentMonth + 1).toString().padStart(2, '0')}`) ? "default" : "ghost"}
-                      size="sm"
-                      className={`h-8 w-8 text-xs ${
-                        isPastDate 
-                          ? 'opacity-50 cursor-not-allowed' 
-                          : isAfterParentDueDate 
-                          ? 'opacity-60 cursor-not-allowed bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
-                          : ''
-                      }`}
-                      disabled={isDisabled}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (!isDisabled) {
-                          handleCalendarDateSelect(day)
-                        }
-                      }}
-                    >
-                      {day}
-                    </Button>
-                  )
-                })}
+                  {(() => {
+                    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1
+                    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear
+                    return Array.from({ length: getDaysInMonth(nextMonth, nextYear) }, (_, i) => i + 1).map((day) => {
+                      const today = new Date()
+                      const currentDate = new Date(nextYear, nextMonth, day)
+                      const isPastDate = currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                      
+                      // Parent task bitiş tarihi kontrolü
+                      let isAfterParentDueDate = false
+                      if (parentTaskDueDate) {
+                        const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
+                          ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
+                          : parentTaskDueDate
+                        
+                        isAfterParentDueDate = currentDate > parentEndOfDay
+                      }
+                      
+                      const isDisabled = isPastDate || isAfterParentDueDate
+                      const isSelected = selectedDate?.startsWith(`${day.toString().padStart(2, '0')}.${(nextMonth + 1).toString().padStart(2, '0')}`)
+                      
+                      return (
+                        <Button
+                          key={`next-${day}`}
+                          variant={isSelected ? "default" : "ghost"}
+                          size="sm"
+                          className={`h-7 w-7 text-xs ${
+                            isPastDate 
+                              ? 'opacity-50 cursor-not-allowed' 
+                              : isAfterParentDueDate 
+                              ? 'opacity-60 cursor-not-allowed bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20' 
+                              : ''
+                          }`}
+                          disabled={isDisabled}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (!isDisabled) {
+                              const formattedDate = `${day.toString().padStart(2, '0')}.${(nextMonth + 1).toString().padStart(2, '0')}.${nextYear}`
+                              setSelectedDate(formattedDate)
+                              setShowCalendar(false)
+                            }
+                          }}
+                        >
+                          {day}
+                        </Button>
+                      )
+                    })
+                  })()}
+                </div>
               </div>
             </div>
           </div>
