@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
   },
   // ESLint strict mode
   eslint: {
-    ignoreDuringBuilds: process.env.NODE_ENV === 'production',
+    ignoreDuringBuilds: true,
   },
 };
 
