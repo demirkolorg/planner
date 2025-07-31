@@ -13,9 +13,10 @@ interface DateTimePickerProps {
   position?: { x: number; y: number }
   isModal?: boolean // Modal kullanımı için
   parentTaskDueDate?: Date | null
+  disablePastNavigation?: boolean // Geçmiş aylara gitmeyi engelle
 }
 
-export function DateTimePicker({ initialDateTime, onSave, onCancel, position, isModal = false, parentTaskDueDate }: DateTimePickerProps) {
+export function DateTimePicker({ initialDateTime, onSave, onCancel, position, isModal = false, parentTaskDueDate, disablePastNavigation = true }: DateTimePickerProps) {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
   const [timeInput, setTimeInput] = useState("")
@@ -228,6 +229,19 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
   }
 
   const handlePreviousMonth = () => {
+    // Geçmiş ay navigasyonu engellenmişse bugün tarihinden önceki aylara gitmeyi engelle
+    if (disablePastNavigation) {
+      const today = new Date()
+      const targetMonth = currentMonth === 0 ? 11 : currentMonth - 1
+      const targetYear = currentMonth === 0 ? currentYear - 1 : currentYear
+      
+      // Hedef ay bugünden önceki bir ay mı kontrol et
+      if (targetYear < today.getFullYear() || 
+          (targetYear === today.getFullYear() && targetMonth < today.getMonth())) {
+        return // Geçmiş aya gitme
+      }
+    }
+    
     if (currentMonth === 0) {
       setCurrentMonth(11)
       setCurrentYear(currentYear - 1)
@@ -331,8 +345,8 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
     const viewportHeight = window.innerHeight
     
     // Estimated editor dimensions (can be adjusted as needed)
-    const editorWidth = 320 // min-w-80 = 20rem = 320px
-    const editorHeight = 360 // Approximate height
+    const editorWidth = 520 // min-w-[520px] = 520px
+    const editorHeight = 400 // Approximate height
     
     let { x, y } = position
     
@@ -357,8 +371,8 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
   }
 
   const containerClass = isModal 
-    ? "w-80 bg-background border rounded-lg shadow-lg p-3 min-w-80" 
-    : "fixed bg-background border rounded-lg shadow-lg p-3 min-w-80 z-[100]"
+    ? "w-[520px] bg-background border rounded-lg shadow-lg p-4 min-w-[520px]" 
+    : "fixed bg-background border rounded-lg shadow-lg p-4 min-w-[520px] z-[100]"
 
   return (
     <div 
@@ -432,14 +446,14 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   setShowCalendar(false)
                 }}
-                className="h-8 w-8"
+                className="text-xs"
               >
-                <ChevronLeft className="h-4 w-4" />
+                ← Geri
               </Button>
               <div className="flex items-center space-x-2">
                 <Button 
@@ -450,8 +464,28 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                     e.stopPropagation()
                     handlePreviousMonth()
                   }}
+                  disabled={disablePastNavigation && (() => {
+                    const today = new Date()
+                    const targetMonth = currentMonth === 0 ? 11 : currentMonth - 1
+                    const targetYear = currentMonth === 0 ? currentYear - 1 : currentYear
+                    return targetYear < today.getFullYear() || 
+                           (targetYear === today.getFullYear() && targetMonth < today.getMonth())
+                  })()}
                 >
                   <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    const today = new Date()
+                    setCurrentMonth(today.getMonth())
+                    setCurrentYear(today.getFullYear())
+                  }}
+                  className="text-xs px-2"
+                >
+                  Bugün
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -465,11 +499,11 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                   <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="w-8"></div>
+              <div className="w-12"></div>
             </div>
 
             {/* Dual Calendar Grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               {/* Current Month */}
               <div className="space-y-2">
                 <div className="text-center">
@@ -491,7 +525,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                 <div className="grid grid-cols-7 gap-1">
                   {/* Empty cells for first week padding */}
                   {Array.from({ length: new Date(currentYear, currentMonth, 1).getDay() === 0 ? 6 : new Date(currentYear, currentMonth, 1).getDay() - 1 }, (_, i) => (
-                    <div key={`empty-${i}`} className="h-7 w-7"></div>
+                    <div key={`empty-${i}`} className="h-8 w-8"></div>
                   ))}
                   
                   {Array.from({ length: getDaysInMonth(currentMonth, currentYear) }, (_, i) => i + 1).map((day) => {
@@ -517,7 +551,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                         key={day}
                         variant={isSelected ? "default" : "ghost"}
                         size="sm"
-                        className={`h-7 w-7 text-xs ${
+                        className={`h-8 w-8 text-sm ${
                           isPastDate 
                             ? 'opacity-50 cursor-not-allowed' 
                             : isAfterParentDueDate 
@@ -566,7 +600,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                     const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear
                     const firstDayOfWeek = new Date(nextYear, nextMonth, 1).getDay()
                     return Array.from({ length: firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1 }, (_, i) => (
-                      <div key={`empty-next-${i}`} className="h-7 w-7"></div>
+                      <div key={`empty-next-${i}`} className="h-8 w-8"></div>
                     ))
                   })()}
                   
@@ -596,7 +630,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                           key={`next-${day}`}
                           variant={isSelected ? "default" : "ghost"}
                           size="sm"
-                          className={`h-7 w-7 text-xs ${
+                          className={`h-8 w-8 text-sm ${
                             isPastDate 
                               ? 'opacity-50 cursor-not-allowed' 
                               : isAfterParentDueDate 
@@ -663,7 +697,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                     value={timeInput}
                     onChange={(e) => setTimeInput(formatTimeInput(e.target.value))}
                     placeholder="__:__"
-                    className="w-16 h-6 text-xs text-center"
+                    className="w-20 h-8 text-sm text-center"
                     maxLength={5}
                   />
                   <button
@@ -708,7 +742,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                       <span>Kaydediliyor...</span>
                     </div>
                   ) : (
-                    "Tamamlandı"
+                    "Zamanı Kaydet"
                   )}
                 </Button>
               </div>
