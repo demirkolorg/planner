@@ -227,7 +227,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       <div className={cn(
         "flex h-full flex-col bg-sidebar transition-all duration-300 ease-in-out fixed left-0 top-0 p-2 z-10",
         isOpen ? "w-80" : "w-16"
-      )} data-tour="sidebar">
+      )}>
       <div className="flex h-14 items-center justify-between px-2 text-primary">
         {isOpen ? (
           <Link href={ROUTES.DASHBOARD} className="flex items-center pl-2 hover:opacity-80 transition-opacity">

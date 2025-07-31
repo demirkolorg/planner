@@ -12,7 +12,6 @@ import { useRouter } from 'next/navigation'
 import { NotificationDialog } from '@/components/ui/notification-dialog'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { useGoogleCalendarStore } from '@/store/googleCalendarStore'
-import { useTourStore } from '@/store/tourStore'
 
 interface GoogleIntegration {
   id: string
@@ -47,7 +46,6 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true) // İlk yükleme durumu
   const { lastSyncAt: globalLastSyncAt, isSyncing: globalIsSyncing, setIsSyncing, setLastSyncAt, updateSyncStatus } = useGoogleCalendarStore()
-  const { startTour, resetTour } = useTourStore()
   const [integration, setIntegration] = useState<GoogleIntegration | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [syncStats, setSyncStats] = useState<SyncStats | null>(null)
@@ -112,16 +110,6 @@ export default function SettingsPage() {
   }
 
   const router = useRouter()
-
-  // Tour yeniden başlatma
-  const handleRestartTour = () => {
-    resetTour()
-    router.push('/')
-    setTimeout(() => {
-      startTour()
-    }, 500)
-    showNotification('Başarılı', 'Onboarding turu yeniden başlatıldı!', 'info')
-  }
 
   // Google Calendar durumunu kontrol et
   const checkGoogleStatus = async () => {
@@ -818,42 +806,13 @@ export default function SettingsPage() {
             </TabsContent>
 
             {/* Help Tab */}
-            <TabsContent value="help" className="mt-6" data-tour="settings-hint">
+            <TabsContent value="help" className="mt-6">
               <div className="mb-6">
                 <p className="text-gray-600 dark:text-gray-400">
-                  Tur ve yardım seçenekleri
+                  Yardım seçenekleri
                 </p>
               </div>
               <div className="space-y-6">
-                {/* Onboarding Tour */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                        <Play className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Onboarding Turu</h3>
-                        <p className="text-gray-500 dark:text-gray-400">
-                          Planner'ın temel özelliklerini öğrenin
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleRestartTour}
-                      variant="outline"
-                      className="flex items-center space-x-2"
-                    >
-                      <Play className="h-4 w-4" />
-                      <span>Turu Başlat</span>
-                    </Button>
-                  </div>
-                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      💡 Bu tur size uygulamanın temel özelliklerini gösterecek ve nasıl daha verimli çalışabileceğinizi öğretecek.
-                    </p>
-                  </div>
-                </div>
 
                 {/* FAQ */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">

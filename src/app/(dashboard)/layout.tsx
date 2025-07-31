@@ -10,9 +10,7 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
 import { ToastNotification } from "@/components/ui/toast-notification"
-import { OnboardingTour } from "@/components/tour/OnboardingTour"
 import { useCtrlK } from "@/hooks/use-keyboard-shortcut"
-import { useTourStore } from "@/store/tourStore"
 
 export default function DashboardLayout({
   children,
@@ -27,9 +25,6 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   const lastUserIdRef = useRef<string | null>(null)
-  
-  // Tour state
-  const { hasCompletedOnboarding, startTour } = useTourStore()
 
   // Ctrl+K shortcut
   useCtrlK(() => {
@@ -78,20 +73,12 @@ export default function DashboardLayout({
             fetchProjects()
           ])
         }
-        
-        // İlk defa gelen kullanıcı için tour başlat
-        if (!hasCompletedOnboarding) {
-          // Data yüklendikten sonra kısa bir delay ile tour başlat
-          setTimeout(() => {
-            startTour()
-          }, 1500)
-        }
       }
       setIsLoading(false)
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, user?.id, router, fetchTasks, fetchProjects, tasks.length, hasCompletedOnboarding, startTour])
+  }, [isAuthenticated, user?.id, router, fetchTasks, fetchProjects, tasks.length])
 
   if (isLoading) {
     return <SplashScreen message="Dashboard yükleniyor..." />
@@ -102,27 +89,25 @@ export default function DashboardLayout({
   }
 
   return (
-    <OnboardingTour>
-      <div className="flex h-screen bg-background">
-        <DashboardSidebar 
-          isOpen={sidebarOpen} 
-          onToggle={() => setSidebarOpen(!sidebarOpen)} 
-        />
-        <div className={`flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
-          <main className="flex-1 overflow-y-auto p-6">
-            {children}
-          </main>
-        </div>
-        
-        {/* Quick Task Modal */}
-        <QuickTaskModal
-          isOpen={isQuickTaskModalOpen}
-          onClose={() => setIsQuickTaskModalOpen(false)}
-        />
-        
-        {/* Toast Notifications */}
-        <ToastNotification />
+    <div className="flex h-screen bg-background">
+      <DashboardSidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+      />
+      <div className={`flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
       </div>
-    </OnboardingTour>
+      
+      {/* Quick Task Modal */}
+      <QuickTaskModal
+        isOpen={isQuickTaskModalOpen}
+        onClose={() => setIsQuickTaskModalOpen(false)}
+      />
+      
+      {/* Toast Notifications */}
+      <ToastNotification />
+    </div>
   )
 }
