@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar, Settings, Loader2, User, Bell, Palette, Shield, HelpCircle, Play } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { NotificationDialog } from '@/components/ui/notification-dialog'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { useGoogleCalendarStore } from '@/store/googleCalendarStore'
@@ -110,11 +111,16 @@ export default function SettingsPage() {
     setConfirmationModal(prev => ({ ...prev, isOpen: false }))
   }
 
+  const router = useRouter()
+
   // Tour yeniden başlatma
   const handleRestartTour = () => {
     resetTour()
-    startTour()
-    showNotification('info', 'Başarılı', 'Onboarding turu yeniden başlatıldı!')
+    router.push('/')
+    setTimeout(() => {
+      startTour()
+    }, 500)
+    showNotification('Başarılı', 'Onboarding turu yeniden başlatıldı!', 'info')
   }
 
   // Google Calendar durumunu kontrol et
