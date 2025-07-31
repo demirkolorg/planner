@@ -1,6 +1,16 @@
 import { google } from 'googleapis'
 import { OAuth2Client } from 'google-auth-library'
 
+// Task tipi tanımı
+interface Task {
+  id: string
+  title: string
+  description?: string
+  dueDate?: Date | string
+  priority?: string
+  isAllDay?: boolean
+}
+
 // Google Calendar API scopes
 export const GOOGLE_CALENDAR_SCOPES = [
   'https://www.googleapis.com/auth/calendar', // Tam takvim erişimi (events + calendar management)
@@ -97,7 +107,7 @@ export async function findPlannerCalendarByName(accessToken: string): Promise<st
 }
 
 // Task'ı Calendar Event'e dönüştür
-export function convertTaskToCalendarEvent(task: any) {
+export function convertTaskToCalendarEvent(task: Task) {
   const startDate = task.dueDate ? new Date(task.dueDate) : new Date()
   
   // Priority'ye göre renk
@@ -176,7 +186,7 @@ export function convertTaskToCalendarEvent(task: any) {
 }
 
 // Task'ın all-day olup olmadığını kontrol et
-function isTaskAllDay(task: any): boolean {
+function isTaskAllDay(task: Task): boolean {
   if (!task.dueDate) return true // Tarih yoksa all-day varsay
   
   // All-day event tespiti: UTC'de 00:00:00 ise all-day event'tir
@@ -262,7 +272,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<string |
 }
 
 // Calendar Event'i Task'a dönüştür (ters işlem)
-export function convertCalendarEventToTask(event: any) {
+export function convertCalendarEventToTask(event: Record<string, unknown>) {
   // Event tipini tespit et (all-day vs timed)
   const isAllDay = !!event.start?.date && !event.start?.dateTime
   
@@ -309,7 +319,7 @@ function getColorPriority(colorId?: string): string {
 export async function createCalendarEvent(
   accessToken: string,
   calendarId: string,
-  task: any
+  task: Task
 ): Promise<string | null> {
   try {
     const calendar = createCalendarClient(accessToken)
@@ -332,7 +342,7 @@ export async function updateCalendarEvent(
   accessToken: string,
   calendarId: string,
   eventId: string,
-  task: any
+  task: Task
 ): Promise<boolean> {
   try {
     const calendar = createCalendarClient(accessToken)
@@ -375,7 +385,7 @@ export async function deleteCalendarEvent(
 // Task'ı Google Calendar ile senkronize et
 export async function syncTaskToCalendar(
   userId: string,
-  task: any,
+  task: Task,
   action: 'CREATE' | 'UPDATE' | 'DELETE'
 ): Promise<{ success: boolean; eventId?: string; error?: string }> {
   try {

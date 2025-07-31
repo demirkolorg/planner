@@ -12,7 +12,7 @@ interface UseKeyboardShortcutOptions {
 export function useKeyboardShortcut(
   options: UseKeyboardShortcutOptions,
   callback: () => void,
-  deps: any[] = []
+  deps: unknown[] = []
 ) {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     const {
@@ -57,7 +57,7 @@ export function useKeyboardShortcut(
 }
 
 // Özel Ctrl+K hook'u
-export function useCtrlK(callback: () => void, deps: any[] = []) {
+export function useCtrlK(callback: () => void, deps: unknown[] = []) {
   useKeyboardShortcut(
     {
       key: 'k',

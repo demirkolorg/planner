@@ -1,17 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar, Settings, Loader2, CheckCircle, AlertCircle, User, Bell, Shield, Palette } from 'lucide-react'
+import { Calendar, Settings, Loader2 } from 'lucide-react'
 import { NotificationDialog } from '@/components/ui/notification-dialog'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
-import { ManualEventWarning } from '@/components/settings/manual-event-warning'
 import { useGoogleCalendarStore } from '@/store/googleCalendarStore'
 
 interface GoogleIntegration {
@@ -46,12 +44,11 @@ interface GoogleCalendar {
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true) // İlk yükleme durumu
-  const { lastSyncAt: globalLastSyncAt, isSyncing: globalIsSyncing, setIsSyncing, setLastSyncAt, updateSyncStatus, isConnected: globalIsConnected } = useGoogleCalendarStore()
+  const { lastSyncAt: globalLastSyncAt, isSyncing: globalIsSyncing, setIsSyncing, setLastSyncAt, updateSyncStatus } = useGoogleCalendarStore()
   const [integration, setIntegration] = useState<GoogleIntegration | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [syncStats, setSyncStats] = useState<SyncStats | null>(null)
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
-  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]) // backward compatibility
   const [selectedReadOnlyCalendarIds, setSelectedReadOnlyCalendarIds] = useState<string[]>([])
   const [isUpdatingCalendars, setIsUpdatingCalendars] = useState(false)
   const [isCreatingPlannerCalendar, setIsCreatingPlannerCalendar] = useState(false)
@@ -543,7 +540,7 @@ export default function SettingsPage() {
                         className="bg-blue-600 hover:bg-blue-700"
                       >
                         {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        Google Calendar'ı Bağla
+                        Google Calendar&apos;ı Bağla
                       </Button>
                     )}
                   </div>
@@ -573,7 +570,7 @@ export default function SettingsPage() {
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm underline"
                               >
-                                Google Calendar'da Aç
+                                Google Calendar&apos;da Aç
                               </a>
                             )}
                           </div>

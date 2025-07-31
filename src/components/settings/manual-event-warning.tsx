@@ -107,7 +107,7 @@ export function ManualEventWarning({ plannerCalendarId }: ManualEventWarningProp
           </Badge>
         </div>
         <p className="text-sm text-green-800 dark:text-green-200 mt-2">
-          Planner Takvimi'nde manuel eklenen event bulunamadı. Takvim otomatik korunuyor.
+          Planner Takvimi&apos;nde manuel eklenen event bulunamadı. Takvim otomatik korunuyor.
         </p>
         <div className="flex items-center justify-between mt-3">
           <p className="text-xs text-green-700 dark:text-green-300">
@@ -153,7 +153,7 @@ export function ManualEventWarning({ plannerCalendarId }: ManualEventWarningProp
             {manualEvents.length > 0 && (
               <div className="mb-4">
                 <p className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-2">
-                  Tespit Edilen Manuel Event'ler:
+                  Tespit Edilen Manuel Event&apos;ler:
                 </p>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {manualEvents.map((event) => (
@@ -171,7 +171,7 @@ export function ManualEventWarning({ plannerCalendarId }: ManualEventWarningProp
             )}
 
             <div className="text-xs text-orange-700 dark:text-orange-300 mb-3">
-              ⚠️ Bu event'ler Planner ile senkronize edilmeyecek ve çakışmalara neden olabilir.
+              ⚠️ Bu event&apos;ler Planner ile senkronize edilmeyecek ve çakışmalara neden olabilir.
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ export function ManualEventWarning({ plannerCalendarId }: ManualEventWarningProp
               ) : (
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Manuel Event'leri Temizle
+                  Manuel Event&apos;leri Temizle
                 </>
               )}
             </Button>

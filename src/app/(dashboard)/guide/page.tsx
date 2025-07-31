@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Users, Zap, RefreshCw, Keyboard, Search, Brain, Eye, EyeOff, Palette, Bell, Shield, User } from "lucide-react"
+import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -291,7 +291,7 @@ export default function GuidePage() {
                   Hemen başlamaya hazır mısınız?
                 </h3>
                 <p className="text-blue-700 dark:text-blue-300 mb-6">
-                  İlk projenizi oluşturun ve Planner'ın gücünü keşfedin.
+                  İlk projenizi oluşturun ve Planner&apos;ın gücünü keşfedin.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button asChild>
@@ -365,7 +365,7 @@ export default function GuidePage() {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Son Güncellemeler</h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                Planner'a eklenen yeni özellikler ve iyileştirmeler
+                Planner&apos;a eklenen yeni özellikler ve iyileştirmeler
               </p>
             </div>
 
@@ -447,7 +447,7 @@ export default function GuidePage() {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Pro İpuçları</h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                Planner'dan maksimum verim almanızı sağlayacak ipuçları
+                Planner&apos;dan maksimum verim almanızı sağlayacak ipuçları
               </p>
             </div>
 
@@ -510,7 +510,7 @@ export default function GuidePage() {
                     <Clock className="h-5 w-5 text-purple-600 mt-1" />
                     <div>
                       <h4 className="font-medium text-green-900 dark:text-green-100">Manuel sync kullanın</h4>
-                      <p className="text-sm text-green-700 dark:text-green-300">Sidebar'daki sync butonuyla anında senkronize edin</p>
+                      <p className="text-sm text-green-700 dark:text-green-300">Sidebar&apos;daki sync butonuyla anında senkronize edin</p>
                     </div>
                   </div>
                 </CardContent>
@@ -534,7 +534,7 @@ export default function GuidePage() {
                   <div className="flex items-start space-x-3">
                     <Search className="h-5 w-5 text-blue-600 mt-1" />
                     <div>
-                      <h4 className="font-medium text-orange-900 dark:text-orange-100">Arama özelligini kullanın</h4>
+                      <h4 className="font-medium text-orange-900 dark:text-orange-100">Arama özelliğini kullanın</h4>
                       <p className="text-sm text-orange-700 dark:text-orange-300">Ctrl+/ ile tüm görev ve projelerde arama yapın</p>
                     </div>
                   </div>

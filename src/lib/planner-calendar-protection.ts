@@ -7,7 +7,7 @@ export async function detectManualEvents(
   plannerCalendarId: string, 
   userId: string
 ): Promise<{
-  manualEvents: any[]
+  manualEvents: Record<string, unknown>[]
   hasManualEvents: boolean
   warnings: string[]
 }> {

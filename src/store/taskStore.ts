@@ -1153,7 +1153,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       if (response.ok) {
         const comments = await response.json()
         // Ana yorumları ve reply'ları say
-        const totalComments = comments.reduce((total: number, comment: any) => {
+        const totalComments = comments.reduce((total: number, comment: Record<string, unknown>) => {
           return total + 1 + (comment.replies?.length || 0)
         }, 0)
         
