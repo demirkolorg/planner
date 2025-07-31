@@ -7,10 +7,11 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar, Settings, Loader2, User, Bell, Palette, Shield } from 'lucide-react'
+import { Calendar, Settings, Loader2, User, Bell, Palette, Shield, HelpCircle, Play } from 'lucide-react'
 import { NotificationDialog } from '@/components/ui/notification-dialog'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { useGoogleCalendarStore } from '@/store/googleCalendarStore'
+import { useTourStore } from '@/store/tourStore'
 
 interface GoogleIntegration {
   id: string
@@ -45,6 +46,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true) // İlk yükleme durumu
   const { lastSyncAt: globalLastSyncAt, isSyncing: globalIsSyncing, setIsSyncing, setLastSyncAt, updateSyncStatus } = useGoogleCalendarStore()
+  const { startTour, resetTour } = useTourStore()
   const [integration, setIntegration] = useState<GoogleIntegration | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [syncStats, setSyncStats] = useState<SyncStats | null>(null)
@@ -107,6 +109,12 @@ export default function SettingsPage() {
     setConfirmationModal(prev => ({ ...prev, isOpen: false }))
   }
 
+  // Tour yeniden başlatma
+  const handleRestartTour = () => {
+    resetTour()
+    startTour()
+    showNotification('info', 'Başarılı', 'Onboarding turu yeniden başlatıldı!')
+  }
 
   // Google Calendar durumunu kontrol et
   const checkGoogleStatus = async () => {
@@ -458,6 +466,12 @@ export default function SettingsPage() {
       name: 'Gizlilik',
       icon: Shield,
       description: 'Güvenlik ve gizlilik ayarları'
+    },
+    {
+      id: 'help',
+      name: 'Yardım',
+      icon: HelpCircle,
+      description: 'Tur ve yardım seçenekleri'
     }
   ]
 
@@ -484,7 +498,7 @@ export default function SettingsPage() {
         {/* Tabs */}
         <div className="max-w-6xl mx-auto px-6 py-8">
           <Tabs defaultValue="google-calendar" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -793,6 +807,86 @@ export default function SettingsPage() {
                 <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Gizlilik Ayarları</h3>
                 <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
+              </div>
+            </TabsContent>
+
+            {/* Help Tab */}
+            <TabsContent value="help" className="mt-6" data-tour="settings-hint">
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Tur ve yardım seçenekleri
+                </p>
+              </div>
+              <div className="space-y-6">
+                {/* Onboarding Tour */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                        <Play className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Onboarding Turu</h3>
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Planner'ın temel özelliklerini öğrenin
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleRestartTour}
+                      variant="outline"
+                      className="flex items-center space-x-2"
+                    >
+                      <Play className="h-4 w-4" />
+                      <span>Turu Başlat</span>
+                    </Button>
+                  </div>
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      💡 Bu tur size uygulamanın temel özelliklerini gösterecek ve nasıl daha verimli çalışabileceğinizi öğretecek.
+                    </p>
+                  </div>
+                </div>
+
+                {/* FAQ */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sık Sorulan Sorular</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">Google Calendar senkronizasyonu nasıl çalışır?</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Görevleriniz otomatik olarak Google Calendar'ınızda "Planner Takvimi" adlı ayrı bir takvimde gösterilir.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">Ctrl+K kısayolu ne işe yarar?</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Her yerden hızlıca yeni görev oluşturmanızı sağlar.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">Projeler ve etiketler arasındaki fark nedir?</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Projeler büyük hedeflerinizi organize eder, etiketler ise görevlerinizi kategorilere ayırır.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Keyboard Shortcuts */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Klavye Kısayolları</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Hızlı görev ekle</span>
+                      <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-600 border rounded">Ctrl+K</kbd>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Menüyü kapat/aç</span>
+                      <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-600 border rounded">Esc</kbd>
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

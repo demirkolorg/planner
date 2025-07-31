@@ -368,7 +368,7 @@ export function DashboardOverview() {
   return (
     <div className="space-y-6">
       {/* Header with Today-style design */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-tour="welcome">
         <div className="flex items-center space-x-4">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
             <Home className="h-7 w-7 text-white" />
@@ -397,6 +397,7 @@ export function DashboardOverview() {
           <Button 
             onClick={() => setIsTaskModalOpen(true)}
             className="px-6 h-12 text-base"
+            data-tour="new-task-button"
           >
             <Plus className="h-5 w-5 mr-2" />
             Yeni Görev
@@ -405,7 +406,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Modern Stats Cards - Single Row */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6" data-tour="stats-cards">
         {/* Ana İstatistik Kartları */}
         {mainStats.map((stat) => (
           <Card key={stat.title} className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-primary/30">
@@ -555,7 +556,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Task Lists - Horizontal Layout */}
-      <div className="space-y-6">
+      <div className="space-y-6" data-tour="task-categories">
         {/* Overdue Tasks */}
         {stats.overdueTasks.length > 0 && (
           <div className="space-y-3">
@@ -700,7 +701,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Enhanced Motivational Quote Card */}
-      <Card className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 group">
+      <Card className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-500 group" data-tour="completion">
         {/* Animated Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 group-hover:from-indigo-500/15 group-hover:via-purple-500/15 group-hover:to-pink-500/15 transition-all duration-500" />
         
