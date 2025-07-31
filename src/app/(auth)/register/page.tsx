@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from "react"
 import { RegisterForm } from "@/components/auth/register-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Users, Shield, Zap } from "lucide-react";
@@ -5,8 +8,13 @@ import { Logo } from "@/components/ui/logo";
 import { BRAND_SLOGANS } from "@/lib/constants";
 
 export default function RegisterPage() {
-  // Rastgele slogan seç
-  const randomSlogan = BRAND_SLOGANS[Math.floor(Math.random() * BRAND_SLOGANS.length)]
+  const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
+  
+  useEffect(() => {
+    // Client-side'da rastgele slogan seç (hydration sorunu için)
+    const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
+    setRandomSlogan(BRAND_SLOGANS[randomIndex])
+  }, [])
   
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">

@@ -21,7 +21,6 @@ import {
   Plus,
   Lightbulb
 } from "lucide-react"
-import { useState as useRandomSlogan } from "react"
 import { BRAND_SLOGANS } from "@/lib/constants"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -50,11 +49,14 @@ export function DashboardOverview() {
   } = useTaskStore()
   const { projects, fetchProjects } = useProjectStore()
   
-  // Rastgele slogan seç (session boyunca sabit kalır)
-  const [randomSlogan] = useRandomSlogan(() => {
+  // Rastgele slogan seç (hydration sorunu için client-side)
+  const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
+  
+  useEffect(() => {
+    // Client-side'da rastgele slogan seç
     const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
-    return BRAND_SLOGANS[randomIndex]
-  })
+    setRandomSlogan(BRAND_SLOGANS[randomIndex])
+  }, [])
 
   // Modal states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)

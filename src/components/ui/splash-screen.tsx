@@ -12,13 +12,13 @@ interface SplashScreenProps {
 
 export function SplashScreen({ className, message = "Yükleniyor..." }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(false)
-  const [randomSlogan] = useState(() => {
-    // Her splash screen açıldığında rastgele bir slogan seç
-    const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
-    return BRAND_SLOGANS[randomIndex]
-  })
+  const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
 
   useEffect(() => {
+    // Client-side'da rastgele slogan seç (hydration sorunu için)
+    const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
+    setRandomSlogan(BRAND_SLOGANS[randomIndex])
+    
     // Fade-in efekti için kısa bir gecikme
     const timer = setTimeout(() => setIsVisible(true), 100)
     return () => clearTimeout(timer)
