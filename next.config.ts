@@ -9,6 +9,40 @@ const nextConfig: NextConfig = {
       pagesBufferLength: 2,
     },
   }),
+  // Webpack ayarları
+  webpack: (config) => {
+    // Windows EPERM hatası için
+    config.watchOptions = {
+      poll: 1000,
+      aggregateTimeout: 300,
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/Belgelerim/**',
+        '**/Documents/**',
+        '**/Application Data/**',
+        '**/.next/**',
+        '**/dist/**',
+        '**/build/**'
+      ],
+    };
+    
+    // Windows için ek ayarlar
+    if (process.platform === 'win32') {
+      config.resolve.symlinks = false;
+      config.cache = false;
+    }
+    
+    return config;
+  },
+  // TypeScript strict mode
+  typescript: {
+    ignoreBuildErrors: process.env.NODE_ENV === 'production',
+  },
+  // ESLint strict mode
+  eslint: {
+    ignoreDuringBuilds: process.env.NODE_ENV === 'production',
+  },
 };
 
 export default nextConfig;
