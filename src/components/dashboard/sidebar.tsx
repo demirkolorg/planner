@@ -8,6 +8,7 @@ import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
 import { FaRegStar, FaStar, FaRegCheckCircle, FaCheckCircle } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
+import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect, useMemo, useCallback } from "react"
@@ -230,14 +231,14 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       <div className="flex h-14 items-center justify-between px-2 text-primary">
         {isOpen ? (
           <Link href={ROUTES.DASHBOARD} className="flex items-center pl-2 hover:opacity-80 transition-opacity">
-            <img src="/logo/logo.svg" alt="Planner Logo" className="h-7 w-7 mr-3 text-primary" />
+            <Logo size={28} className="mr-3" />
             <h1 className="text-xl font-bold">Planner</h1>
           </Link>
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
               <Link href={ROUTES.DASHBOARD} className="flex-1 flex items-center justify-center hover:opacity-80 transition-opacity">
-                <img src="/logo/logo.svg" alt="Planner Logo" className="h-7 w-7 text-primary" />
+                <Logo size={28} />
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right">

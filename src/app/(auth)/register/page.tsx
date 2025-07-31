@@ -1,6 +1,7 @@
 import { RegisterForm } from "@/components/auth/register-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
-import { CalendarDays, Users, Shield, Zap } from "lucide-react";
+import { Users, Shield, Zap } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 export default function RegisterPage() {
   return (
@@ -15,7 +16,7 @@ export default function RegisterPage() {
         <div className="relative z-10 text-center space-y-6 px-8">
           <div className="flex items-center justify-center space-x-3">
             <div className="p-3 bg-primary/20 rounded-2xl">
-              <img src="/logo/logo.svg" alt="Planner Logo" className="h-8 w-8 text-primary" />
+              <Logo size={32} />
             </div>
             <h1 className="text-4xl font-bold text-foreground">Planner</h1>
           </div>
@@ -65,7 +66,7 @@ export default function RegisterPage() {
         
         {/* Mobile Logo */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center space-x-2">
-          <img src="/logo/logo.svg" alt="Planner Logo" className="h-6 w-6 text-primary" />
+          <Logo size={24} />
           <span className="text-xl font-bold">Planner</span>
         </div>
         
