@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -189,6 +189,9 @@ export function ProjectTimelineModal({ isOpen, onClose, projectId, projectTitle 
           <p className="text-sm text-muted-foreground truncate">
             {projectTitle}
           </p>
+          <DialogDescription className="sr-only">
+            Proje zaman çizelgesi penceresi: {projectTitle} projesi için aktivite geçmişini görüntüleme
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 min-h-0">

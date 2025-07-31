@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { X, Search, Folder, Move, FileText } from "lucide-react"
@@ -141,20 +141,25 @@ export function MoveTaskModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] fixed left-[50%] top-[20%] translate-x-[-50%] translate-y-0 overflow-hidden">
-        <div className="flex items-center justify-between">
-          <DialogTitle className="text-lg font-semibold flex items-center">
-            <Move className="w-5 h-5 mr-2" />
-            {mode === 'clone' ? 'Görevi Klonla' : 'Görevi Taşı'}
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-6 w-6"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold flex items-center">
+              <Move className="w-5 h-5 mr-2" />
+              {mode === 'clone' ? 'Görevi Klonla' : 'Görevi Taşı'}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="h-6 w-6"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <DialogDescription className="sr-only">
+            {mode === 'clone' ? 'Görevi klonlama penceresi' : 'Görevi taşıma penceresi'}: Hedef proje ve bölüm seçimi
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="space-y-3">
           {/* Görev Bilgisi */}

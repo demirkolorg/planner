@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react"
 
@@ -61,6 +61,9 @@ export function NotificationDialog({
               </DialogTitle>
             </div>
           </div>
+          <DialogDescription className="sr-only">
+            Bildirim penceresi: {type} türünde mesaj gösteriliyor
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">

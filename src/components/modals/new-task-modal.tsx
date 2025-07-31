@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -656,6 +656,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
+          <DialogDescription className="sr-only">
+            Yeni görev oluşturmak veya mevcut görevi düzenlemek için form
+          </DialogDescription>
           {/* Modal Header with Proper Layout */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <DialogTitle className="text-lg font-semibold leading-relaxed pr-2 flex-1 min-w-0 mb-2">
@@ -1287,6 +1290,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             <Info className="h-6 w-6 text-primary" />
             <span>Görev Ekleme Rehberi</span>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Görev ekleme özelliklerini öğrenmek için rehber
+          </DialogDescription>
           <Button
             variant="ghost"
             size="icon"

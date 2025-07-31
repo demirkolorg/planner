@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -199,6 +199,9 @@ export function TaskTimelineModal({ isOpen, onClose, taskId, taskTitle }: TaskTi
           <p className="text-sm text-muted-foreground truncate">
             {taskTitle}
           </p>
+          <DialogDescription className="sr-only">
+            Görev zaman çizelgesi penceresi: {taskTitle} görevi için aktivite geçmişini görüntüleme
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 min-h-0">

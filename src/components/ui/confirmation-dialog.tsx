@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 
@@ -55,6 +55,9 @@ export function ConfirmationDialog({
               </DialogTitle>
             </div>
           </div>
+          <DialogDescription className="sr-only">
+            Onay penceresi: {variant === "destructive" ? "Dikkatli bir işlem" : "Eylem onayı"} gerekiyor
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">

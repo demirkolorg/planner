@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { X, Search, Folder, Move } from "lucide-react"
@@ -82,18 +82,23 @@ export function MoveSectionModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogTitle className="text-lg font-semibold flex items-center space-x-2">
-          <Move className="h-5 w-5 text-blue-600" />
-          <span>Bölüm Taşı</span>
-        </DialogTitle>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="absolute right-4 top-4"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold flex items-center space-x-2">
+            <Move className="h-5 w-5 text-blue-600" />
+            <span>Bölüm Taşı</span>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Bölüm taşıma penceresi: Bölümü başka bir projeye taşıma ve hedef proje seçimi
+          </DialogDescription>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="absolute right-4 top-4"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </DialogHeader>
 
         <div className="space-y-4">
           {/* Current Section Info */}

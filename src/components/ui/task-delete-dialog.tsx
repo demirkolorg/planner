@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -62,6 +62,9 @@ export function TaskDeleteDialog({
               </DialogTitle>
             </div>
           </div>
+          <DialogDescription className="sr-only">
+            Görev silme onay penceresi: Görev adını yazarak silme işlemini onaylama
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4 space-y-4">

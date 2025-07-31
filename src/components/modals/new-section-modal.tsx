@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -194,6 +194,9 @@ export function NewSectionModal({ isOpen, onClose, onSave, editingSection, proje
               </div>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {editingSection ? "Mevcut bölümü düzenleme penceresi" : "Yeni bölüm oluşturma penceresi"}: Bölüm adı belirleme
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

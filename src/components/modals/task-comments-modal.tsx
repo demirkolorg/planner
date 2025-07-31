@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, memo } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -405,6 +405,9 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
               </span>
             </div>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Görev yorumları penceresi: {taskTitle} görevi için yorum görüntüleme ve ekleme
+          </DialogDescription>
         </DialogHeader>
 
         {/* Yeni yorum ekleme */}

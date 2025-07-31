@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Sparkles, Zap } from "lucide-react"
@@ -167,6 +167,9 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg top-[20%] translate-y-0">
         <DialogTitle className="sr-only">Hızlı Görev Ekle</DialogTitle>
+        <DialogDescription className="sr-only">
+          Hızlı bir şekilde yeni görev oluşturmak için bu formu kullanın
+        </DialogDescription>
         <div className="space-y-4">
           {/* Header */}
           <div className="text-center">

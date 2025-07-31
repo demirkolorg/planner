@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useThemeStore, ColorTheme } from "@/store/themeStore"
 import { Check, Palette } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -149,6 +149,9 @@ export function ColorThemeModal({ isOpen, onClose }: ColorThemeModalProps) {
             <Palette className="h-5 w-5 text-primary" />
             <DialogTitle className="text-lg font-semibold">Renk Teması Seçin</DialogTitle>
           </div>
+          <DialogDescription className="sr-only">
+            Renk teması seçim penceresi: Uygulamanın görünümünü değiştirmek için renk teması seçin
+          </DialogDescription>
         </DialogHeader>
         
         <div className="p-6 overflow-y-auto max-h-[60vh] scrollbar-thin-hover">

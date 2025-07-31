@@ -13,7 +13,7 @@ interface Task {
 
 // Google Calendar API scopes
 export const GOOGLE_CALENDAR_SCOPES = [
-  'https://www.googleapis.com/auth/calendar', // Tam takvim erişimi (events + calendar management)
+  'https://www.googleapis.com/auth/calendar', // Tam takvim erişimi (calendar oluşturma gerekli)
   'https://www.googleapis.com/auth/userinfo.email'
 ]
 
