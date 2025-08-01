@@ -2,12 +2,13 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2 } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
 import { FaRegStar, FaStar, FaRegCheckCircle, FaCheckCircle } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -104,12 +105,28 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const [showCompletedProjects, setShowCompletedProjects] = useState(true)
+  const [isInspirationExpanded, setIsInspirationExpanded] = useState(true)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
   const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
   const { isConnected: googleCalendarConnected, lastSyncAt, isSyncing, setLastSyncAt, setIsSyncing, updateSyncStatus } = useGoogleCalendarStore()
+
+  // İlham kartının durumunu localStorage'dan yükle
+  useEffect(() => {
+    const savedState = localStorage.getItem('inspirationExpanded')
+    if (savedState !== null) {
+      setIsInspirationExpanded(JSON.parse(savedState))
+    }
+  }, [])
+
+  // İlham kartının durumunu localStorage'a kaydet
+  const toggleInspirationExpanded = () => {
+    const newState = !isInspirationExpanded
+    setIsInspirationExpanded(newState)
+    localStorage.setItem('inspirationExpanded', JSON.stringify(newState))
+  }
 
   useEffect(() => {
     Promise.all([
@@ -558,6 +575,108 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
               )
             })}
           </div>
+        </div>
+      )}
+      
+      {/* Günün İlhamı - Sadece açık sidebar'da görünsün */}
+      {isOpen && (
+        <div className="px-4 pb-4">
+          {isInspirationExpanded ? (
+            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+              {/* Animated Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 group-hover:from-indigo-500/15 group-hover:via-purple-500/15 group-hover:to-pink-500/15 transition-all duration-300" />
+              
+              {/* Decorative Elements */}
+              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-indigo-200/20 to-transparent rounded-bl-full" />
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full group-hover:scale-110 transition-transform duration-300" />
+              <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-gradient-to-tr from-indigo-400/20 to-purple-400/20 rounded-full group-hover:scale-110 transition-transform duration-300" />
+              
+              {/* Floating Particles Effect */}
+              <div className="absolute top-1/4 left-1/4 w-0.5 h-0.5 bg-indigo-400/40 rounded-full animate-pulse" />
+              <div className="absolute top-3/4 right-1/3 w-1 h-1 bg-purple-400/40 rounded-full animate-pulse delay-300" />
+              <div className="absolute bottom-1/3 left-2/3 w-0.5 h-0.5 bg-pink-400/40 rounded-full animate-pulse delay-700" />
+              
+              {/* Toggle Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleInspirationExpanded}
+                    className="absolute top-2 right-2 h-6 w-6 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 shadow-sm z-10"
+                  >
+                    <Minimize2 className="h-3 w-3 text-gray-600 dark:text-gray-400" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Küçült</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <CardContent className="relative p-4">
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex items-center space-x-2">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur-sm opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
+                      <div className="relative p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                        <Lightbulb className="h-4 w-4 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        Günün İlhamı
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Motivasyon & İlham
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Quote Content - Compact */}
+                  <div className="relative">
+                    <div className="absolute -left-1 -top-1 text-lg text-indigo-300/30 dark:text-indigo-600/30 font-serif">
+                      "
+                    </div>
+                    <div className="absolute -right-1 -bottom-1 text-lg text-purple-300/30 dark:text-purple-600/30 font-serif rotate-180">
+                      "
+                    </div>
+                    <blockquote className="relative text-xs font-medium text-gray-700 dark:text-gray-200 leading-relaxed text-center px-2 py-1">
+                      Her bir tık, hedefinize bir adım daha yaklaşmanız demektir. Ağaçkakan gibi kararlı olun.
+                    </blockquote>
+                  </div>
+                  
+                  {/* Author - Compact */}
+                  <div className="flex items-center justify-center space-x-1 pt-1">
+                    <div className="w-4 h-0.5 bg-gradient-to-r from-transparent via-indigo-300 to-transparent" />
+                    <cite className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 not-italic">
+                      Planner Ağaçkakanı
+                    </cite>
+                    <div className="w-4 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            /* Minimal Icon Button */
+            <div className="flex justify-start">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleInspirationExpanded}
+                    className="h-10 w-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md hover:shadow-lg transition-all duration-300"
+                  >
+                    <Lightbulb className="h-4 w-4 text-white" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Günün İlhamı - Genişlet</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </div>
       )}
       
