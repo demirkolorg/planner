@@ -309,14 +309,6 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 </TooltipContent>
               </Tooltip>
             </div>
-            
-            {/* Hızlı görev ekleme bildirimi */}
-            <div className="mt-2 px-2 py-1.5 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200/50 dark:border-purple-800/50 rounded-lg">
-              <div className="flex items-center text-xs text-purple-700 dark:text-purple-300">
-                <kbd className="px-1.5 py-0.5 text-xs bg-purple-200 dark:bg-purple-800 rounded mr-2">Ctrl+K</kbd>
-                ile hızlı görev ekle
-              </div>
-            </div>
           </div>
 
           {/* Navigation Cards */}
@@ -567,32 +559,53 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           <>
             {/* Action Buttons Row */}
             <div className="flex items-center justify-center space-x-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                asChild
-                className="h-9 w-9"
-              >
-                <Link href="/guide">
-                  <Info className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="h-9 w-9"
-              >
-                {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsColorThemeModalOpen(true)}
-                className="h-9 w-9"
-              >
-                <Palette className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="h-9 w-9"
+                  >
+                    <Link href="/guide">
+                      <Info className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Kullanım Kılavuzu</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleTheme}
+                    className="h-9 w-9"
+                  >
+                    {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsColorThemeModalOpen(true)}
+                    className="h-9 w-9"
+                  >
+                    <Palette className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Renk Teması</p>
+                </TooltipContent>
+              </Tooltip>
               
               {/* Google Calendar Sync Button */}
               {googleCalendarConnected && (
@@ -623,37 +636,44 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 </Tooltip>
               )}
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-9 w-9 rounded-full">
-                    <User className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user?.firstName} {user?.lastName}</p>
-                      <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    </div>
-                  </div>
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Profil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Ayarlar
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
-                    <LogOut className="h-4 w-4" />
-                    Çıkış Yap
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-9 w-9 rounded-full">
+                        <User className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <div className="flex items-center justify-start gap-2 p-2">
+                        <div className="flex flex-col space-y-1 leading-none">
+                          <p className="font-medium">{user?.firstName} {user?.lastName}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
+                        </div>
+                      </div>
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Profil
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/settings" className="flex items-center gap-2">
+                          <Settings className="h-4 w-4" />
+                          Ayarlar
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                        <LogOut className="h-4 w-4" />
+                        Çıkış Yap
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Kullanıcı Menüsü</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </>
         ) : (
