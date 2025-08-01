@@ -4,7 +4,7 @@ import { STORAGE_KEYS, THEME } from '@/lib/constants'
 
 export type Theme = typeof THEME[keyof typeof THEME]
 
-export type ColorTheme = 'default' | 'nature' | 'amber' | 'boldtech' | 'supabase' | 'quantum' | 'perpetuity' | 'yellow' | 'red' | 'rose' | 'orange' | 'green' | 'blue' | 'violet'
+export type ColorTheme = 'default' | 'nature' | 'amber' | 'boldtech' | 'supabase' | 'quantum' | 'perpetuity' | 'yellow' | 'red' | 'rose' | 'orange' | 'green' | 'blue' | 'violet' | 'ocean'
 
 interface ThemeState {
   theme: Theme
@@ -52,7 +52,7 @@ export const useThemeStore = create<ThemeState>()(
         const body = document.body
         
         // Mevcut tema sınıflarını hem root hem body'den temizle
-        const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet']
+        const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet', 'theme-ocean']
         
         themeClasses.forEach(cls => {
           root.classList.remove(cls)
@@ -105,7 +105,7 @@ export const useThemeStore = create<ThemeState>()(
             root.style.colorScheme = effectiveTheme
             
             // Renk teması uygulaması
-            const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet']
+            const themeClasses = ['theme-default', 'theme-nature', 'theme-amber', 'theme-boldtech', 'theme-supabase', 'theme-quantum', 'theme-perpetuity', 'theme-yellow', 'theme-red', 'theme-rose', 'theme-orange', 'theme-green', 'theme-blue', 'theme-violet', 'theme-ocean']
             
             themeClasses.forEach(cls => {
               root.classList.remove(cls)

@@ -130,6 +130,14 @@ const colorThemes: {
     primaryColor: '#7c3aed',
     secondaryColor: '#f5f3ff',
     accentColor: '#6d28d9'
+  },
+  {
+    id: 'ocean',
+    name: 'Ocean',
+    description: 'Sakin okyanus mavi tonları teması',
+    primaryColor: '#0891b2',
+    secondaryColor: '#ecfeff',
+    accentColor: '#0e7490'
   }
 
 ]

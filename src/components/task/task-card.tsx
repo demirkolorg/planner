@@ -406,10 +406,10 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             )}>
               <div className="flex items-center gap-1 flex-1 min-w-0">
                 <span className="truncate">{task.title}</span>
-                {/* Debug: Level bilgisi */}
-                <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded font-mono">
+                {/* Debug: Level bilgisi - gizli */}
+                {/* <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded font-mono">
                   L{task.level}
-                </span>
+                </span> */}
                 
                 {/* Project Link Button - Only show on hover and not on project page */}
                 {isHovered && !isOnProjectPage && (

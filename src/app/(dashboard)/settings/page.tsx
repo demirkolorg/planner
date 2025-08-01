@@ -666,67 +666,139 @@ export default function SettingsPage() {
                       )}
                     </div>
 
-                    {/* Takvim Seçimi */}
+                    {/* Takvim Seçimi - İki Sütun */}
                     {calendars.length > 0 && (
-                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                        <div className="mb-4">
-                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                            Okunacak Takvimler
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Bu takvimlerden event'ler Planner'a görev olarak aktarılacak (isteğe bağlı)
-                          </p>
-                        </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Sol Sütun - Okunacak Takvimler */}
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                          <div className="mb-4">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              📖 Okunacak Takvimler
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Bu takvimlerden event'ler Planner'a görev olarak aktarılacak (isteğe bağlı)
+                            </p>
+                          </div>
 
-                        <div className="space-y-3 max-h-60 overflow-y-auto">
-                          {calendars
-                            .filter(cal => !cal.isPlannerCalendar)
-                            .map((calendar) => (
-                            <label
-                              key={calendar.id}
-                              className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedReadOnlyCalendarIds.includes(calendar.id)}
-                                onChange={() => handleReadOnlyCalendarToggle(calendar.id)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <div 
-                                className="w-3 h-3 rounded-full" 
-                                style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-medium text-gray-900 dark:text-white">
-                                    {calendar.name}
-                                  </span>
-                                  {calendar.primary && (
-                                    <Badge variant="secondary" className="text-xs">Ana</Badge>
+                          <div className="space-y-3 max-h-60 overflow-y-auto">
+                            {calendars
+                              .filter(cal => !cal.isPlannerCalendar)
+                              .map((calendar) => (
+                              <label
+                                key={calendar.id}
+                                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedReadOnlyCalendarIds.includes(calendar.id)}
+                                  onChange={() => handleReadOnlyCalendarToggle(calendar.id)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: calendar.backgroundColor || '#3b82f6' }}
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      {calendar.name}
+                                    </span>
+                                    {calendar.primary && (
+                                      <Badge variant="secondary" className="text-xs">Ana</Badge>
+                                    )}
+                                  </div>
+                                  {calendar.description && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {calendar.description}
+                                    </p>
                                   )}
                                 </div>
-                                {calendar.description && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {calendar.description}
-                                  </p>
-                                )}
-                              </div>
-                            </label>
-                          ))}
+                              </label>
+                            ))}
+                          </div>
+
+                          {selectedReadOnlyCalendarIds.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <Button
+                                onClick={handleSaveReadOnlyCalendars}
+                                disabled={isUpdatingCalendars}
+                                className="w-full"
+                              >
+                                {isUpdatingCalendars && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Seçimi Kaydet ({selectedReadOnlyCalendarIds.length} takvim)
+                              </Button>
+                            </div>
+                          )}
                         </div>
 
-                        {selectedReadOnlyCalendarIds.length > 0 && (
-                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <Button
-                              onClick={handleSaveReadOnlyCalendars}
-                              disabled={isUpdatingCalendars}
-                              className="w-full"
-                            >
-                              {isUpdatingCalendars && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                              Seçimi Kaydet ({selectedReadOnlyCalendarIds.length} takvim)
-                            </Button>
+                        {/* Sağ Sütun - Yazılacak Takvim */}
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                          <div className="mb-4">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              ✏️ Yazılacak Takvim
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Planner görevleri bu takvime otomatik olarak yazılır
+                            </p>
                           </div>
-                        )}
+
+                          {/* Planner Takvimi */}
+                          {(() => {
+                            const plannerCalendar = calendars.find(cal => cal.isPlannerCalendar)
+                            return plannerCalendar ? (
+                              <div className="space-y-4">
+                                <div className="flex items-center space-x-3 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                                  <div 
+                                    className="w-4 h-4 rounded-full" 
+                                    style={{ backgroundColor: plannerCalendar.backgroundColor || '#10b981' }}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="font-medium text-gray-900 dark:text-white">
+                                        {plannerCalendar.name}
+                                      </span>
+                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                        Aktif
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                      Tüm Planner görevleri bu takvime senkronize edilir
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                                  <p>✅ Planner Takvimi hazır ve çalışıyor</p>
+                                  <p className="text-xs mt-1">Görevleriniz otomatik olarak bu takvime yazılacak</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <div className="flex items-center space-x-3 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                                  <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                                  <div className="flex-1">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      Planner Takvimi
+                                    </span>
+                                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                      Henüz oluşturulmamış - oluşturulması gerekiyor
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <Button
+                                  onClick={handleCreatePlannerCalendar}
+                                  disabled={isCreatingPlannerCalendar}
+                                  className="w-full"
+                                  variant="default"
+                                >
+                                  {isCreatingPlannerCalendar && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                  Planner Takvimi Oluştur
+                                </Button>
+                              </div>
+                            )
+                          })()}
+                        </div>
                       </div>
                     )}
 
