@@ -21,7 +21,7 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       theme: THEME.SYSTEM,
-      colorTheme: 'default',
+      colorTheme: 'boldtech',
       
       setTheme: (theme: Theme) => {
         set({ theme })
