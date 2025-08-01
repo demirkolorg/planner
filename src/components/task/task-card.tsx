@@ -111,7 +111,6 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   
   // Task validation
   if (!task || !task.id) {
-    console.error('TaskCard: Invalid task object', task)
     return null
   }
   // İç expansion state (eski davranış için fallback)

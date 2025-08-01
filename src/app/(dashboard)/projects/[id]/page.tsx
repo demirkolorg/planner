@@ -1145,7 +1145,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onAddSubTask={(parentTaskId) => {
-                        const parentTask = sectionTasks.find(t => t.id === taskId)
+                        const parentTask = sectionTasks.find(t => t.id === parentTaskId)
                         setTaskModalContext({
                           project: { id: project.id, name: project.name, emoji: project.emoji },
                           section: { id: section.id, name: section.name, projectId: project.id },

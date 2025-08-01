@@ -153,13 +153,7 @@ export function DashboardOverview() {
   }, [tasks])
 
   const handleAddSubTask = useCallback((parentTaskId: string) => {
-    console.log('Overview - handleAddSubTask called with parentTaskId:', parentTaskId)
-    if (!parentTaskId) {
-      console.error('Overview - parentTaskId is undefined!')
-      return
-    }
     const parentTask = tasks.find(t => t.id === parentTaskId)
-    console.log('Overview - found parentTask:', parentTask)
     const project = parentTask ? projects.find(p => p.id === parentTask.projectId) : null
     
     const section = parentTask?.sectionId ? {
