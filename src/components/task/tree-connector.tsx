@@ -31,7 +31,7 @@ export function TreeConnector({
           
           return (
             <div key={index} className="absolute h-full" style={{ left: `${leftPosition}px` }}>
-              {/* Parent levels - always show vertical line */}
+              {/* Parent levels - ALWAYS show continuous vertical line */}
               {!isCurrentLevel && (
                 <div 
                   className="absolute w-px h-full border-l border-dashed border-muted-foreground/30"
@@ -48,7 +48,7 @@ export function TreeConnector({
                     style={{ 
                       left: '0px',
                       top: '0px',
-                      height: '18px' // Görev kartının yarısına kadar
+                      height: '18px'
                     }}
                   />
                   
@@ -58,21 +58,19 @@ export function TreeConnector({
                     style={{ 
                       left: '0px',
                       top: '18px',
-                      width: '24px' // Task'a kadar uzanır
+                      width: '24px'
                     }}
                   />
                   
-                  {/* Vertical line from center to bottom (if not last) */}
-                  {!isLast && (
-                    <div 
-                      className="absolute w-px border-l border-dashed border-muted-foreground/30"
-                      style={{ 
-                        left: '0px',
-                        top: '18px',
-                        height: 'calc(100% - 18px)'
-                      }}
-                    />
-                  )}
+                  {/* Vertical line from center to bottom - ALWAYS show for parent continuation */}
+                  <div 
+                    className="absolute w-px border-l border-dashed border-muted-foreground/30"
+                    style={{ 
+                      left: '0px',
+                      top: '18px',
+                      height: 'calc(100% - 18px)'
+                    }}
+                  />
                   
                   {/* Expansion indicator */}
                   {hasChildren && (
