@@ -108,6 +108,12 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Force expand prop
   forceExpand = false
 }, ref) => {
+  
+  // Task validation
+  if (!task || !task.id) {
+    console.error('TaskCard: Invalid task object', task)
+    return null
+  }
   // İç expansion state (eski davranış için fallback)
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
