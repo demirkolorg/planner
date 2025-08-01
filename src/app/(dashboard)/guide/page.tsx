@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye } from "lucide-react"
+import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -214,9 +214,6 @@ export default function GuidePage() {
               <Badge variant="outline" className="hidden sm:flex">
                 v2.1.0
               </Badge>
-              <Badge variant="secondary" className="hidden sm:flex">
-                Kaymakam için özel tasarım
-              </Badge>
             </div>
           </div>
         </div>
@@ -363,42 +360,140 @@ export default function GuidePage() {
           {/* Yenilikler Tab */}
           <TabsContent value="whats-new" className="space-y-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Son Güncellemeler</h2>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Sürüm Notları</h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
                 Planner&apos;a eklenen yeni özellikler ve iyileştirmeler
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {newFeatures.map((feature, index) => (
-                <Card key={index} className="relative overflow-hidden">
-                  <CardHeader className={`${feature.bgColor} border-b`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg bg-white dark:bg-gray-800 ${feature.color}`}>
-                          <feature.icon className="h-6 w-6" />
+            <div className="space-y-6">
+              {/* Current Version */}
+              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+                    <h3 className="text-lg font-semibold text-foreground">Güncel Sürüm</h3>
+                  </div>
+                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.2.0</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  En son güncellemeyi kullanıyorsunuz. Tüm yeni özellikler ve iyileştirmeler aktif durumda.
+                </p>
+              </div>
+
+              {/* Version History */}
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h3 className="text-lg font-semibold text-card-foreground mb-6">Sürüm Geçmişi</h3>
+                
+                <div className="space-y-6">
+                  {/* v1.2.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.2.0</h4>
+                          <Badge variant="secondary" className="text-xs">1 Ağustos 2025</Badge>
                         </div>
-                        <div>
-                          <CardTitle className="text-lg">{feature.title}</CardTitle>
-                          <CardDescription className="text-sm">
-                            {feature.version}
-                          </CardDescription>
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Hızlı görev ekleme butonu (⚡) sidebar'a eklendi</li>
+                              <li>• Ocean teması renk seçeneklerine eklendi</li>
+                              <li>• Google Calendar ayarları 2 sütunlu tasarıma geçirildi</li>
+                              <li>• Görev ekleme butonlarında tooltip ile kısayol bilgileri</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🔧 İyileştirmeler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Sidebar kapalı konumda buton düzeni optimize edildi</li>
+                              <li>• Ayarlar sayfası tema renkleri ile uyumlu hale getirildi</li>
+                              <li>• Google Calendar bilgilendirme modalı genişletildi</li>
+                              <li>• Takvim seçimi için değişiklik kontrolü eklendi</li>
+                            </ul>
+                          </div>
                         </div>
                       </div>
-                      {feature.isNew && (
-                        <Badge className="bg-green-500 text-white">
-                          YENİ
-                        </Badge>
-                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+
+                  {/* v1.1.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.1.0</h4>
+                          <Badge variant="outline" className="text-xs">25 Temmuz 2025</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Hiyerarşik görev yapısı ve Level 4+ kısıtlaması</li>
+                              <li>• Tree connector görselleri ile görsel hiyerarşi</li>
+                              <li>• Database seviyesinde level storage</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🔧 İyileştirmeler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Görev kartı indentasyon 24px'den 48px'e çıkarıldı</li>
+                              <li>• Alt görev ekleme kısıtlamaları uygulandı</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* v1.0.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-muted-foreground/30 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.0.0</h4>
+                          <Badge variant="outline" className="text-xs">15 Temmuz 2025</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🚀 İlk Sürüm</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Temel görev yönetimi özellikleri</li>
+                              <li>• Proje ve etiket sistemi</li>
+                              <li>• Google Calendar entegrasyonu</li>
+                              <li>• Tema desteği</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upcoming Features */}
+              <div className="bg-gradient-to-r from-secondary/20 to-accent/10 rounded-xl border border-secondary/30 p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-3 h-3 bg-secondary rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-card-foreground">Gelecek Güncellemeler</h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <h5 className="font-medium text-card-foreground text-sm mb-1">🔮 Planlanan Özellikler</h5>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                      <li>• Gelişmiş bildirim sistemi</li>
+                      <li>• Mobil uygulama desteği</li>
+                      <li>• Takım çalışması özellikleri</li>
+                      <li>• Gelişmiş raporlama ve analitik</li>
+                      <li>• Özelleştirilebilir dashboard</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </TabsContent>
 
