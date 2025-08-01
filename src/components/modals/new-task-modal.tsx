@@ -371,7 +371,19 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
 
   const handleSave = async () => {
+    console.log('💾 Task kaydetme işlemi başladı:', { 
+      title: title.trim(), 
+      selectedProject, 
+      selectedSection, 
+      parentTaskId 
+    })
+    
     if (!title.trim() || !selectedProject || !selectedSection) {
+      console.log('❌ Gerekli alanlar eksik:', { 
+        hasTitle: !!title.trim(), 
+        hasProject: !!selectedProject, 
+        hasSection: !!selectedSection 
+      })
       return
     }
 
@@ -407,10 +419,13 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         await Promise.all(updatePromises)
       } else {
         // Yeni görev modu: yeni görev oluştur  
+        console.log('🆕 Yeni görev oluşturma modu:', { parentTaskId, parentTask })
+        
         // Eğer parent task'ın due date'i var ve kullanıcı tarih seçmemişse, otomatik ata
         let finalDueDate = combineDateTime()
         if (!finalDueDate && parentTask?.dueDate) {
           finalDueDate = parentTask.dueDate
+          console.log('📅 Parent task due date otomatik atandı:', finalDueDate)
         }
         
         const taskData: CreateTaskRequest = {
@@ -423,8 +438,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           tags: selectedTags,
           ...(parentTaskId && { parentTaskId })
         }
+        console.log('📋 Oluşturulacak task data:', taskData)
 
         const newTask = await createTask(taskData)
+        console.log('✅ Yeni task oluşturuldu:', newTask)
         
         if (onTaskCreated) {
           onTaskCreated(newTask)
@@ -630,8 +647,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setSelectedTags(suggestion.tags)
       }
       
-      // Tarih ata (parent task yoksa veya parent'ın tarihi yoksa)
-      if (suggestion.dueDate && !parentTask?.dueDate) {
+      // Tarih ata - AI önerisi varsa kullan
+      if (suggestion.dueDate) {
         // Suggestion'dan gelen ISO string'i tarih ve saat olarak ayır
         const date = new Date(suggestion.dueDate)
         const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`

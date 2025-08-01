@@ -8,7 +8,7 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
   dueDate?: string
   isPinned: boolean
   parentTaskId?: string
-  level?: number
+  level: number
   tags?: Array<{
     id: string
     taskId: string
@@ -613,7 +613,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     
     // Recursive function to get all sub-tasks at any level
     const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
-      const directSubTasks = filteredTasks.filter(task => task.parentTaskId === parentId)
+      // ALT GÖREVLER İÇİN TÜM TASK'LARI ARA - sectionId filtresiz
+      const directSubTasks = tasks.filter(task => 
+        task.parentTaskId === parentId && 
+        (showCompletedTasks || !task.completed)
+      )
       const result: TaskWithRelations[] = []
       
       directSubTasks.forEach(subTask => {
@@ -653,7 +657,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     
     // Recursive function to get all sub-tasks at any level
     const getAllSubTasksRecursive = (parentId: string, level: number = 1): TaskWithRelations[] => {
-      const directSubTasks = filteredTasks.filter(task => task.parentTaskId === parentId)
+      // ALT GÖREVLER İÇİN TÜM TASK'LARI ARA - sectionId filtresiz
+      const directSubTasks = tasks.filter(task => 
+        task.parentTaskId === parentId && 
+        (showCompletedTasks || !task.completed)
+      )
       const result: TaskWithRelations[] = []
       
       directSubTasks.forEach(subTask => {

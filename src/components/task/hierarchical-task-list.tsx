@@ -129,6 +129,7 @@ export function HierarchicalTaskList({
         const isExpanded = expandedTaskIds.has(task.id)
         const hasChildren = task.hasChildren || false
         
+        
         return (
           <TaskItem
             key={task.id}

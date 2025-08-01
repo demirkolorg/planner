@@ -45,7 +45,9 @@
       "Bash(rg:*)",
       "Bash(tskill:*)",
       "Bash(set NODE_ENV=production)",
-      "Bash(bunx next:*)"
+      "Bash(bunx next:*)",
+      "Bash(bun prisma migrate dev:*)",
+      "Bash(node scripts/update-task-levels.js:*)"
     ],
     "deny": []
   }

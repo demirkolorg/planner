@@ -274,16 +274,6 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   }
 
 
-  // Level bazlı margin hesapla
-  const getMarginByLevel = (level?: number) => {
-    switch (level) {
-      case 1: return "ml-6"
-      case 2: return "ml-12"
-      case 3: return "ml-18"
-      case 4: return "ml-24"
-      default: return ""
-    }
-  }
 
   // Date status hesapla
   const dateStatus = getTaskDateStatus(task.dueDate)
@@ -308,13 +298,13 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Tamamlanmış görevlerde tüm düzenleme işlemlerini disable et
   const isTaskCompleted = task.completed
 
+
   return (
     <TooltipProvider>
       <div 
         ref={ref}
         className={cn(
           "rounded-lg transition-all duration-200",
-          task.level && task.level > 0 ? getMarginByLevel(task.level) : "",
           isExpanded
             ? "bg-secondary rounded-t-lg"
             : "hover:bg-secondary rounded-lg",
@@ -416,6 +406,10 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             )}>
               <div className="flex items-center gap-1 flex-1 min-w-0">
                 <span className="truncate">{task.title}</span>
+                {/* Debug: Level bilgisi */}
+                <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded font-mono">
+                  L{task.level}
+                </span>
                 
                 {/* Project Link Button - Only show on hover and not on project page */}
                 {isHovered && !isOnProjectPage && (

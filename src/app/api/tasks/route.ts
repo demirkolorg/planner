@@ -121,6 +121,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Parent task'ın level'ını hesapla
+    let taskLevel = 0
+    if (parentTaskId) {
+      const parentTask = await db.task.findUnique({
+        where: { id: parentTaskId },
+        select: { level: true }
+      })
+      
+      if (parentTask) {
+        // Level 4 ve üzeri görevlerde alt görev oluşturulamaz
+        if (parentTask.level >= 4) {
+          return NextResponse.json({ 
+            error: "Level 4 ve üzeri görevlerde alt görev oluşturulamaz" 
+          }, { status: 400 })
+        }
+        
+        taskLevel = Math.min(parentTask.level + 1, 10) // Max 10 level
+      }
+    }
+
     // Transaction ile task ve tag ilişkilerini oluştur
     const result = await db.$transaction(async (tx) => {
       // Task oluştur
@@ -133,7 +153,8 @@ export async function POST(request: NextRequest) {
           projectId,
           sectionId: finalSectionId,
           userId: decoded.userId,
-          parentTaskId
+          parentTaskId,
+          level: taskLevel
         }
       })
 
@@ -250,7 +271,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Task creation error:', error)
+    return NextResponse.json({ 
+      error: "Internal server error", 
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }
 

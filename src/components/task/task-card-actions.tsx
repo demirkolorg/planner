@@ -113,6 +113,9 @@ export function TaskCardActions({
     onAddSubTask?.(task.id)
   }
 
+  // Level 4 ve üzeri görevlerde alt görev eklenemez
+  const canAddSubTask = task.level < 4
+
 
   const handleUpdateTags = (tagIds: string[]) => {
     onUpdateTags?.(task.id, tagIds)
@@ -163,23 +166,25 @@ export function TaskCardActions({
   return (
     <TooltipProvider>
       <div className="flex items-center space-x-1 task-card-actions pointer-events-auto">
-        {/* Add Sub-task */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={isTaskCompleted ? undefined : handleAddSubTask}
-              disabled={isTaskCompleted}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Alt görev ekle'}</p>
-          </TooltipContent>
-        </Tooltip>
+        {/* Add Sub-task - Level 4+ görevlerde gizli */}
+        {canAddSubTask && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={isTaskCompleted ? undefined : handleAddSubTask}
+                disabled={isTaskCompleted}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Alt görev ekle'}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
 
 
         {/* Tag Selector */}

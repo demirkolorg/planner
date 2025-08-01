@@ -66,6 +66,7 @@ model Task {
   dueDate        DateTime?
   isPinned       Boolean            @default(false)
   syncToCalendar Boolean            @default(false)
+  level          Int                @default(0)
   parentTaskId   String?
   projectId      String
   sectionId      String?

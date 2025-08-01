@@ -8,6 +8,7 @@ export interface Task {
   priority: string
   dueDate?: Date
   isPinned: boolean
+  level: number
   parentTaskId?: string
   parentTask?: Task
   subTasks?: Task[]
@@ -27,7 +28,6 @@ export interface Task {
 
 // Hiyerarşik task gösterimi için genişletilmiş tip
 export interface TaskWithHierarchy extends Task {
-  level: number
   children?: TaskWithHierarchy[]
   isExpanded?: boolean
   hasChildren?: boolean

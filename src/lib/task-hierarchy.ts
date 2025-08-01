@@ -15,7 +15,7 @@ export function buildTaskHierarchy(tasks: Task[]): TaskWithHierarchy[] {
   tasks.forEach(task => {
     const hierarchicalTask: TaskWithHierarchy = {
       ...task,
-      level: 0,
+      // Level artık DB'den geliyor, hesaplama yapmıyoruz
       children: [],
       hasChildren: false,
       isExpanded: false,
@@ -24,14 +24,13 @@ export function buildTaskHierarchy(tasks: Task[]): TaskWithHierarchy[] {
     taskMap.set(task.id, hierarchicalTask)
   })
   
-  // İkinci aşama: parent-child ilişkilerini kur ve level hesapla
+  // İkinci aşama: parent-child ilişkilerini kur (level hesaplama kaldırıldı)
   tasks.forEach(task => {
     const hierarchicalTask = taskMap.get(task.id)!
     
     if (task.parentTaskId && taskMap.has(task.parentTaskId)) {
       // Alt görev ise parent'a ekle
       const parent = taskMap.get(task.parentTaskId)!
-      hierarchicalTask.level = parent.level + 1
       parent.children!.push(hierarchicalTask)
       parent.hasChildren = true
     } else {

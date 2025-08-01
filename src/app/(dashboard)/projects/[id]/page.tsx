@@ -175,7 +175,8 @@ export default function ProjectDetailPage() {
     getPendingTasksCount,
     getOverdueTasksByProject,
     getOverdueTasksCountByProject,
-    refreshTaskCommentCount
+    refreshTaskCommentCount,
+    getTaskById
   } = useTaskStore()
 
   const fetchProjectData = useCallback(async () => {
@@ -906,7 +907,7 @@ export default function ProjectDetailPage() {
                   onToggleComplete={toggleTaskComplete}
                   onUpdate={updateTask}
                   onDelete={(taskId) => {
-                    const taskToDelete = getSortedTasksWithoutSection().find(t => t.id === taskId)
+                    const taskToDelete = getTaskById(taskId)
                     if (taskToDelete) {
                       const subTaskCount = taskToDelete.subTasks?.length || 0
                       setTaskToDelete({ 
@@ -920,7 +921,7 @@ export default function ProjectDetailPage() {
                   onPin={toggleTaskPin}
                   onEdit={handleEditTask}
                   onCopy={(taskId) => {
-                    const taskToClone = getSortedTasksWithoutSection().find(t => t.id === taskId)
+                    const taskToClone = getTaskById(taskId)
                     if (taskToClone) {
                       setTaskToClone({
                         id: taskId,
@@ -932,7 +933,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   onMove={(taskId) => {
-                    const taskToMove = getSortedTasksWithoutSection().find(t => t.id === taskId)
+                    const taskToMove = getTaskById(taskId)
                     if (taskToMove) {
                       setTaskToMove({
                         id: taskId,
@@ -944,7 +945,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   onAddSubTask={(parentTaskId) => {
-                    const parentTask = getSortedTasksWithoutSection().find(t => t.id === parentTaskId)
+                    const parentTask = getTaskById(parentTaskId)
                     setTaskModalContext({
                       project: { id: project.id, name: project.name, emoji: project.emoji },
                       section: undefined, // Bölümsüz görevler için section undefined
@@ -1107,7 +1108,7 @@ export default function ProjectDetailPage() {
                       onToggleComplete={toggleTaskComplete}
                       onUpdate={updateTask}
                       onDelete={(taskId) => {
-                        const taskToDelete = sectionTasks.find(t => t.id === taskId)
+                        const taskToDelete = getTaskById(taskId)
                         if (taskToDelete) {
                           const subTaskCount = taskToDelete.subTasks?.length || 0
                           setTaskToDelete({ 
@@ -1121,7 +1122,7 @@ export default function ProjectDetailPage() {
                       onPin={toggleTaskPin}
                       onEdit={handleEditTask}
                       onCopy={(taskId) => {
-                        const taskToClone = sectionTasks.find(t => t.id === taskId)
+                        const taskToClone = getTaskById(taskId)
                         if (taskToClone) {
                           setTaskToClone({
                             id: taskId,
@@ -1133,7 +1134,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onMove={(taskId) => {
-                        const taskToMove = sectionTasks.find(t => t.id === taskId)
+                        const taskToMove = getTaskById(taskId)
                         if (taskToMove) {
                           setTaskToMove({
                             id: taskId,
@@ -1145,7 +1146,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       onAddSubTask={(parentTaskId) => {
-                        const parentTask = sectionTasks.find(t => t.id === parentTaskId)
+                        const parentTask = getTaskById(parentTaskId)
                         setTaskModalContext({
                           project: { id: project.id, name: project.name, emoji: project.emoji },
                           section: { id: section.id, name: section.name, projectId: project.id },
@@ -1293,11 +1294,8 @@ export default function ProjectDetailPage() {
           setEditingTask(null)
         }}
         onTaskCreated={async (newTask) => {
-          if (!newTask) {
-            // Fallback: Tüm verileri yenile
-            await fetchProjectData()
-          }
-          // TaskStore otomatik olarak tüm UI'ı güncelleyecek
+          // Task oluşturulduktan sonra project data'yı yenile
+          await fetchProjectData()
         }}
         defaultProject={taskModalContext.project}
         defaultSection={taskModalContext.section}

@@ -53,6 +53,7 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
   const level = task.level || 0
   const isLast = task.isLast || false
 
+
   return (
     <div
       ref={ref}
@@ -70,7 +71,12 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
       )}
       
       {/* Task Card */}
-      <div className={level > 0 ? `ml-${level * 6}` : ""}>
+      <div 
+        className="transition-all duration-200"
+        style={{ 
+          marginLeft: level > 0 ? `${Math.min(level * 48, 192)}px` : '0px' 
+        }}
+      >
         <TaskCard
           task={{
             ...task,
