@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -68,6 +69,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!existingProject) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
+    // Korumalı projelerin adı ve emojisi değiştirilemez
+    if (isProtectedProject(existingProject.name) && (name !== existingProject.name || emoji !== existingProject.emoji)) {
+      return NextResponse.json({ 
+        error: PROTECTED_PROJECT_MESSAGES.EDIT,
+        allowNotesEdit: true 
+      }, { status: 403 })
     }
 
     // Check if another project with same name exists for this user
@@ -147,6 +156,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     if (!existingProject) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    }
+
+    // Korumalı projeler silinemez
+    if (isProtectedProject(existingProject.name)) {
+      return NextResponse.json({ 
+        error: PROTECTED_PROJECT_MESSAGES.DELETE 
+      }, { status: 403 })
     }
 
     await db.$transaction(async (tx) => {

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { X, Sparkles, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
 
 // Emoji kategorileri
 const emojiCategories = {
@@ -127,6 +128,9 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof emojiCategories>("Favoriler")
   const [isGeneratingName, setIsGeneratingName] = useState(false)
   const [selectedProjectType, setSelectedProjectType] = useState<keyof typeof projectTypes>("Kamu Yönetimi")
+  
+  // Korumalı proje kontrolü
+  const isEditingProtectedProject = editingProject && isProtectedProject(editingProject.name)
 
   useEffect(() => {
     if (editingProject) {
@@ -196,6 +200,15 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Korumalı proje uyarısı */}
+          {isEditingProtectedProject && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                {PROTECTED_PROJECT_MESSAGES.EDIT}
+              </p>
+            </div>
+          )}
+
           {/* Proje İkonu */}
           <div className="flex justify-center">
             <div className="w-20 h-20 rounded-lg bg-primary/10 flex items-center justify-center text-3xl">
@@ -204,24 +217,26 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
           </div>
 
           {/* Proje Türü */}
-          <div className="space-y-2">
-            <Label>Proje türü</Label>
-            <Select value={selectedProjectType} onValueChange={(value: keyof typeof projectTypes) => setSelectedProjectType(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Proje türü seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(projectTypes).map(([type, config]) => (
-                  <SelectItem key={type} value={type}>
-                    <div className="flex items-center gap-2">
-                      <span>{config.emoji}</span>
-                      <span>{type}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!isEditingProtectedProject && (
+            <div className="space-y-2">
+              <Label>Proje türü</Label>
+              <Select value={selectedProjectType} onValueChange={(value: keyof typeof projectTypes) => setSelectedProjectType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Proje türü seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(projectTypes).map(([type, config]) => (
+                    <SelectItem key={type} value={type}>
+                      <div className="flex items-center gap-2">
+                        <span>{config.emoji}</span>
+                        <span>{type}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Proje Adı */}
           <div className="space-y-2">
@@ -232,68 +247,77 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Proje adı"
                 className="flex-1"
+                disabled={isEditingProtectedProject}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={generateProjectName}
-                disabled={isGeneratingName}
-                className="shrink-0"
-                title={`${selectedProjectType} alanında AI ile proje adı öner`}
-              >
-                {isGeneratingName ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-              </Button>
+              {!isEditingProtectedProject && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={generateProjectName}
+                  disabled={isGeneratingName}
+                  className="shrink-0"
+                  title={`${selectedProjectType} alanında AI ile proje adı öner`}
+                >
+                  {isGeneratingName ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              AI, {selectedProjectType.toLowerCase()} alanına uygun proje adları önerecek
-            </p>
+            {!isEditingProtectedProject && (
+              <p className="text-xs text-muted-foreground">
+                AI, {selectedProjectType.toLowerCase()} alanına uygun proje adları önerecek
+              </p>
+            )}
           </div>
 
           {/* Emoji Kategorileri */}
-          <div className="space-y-4">
-            <Label>Emoji Kategorisi</Label>
-            <div className="flex flex-wrap gap-2">
-              {Object.keys(emojiCategories).map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category as keyof typeof emojiCategories)}
-                >
-                  {category}
-                </Button>
-              ))}
+          {!isEditingProtectedProject && (
+            <div className="space-y-4">
+              <Label>Emoji Kategorisi</Label>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(emojiCategories).map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category as keyof typeof emojiCategories)}
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Emoji Seçimi */}
-          <div className="space-y-4">
-            <Label>{selectedCategory}</Label>
-            <div className="grid grid-cols-8 gap-2 max-h-60 overflow-y-auto">
-              {getCurrentEmojis().map((emoji, index) => (
-                <Button
-                  key={index}
-                  variant={selectedEmoji === emoji ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedEmoji(emoji)}
-                  className="text-2xl h-12 w-12 p-0"
-                >
-                  {emoji}
-                </Button>
-              ))}
+          {!isEditingProtectedProject && (
+            <div className="space-y-4">
+              <Label>{selectedCategory}</Label>
+              <div className="grid grid-cols-8 gap-2 max-h-60 overflow-y-auto">
+                {getCurrentEmojis().map((emoji, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedEmoji === emoji ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setSelectedEmoji(emoji)}
+                    className="text-2xl h-12 w-12 p-0"
+                  >
+                    {emoji}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Kaydet Butonu */}
           <Button
             onClick={handleSave}
             className="w-full"
-            disabled={!name.trim()}
+            disabled={!name.trim() || (isEditingProtectedProject && (name !== editingProject?.name || selectedEmoji !== editingProject?.emoji))}
           >
             {editingProject ? "Proje Güncelle" : "Proje Ekle"}
           </Button>

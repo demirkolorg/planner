@@ -24,6 +24,7 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
 import { ColorThemeModal } from "@/components/modals/color-theme-modal"
 import { FontSizeModal } from "@/components/modals/font-size-modal"
+import { isProtectedProject } from "@/lib/project-utils"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -195,6 +196,11 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
 
   // Proje tamamlanma kontrolü
   const isProjectCompleted = useCallback((projectId: string) => {
+    const project = projects.find(p => p.id === projectId)
+    
+    // Korumalı projeler hiçbir zaman tamamlandı olarak işaretlenemez
+    if (project && isProtectedProject(project.name)) return false
+    
     const projectTasks = tasks.filter(task => task.projectId === projectId)
     
     // Hiç görev yoksa tamamlandı sayılmaz
@@ -202,15 +208,18 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     
     // En az 1 görev var ve tüm görevler tamamlanmışsa proje tamamlandı
     return projectTasks.every(task => task.completed)
-  }, [tasks])
+  }, [tasks, projects])
 
   // Projeleri sırala ve filtrele
   const sortedProjects = useMemo(() => {
     let filteredProjects = [...projects]
     
     // Tamamlanan projeleri gizle seçeneği aktifse filtrele
+    // Ancak korumalı projeleri her zaman göster
     if (!showCompletedProjects) {
-      filteredProjects = filteredProjects.filter(project => !isProjectCompleted(project.id))
+      filteredProjects = filteredProjects.filter(project => 
+        !isProjectCompleted(project.id) || isProtectedProject(project.name)
+      )
     }
     
     return filteredProjects.sort((a, b) => {

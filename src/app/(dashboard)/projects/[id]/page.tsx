@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { TaskCard } from "@/components/task/task-card"
+import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
+import { toast } from "sonner"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
 
@@ -369,6 +371,12 @@ export default function ProjectDetailPage() {
   }
 
   const handleDeleteProject = async () => {
+    // Korumalı proje kontrolü
+    if (project && isProtectedProject(project.name)) {
+      toast.error(PROTECTED_PROJECT_MESSAGES.DELETE)
+      return
+    }
+    
     await deleteProject(projectId)
     router.push("/") // Ana sayfaya yönlendir
   }
@@ -742,14 +750,18 @@ export default function ProjectDetailPage() {
                   <Edit className="h-4 w-4 mr-2" />
                   Projeyi Düzenle
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Projeyi Sil
-                </DropdownMenuItem>
+                {!isProtectedProject(project?.name || '') && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Projeyi Sil
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
