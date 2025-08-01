@@ -85,6 +85,12 @@ export function TaskCardActions({
   onComment,
   isFirstInSection = false
 }: TaskCardActionsProps) {
+  
+  // Task validation
+  if (!task || !task.id) {
+    console.error('TaskCardActions: Invalid task object', task)
+    return null
+  }
   // DropdownMenu state'ini tamamen Radix UI'ye bırakalım
   // const [showMoreActions, setShowMoreActions] = useState(false)
 
@@ -105,6 +111,11 @@ export function TaskCardActions({
 
   const handleAddSubTask = (e: React.MouseEvent) => {
     e.stopPropagation()
+    console.log('TaskCardActions - handleAddSubTask called with taskId:', task.id)
+    if (!task.id) {
+      console.error('TaskCardActions - taskId is undefined!', task)
+      return
+    }
     onAddSubTask?.(task.id)
   }
 
