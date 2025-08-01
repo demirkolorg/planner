@@ -413,7 +413,7 @@ export function DashboardOverview() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {/* Ana İstatistik Kartları */}
         {mainStats.map((stat) => (
-          <Card key={stat.title} className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-primary/30">
+          <Card key={stat.title} className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
             {/* Gradient Background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor} opacity-10 group-hover:opacity-15 transition-opacity duration-300`} />
             
@@ -459,7 +459,7 @@ export function DashboardOverview() {
         ))}
 
         {/* Yüksek Öncelik Kartı */}
-        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-purple-500/30">
+        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1">
           {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 group-hover:from-purple-500/15 group-hover:to-indigo-500/15 transition-all duration-300" />
           
@@ -509,7 +509,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* İlerleme Kartı */}
-        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-green-500/30">
+        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-green-500/30 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-1">
           {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 group-hover:from-green-500/15 group-hover:to-emerald-500/15 transition-all duration-300" />
           

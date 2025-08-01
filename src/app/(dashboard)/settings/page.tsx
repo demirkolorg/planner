@@ -479,14 +479,14 @@ export default function SettingsPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-secondary/30">
+      <div className="min-h-screen bg-secondary/20">
         {/* Header */}
-        <div className="bg-background border-b border-border">
+        <div className="bg-card border-b border-border">
           <div className="max-w-6xl mx-auto px-6 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                  <Settings className="h-8 w-8" />
+                <h1 className="text-3xl font-bold text-card-foreground flex items-center gap-3">
+                  <Settings className="h-8 w-8 text-primary" />
                   Ayarlar
                 </h1>
                 <p className="text-muted-foreground mt-2">
@@ -716,9 +716,9 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Sağ Sütun - Yazılacak Takvim */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <div className="bg-card rounded-xl border border-border p-6">
                           <div className="mb-4">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                            <h3 className="font-semibold text-card-foreground mb-1">
                               ✏️ Yazılacak Takvim
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -738,7 +738,7 @@ export default function SettingsPage() {
                                   />
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2">
-                                      <span className="font-medium text-gray-900 dark:text-white">
+                                      <span className="font-medium text-card-foreground">
                                         {plannerCalendar.name}
                                       </span>
                                       <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
@@ -774,7 +774,7 @@ export default function SettingsPage() {
                                   <div className="flex items-center space-x-3">
                                     <div className="w-4 h-4 rounded-full bg-yellow-400" />
                                     <div>
-                                      <span className="font-medium text-gray-900 dark:text-white">
+                                      <span className="font-medium text-card-foreground">
                                         Planner Takvimi
                                       </span>
                                       <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
@@ -815,9 +815,9 @@ export default function SettingsPage() {
                   Hesap bilgileri ve kişisel ayarlar
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <div className="bg-card rounded-xl border border-border p-8 text-center">
                 <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Profil Ayarları</h3>
+                <h3 className="text-lg font-semibold text-card-foreground mb-2">Profil Ayarları</h3>
                 <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
               </div>
             </TabsContent>
@@ -829,9 +829,9 @@ export default function SettingsPage() {
                   Bildirim tercihleri ve uyarılar
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <div className="bg-card rounded-xl border border-border p-8 text-center">
                 <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Bildirim Ayarları</h3>
+                <h3 className="text-lg font-semibold text-card-foreground mb-2">Bildirim Ayarları</h3>
                 <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
               </div>
             </TabsContent>
@@ -843,9 +843,9 @@ export default function SettingsPage() {
                   Tema ve görünüm ayarları
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <div className="bg-card rounded-xl border border-border p-8 text-center">
                 <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Görünüm Ayarları</h3>
+                <h3 className="text-lg font-semibold text-card-foreground mb-2">Görünüm Ayarları</h3>
                 <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
               </div>
             </TabsContent>
@@ -857,9 +857,9 @@ export default function SettingsPage() {
                   Güvenlik ve gizlilik ayarları
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+              <div className="bg-card rounded-xl border border-border p-8 text-center">
                 <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Gizlilik Ayarları</h3>
+                <h3 className="text-lg font-semibold text-card-foreground mb-2">Gizlilik Ayarları</h3>
                 <p className="text-gray-500 dark:text-gray-400">Bu bölüm yakında kullanıma sunulacak.</p>
               </div>
             </TabsContent>
@@ -874,23 +874,23 @@ export default function SettingsPage() {
               <div className="space-y-6">
 
                 {/* FAQ */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sık Sorulan Sorular</h3>
+                <div className="bg-card rounded-xl border border-border p-6">
+                  <h3 className="text-lg font-semibold text-card-foreground mb-4">Sık Sorulan Sorular</h3>
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">Google Calendar senkronizasyonu nasıl çalışır?</h4>
+                      <h4 className="font-medium text-card-foreground">Google Calendar senkronizasyonu nasıl çalışır?</h4>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Görevleriniz otomatik olarak Google Calendar'ınızda "Planner Takvimi" adlı ayrı bir takvimde gösterilir.
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">Ctrl+K kısayolu ne işe yarar?</h4>
+                      <h4 className="font-medium text-card-foreground">Ctrl+K kısayolu ne işe yarar?</h4>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Her yerden hızlıca yeni görev oluşturmanızı sağlar.
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">Projeler ve etiketler arasındaki fark nedir?</h4>
+                      <h4 className="font-medium text-card-foreground">Projeler ve etiketler arasındaki fark nedir?</h4>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Projeler büyük hedeflerinizi organize eder, etiketler ise görevlerinizi kategorilere ayırır.
                       </p>
@@ -899,16 +899,16 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Keyboard Shortcuts */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Klavye Kısayolları</h3>
+                <div className="bg-card rounded-xl border border-border p-6">
+                  <h3 className="text-lg font-semibold text-card-foreground mb-4">Klavye Kısayolları</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <span className="text-sm text-gray-600 dark:text-gray-300">Hızlı görev ekle</span>
-                      <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-600 border rounded">Ctrl+K</kbd>
+                      <kbd className="px-2 py-1 text-xs bg-muted border rounded">Ctrl+K</kbd>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <span className="text-sm text-gray-600 dark:text-gray-300">Menüyü kapat/aç</span>
-                      <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-600 border rounded">Esc</kbd>
+                      <kbd className="px-2 py-1 text-xs bg-muted border rounded">Esc</kbd>
                     </div>
                   </div>
                 </div>

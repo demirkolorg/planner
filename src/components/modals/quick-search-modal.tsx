@@ -97,7 +97,7 @@ export function QuickSearchModal({ isOpen, onClose }: QuickSearchModalProps) {
               className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50"
             >
               <div className="flex items-center space-x-1">
-                <ArrowRight className="h-3 w-3" />
+                <Search className="h-3 w-3" />
                 <span className="text-xs">Ara</span>
               </div>
             </Button>
