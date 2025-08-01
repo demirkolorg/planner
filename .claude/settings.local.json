@@ -47,7 +47,8 @@
       "Bash(set NODE_ENV=production)",
       "Bash(bunx next:*)",
       "Bash(bun prisma migrate dev:*)",
-      "Bash(node scripts/update-task-levels.js:*)"
+      "Bash(node scripts/update-task-levels.js:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

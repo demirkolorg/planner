@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2 } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2, Type } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -23,6 +23,7 @@ import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
 import { ColorThemeModal } from "@/components/modals/color-theme-modal"
+import { FontSizeModal } from "@/components/modals/font-size-modal"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,6 +105,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
+  const [isFontSizeModalOpen, setIsFontSizeModalOpen] = useState(false)
   const [showCompletedProjects, setShowCompletedProjects] = useState(true)
   const [isInspirationExpanded, setIsInspirationExpanded] = useState(true)
   const { projects, fetchProjects, createProject } = useProjectStore()
@@ -733,6 +735,21 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <p>Renk Teması</p>
                 </TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsFontSizeModalOpen(true)}
+                    className="h-9 w-9"
+                  >
+                    <Type className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Font Boyutu</p>
+                </TooltipContent>
+              </Tooltip>
               
               {/* Google Calendar Sync Button */}
               {googleCalendarConnected && (
@@ -856,6 +873,22 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
               </TooltipContent>
             </Tooltip>
 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFontSizeModalOpen(true)}
+                  className="h-9 w-9"
+                >
+                  <Type className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Font Boyutu</p>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Google Calendar Sync Button - Collapsed */}
             {googleCalendarConnected && (
               <Tooltip>
@@ -948,6 +981,11 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       <QuickTaskModal
         isOpen={isQuickTaskModalOpen}
         onClose={() => setIsQuickTaskModalOpen(false)}
+      />
+      
+      <FontSizeModal
+        isOpen={isFontSizeModalOpen}
+        onClose={() => setIsFontSizeModalOpen(false)}
       />
       </div>
     </TooltipProvider>

@@ -42,6 +42,8 @@
   --font-sans: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-mono: Poppins, ui-sans-serif, sans-serif, system-ui;
+  --font-size-base: 16px;
+  --font-size-base: 16px;
   --radius: 0.625rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -90,6 +92,7 @@
   --font-sans: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-mono: Poppins, ui-sans-serif, sans-serif, system-ui;
+  --font-size-base: 16px;
   --radius: 0.625rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -435,6 +438,7 @@
   --font-sans: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-mono: Poppins, ui-sans-serif, sans-serif, system-ui;
+  --font-size-base: 16px;
   --radius: 0.625rem;
   --shadow-2xs: 2px 2px 4px 0px hsl(255 86% 66% / 0.10);
   --shadow-xs: 2px 2px 4px 0px hsl(255 86% 66% / 0.10);
@@ -483,6 +487,7 @@
   --font-sans: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Poppins, ui-sans-serif, sans-serif, system-ui;
   --font-mono: Poppins, ui-sans-serif, sans-serif, system-ui;
+  --font-size-base: 16px;
   --radius: 0.625rem;
   --shadow-2xs: 2px 2px 4px 0px hsl(255 86% 66% / 0.10);
   --shadow-xs: 2px 2px 4px 0px hsl(255 86% 66% / 0.10);
@@ -590,6 +595,51 @@
   --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 4px 6px -1px hsl(0 0% 0% / 0.17);
   --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
+}
+
+/* ================================================================= */
+/* Font Size Global Styles - Simplified & Reliable                 */
+/* ================================================================= */
+:root {
+  --font-size-base: 16px;
+}
+
+/* Apply base font size to body and use rem-based scaling */
+body {
+  font-size: var(--font-size-base);
+}
+
+/* Scale root element to match our base font size */
+html {
+  font-size: var(--font-size-base);
+}
+
+/* Use rem units which will scale with html font-size */
+.text-xs { font-size: 0.75rem !important; }
+.text-sm { font-size: 0.875rem !important; }
+.text-base { font-size: 1rem !important; }
+.text-lg { font-size: 1.125rem !important; }
+.text-xl { font-size: 1.25rem !important; }
+.text-2xl { font-size: 1.5rem !important; }
+.text-3xl { font-size: 1.875rem !important; }
+.text-4xl { font-size: 2.25rem !important; }
+
+/* Headers using rem */
+h1 { font-size: 2.25rem !important; }
+h2 { font-size: 1.875rem !important; }
+h3 { font-size: 1.5rem !important; }
+h4 { font-size: 1.25rem !important; }
+h5 { font-size: 1.125rem !important; }
+h6 { font-size: 1rem !important; }
+
+/* Form elements */
+input, textarea, select, button {
+  font-size: 1rem !important;
+}
+
+/* Override any conflicting styles */
+* {
+  font-size: inherit;
 }
 
 /* ================================================================= */
