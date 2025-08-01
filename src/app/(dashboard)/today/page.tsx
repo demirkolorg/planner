@@ -361,11 +361,11 @@ export default function TodayPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-              <Sun className="h-7 w-7 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
+              <Sun className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 Bugün
               </h1>
               <p className="text-muted-foreground">

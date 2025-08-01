@@ -373,11 +373,11 @@ export function DashboardOverview() {
       {/* Header with Today-style design */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-            <Home className="h-7 w-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
+            <Home className="h-7 w-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-foreground">
               Anasayfa
             </h1>
             <p className="text-muted-foreground font-medium">
