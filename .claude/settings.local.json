@@ -44,7 +44,8 @@
       "WebFetch(domain:www.cerebras.ai)",
       "Bash(rg:*)",
       "Bash(tskill:*)",
-      "Bash(set NODE_ENV=production)"
+      "Bash(set NODE_ENV=production)",
+      "Bash(bunx next:*)"
     ],
     "deny": []
   }

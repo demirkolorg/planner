@@ -309,6 +309,13 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
     setShowTimeInput(false)
   }
 
+  const handleDateClear = () => {
+    setSelectedDate("")
+    setSelectedTime("") // Tarih temizlendiğinde saati de temizle
+    setTimeInput("")
+    setShowTimeInput(false)
+  }
+
   const handleTimeButtonClick = () => {
     // Eğer selectedTime varsa onu kullan, yoksa şu anki saati koy
     if (selectedTime) {
@@ -661,16 +668,29 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
         {/* Custom date input */}
         {!showCalendar && (
           <div className="space-y-2">
-            <Input
-              placeholder="DD.MM.YYYY"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="text-sm"
-            />
+            <div className="relative">
+              <Input
+                placeholder="DD.MM.YYYY"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="text-sm pr-8"
+              />
+              {selectedDate && (
+                <button
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 inline-flex items-center justify-center h-4 w-4 rounded-md hover:bg-accent transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDateClear()
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
             
-            {/* Time picker toggle */}
-            {!showTimeInput ? (
+            {/* Time picker toggle - Sadece tarih seçilmişse göster */}
+            {selectedDate && !showTimeInput ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -686,7 +706,7 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                 </div>
                 <Plus className="h-4 w-4" />
               </Button>
-            ) : (
+            ) : selectedDate && showTimeInput ? (
               <div className="flex items-center justify-between w-full px-3 py-2 border rounded-md bg-background">
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2" />
@@ -711,10 +731,10 @@ export function DateTimePicker({ initialDateTime, onSave, onCancel, position, is
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Time confirmation buttons */}
-            {showTimeInput && (
+            {selectedDate && showTimeInput && (
               <div className="flex space-x-2">
                 <Button
                   variant="ghost"

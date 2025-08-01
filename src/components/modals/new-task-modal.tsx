@@ -1024,6 +1024,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                         onClick={(e) => {
                           e.stopPropagation()
                           setSelectedDate(null)
+                          setSelectedTime(null) // Tarih temizlendiğinde saati de temizle
                           setShowDatePicker(false)
                         }}
                       >
@@ -1053,50 +1054,52 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 )}
               </div>
 
-              {/* Time Button */}
-              <div className="relative group">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowTimePicker(!showTimePicker)}
-                >
-                  <Clock className="h-4 w-4 mr-2" />
-                  {getDisplayTime()}
-                </Button>
-                {selectedTime && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedTime(null)
-                          setShowTimePicker(false)
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Saati Temizle</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                
-                {/* Time Picker Dropdown */}
-                {showTimePicker && (
-                  <div className="absolute top-full left-0 mt-1 z-50">
-                    <TimePicker
-                      initialTime={selectedTime}
-                      onSave={handleTimeSave}
-                      onCancel={handleTimeCancel}
-                      isModal={true}
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Time Button - Sadece tarih seçilmişse göster */}
+              {selectedDate && (
+                <div className="relative group">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowTimePicker(!showTimePicker)}
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    {getDisplayTime()}
+                  </Button>
+                  {selectedTime && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedTime(null)
+                            setShowTimePicker(false)
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Saati Temizle</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  
+                  {/* Time Picker Dropdown */}
+                  {showTimePicker && (
+                    <div className="absolute top-full left-0 mt-1 z-50">
+                      <TimePicker
+                        initialTime={selectedTime}
+                        onSave={handleTimeSave}
+                        onCancel={handleTimeCancel}
+                        isModal={true}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">

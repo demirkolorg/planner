@@ -108,6 +108,7 @@ export async function findPlannerCalendarByName(accessToken: string): Promise<st
 
 // Task'ı Calendar Event'e dönüştür
 export function convertTaskToCalendarEvent(task: Task) {
+  const hasNoDate = !task.dueDate
   const startDate = task.dueDate ? new Date(task.dueDate) : new Date()
   
   // Priority'ye göre renk
@@ -121,30 +122,31 @@ export function convertTaskToCalendarEvent(task: Task) {
     // UTC tarihini doğrudan kullan (timezone offset olmadan)
     let dateStr: string
     
-    const dueDateString = task.dueDate instanceof Date 
-      ? task.dueDate.toISOString()
-      : task.dueDate.toString()
-    
-    if (dueDateString.includes('T00:00:00.000Z')) {
-      // Zaten UTC formatındaysa, sadece tarih kısmını al
-      dateStr = dueDateString.split('T')[0]
-    } else {
-      // Local date'i UTC'ye çevirmeden doğrudan tarihi al
-      const localDate = new Date(task.dueDate)
-      const year = localDate.getFullYear()
-      const month = String(localDate.getMonth() + 1).padStart(2, '0')
-      const day = String(localDate.getDate()).padStart(2, '0')
+    if (hasNoDate) {
+      // Tarih atanmamış görevler için bugünün tarihini kullan
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = String(today.getMonth() + 1).padStart(2, '0')
+      const day = String(today.getDate()).padStart(2, '0')
       dateStr = `${year}-${month}-${day}`
+    } else {
+      // Tarih atanmış görevler için mevcut logic
+      const dueDateString = task.dueDate instanceof Date 
+        ? task.dueDate.toISOString()
+        : task.dueDate.toString()
+      
+      if (dueDateString.includes('T00:00:00.000Z')) {
+        // Zaten UTC formatındaysa, sadece tarih kısmını al
+        dateStr = dueDateString.split('T')[0]
+      } else {
+        // Local date'i UTC'ye çevirmeden doğrudan tarihi al
+        const localDate = new Date(task.dueDate)
+        const year = localDate.getFullYear()
+        const month = String(localDate.getMonth() + 1).padStart(2, '0')
+        const day = String(localDate.getDate()).padStart(2, '0')
+        dateStr = `${year}-${month}-${day}`
+      }
     }
-    
-    console.log('📅 convertTaskToCalendarEvent DEBUG:', {
-      taskTitle: task.title,
-      originalDueDate: task.dueDate,
-      dueDateString,
-      finalDateStr: dateStr,
-      isAllDay: true
-    })
-    
     
     return {
       summary: task.title,
@@ -207,13 +209,6 @@ function isTaskAllDay(task: Task): boolean {
     
     isAllDayEvent = utcHours === 0 && utcMinutes === 0 && utcSeconds === 0
   }
-  
-  console.log('🔍 isTaskAllDay DEBUG:', {
-    taskTitle: task.title,
-    originalDueDate: task.dueDate,
-    dueDateString,
-    isAllDay: isAllDayEvent
-  })
   
   return isAllDayEvent
 }
