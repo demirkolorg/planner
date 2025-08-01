@@ -19,7 +19,8 @@ import {
   CalendarClock,
   Home,
   Plus,
-  Lightbulb
+  Lightbulb,
+  Info
 } from "lucide-react"
 import { BRAND_SLOGANS } from "@/lib/constants"
 import { useTaskStore } from "@/store/taskStore"
@@ -28,6 +29,7 @@ import { TaskCard } from "@/components/task/task-card"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
+import { KeyboardShortcutsModal } from "@/components/modals/keyboard-shortcuts-modal"
 import { useEffect, useMemo, useState, useCallback } from "react"
 import Link from "next/link"
 import { format, isToday, startOfWeek, endOfWeek, isWithinInterval, addWeeks } from "date-fns"
@@ -73,6 +75,7 @@ export function DashboardOverview() {
   const [isTaskCloneModalOpen, setIsTaskCloneModalOpen] = useState(false)
   const [taskToClone, setTaskToClone] = useState<{ id: string; title: string; projectId: string; sectionId?: string } | null>(null)
   const [editingTask, setEditingTask] = useState<any | null>(null)
+  const [isKeyboardShortcutsModalOpen, setIsKeyboardShortcutsModalOpen] = useState(false)
 
   // AI'dan motivasyon sözü çekme
   const [todaysQuote, setTodaysQuote] = useState({
@@ -385,13 +388,15 @@ export function DashboardOverview() {
 
         {/* Action Buttons */}
         <div className="flex items-center space-x-3">
-          {/* Quick Task Hint */}
-          <div className="px-3 py-1.5 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200/50 dark:border-purple-800/50 rounded-lg">
-            <div className="flex items-center text-xs text-purple-700 dark:text-purple-300">
-              <kbd className="px-1.5 py-0.5 text-xs bg-purple-200 dark:bg-purple-800 rounded mr-2">Ctrl+K</kbd>
-              hızlı görev ekle
-            </div>
-          </div>
+          {/* Keyboard Shortcuts Button */}
+          <Button 
+            variant="ghost"
+            onClick={() => setIsKeyboardShortcutsModalOpen(true)}
+            className="h-12 px-4"
+          >
+            <Info className="h-4 w-4 mr-2" />
+            Kısayollar
+          </Button>
           
           {/* New Task Button */}
           <Button 
@@ -844,6 +849,11 @@ export function DashboardOverview() {
         }}
         onMove={handleMoveTask}
         task={taskToMove}
+      />
+
+      <KeyboardShortcutsModal
+        isOpen={isKeyboardShortcutsModalOpen}
+        onClose={() => setIsKeyboardShortcutsModalOpen(false)}
       />
     </div>
   )

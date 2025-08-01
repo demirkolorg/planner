@@ -68,3 +68,42 @@ export function useCtrlK(callback: () => void, deps: unknown[] = []) {
     deps
   )
 }
+
+// Özel Ctrl+S hook'u
+export function useCtrlS(callback: () => void, deps: unknown[] = []) {
+  useKeyboardShortcut(
+    {
+      key: 's',
+      ctrlKey: true,
+      preventDefault: true
+    },
+    callback,
+    deps
+  )
+}
+
+// Özel Ctrl+J hook'u
+export function useCtrlJ(callback: () => void, deps: unknown[] = []) {
+  useKeyboardShortcut(
+    {
+      key: 'j',
+      ctrlKey: true,
+      preventDefault: true
+    },
+    callback,
+    deps
+  )
+}
+
+// Özel Ctrl+B hook'u
+export function useCtrlB(callback: () => void, deps: unknown[] = []) {
+  useKeyboardShortcut(
+    {
+      key: 'b',
+      ctrlKey: true,
+      preventDefault: true
+    },
+    callback,
+    deps
+  )
+}

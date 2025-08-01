@@ -93,9 +93,10 @@ const cardItems = [
 interface DashboardSidebarProps {
   isOpen: boolean
   onToggle: () => void
+  onOpenSearch?: () => void
 }
 
-export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
+export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
@@ -267,14 +268,22 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
           {/* Add Task and Search Buttons */}
           <div className="px-4 pt-2 pb-3">
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="flex-1 px-3 py-2 font-medium"
-                onClick={() => setIsTaskModalOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Görev Ekle
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="flex-1 px-3 py-2 font-medium"
+                    onClick={() => setIsTaskModalOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Görev Ekle
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Yeni Görev Oluştur</p>
+                  <p className="text-xs text-muted-foreground">Ctrl+J</p>
+                </TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -293,19 +302,18 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href={ROUTES.SEARCH}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="px-2"
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="px-2"
+                    onClick={() => onOpenSearch?.()}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Arama</p>
-                  <p className="text-xs text-muted-foreground">Ctrl+/</p>
+                  <p>Hızlı Arama</p>
+                  <p className="text-xs text-muted-foreground">Ctrl+S</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -450,7 +458,8 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Görev Ekle</p>
+                <p>Yeni Görev Oluştur</p>
+                <p className="text-xs text-muted-foreground">Ctrl+J</p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -471,19 +480,18 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href={ROUTES.SEARCH}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-full h-9"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-full h-9"
+                  onClick={() => onOpenSearch?.()}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Arama</p>
-                <p className="text-xs text-muted-foreground">Ctrl+/</p>
+                <p>Hızlı Arama</p>
+                <p className="text-xs text-muted-foreground">Ctrl+S</p>
               </TooltipContent>
             </Tooltip>
           </div>

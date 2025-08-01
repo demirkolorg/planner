@@ -9,8 +9,10 @@ import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
+import { QuickSearchModal } from "@/components/modals/quick-search-modal"
+import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { ToastNotification } from "@/components/ui/toast-notification"
-import { useCtrlK } from "@/hooks/use-keyboard-shortcut"
+import { useCtrlK, useCtrlS, useCtrlJ, useCtrlB } from "@/hooks/use-keyboard-shortcut"
 
 export default function DashboardLayout({
   children,
@@ -24,12 +26,36 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
+  const [isQuickSearchModalOpen, setIsQuickSearchModalOpen] = useState(false)
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false)
   const lastUserIdRef = useRef<string | null>(null)
 
   // Ctrl+K shortcut
   useCtrlK(() => {
     if (isAuthenticated) {
       setIsQuickTaskModalOpen(true)
+    }
+  })
+
+  // Ctrl+S shortcut
+  useCtrlS(() => {
+    if (isAuthenticated) {
+      setIsQuickSearchModalOpen(true)
+    }
+  })
+
+  // Ctrl+J shortcut
+  useCtrlJ(() => {
+    if (isAuthenticated) {
+      console.log('Ctrl+J pressed, opening new task modal')
+      setIsNewTaskModalOpen(true)
+    }
+  })
+
+  // Ctrl+B shortcut
+  useCtrlB(() => {
+    if (isAuthenticated) {
+      setSidebarOpen(!sidebarOpen)
     }
   })
 
@@ -93,6 +119,7 @@ export default function DashboardLayout({
       <DashboardSidebar 
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)} 
+        onOpenSearch={() => setIsQuickSearchModalOpen(true)}
       />
       <div className={`flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
         <main className="flex-1 overflow-y-auto p-6">
@@ -104,6 +131,21 @@ export default function DashboardLayout({
       <QuickTaskModal
         isOpen={isQuickTaskModalOpen}
         onClose={() => setIsQuickTaskModalOpen(false)}
+      />
+      
+      {/* Quick Search Modal */}
+      <QuickSearchModal
+        isOpen={isQuickSearchModalOpen}
+        onClose={() => setIsQuickSearchModalOpen(false)}
+      />
+      
+      {/* New Task Modal */}
+      <NewTaskModal
+        isOpen={isNewTaskModalOpen}
+        onClose={() => setIsNewTaskModalOpen(false)}
+        onTaskCreated={() => {
+          setIsNewTaskModalOpen(false)
+        }}
       />
       
       {/* Toast Notifications */}

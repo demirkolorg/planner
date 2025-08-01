@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Calendar, Flag, Sun, Folder, Tag, ChevronDown, ArrowRight, CalendarIcon } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
+import { Search, Calendar, Flag, Sun, Folder, Tag, ChevronDown, ArrowRight, CalendarIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -25,6 +26,7 @@ type ViewMode = 'simple' | 'detailed'
 type ResultViewMode = 'simple' | 'project' | 'tag' | 'priority'
 
 export default function SearchPage() {
+  const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState<ViewMode>('simple')
   const [resultViewMode, setResultViewMode] = useState<ResultViewMode>('simple')
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,6 +74,22 @@ export default function SearchPage() {
   
   const { projects } = useProjectStore()
   const { tags } = useTagStore()
+
+  // URL'den query parametresini al ve başlangıçta set et
+  useEffect(() => {
+    const queryParam = searchParams.get('q')
+    if (queryParam) {
+      setSearchQuery(queryParam)
+      // Query parametresi varsa otomatik arama yap
+      setTimeout(() => {
+        const filtered = tasks.filter(task => 
+          task.title.toLowerCase().includes(queryParam.toLowerCase()) ||
+          (task.description && task.description.toLowerCase().includes(queryParam.toLowerCase()))
+        )
+        setSearchResults(filtered)
+      }, 100) // Tasks'ların yüklenmesi için kısa bir gecikme
+    }
+  }, [searchParams, tasks])
 
   // Simple search function
   const performSimpleSearch = () => {
@@ -397,6 +415,19 @@ export default function SearchPage() {
               className="text-lg h-14 px-6 text-base placeholder:text-base"
             />
           </div>
+          {searchQuery.trim() && (
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setSearchQuery('')
+                setSearchResults([])
+              }} 
+              className="px-6 h-14 text-base"
+            >
+              <X className="h-5 w-5 mr-2" />
+              Temizle
+            </Button>
+          )}
           <Button onClick={handleSearch} className="px-8 h-14 text-base">
             <Search className="h-5 w-5 mr-2" />
             Ara
