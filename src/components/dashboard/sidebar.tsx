@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -20,6 +20,7 @@ import { useThemeStore } from "@/store/themeStore"
 import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
+import { QuickTaskModal } from "@/components/modals/quick-task-modal"
 import { ColorThemeModal } from "@/components/modals/color-theme-modal"
 import {
   DropdownMenu,
@@ -99,6 +100,7 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
   const router = useRouter()
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const [showCompletedProjects, setShowCompletedProjects] = useState(true)
   const { projects, fetchProjects, createProject } = useProjectStore()
@@ -273,16 +275,39 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
                 <Plus className="h-4 w-4 mr-2" />
                 Görev Ekle
               </Button>
-              <Link href={ROUTES.SEARCH} className="flex-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full px-3 py-2"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Arama
-                </Button>
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="px-2"
+                    onClick={() => setIsQuickTaskModalOpen(true)}
+                  >
+                    <Zap className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Hızlı Görev Ekleme</p>
+                  <p className="text-xs text-muted-foreground">Ctrl+K</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={ROUTES.SEARCH}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="px-2"
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Arama</p>
+                  <p className="text-xs text-muted-foreground">Ctrl+/</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             
             {/* Hızlı görev ekleme bildirimi */}
@@ -438,6 +463,22 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="w-full h-9"
+                  onClick={() => setIsQuickTaskModalOpen(true)}
+                >
+                  <Zap className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Hızlı Görev Ekleme</p>
+                <p className="text-xs text-muted-foreground">Ctrl+K</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Link href={ROUTES.SEARCH}>
                   <Button
                     variant="ghost"
@@ -450,9 +491,13 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p>Arama</p>
+                <p className="text-xs text-muted-foreground">Ctrl+/</p>
               </TooltipContent>
             </Tooltip>
           </div>
+
+          {/* Divider */}
+          <div className="mx-2 border-t border-gray-200 dark:border-sidebar-border" />
 
           {/* Navigation Icons */}
           <div className="p-2 space-y-2">
@@ -751,6 +796,11 @@ export function DashboardSidebar({ isOpen, onToggle }: DashboardSidebarProps) {
       <ColorThemeModal
         isOpen={isColorThemeModalOpen}
         onClose={() => setIsColorThemeModalOpen(false)}
+      />
+      
+      <QuickTaskModal
+        isOpen={isQuickTaskModalOpen}
+        onClose={() => setIsQuickTaskModalOpen(false)}
       />
       </div>
     </TooltipProvider>
