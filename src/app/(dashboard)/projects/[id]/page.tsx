@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown, Calendar, CalendarClock, Zap, Hash, SortAsc, SortDesc, CalendarDays } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown, Calendar, CalendarClock, Zap, Hash, SortAsc, SortDesc, CalendarDays, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -706,6 +706,13 @@ export default function ProjectDetailPage() {
               </TooltipContent>
             </Tooltip>
             
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/projects/${projectId}/special-fields`}>
+                <FileText className="h-4 w-4 mr-2" />
+                Özel Alanlar
+              </Link>
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -792,6 +799,7 @@ export default function ProjectDetailPage() {
           </div>
         )
       )}
+
 
       {/* Bölümler ve Görevler */}
       {isLoading ? (
