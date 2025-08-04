@@ -195,38 +195,8 @@ export async function POST(request: NextRequest) {
         existingEventsMap.set(taskEvent.googleEventId, taskEvent)
       })
 
-      // Planner Takvimi projesi ve section'ı önceden al
-      let inboxProject = await db.project.findFirst({
-        where: { 
-          userId,
-          name: 'Planner Takvimi'
-        }
-      })
-
-      if (!inboxProject) {
-        inboxProject = await db.project.create({
-          data: {
-            name: 'Planner Takvimi',
-            emoji: '📅',
-            notes: '🔄 Google Calendar ile otomatik senkronize olan özel proje. Google Calendar\'daki etkinlikler buraya görev olarak aktarılır.',
-            userId
-          }
-        })
-      }
-
-      let defaultSection = await db.section.findFirst({
-        where: { projectId: inboxProject.id }
-      })
-
-      if (!defaultSection) {
-        defaultSection = await db.section.create({
-          data: {
-            name: 'Genel',
-            projectId: inboxProject.id,
-            order: 0
-          }
-        })
-      }
+      // Calendar Tasks artık CALENDAR türü görev olarak oluşturulacak
+      // Proje/section bağımlılığı kaldırıldı
 
       // Batch operations için arrays
       const tasksToUpdate: any[] = []
@@ -256,7 +226,7 @@ export async function POST(request: NextRequest) {
               })
             }
           } else {
-            // Yeni task oluşturma
+            // Yeni task oluşturma - CALENDAR türü görev olarak
             if (event.status !== 'cancelled') {
               const taskId = `temp_${Date.now()}_${Math.random()}`
               tasksToCreate.push({
@@ -267,8 +237,10 @@ export async function POST(request: NextRequest) {
                   priority: eventData.priority,
                   dueDate: eventData.dueDate ? new Date(eventData.dueDate) : null,
                   userId,
-                  projectId: inboxProject.id,
-                  sectionId: defaultSection.id,
+                  projectId: null,              // Calendar görevleri için null
+                  sectionId: null,             // Calendar görevleri için null
+                  taskType: 'CALENDAR',        // Görev türü CALENDAR
+                  calendarSourceId: event._sourceCalendarId || readOnlyCalendarIds[0]
                 },
                 eventId: event.id,
                 calendarId: event._sourceCalendarId || readOnlyCalendarIds[0]

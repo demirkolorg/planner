@@ -9,6 +9,9 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
   isPinned: boolean
   parentTaskId?: string
   level: number
+  taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
+  calendarSourceId?: string                          // Google Calendar kaynak ID'si
+  quickNoteCategory?: string                         // Hızlı Not kategorisi
   tags?: Array<{
     id: string
     taskId: string
@@ -76,6 +79,14 @@ interface TaskStore {
   getPendingTasksCountByTag: (tagId: string) => number
   toggleShowCompletedTasks: () => void
   clearError: () => void
+  
+  // TaskType filtreleme metodları
+  getTasksByType: (taskType: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE') => TaskWithRelations[]
+  getCalendarTasks: () => TaskWithRelations[]
+  getQuickNoteTasks: () => TaskWithRelations[]
+  getProjectTasks: () => TaskWithRelations[]
+  getCalendarTasksBySource: (calendarSourceId: string) => TaskWithRelations[]
+  getQuickNoteTasksByCategory: (category: string) => TaskWithRelations[]
   
   // Overdue and date-based filtering
   getOverdueTasks: () => TaskWithRelations[]
@@ -479,6 +490,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     const { tasks, showCompletedTasks } = get()
     const filteredTasks = tasks.filter(task => 
       task.projectId === projectId && 
+      task.taskType === 'PROJECT' &&  // Sadece PROJECT türü görevler
       (showCompletedTasks || !task.completed)
     )
     
@@ -1177,5 +1189,44 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     } catch (error) {
       console.error('Error refreshing task comment count:', error)
     }
+  },
+
+  // TaskType filtreleme metodları implementasyonu
+  getTasksByType: (taskType: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE') => {
+    const { tasks, showCompletedTasks } = get()
+    return tasks.filter(task => 
+      task.taskType === taskType && 
+      (showCompletedTasks || !task.completed)
+    )
+  },
+
+  getCalendarTasks: () => {
+    return get().getTasksByType('CALENDAR')
+  },
+
+  getQuickNoteTasks: () => {
+    return get().getTasksByType('QUICK_NOTE')
+  },
+
+  getProjectTasks: () => {
+    return get().getTasksByType('PROJECT')
+  },
+
+  getCalendarTasksBySource: (calendarSourceId: string) => {
+    const { tasks, showCompletedTasks } = get()
+    return tasks.filter(task => 
+      task.taskType === 'CALENDAR' && 
+      task.calendarSourceId === calendarSourceId &&
+      (showCompletedTasks || !task.completed)
+    )
+  },
+
+  getQuickNoteTasksByCategory: (category: string) => {
+    const { tasks, showCompletedTasks } = get()
+    return tasks.filter(task => 
+      task.taskType === 'QUICK_NOTE' && 
+      task.quickNoteCategory === category &&
+      (showCompletedTasks || !task.completed)
+    )
   }
 }))

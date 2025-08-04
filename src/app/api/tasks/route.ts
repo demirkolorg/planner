@@ -18,12 +18,15 @@ const PRIORITY_MAP: Record<string, string> = {
 interface CreateTaskRequest {
   title: string
   description?: string
-  projectId: string
-  sectionId: string
+  projectId?: string           // Opsiyonel - Calendar ve Quick Note tasks için null olabilir
+  sectionId?: string          // Opsiyonel - Calendar ve Quick Note tasks için null olabilir
   priority?: string
-  dueDate?: string  // ISO date string
-  tags?: string[]  // Tag name'leri
-  parentTaskId?: string  // Alt görev için parent task ID'si
+  dueDate?: string            // ISO date string
+  tags?: string[]             // Tag name'leri
+  parentTaskId?: string       // Alt görev için parent task ID'si
+  taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
+  calendarSourceId?: string   // Google Calendar kaynak ID'si
+  quickNoteCategory?: string  // Hızlı Not kategorisi
 }
 
 export async function POST(request: NextRequest) {
@@ -46,64 +49,79 @@ export async function POST(request: NextRequest) {
       priority = "Yok",
       dueDate,
       tags = [],
-      parentTaskId
+      parentTaskId,
+      taskType = 'PROJECT',
+      calendarSourceId,
+      quickNoteCategory
     } = body
 
-    if (!title || !projectId || !sectionId) {
+    if (!title) {
       return NextResponse.json({ 
-        error: "Title, projectId and sectionId are required" 
+        error: "Title is required" 
       }, { status: 400 })
     }
 
-    // Proje kullanıcıya ait mi kontrol et
-    const project = await db.project.findFirst({
-      where: {
-        id: projectId,
-        userId: decoded.userId
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    // PROJECT türü görevler için projectId ve sectionId zorunlu
+    if (taskType === 'PROJECT' && (!projectId || !sectionId)) {
+      return NextResponse.json({ 
+        error: "ProjectId and sectionId are required for PROJECT tasks" 
+      }, { status: 400 })
     }
 
-    // Bölüm mevcut mu kontrol et
-    let finalSectionId = sectionId
-    
-    // Eğer 'default' section kullanılıyorsa, projenin ilk section'ını bul veya oluştur
-    if (sectionId === 'default') {
-      let defaultSection = await db.section.findFirst({
+    // PROJECT türü görevler için proje kontrolü
+    let project = null
+    if (taskType === 'PROJECT' && projectId) {
+      project = await db.project.findFirst({
         where: {
-          projectId: projectId
-        },
-        orderBy: {
-          createdAt: 'asc'
-        }
-      })
-      
-      // Eğer proje hiç section'a sahip değilse, default section oluştur
-      if (!defaultSection) {
-        defaultSection = await db.section.create({
-          data: {
-            name: 'Varsayılan',
-            projectId: projectId,
-            order: 0
-          }
-        })
-      }
-      
-      finalSectionId = defaultSection.id
-    } else {
-      // Normal section kontrolü
-      const section = await db.section.findFirst({
-        where: {
-          id: sectionId,
-          projectId: projectId
+          id: projectId,
+          userId: decoded.userId
         }
       })
 
-      if (!section) {
-        return NextResponse.json({ error: "Section not found" }, { status: 404 })
+      if (!project) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 })
+      }
+    }
+
+    // PROJECT türü görevler için bölüm kontrolü
+    let finalSectionId = sectionId
+    
+    if (taskType === 'PROJECT' && projectId && sectionId) {
+      // Eğer 'default' section kullanılıyorsa, projenin ilk section'ını bul veya oluştur
+      if (sectionId === 'default') {
+        let defaultSection = await db.section.findFirst({
+          where: {
+            projectId: projectId
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        })
+        
+        // Eğer proje hiç section'a sahip değilse, default section oluştur
+        if (!defaultSection) {
+          defaultSection = await db.section.create({
+            data: {
+              name: 'Varsayılan',
+              projectId: projectId,
+              order: 0
+            }
+          })
+        }
+        
+        finalSectionId = defaultSection.id
+      } else {
+        // Normal section kontrolü
+        const section = await db.section.findFirst({
+          where: {
+            id: sectionId,
+            projectId: projectId
+          }
+        })
+
+        if (!section) {
+          return NextResponse.json({ error: "Section not found" }, { status: 404 })
+        }
       }
     }
 
@@ -150,11 +168,14 @@ export async function POST(request: NextRequest) {
           description,
           priority: PRIORITY_MAP[priority] || "NONE",
           dueDate: parsedDueDate,
-          projectId,
-          sectionId: finalSectionId,
+          projectId: taskType === 'PROJECT' ? projectId : null,
+          sectionId: taskType === 'PROJECT' ? finalSectionId : null,
           userId: decoded.userId,
           parentTaskId,
-          level: taskLevel
+          level: taskLevel,
+          taskType: taskType as 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE',
+          calendarSourceId,
+          quickNoteCategory
         }
       })
 
@@ -252,16 +273,18 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Proje aktivitesi kaydet
-      await createProjectActivity({
-        projectId: result.projectId,
-        userId: decoded.userId,
-        actionType: ProjectActivityTypes.TASK_CREATED,
-        entityType: "task",
-        entityId: result.id,
-        entityName: result.title,
-        description: `Görev oluşturuldu: "${result.title}"`
-      })
+      // Proje aktivitesi kaydet (sadece PROJECT türü görevler için)
+      if (result.taskType === 'PROJECT' && result.projectId) {
+        await createProjectActivity({
+          projectId: result.projectId,
+          userId: decoded.userId,
+          actionType: ProjectActivityTypes.TASK_CREATED,
+          entityType: "task",
+          entityId: result.id,
+          entityName: result.title,
+          description: `Görev oluşturuldu: "${result.title}"`
+        })
+      }
 
       // Google Calendar'a sync et (asyncronous - hata durumunda task oluşturma başarısız olmaz)
       syncTaskToCalendar(decoded.userId, result, 'CREATE').catch(error => {
@@ -290,11 +313,23 @@ export async function GET(request: NextRequest) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     
-    // Kullanıcının tüm görevlerini getir
+    // URL parametrelerinden taskType filtresi al
+    const { searchParams } = new URL(request.url)
+    const taskTypeFilter = searchParams.get('taskType')
+    
+    // Where koşulunu oluştur
+    const whereClause: any = {
+      userId: decoded.userId
+    }
+    
+    // TaskType filtresi varsa ekle
+    if (taskTypeFilter && ['PROJECT', 'CALENDAR', 'QUICK_NOTE'].includes(taskTypeFilter)) {
+      whereClause.taskType = taskTypeFilter
+    }
+    
+    // Kullanıcının görevlerini getir
     const tasks = await db.task.findMany({
-      where: {
-        userId: decoded.userId
-      },
+      where: whereClause,
       include: {
         project: true,
         section: true,

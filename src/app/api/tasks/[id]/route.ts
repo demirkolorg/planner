@@ -154,27 +154,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         description: getActivityDescription(change.type, change.oldValue, change.newValue)
       })
 
-      // Proje aktivitesi kaydet (sadece completion/uncompletion için)
-      if (change.type === TaskActivityTypes.COMPLETED) {
-        await createProjectActivity({
-          projectId: existingTask.project.id,
-          userId: decoded.userId,
-          actionType: ProjectActivityTypes.TASK_COMPLETED,
-          entityType: "task",
-          entityId: id,
-          entityName: existingTask.title,
-          description: `Görev tamamlandı: "${existingTask.title}"`
-        })
-      } else if (change.type === TaskActivityTypes.UNCOMPLETED) {
-        await createProjectActivity({
-          projectId: existingTask.project.id,
-          userId: decoded.userId,
-          actionType: ProjectActivityTypes.TASK_UNCOMPLETED,
-          entityType: "task",
-          entityId: id,
-          entityName: existingTask.title,
-          description: `Görev tamamlanması geri alındı: "${existingTask.title}"`
-        })
+      // Proje aktivitesi kaydet (sadece completion/uncompletion için ve projeye bağlı görevler için)
+      if (existingTask.project?.id) {
+        if (change.type === TaskActivityTypes.COMPLETED) {
+          await createProjectActivity({
+            projectId: existingTask.project.id,
+            userId: decoded.userId,
+            actionType: ProjectActivityTypes.TASK_COMPLETED,
+            entityType: "task",
+            entityId: id,
+            entityName: existingTask.title,
+            description: `Görev tamamlandı: "${existingTask.title}"`
+          })
+        } else if (change.type === TaskActivityTypes.UNCOMPLETED) {
+          await createProjectActivity({
+            projectId: existingTask.project.id,
+            userId: decoded.userId,
+            actionType: ProjectActivityTypes.TASK_UNCOMPLETED,
+            entityType: "task",
+            entityId: id,
+            entityName: existingTask.title,
+            description: `Görev tamamlanması geri alındı: "${existingTask.title}"`
+          })
+        }
       }
     }
 
@@ -224,17 +226,20 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    await db.$transaction(async (tx) => {
-      // Silme aktivitesi kaydet (task silinmeden önce)
-      await createTaskActivity({
+    // Delete task (this will also delete sub-tasks due to cascade)
+    await db.task.delete({
+      where: { id }
+    })
+
+    // Aktivite kaydetmeyi silme işleminden sonra yap (task silindiği için hata verebilir ama önemli değil)
+    Promise.allSettled([
+      createTaskActivity({
         taskId: id,
         userId: decoded.userId,
         actionType: TaskActivityTypes.DELETED,
         description: getActivityDescription(TaskActivityTypes.DELETED)
-      })
-
-      // Proje aktivitesi kaydet
-      await createProjectActivity({
+      }),
+      existingTask.project?.id ? createProjectActivity({
         projectId: existingTask.project.id,
         userId: decoded.userId,
         actionType: ProjectActivityTypes.TASK_DELETED,
@@ -242,12 +247,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         entityId: id,
         entityName: existingTask.title,
         description: `Görev silindi: "${existingTask.title}"`
-      })
-
-      // Delete task (this will also delete sub-tasks due to cascade)
-      await tx.task.delete({
-        where: { id }
-      })
+      }) : Promise.resolve()
+    ]).catch(error => {
+      console.error('Activity logging error (non-blocking):', error)
     })
 
     // Google Calendar'dan sync et

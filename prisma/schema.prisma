@@ -59,30 +59,33 @@ model Project {
 }
 
 model Task {
-  id             String             @id @default(cuid())
-  title          String
-  description    String?
-  completed      Boolean            @default(false)
-  priority       String             @default("NONE")
-  dueDate        DateTime?
-  isPinned       Boolean            @default(false)
-  syncToCalendar Boolean            @default(false)
-  level          Int                @default(0)
-  parentTaskId   String?
-  projectId      String
-  sectionId      String?
-  userId         String
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  comments       Comment[]
-  parentTask     Task?              @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
-  subTasks       Task[]             @relation("SubTasks")
-  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  section        Section?           @relation(fields: [sectionId], references: [id])
-  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activities     TaskActivity[]
-  tags           TaskTag[]
-  calendarEvent  TaskCalendarEvent?
+  id                  String             @id @default(cuid())
+  title               String
+  description         String?
+  completed           Boolean            @default(false)
+  priority            String             @default("NONE")
+  dueDate             DateTime?
+  isPinned            Boolean            @default(false)
+  syncToCalendar      Boolean            @default(false)
+  level               Int                @default(0)
+  parentTaskId        String?
+  projectId           String?            // Nullable - Calendar ve Quick Note tasks için
+  sectionId           String?
+  userId              String
+  taskType            TaskType           @default(PROJECT) // Görev türü
+  calendarSourceId    String?           // Google Calendar kaynak ID'si (Calendar tasks için)
+  quickNoteCategory   String?           // Hızlı Not kategorisi (Quick Note tasks için)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  comments            Comment[]
+  parentTask          Task?              @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subTasks            Task[]             @relation("SubTasks")
+  project             Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  section             Section?           @relation(fields: [sectionId], references: [id])
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities          TaskActivity[]
+  tags                TaskTag[]
+  calendarEvent       TaskCalendarEvent?
 }
 
 model Section {
@@ -215,4 +218,10 @@ model ProjectCustomField {
 enum UserRole {
   ADMIN
   USER
+}
+
+enum TaskType {
+  PROJECT      // Proje altında organize olan görevler
+  CALENDAR     // Google Calendar'dan gelen görevler  
+  QUICK_NOTE   // Hızlı Not tarzı görevler
 }

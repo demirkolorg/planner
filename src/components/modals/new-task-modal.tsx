@@ -37,6 +37,8 @@ interface NewTaskModalProps {
   }
   parentTaskId?: string
   parentTaskTitle?: string
+  defaultTaskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'
+  defaultQuickNoteCategory?: string
   editingTask?: {
     id: string
     title: string
@@ -58,7 +60,7 @@ interface NewTaskModalProps {
   }
 }
 
-export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection, parentTaskId, parentTaskTitle, editingTask }: NewTaskModalProps) {
+export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultProject, defaultSection, parentTaskId, parentTaskTitle, defaultTaskType, defaultQuickNoteCategory, editingTask }: NewTaskModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
@@ -431,11 +433,13 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         const taskData: CreateTaskRequest = {
           title: title.trim(),
           description: description.trim() || undefined,
-          projectId: selectedProject.id,
-          sectionId: selectedSection.id,
+          projectId: defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR' ? undefined : selectedProject.id,
+          sectionId: defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR' ? undefined : selectedSection.id,
           priority: selectedPriority,
           dueDate: finalDueDate || undefined,
           tags: selectedTags,
+          taskType: defaultTaskType || 'PROJECT',
+          ...(defaultTaskType === 'QUICK_NOTE' && defaultQuickNoteCategory && { quickNoteCategory: defaultQuickNoteCategory }),
           ...(parentTaskId && { parentTaskId })
         }
         console.log('📋 Oluşturulacak task data:', taskData)
@@ -1174,7 +1178,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             </div>
           </div>
 
-          {/* Project and Section Selection */}
+          {/* Project and Section Selection - Only show for PROJECT tasks */}
+          {(!defaultTaskType || defaultTaskType === 'PROJECT') && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {/* Project Selection */}
@@ -1292,13 +1297,28 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
             </div>
             <Button
               onClick={handleSave}
-              disabled={!title.trim() || !selectedProject || !selectedSection || isSubmitting}
+              disabled={!title.trim() || 
+                       (defaultTaskType !== 'QUICK_NOTE' && defaultTaskType !== 'CALENDAR' && (!selectedProject || !selectedSection)) || 
+                       isSubmitting}
             >
               {isSubmitting ? (editingTask ? "Güncelleniyor..." : "Ekleniyor...") : 
                editingTask ? "Görevi Güncelle" :
                parentTaskId ? "Alt Görev Ekle" : "Görev Ekle"}
             </Button>
           </div>
+          )}
+          
+          {/* For QUICK_NOTE and CALENDAR tasks, show simple save button */}
+          {(defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR') && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSave}
+                disabled={!title.trim() || isSubmitting}
+              >
+                {isSubmitting ? "Ekleniyor..." : "Hızlı Not Ekle"}
+              </Button>
+            </div>
+          )}
         </div>
         </DialogContent>
       </Dialog>

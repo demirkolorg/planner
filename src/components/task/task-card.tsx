@@ -22,12 +22,15 @@ interface TaskWithRelations {
   dueDate?: string
   isPinned: boolean
   parentTaskId?: string
-  projectId: string
+  projectId?: string                             // Nullable - Calendar ve Quick Note tasks için
   sectionId?: string
   userId: string
   createdAt: string
   updatedAt: string
   level?: number
+  taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
+  calendarSourceId?: string                          // Google Calendar kaynak ID'si
+  quickNoteCategory?: string                         // Hızlı Not kategorisi
   project?: {
     id: string
     name: string
@@ -152,7 +155,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const displayCompleted = optimisticCompleted
   
   // Proje sayfasında mı kontrol et
-  const isOnProjectPage = pathname.startsWith('/projects/') && pathname.includes(task.projectId)
+  const isOnProjectPage = task.projectId && pathname.startsWith('/projects/') && pathname.includes(task.projectId)
   
   
   
@@ -412,7 +415,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 </span> */}
                 
                 {/* Project Link Button - Only show on hover and not on project page */}
-                {isHovered && !isOnProjectPage && (
+                {isHovered && !isOnProjectPage && task.projectId && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link 

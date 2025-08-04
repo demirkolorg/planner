@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2, Type, Folder } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2, Type, Folder, Calendar, FileText } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -89,6 +89,26 @@ const cardItems = [
     color: "bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-800/50", 
     activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
     href: ROUTES.BOARD 
+  },
+  { 
+    name: "Takvim Görevleri", 
+    count: null, 
+    icon: Calendar, 
+    activeIcon: Calendar, 
+    color: "bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-950/50 dark:to-teal-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200/50 dark:border-cyan-800/50", 
+    activeColor: "bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-900/70 dark:to-teal-900/70 text-cyan-800 dark:text-cyan-200 border-cyan-300/70 dark:border-cyan-700/70 shadow-lg shadow-cyan-500/10", 
+    href: "/calendar-tasks", 
+    taskType: 'CALENDAR'
+  },
+  { 
+    name: "Hızlı Notlar", 
+    count: null, 
+    icon: FileText, 
+    activeIcon: FileText, 
+    color: "bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/50 dark:to-red-950/50 text-orange-700 dark:text-orange-300 border-orange-200/50 dark:border-orange-800/50", 
+    activeColor: "bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/70 dark:to-red-900/70 text-orange-800 dark:text-orange-200 border-orange-300/70 dark:border-orange-700/70 shadow-lg shadow-orange-500/10", 
+    href: "/quick-notes", 
+    taskType: 'QUICK_NOTE'
   },
   { 
     name: "Projeler", 
@@ -219,31 +239,30 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     return projectTasks.every(task => task.completed)
   }, [tasks, projects])
 
-  // Projeleri sırala ve filtrele
+  // Projeleri sırala ve filtrele - Sistem projelerini çıkar
   const sortedProjects = useMemo(() => {
     let filteredProjects = [...projects]
     
+    // Sistem projelerini çıkar
+    filteredProjects = filteredProjects.filter(project => 
+      !isProtectedProject(project.name)
+    )
+    
     // Tamamlanan projeleri gizle seçeneği aktifse filtrele
-    // Ancak korumalı projeleri her zaman göster
     if (!showCompletedProjects) {
       filteredProjects = filteredProjects.filter(project => 
-        !isProjectCompleted(project.id) || isProtectedProject(project.name)
+        !isProjectCompleted(project.id)
       )
     }
     
+    // Alfabetik sıralama
     return filteredProjects.sort((a, b) => {
-      // Özel proje sıralaması: Planner Takvimi, Hızlı Notlar, diğerleri
-      if (a.name === "Planner Takvimi") return -1
-      if (b.name === "Planner Takvimi") return 1
-      if (a.name === "Hızlı Notlar") return -1
-      if (b.name === "Hızlı Notlar") return 1
-      // Diğer projeler alfabetik sırada
       return a.name.localeCompare(b.name, 'tr')
     })
   }, [projects, showCompletedProjects, isProjectCompleted])
 
   // Dinamik sayıları hesapla
-  const getDynamicCount = (itemName: string) => {
+  const getDynamicCount = (itemName: string, taskType?: string) => {
     switch (itemName) {
       case "Bugün":
         return getTasksDueToday().length
@@ -259,8 +278,14 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
         return getPinnedTasks().length
       case "Projeler":
         return projects.length
+      case "Takvim Görevleri":
+        // Calendar task'ları say
+        return tasks.filter(task => task.taskType === 'CALENDAR' && !task.completed).length
+      case "Hızlı Notlar":
+        // Quick Note task'ları say
+        return tasks.filter(task => task.taskType === 'QUICK_NOTE' && !task.completed).length
       default:
-        return null
+        return taskType ? tasks.filter(task => task.taskType === taskType && !task.completed).length : null
     }
   }
 
@@ -362,7 +387,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
           <div className="p-4 pb-2">
             <div className="grid grid-cols-2 gap-3">
               {cardItems.map((item) => {
-                const dynamicCount = getDynamicCount(item.name)
+                const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
                 
                 return (

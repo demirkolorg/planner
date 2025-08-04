@@ -12,13 +12,16 @@ export interface Task {
   parentTaskId?: string
   parentTask?: Task
   subTasks?: Task[]
-  projectId: string
+  projectId?: string                           // Nullable - Calendar ve Quick Note tasks için
   project?: Project
   sectionId?: string
   section?: Section
   userId: string
   user?: User
   tags?: TaskTag[]
+  taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
+  calendarSourceId?: string                     // Google Calendar kaynak ID'si
+  quickNoteCategory?: string                    // Hızlı Not kategorisi
   createdAt: Date
   updatedAt: Date
   _count?: {
@@ -93,12 +96,15 @@ export interface User {
 export interface CreateTaskRequest {
   title: string
   description?: string
-  projectId: string
-  sectionId: string
+  projectId?: string                           // Opsiyonel - Calendar ve Quick Note tasks için
+  sectionId?: string                          // Opsiyonel - Calendar ve Quick Note tasks için
   priority?: string
-  dueDate?: string  // ISO date string
-  tags?: string[]   // Tag names
-  parentTaskId?: string // For sub-tasks
+  dueDate?: string                            // ISO date string
+  tags?: string[]                             // Tag names
+  parentTaskId?: string                       // For sub-tasks
+  taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
+  calendarSourceId?: string                   // Google Calendar kaynak ID'si
+  quickNoteCategory?: string                  // Hızlı Not kategorisi
 }
 
 export interface CreateTaskResponse extends Task {

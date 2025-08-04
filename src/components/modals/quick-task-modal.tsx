@@ -13,9 +13,10 @@ import { useTagStore } from "@/store/tagStore"
 interface QuickTaskModalProps {
   isOpen: boolean
   onClose: () => void
+  onTaskCreated?: () => void
 }
 
-export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
+export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModalProps) {
   const [input, setInput] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   
@@ -117,8 +118,8 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
       const taskData = {
         title: title, // Kullanıcının yazdığı direkt başlık
         description: analysis.description, // AI'dan genişletilmiş açıklama
-        projectId: quickNotesProject.id,
-        sectionId: 'default',
+        taskType: 'QUICK_NOTE' as const,
+        quickNoteCategory: 'Genel',
         priority: priorityMap[analysis.priority] || 'Orta',
         dueDate: analysis.dueDate || undefined,
         tags: tagNames
@@ -128,6 +129,15 @@ export function QuickTaskModal({ isOpen, onClose }: QuickTaskModalProps) {
       
       // Başarı bildirimi göster
       showSuccessNotification()
+      
+      // Modal'ı kapat ve formu temizle
+      setInput("")
+      onClose()
+      
+      // Callback'i çağır
+      if (onTaskCreated) {
+        onTaskCreated()
+      }
       
     } catch (error) {
       // Hata bildirimi göster
