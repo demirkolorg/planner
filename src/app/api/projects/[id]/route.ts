@@ -93,15 +93,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const updatedProject = await db.$transaction(async (tx) => {
+      // Notes sadece tanımlıysa güncelle
+      const updateData: { name: string; emoji: string; notes?: string | null } = {
+        name,
+        emoji
+      }
+      
+      if (notes !== undefined) {
+        updateData.notes = notes
+      }
+      
       const updated = await tx.project.update({
         where: {
           id
         },
-        data: {
-          name,
-          emoji,
-          notes
-        },
+        data: updateData,
         include: {
           _count: {
             select: {

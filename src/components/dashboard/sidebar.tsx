@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2, Type } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2, Type, Folder } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -89,6 +89,15 @@ const cardItems = [
     color: "bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-800/50", 
     activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
     href: ROUTES.BOARD 
+  },
+  { 
+    name: "Projeler", 
+    count: null, 
+    icon: Folder, 
+    activeIcon: FolderKanban, 
+    color: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-800/50", 
+    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/70 dark:to-indigo-900/70 text-blue-800 dark:text-blue-200 border-blue-300/70 dark:border-blue-700/70 shadow-lg shadow-blue-500/10", 
+    href: "/projects" 
   },
 ]
 
@@ -248,6 +257,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
         return tags.length
       case "Pano":
         return getPinnedTasks().length
+      case "Projeler":
+        return projects.length
       default:
         return null
     }

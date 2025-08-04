@@ -530,7 +530,7 @@ export default function ProjectDetailPage() {
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
+            <Link href="/projects">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -552,7 +552,7 @@ export default function ProjectDetailPage() {
         {/* Left: Navigation & Project Info */}
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
+            <Link href="/projects">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
