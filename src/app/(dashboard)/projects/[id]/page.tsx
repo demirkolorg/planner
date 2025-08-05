@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown, Calendar, CalendarClock, Zap, Hash, SortAsc, SortDesc, CalendarDays, FileText } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, FolderClosed, Check, Archive, Trash, ChevronDown, ChevronRight, ArrowUpDown, Calendar, CalendarClock, Zap, Hash, SortAsc, SortDesc, CalendarDays, FileText, Pin, PinOff, MoreHorizontal, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
@@ -18,7 +18,7 @@ import { ProjectTimelineModal } from "@/components/modals/project-timeline-modal
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -155,7 +155,7 @@ export default function ProjectDetailPage() {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
-  const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
+  const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection, toggleProjectPin } = useProjectStore()
   const { 
     fetchTasksByProject, 
     createTask, 
@@ -379,6 +379,20 @@ export default function ProjectDetailPage() {
     
     await deleteProject(projectId)
     router.push("/") // Ana sayfaya yönlendir
+  }
+
+  const handleTogglePin = async () => {
+    if (!project) return
+    
+    try {
+      await toggleProjectPin(project.id)
+      // Projeyi yeniden fetch et (local state güncellenir)
+      await fetchProjectData()
+      toast.success(project.isPinned ? 'Proje sabitleme kaldırıldı' : 'Proje sabitlendi')
+    } catch (error) {
+      console.error('Error toggling pin:', error)
+      toast.error('Pin işlemi başarısız')
+    }
   }
 
   const handleCreateSection = async (name: string) => {
@@ -631,7 +645,7 @@ export default function ProjectDetailPage() {
                   
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="text-xs font-medium">
+                      <span className="text-sm font-medium">
                         {Math.round(((getCompletedTasksCount(projectId) / (getCompletedTasksCount(projectId) + getPendingTasksCount(projectId))) || 0) * 100)}%
                       </span>
                     </TooltipTrigger>
@@ -648,82 +662,9 @@ export default function ProjectDetailPage() {
         {/* Right: Actions */}
         {project && (
           <div className="flex items-center space-x-3">
-            {/* Tamamlananları Göster/Gizle Switch */}
-            <div className="flex items-center space-x-2">
-              <label htmlFor="show-completed" className="text-sm text-muted-foreground">
-                Tamamlananlar
-              </label>
-              <Switch
-                id="show-completed"
-                checked={showCompletedTasks}
-                onCheckedChange={toggleShowCompletedTasks}
-              />
-            </div>
-            
-            {/* Sıralama Dropdown */}
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <ArrowUpDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Sıralama Seçenekleri</p>
-                </TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent align="end" className="w-80">
-                {SORT_OPTIONS.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => setSortOption(option.value as SortOption)}
-                    className={sortOption === option.value ? "bg-accent" : ""}
-                  >
-                    <option.icon className="h-4 w-4 mr-3 text-muted-foreground" />
-                    <span className="flex-1">{option.label}</span>
-                    {sortOption === option.value && (
-                      <Check className="h-4 w-4 ml-2 text-primary" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setIsTimelineModalOpen(true)}
-                >
-                  <Clock className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Proje Zaman Çizelgesi</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/projects/${projectId}/special-fields`}>
-                <FileText className="h-4 w-4 mr-2" />
-                Özel Alanlar
-              </Link>
-            </Button>
-
+            {/* Ana Eylem Butonları */}
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSectionModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Bölüm
-            </Button>
-            
-            <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => {
                 // İlk bölümü default section olarak seç
@@ -736,9 +677,19 @@ export default function ProjectDetailPage() {
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Görev
+              Görev Ekle
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSectionModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Bölüm
             </Button>
             
+            {/* Proje Menüsü - Birleştirilmiş */}
             <DropdownMenu>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -749,14 +700,72 @@ export default function ProjectDetailPage() {
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Proje Ayarları</p>
+                  <p>Proje Menüsü</p>
                 </TooltipContent>
               </Tooltip>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-72">
+                {/* Proje Yönetimi */}
+                <DropdownMenuItem onClick={handleTogglePin}>
+                  {project?.isPinned ? (
+                    <PinOff className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Pin className="h-4 w-4 mr-2" />
+                  )}
+                  {project?.isPinned ? 'Projeyi Sabitleme Kaldır' : 'Projeyi Sabitle'}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
                   <Edit className="h-4 w-4 mr-2" />
                   Projeyi Düzenle
                 </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Proje Araçları */}
+                <DropdownMenuItem onClick={() => setIsTimelineModalOpen(true)}>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Proje Zaman Çizelgesi
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/projects/${projectId}/special-fields`}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Projeye Özel Alanlar
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Görünüm Ayarları */}
+                <DropdownMenuItem onClick={toggleShowCompletedTasks}>
+                  {showCompletedTasks ? (
+                    <EyeOff className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Eye className="h-4 w-4 mr-2" />
+                  )}
+                  {showCompletedTasks ? 'Tamamlanan Görevleri Gizle' : 'Tamamlanan Görevleri Göster'}
+                </DropdownMenuItem>
+                
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                    Görev Sıralama Düzeni
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-80">
+                    {SORT_OPTIONS.map((option) => (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => setSortOption(option.value as SortOption)}
+                        className={sortOption === option.value ? "bg-accent" : ""}
+                      >
+                        <option.icon className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <span className="flex-1">{option.label}</span>
+                        {sortOption === option.value && (
+                          <Check className="h-4 w-4 ml-2 text-primary" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                
                 {!isProtectedProject(project?.name || '') && (
                   <>
                     <DropdownMenuSeparator />
@@ -765,7 +774,7 @@ export default function ProjectDetailPage() {
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Projeyi Sil
+                      Projeyi Kalıcı Olarak Sil
                     </DropdownMenuItem>
                   </>
                 )}
@@ -835,7 +844,7 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center space-x-3 flex-1">
                     <ChevronDown className="h-4 w-4 text-destructive" />
                     <h3 className="text-sm font-medium text-destructive">Süresi Geçmiş Görevler</h3>
-                    <span className="text-xs text-destructive">
+                    <span className="text-sm text-destructive">
                       {getOverdueTasksByProject(projectId).length}
                     </span>
                   </div>
@@ -914,8 +923,8 @@ export default function ProjectDetailPage() {
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-3 flex-1">
                     <ChevronDown className="h-4 w-4 text-secondary" />
-                    <h3 className="text-sm font-medium text-secondary-foreground">Bölümsüz Görevler</h3>
-                    <span className="text-xs text-secondary">
+                    <h3 className="font-medium text-secondary-foreground">Bölümsüz Görevler</h3>
+                    <span className="text-secondary">
                       {getSortedTasksWithoutSection().length}
                     </span>
                   </div>
@@ -1025,14 +1034,14 @@ export default function ProjectDetailPage() {
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
-                      <h3 className="text-sm font-medium">{section.name}</h3>
-                      <span className="text-xs text-muted-foreground">
+                      <h3 className="font-medium">{section.name}</h3>
+                      <span className="text-muted-foreground">
                         {sectionTasks.length}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <div 
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 text-xs font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation()
                           setTaskModalContext({

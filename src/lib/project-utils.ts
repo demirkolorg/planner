@@ -1,7 +1,6 @@
 // Sistem projeleri - silinmemesi, düzenlenmemesi gereken projeler
 export const PROTECTED_PROJECT_NAMES = [
-  'Planner Takvimi',
-  'Hızlı Notlar'
+  // Artık korumalı proje yok
 ] as const
 
 export type ProtectedProjectName = typeof PROTECTED_PROJECT_NAMES[number]

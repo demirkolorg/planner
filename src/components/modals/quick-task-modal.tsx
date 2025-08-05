@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Sparkles, Zap } from "lucide-react"
 import { analyzeQuickTask } from "@/lib/ai-quick-task"
-import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
-import { useTagStore } from "@/store/tagStore"
 
 interface QuickTaskModalProps {
   isOpen: boolean
@@ -20,9 +18,7 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
   const [input, setInput] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   
-  const { projects, createProject, fetchProjects } = useProjectStore()
   const { createTask } = useTaskStore()
-  const { tags, createTag, fetchTags } = useTagStore()
 
   // Modal açıldığında input'a focus
   useEffect(() => {
@@ -33,13 +29,6 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
     }
   }, [isOpen])
 
-  // Modal açıldığında gerekli verileri yükle
-  useEffect(() => {
-    if (isOpen) {
-      fetchProjects()
-      fetchTags()
-    }
-  }, [isOpen, fetchProjects, fetchTags])
 
   // Modal kapandığında temizle
   useEffect(() => {
@@ -48,35 +37,6 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
     }
   }, [isOpen])
 
-  // Hızlı Notlar projesini bul veya oluştur
-  const getOrCreateQuickNotesProject = async () => {
-    // Önce mevcut projeler arasından ara
-    let quickNotesProject = projects.find(p => p.name === "Hızlı Notlar")
-    
-    if (!quickNotesProject) {
-      try {
-        // Yeni proje oluştur
-        const newProject = await createProject("Hızlı Notlar", "📝")
-        
-        // Eğer createProject direkt proje objesi döndürürse onu kullan
-        if (newProject && newProject.id) {
-          return newProject
-        }
-        
-        // Yoksa projeler listesini yenile ve bul
-        await fetchProjects()
-        quickNotesProject = projects.find(p => p.name === "Hızlı Notlar")
-        
-        if (!quickNotesProject) {
-          throw new Error('Proje oluşturuldu ama bulunamadı')
-        }
-      } catch (error) {
-        throw new Error('Hızlı Notlar projesi oluşturulamadı')
-      }
-    }
-    
-    return quickNotesProject
-  }
 
 
   const handleSubmit = async () => {
@@ -93,12 +53,6 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
 
   const processQuickTask = async (title: string) => {
     try {
-      // Hızlı Notlar projesini hazırla
-      const quickNotesProject = await getOrCreateQuickNotesProject()
-      if (!quickNotesProject || !quickNotesProject.id) {
-        throw new Error('Hızlı Notlar projesi oluşturulamadı')
-      }
-
       // AI analizi arka planda yap (başlık hariç diğer veriler için)
       const analysis = await analyzeQuickTask(title)
       
@@ -231,7 +185,7 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
               <span><kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Esc</kbd> Kapat</span>
             </div>
             <div className="text-purple-600 dark:text-purple-400">
-              📝 Hızlı Notlar projesine eklenir
+              📝 Hızlı Not olarak eklenir
             </div>
           </div>
         </div>

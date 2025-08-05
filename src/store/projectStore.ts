@@ -5,6 +5,7 @@ interface Project {
   name: string
   emoji?: string
   notes?: string
+  isPinned: boolean
   userId: string
   createdAt: string
   updatedAt: string
@@ -36,6 +37,7 @@ interface ProjectStore {
   createProject: (name: string, emoji: string) => Promise<Project>
   updateProject: (id: string, name: string, emoji: string) => Promise<void>
   deleteProject: (id: string) => Promise<void>
+  toggleProjectPin: (id: string) => Promise<void>
   
   // Section Actions  
   fetchSections: (projectId: string) => Promise<Section[]>
@@ -144,6 +146,53 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       
       set(state => ({
         projects: state.projects.filter(project => project.id !== id)
+      }))
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'An error occurred' })
+      throw error
+    }
+  },
+
+  toggleProjectPin: async (id: string) => {
+    set({ error: null })
+    try {
+      // Önce local state'i güncelle (optimistic update)
+      const currentProject = get().projects.find(p => p.id === id)
+      if (!currentProject) throw new Error('Project not found')
+      
+      const newPinState = !currentProject.isPinned
+      set(state => ({
+        projects: state.projects.map(project => 
+          project.id === id ? { ...project, isPinned: newPinState } : project
+        )
+      }))
+      
+      // API çağrısını yap
+      const response = await fetch(`/api/projects/${id}/pin`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isPinned: newPinState }),
+      })
+      
+      if (!response.ok) {
+        // Hata durumunda eski state'i geri yükle
+        set(state => ({
+          projects: state.projects.map(project => 
+            project.id === id ? { ...project, isPinned: !newPinState } : project
+          )
+        }))
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to toggle pin')
+      }
+      
+      // API'den gelen güncel projeyi al ve state'i güncelle
+      const updatedProject = await response.json()
+      set(state => ({
+        projects: state.projects.map(project => 
+          project.id === id ? { ...project, ...updatedProject.project } : project
+        )
       }))
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'An error occurred' })

@@ -288,7 +288,7 @@ export default function CalendarTasksPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                  Takvim Görevleri
+                  Google Takvim
                 </h1>
                 <div className="space-y-1">
                   <p className="text-muted-foreground">
@@ -407,10 +407,10 @@ export default function CalendarTasksPage() {
                 <CalendarDays className="h-12 w-12 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
-                Henüz takvim görevi yok
+                Henüz Google Takvim görevi yok
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Google Calendar entegrasyonunu etkinleştirin ve takvim etkinlikleriniz otomatik olarak buraya aktarılsın
+                Google Calendar entegrasyonunu etkinleştirin ve Google Takvim etkinlikleriniz otomatik olarak buraya aktarılsın
               </p>
             </div>
           ) : viewMode === 'week' ? (
@@ -474,7 +474,7 @@ export default function CalendarTasksPage() {
                     {dayTasks.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground bg-muted/10 rounded-lg">
                         <span className="text-2xl mb-2 block">📅</span>
-                        <p className="text-sm">Bu gün için takvim görevi yok</p>
+                        <p className="text-sm">Bu gün için Google Takvim görevi yok</p>
                       </div>
                     ) : (
                       <div className="space-y-2 pl-6">

@@ -61,6 +61,7 @@ export interface Project {
   name: string
   emoji?: string
   notes?: string
+  isPinned: boolean
   userId: string
   user?: User
   tasks?: Task[]

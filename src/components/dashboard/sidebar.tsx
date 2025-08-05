@@ -2,13 +2,12 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Eye, EyeOff, Settings, RefreshCw, Zap, Lightbulb, X, Minimize2, Type, Folder, Calendar, FileText } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Settings, RefreshCw, Zap, Type, Folder, Calendar, FileText } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
 import { FaRegStar, FaStar, FaRegCheckCircle, FaCheckCircle } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -41,7 +40,7 @@ const cardItems = [
     count: 1, 
     icon: FaRegStar, 
     activeIcon: FaStar, 
-    color: "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/70 dark:to-teal-900/70 text-emerald-800 dark:text-emerald-200 border-emerald-300/70 dark:border-emerald-700/70 shadow-lg shadow-emerald-500/10", 
     href: ROUTES.TODAY 
   },
@@ -50,7 +49,7 @@ const cardItems = [
     count: 3, 
     icon: RiCalendarScheduleLine, 
     activeIcon: RiCalendarScheduleFill, 
-    color: "bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 text-violet-700 dark:text-violet-300 border-violet-200/50 dark:border-violet-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/70 dark:to-purple-900/70 text-violet-800 dark:text-violet-200 border-violet-300/70 dark:border-violet-700/70 shadow-lg shadow-violet-500/10", 
     href: ROUTES.SCHEDULED 
   },
@@ -59,7 +58,7 @@ const cardItems = [
     count: null, 
     icon: FaRegCheckCircle, 
     activeIcon: FaCheckCircle, 
-    color: "bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-950/50 dark:to-lime-950/50 text-green-700 dark:text-green-300 border-green-200/50 dark:border-green-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-900/70 dark:to-lime-900/70 text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/70 shadow-lg shadow-green-500/10", 
     href: ROUTES.COMPLETED 
   },
@@ -68,7 +67,7 @@ const cardItems = [
     count: null, 
     icon: CalendarX, 
     activeIcon: CalendarX, 
-    color: "bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/50 dark:to-rose-950/50 text-red-700 dark:text-red-300 border-red-200/50 dark:border-red-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/70 dark:to-rose-900/70 text-red-800 dark:text-red-200 border-red-300/70 dark:border-red-700/70 shadow-lg shadow-red-500/10", 
     href: ROUTES.OVERDUE 
   },
@@ -77,7 +76,7 @@ const cardItems = [
     count: 2, 
     icon: PiTagSimpleBold, 
     activeIcon: PiTagSimpleFill, 
-    color: "bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/50 text-amber-700 dark:text-amber-300 border-amber-200/50 dark:border-amber-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/70 dark:to-yellow-900/70 text-amber-800 dark:text-amber-200 border-amber-300/70 dark:border-amber-700/70 shadow-lg shadow-amber-500/10", 
     href: ROUTES.TAGS 
   },
@@ -86,16 +85,16 @@ const cardItems = [
     count: 2, 
     icon: BsPin, 
     activeIcon: BsFillPinFill, 
-    color: "bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-700 dark:text-rose-300 border-rose-200/50 dark:border-rose-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
     href: ROUTES.BOARD 
   },
   { 
-    name: "Takvim Görevleri", 
+    name: "Google Takvim", 
     count: null, 
     icon: Calendar, 
     activeIcon: Calendar, 
-    color: "bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-950/50 dark:to-teal-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200/50 dark:border-cyan-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-900/70 dark:to-teal-900/70 text-cyan-800 dark:text-cyan-200 border-cyan-300/70 dark:border-cyan-700/70 shadow-lg shadow-cyan-500/10", 
     href: "/calendar-tasks", 
     taskType: 'CALENDAR'
@@ -105,7 +104,7 @@ const cardItems = [
     count: null, 
     icon: FileText, 
     activeIcon: FileText, 
-    color: "bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/50 dark:to-red-950/50 text-orange-700 dark:text-orange-300 border-orange-200/50 dark:border-orange-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/70 dark:to-red-900/70 text-orange-800 dark:text-orange-200 border-orange-300/70 dark:border-orange-700/70 shadow-lg shadow-orange-500/10", 
     href: "/quick-notes", 
     taskType: 'QUICK_NOTE'
@@ -115,7 +114,7 @@ const cardItems = [
     count: null, 
     icon: Folder, 
     activeIcon: FolderKanban, 
-    color: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-800/50", 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
     activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/70 dark:to-indigo-900/70 text-blue-800 dark:text-blue-200 border-blue-300/70 dark:border-blue-700/70 shadow-lg shadow-blue-500/10", 
     href: "/projects" 
   },
@@ -136,8 +135,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const [isFontSizeModalOpen, setIsFontSizeModalOpen] = useState(false)
-  const [showCompletedProjects, setShowCompletedProjects] = useState(true)
-  const [isInspirationExpanded, setIsInspirationExpanded] = useState(true)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
   const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
@@ -145,20 +142,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const { theme, setTheme } = useThemeStore()
   const { isConnected: googleCalendarConnected, lastSyncAt, isSyncing, setLastSyncAt, setIsSyncing, updateSyncStatus } = useGoogleCalendarStore()
 
-  // İlham kartının durumunu localStorage'dan yükle
-  useEffect(() => {
-    const savedState = localStorage.getItem('inspirationExpanded')
-    if (savedState !== null) {
-      setIsInspirationExpanded(JSON.parse(savedState))
-    }
-  }, [])
-
-  // İlham kartının durumunu localStorage'a kaydet
-  const toggleInspirationExpanded = () => {
-    const newState = !isInspirationExpanded
-    setIsInspirationExpanded(newState)
-    localStorage.setItem('inspirationExpanded', JSON.stringify(newState))
-  }
 
   useEffect(() => {
     Promise.all([
@@ -239,27 +222,18 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     return projectTasks.every(task => task.completed)
   }, [tasks, projects])
 
-  // Projeleri sırala ve filtrele - Sistem projelerini çıkar
-  const sortedProjects = useMemo(() => {
+  // Sabitlenmiş projeleri filtrele ve sırala
+  const pinnedProjects = useMemo(() => {
     let filteredProjects = [...projects]
     
-    // Sistem projelerini çıkar
-    filteredProjects = filteredProjects.filter(project => 
-      !isProtectedProject(project.name)
-    )
-    
-    // Tamamlanan projeleri gizle seçeneği aktifse filtrele
-    if (!showCompletedProjects) {
-      filteredProjects = filteredProjects.filter(project => 
-        !isProjectCompleted(project.id)
-      )
-    }
+    // Sadece sabitlenmiş projeleri göster
+    filteredProjects = filteredProjects.filter(project => project.isPinned)
     
     // Alfabetik sıralama
     return filteredProjects.sort((a, b) => {
       return a.name.localeCompare(b.name, 'tr')
     })
-  }, [projects, showCompletedProjects, isProjectCompleted])
+  }, [projects])
 
   // Dinamik sayıları hesapla
   const getDynamicCount = (itemName: string, taskType?: string) => {
@@ -277,8 +251,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       case "Pano":
         return getPinnedTasks().length
       case "Projeler":
-        return projects.length
-      case "Takvim Görevleri":
+        return pinnedProjects.length
+      case "Google Takvim":
         // Calendar task'ları say
         return tasks.filter(task => task.taskType === 'CALENDAR' && !task.completed).length
       case "Hızlı Notlar":
@@ -329,17 +303,17 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       
       {isOpen && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Add Task and Search Buttons */}
-          <div className="px-4 pt-2 pb-3">
-            <div className="flex gap-2">
+          {/* Add Task and Search Buttons - Compact */}
+          <div className="px-4 pt-2 pb-2">
+            <div className="flex gap-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     size="sm"
-                    className="flex-1 px-3 py-2 font-medium"
+                    className="flex-1 px-2 py-1.5 text-xs font-medium h-8"
                     onClick={() => setIsTaskModalOpen(true)}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
                     Görev Ekle
                   </Button>
                 </TooltipTrigger>
@@ -353,10 +327,10 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <Button
                     size="sm"
                     variant="outline"
-                    className="px-2"
+                    className="px-1.5 h-8 w-8"
                     onClick={() => setIsQuickTaskModalOpen(true)}
                   >
-                    <Zap className="h-4 w-4" />
+                    <Zap className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -369,10 +343,10 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <Button
                     size="sm"
                     variant="outline"
-                    className="px-2"
+                    className="px-1.5 h-8 w-8"
                     onClick={() => onOpenSearch?.()}
                   >
-                    <Search className="h-4 w-4" />
+                    <Search className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -383,9 +357,9 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
             </div>
           </div>
 
-          {/* Navigation Cards */}
+          {/* Navigation Cards - Compact Design */}
           <div className="p-4 pb-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {cardItems.map((item) => {
                 const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
@@ -395,54 +369,36 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "p-3 rounded-xl border transition-all duration-300 hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5",
+                      "p-2 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01]",
                       pathname === item.href ? item.activeColor : item.color
                     )}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-1">
                       {pathname === item.href ? (
-                        <item.activeIcon className="h-5 w-5" />
+                        <item.activeIcon className="h-4 w-4" />
                       ) : (
-                        <item.icon className="h-5 w-5" />
+                        <item.icon className="h-4 w-4" />
                       )}
                       {displayCount !== null && (
-                        <span className="text-sm font-medium">{displayCount}</span>
+                        <span className="text-xs font-semibold">{displayCount}</span>
                       )}
                     </div>
-                    <div className="mt-1 text-sm font-medium">{item.name}</div>
+                    <div className="text-xs font-medium leading-tight">{item.name}</div>
                   </Link>
                 )
               })}
             </div>
           </div>
           
-          {/* Projects Section */}
-          <div className="px-4 pb-2 pt-4">
-            <div className="flex items-center justify-between mb-3 px-2 border-b border-gray-300 dark:border-gray-600 pb-2 text-primary">
-              <h3 className="text-sm font-medium ">Projeler</h3>
-              <div className="flex items-center space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="h-4 w-4 cursor-pointer hover:opacity-70 transition-opacity"
-                      onClick={() => setShowCompletedProjects(!showCompletedProjects)}
-                    >
-                      {showCompletedProjects ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{showCompletedProjects ? "Tamamlanan projeleri gizle" : "Tamamlanan projeleri göster"}</p>
-                  </TooltipContent>
-                </Tooltip>
-                
+          {/* Projects Section - Compact */}
+          <div className="px-4 pb-1 pt-2">
+            <div className="flex items-center justify-between mb-2 px-2 border-b border-gray-300 dark:border-gray-600 pb-1.5 text-primary">
+              <h3 className="text-xs font-medium uppercase tracking-wide">Projeler</h3>
+              <div className="flex items-center space-x-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Plus 
-                      className="h-4 w-4 cursor-pointer hover:opacity-70 transition-opacity" 
+                      className="h-3.5 w-3.5 cursor-pointer hover:opacity-70 transition-opacity" 
                       onClick={() => setIsProjectModalOpen(true)}
                     />
                   </TooltipTrigger>
@@ -456,8 +412,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
           
           {/* Scrollable Projects List */}
           <div className="flex-1 px-4 overflow-y-auto">
-            <div className="space-y-1 pb-2">
-              {sortedProjects.map((project) => {
+            <div className="space-y-0.5 pb-2">
+              {pinnedProjects.map((project) => {
                 // TaskStore'dan bekleyen görev sayısını al
                 const pendingCount = getPendingTasksCount(project.id)
                 // API'den gelen sayı
@@ -471,24 +427,24 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <Link
                     key={project.id}
                     href={`/projects/${project.id}`}
-                    className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                    className="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
                       {project.emoji ? (
-                        <span className="text-sm">{project.emoji}</span>
+                        <span className="text-sm flex-shrink-0">{project.emoji}</span>
                       ) : (
-                        <div className="w-3 h-3 rounded-full bg-primary" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0" />
                       )}
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{project.name}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{project.name}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1.5 flex-shrink-0">
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{displayCount}</span>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div>
                             <CircularProgress 
                               percentage={completionPercentage} 
-                              size={16} 
+                              size={14} 
                               strokeWidth={2} 
                             />
                           </div>
@@ -594,7 +550,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
 
           {/* Collapsed Projects */}
           <div className="flex-1 p-2 space-y-2 overflow-y-auto">
-            {sortedProjects.map((project) => {
+            {pinnedProjects.map((project) => {
               const completionPercentage = getProjectCompletionPercentage(project.id)
               
               return (
@@ -625,107 +581,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
         </div>
       )}
       
-      {/* Günün İlhamı - Sadece açık sidebar'da görünsün */}
-      {isOpen && (
-        <div className="px-4 pb-4">
-          {isInspirationExpanded ? (
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
-              {/* Animated Background Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 group-hover:from-indigo-500/15 group-hover:via-purple-500/15 group-hover:to-pink-500/15 transition-all duration-300" />
-              
-              {/* Decorative Elements */}
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-indigo-200/20 to-transparent rounded-bl-full" />
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full group-hover:scale-110 transition-transform duration-300" />
-              <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-gradient-to-tr from-indigo-400/20 to-purple-400/20 rounded-full group-hover:scale-110 transition-transform duration-300" />
-              
-              {/* Floating Particles Effect */}
-              <div className="absolute top-1/4 left-1/4 w-0.5 h-0.5 bg-indigo-400/40 rounded-full animate-pulse" />
-              <div className="absolute top-3/4 right-1/3 w-1 h-1 bg-purple-400/40 rounded-full animate-pulse delay-300" />
-              <div className="absolute bottom-1/3 left-2/3 w-0.5 h-0.5 bg-pink-400/40 rounded-full animate-pulse delay-700" />
-              
-              {/* Toggle Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleInspirationExpanded}
-                    className="absolute top-2 right-2 h-6 w-6 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 shadow-sm z-10"
-                  >
-                    <Minimize2 className="h-3 w-3 text-gray-600 dark:text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Küçült</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <CardContent className="relative p-4">
-                <div className="space-y-3">
-                  {/* Header */}
-                  <div className="flex items-center space-x-2">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur-sm opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
-                      <div className="relative p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300">
-                        <Lightbulb className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                        Günün İlhamı
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Motivasyon & İlham
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Quote Content - Compact */}
-                  <div className="relative">
-                    <div className="absolute -left-1 -top-1 text-lg text-indigo-300/30 dark:text-indigo-600/30 font-serif">
-                      "
-                    </div>
-                    <div className="absolute -right-1 -bottom-1 text-lg text-purple-300/30 dark:text-purple-600/30 font-serif rotate-180">
-                      "
-                    </div>
-                    <blockquote className="relative text-xs font-medium text-gray-700 dark:text-gray-200 leading-relaxed text-center px-2 py-1">
-                      Her bir tık, hedefinize bir adım daha yaklaşmanız demektir. Ağaçkakan gibi kararlı olun.
-                    </blockquote>
-                  </div>
-                  
-                  {/* Author - Compact */}
-                  <div className="flex items-center justify-center space-x-1 pt-1">
-                    <div className="w-4 h-0.5 bg-gradient-to-r from-transparent via-indigo-300 to-transparent" />
-                    <cite className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 not-italic">
-                      Planner Ağaçkakanı
-                    </cite>
-                    <div className="w-4 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            /* Minimal Icon Button */
-            <div className="flex justify-start">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleInspirationExpanded}
-                    className="h-10 w-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md hover:shadow-lg transition-all duration-300"
-                  >
-                    <Lightbulb className="h-4 w-4 text-white" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Günün İlhamı - Genişlet</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-        </div>
-      )}
       
       {/* Bottom Actions Section */}
       <div className="p-2 space-y-2">

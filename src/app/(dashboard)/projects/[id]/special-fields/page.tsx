@@ -124,25 +124,33 @@ export default function SpecialFieldsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={`/projects/${projectId}`}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">
-            {project?.name ? `${project.name} - Özel Alanlar` : "Özel Alanlar"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {customFields.length} özel alan
-          </p>
+      {/* Header - Anasayfa stilinde */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={`/projects/${projectId}`}>
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          
+          <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg">
+            <FileText className="h-7 w-7 text-white" />
+          </div>
+          
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
+              Özel Alanlar
+            </h1>
+            <p className="text-base text-muted-foreground font-medium">
+              {project?.name && (
+                <span className="font-semibold text-foreground">{project.name}</span>
+              )} • {customFields.length} özel alan tanımlanmış
+            </p>
+          </div>
         </div>
 
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={() => setIsModalOpen(true)} size="lg">
+          <Plus className="h-5 w-5 mr-2" />
           Yeni Özel Alan
         </Button>
       </div>
@@ -153,8 +161,8 @@ export default function SpecialFieldsPage() {
           <div className="p-4 rounded-lg mx-auto mb-4 w-fit bg-muted/50">
             <FileText className="h-12 w-12 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Bu projede henüz özel alan yok</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          <h3 className="text-2xl font-semibold mb-2">Bu projede henüz özel alan yok</h3>
+          <p className="text-base text-muted-foreground mb-6 max-w-md mx-auto">
             İlk özel alanınızı ekleyerek projeniz hakkında detay bilgileri saklayabilirsiniz
           </p>
           <Button onClick={() => setIsModalOpen(true)} size="lg">
@@ -165,7 +173,7 @@ export default function SpecialFieldsPage() {
       ) : (
         <div className="rounded-lg border">
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 border-b text-sm font-medium text-muted-foreground">
+          <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 border-b text-base font-medium text-muted-foreground">
             <div className="col-span-3">Özel Alan Adı</div>
             <div className="col-span-7">Değeri</div>
             <div className="col-span-2 text-center">İşlemler</div>
@@ -180,18 +188,18 @@ export default function SpecialFieldsPage() {
               >
                 {/* Özel Alan Adı */}
                 <div className="col-span-3 flex items-center">
-                  <div className="font-medium text-sm truncate">
+                  <div className="text-base font-medium truncate">
                     {field.key}
                   </div>
                 </div>
                 
                 {/* Değeri */}
                 <div className="col-span-7 flex items-start py-1">
-                  <div className="text-sm break-words">
+                  <div className="text-base break-words">
                     {field.value.length > 200 ? (
                       <div>
                         <p className="line-clamp-3">{field.value}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-sm text-muted-foreground mt-2">
                           {field.value.length} karakter - Tam görünüm için düzenle
                         </p>
                       </div>

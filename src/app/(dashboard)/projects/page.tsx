@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Edit, Trash2, MoreVertical, Eye, EyeOff, FolderKanban, Search, Filter } from "lucide-react"
+import { Plus, Edit, Trash2, MoreVertical, Eye, EyeOff, FolderKanban, Search, Filter, Pin, PinOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
@@ -22,6 +22,7 @@ interface Project {
   name: string
   emoji?: string
   notes?: string
+  isPinned: boolean
   createdAt: string
   updatedAt: string
   _count: {
@@ -41,7 +42,7 @@ export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all")
   
-  const { deleteProject, createProject, updateProject } = useProjectStore()
+  const { deleteProject, createProject, updateProject, toggleProjectPin } = useProjectStore()
   const { 
     getProjectCompletionPercentage, 
     getPendingTasksCount, 
@@ -165,6 +166,16 @@ export default function ProjectsPage() {
 
   const handleProjectClick = (projectId: string) => {
     router.push(`/projects/${projectId}`)
+  }
+
+  const handleTogglePin = async (project: Project) => {
+    try {
+      await toggleProjectPin(project.id)
+      toast.success(project.isPinned ? 'Proje sabitleme kaldırıldı' : 'Proje sabitlendi')
+    } catch (error) {
+      console.error('Error toggling pin:', error)
+      toast.error('Pin işlemi başarısız')
+    }
   }
 
   if (isLoading) {
@@ -294,7 +305,7 @@ export default function ProjectsPage() {
         ) : (
           <div className="rounded-lg border">
             {/* Tablo Header */}
-            <div className="grid grid-cols-12 gap-2 p-4 bg-muted/50 border-b text-sm font-medium text-muted-foreground">
+            <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/50 border-b text-sm font-medium text-muted-foreground">
               <div className="col-span-6">Proje</div>
               <div className="col-span-2 text-center">Görevler</div>
               <div className="col-span-2 text-center">İlerleme</div>
@@ -315,26 +326,26 @@ export default function ProjectsPage() {
                   <div
                     key={project.id}
                     className={cn(
-                      "grid grid-cols-12 gap-2 p-4 hover:bg-muted/50 transition-colors cursor-pointer",
+                      "grid grid-cols-12 gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer",
                       isCompleted && "opacity-75"
                     )}
                     onClick={() => handleProjectClick(project.id)}
                   >
                     {/* Proje Bilgisi */}
-                    <div className="col-span-6 flex items-center space-x-3">
+                    <div className="col-span-6 flex items-center space-x-2">
                       <div className="flex-shrink-0">
                         {project.emoji ? (
-                          <span className="text-2xl">{project.emoji}</span>
+                          <span className="text-xl">{project.emoji}</span>
                         ) : (
-                          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                            <FolderKanban className="h-4 w-4 text-primary" />
+                          <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <FolderKanban className="h-3.5 w-3.5 text-primary" />
                           </div>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-medium truncate">{project.name}</h3>
+                        <h3 className="text-sm font-medium truncate">{project.name}</h3>
                         {project.notes && (
-                          <p className="text-sm text-muted-foreground truncate">
+                          <p className="text-xs text-muted-foreground truncate">
                             {project.notes}
                           </p>
                         )}
@@ -353,11 +364,11 @@ export default function ProjectsPage() {
                     
                     {/* İlerleme */}
                     <div className="col-span-2 flex items-center justify-center">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1.5">
                         <CircularProgress 
                           percentage={completionPercentage} 
-                          size={24} 
-                          strokeWidth={3}
+                          size={20} 
+                          strokeWidth={2.5}
                         />
                         <span className="text-sm font-medium">
                           %{completionPercentage}
@@ -368,7 +379,7 @@ export default function ProjectsPage() {
                     {/* Durum */}
                     <div className="col-span-1 flex items-center justify-center">
                       <span className={cn(
-                        "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+                        "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium",
                         isCompleted 
                           ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
                           : pendingCount > 0
@@ -392,6 +403,18 @@ export default function ProjectsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            handleTogglePin(project)
+                          }}>
+                            {project.isPinned ? (
+                              <PinOff className="h-4 w-4 mr-2" />
+                            ) : (
+                              <Pin className="h-4 w-4 mr-2" />
+                            )}
+                            {project.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation()
                             setEditingProject(project)

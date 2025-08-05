@@ -28,29 +28,6 @@ export async function POST(request: NextRequest) {
 
     // Transaction içinde varsayılan projeleri oluştur
     await db.$transaction(async (tx) => {
-      // "Hızlı Notlar" projesi yoksa oluştur
-      if (!projectNames.includes("Hızlı Notlar")) {
-        const quickNotesProject = await tx.project.create({
-          data: {
-            name: "Hızlı Notlar",
-            emoji: "📝",
-            notes: "Günlük notlarınız, ani fikirleriniz ve hatırlatmalarınız için hızlı erişim alanı. Aklınıza gelen her şeyi buraya kaydedebilirsiniz.",
-            userId: userId,
-          },
-        })
-
-        // "Hızlı Notlar" için "Genel" bölümü oluştur
-        await tx.section.create({
-          data: {
-            name: "Genel",
-            projectId: quickNotesProject.id,
-            order: 0,
-          },
-        })
-
-        results.push("Hızlı Notlar projesi oluşturuldu")
-      }
-
       // "Gelen Kutusu" projesi yoksa oluştur
       if (!projectNames.includes("Gelen Kutusu")) {
         const inboxProject = await tx.project.create({

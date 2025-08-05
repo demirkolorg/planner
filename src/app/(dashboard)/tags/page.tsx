@@ -257,20 +257,27 @@ export default function TagsPage() {
   }
 
   return (
-    <>
-      <div className="flex h-[calc(100vh-120px)] gap-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center space-x-4">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg">
+          <PiTagSimpleFill className="h-7 w-7 text-white" />
+        </div>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Etiketler</h1>
+          <p className="text-sm text-muted-foreground">
+            Görev etiketlerini yönetin ve düzenleyin
+          </p>
+        </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Yeni Etiket
+        </Button>
+      </div>
+
+      <div className="flex h-[calc(100vh-180px)] gap-6">
         {/* Sol sütun - Tag listesi (20% genişlik) */}
         <div className="w-1/5 flex flex-col space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <PiTagSimpleFill className="h-6 w-6 text-amber-600" />
-              <h1 className="text-xl font-bold">Etiketler</h1>
-            </div>
-            <Button onClick={() => setIsModalOpen(true)} size="sm" className="gap-1">
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
 
           {/* Etiket arama kutusu */}
           <div className="relative">
@@ -647,6 +654,6 @@ export default function TagsPage() {
         onMove={handleMoveTask}
         task={taskToMove}
       />
-    </>
+    </div>
   )
 }

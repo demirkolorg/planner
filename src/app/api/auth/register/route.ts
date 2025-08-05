@@ -76,43 +76,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Default "Hızlı Notlar" projesini oluştur
-      const quickNotesProject = await tx.project.create({
-        data: {
-          name: "Hızlı Notlar",
-          emoji: "📝",
-          notes: "Günlük notlarınız, ani fikirleriniz ve hatırlatmalarınız için hızlı erişim alanı. Aklınıza gelen her şeyi buraya kaydedebilirsiniz.",
-          userId: user.id,
-        },
-      });
-
-      // "Hızlı Notlar" için "Genel" bölümü oluştur
-      await tx.section.create({
-        data: {
-          name: "Genel",
-          projectId: quickNotesProject.id,
-          order: 0,
-        },
-      });
-
-      // Default "Planner Takvimi" projesini oluştur
-      const inboxProject = await tx.project.create({
-        data: {
-          name: "Planner Takvimi",
-          emoji: "📅",
-          notes: "🔄 Google Calendar ile otomatik senkronize olan özel proje. Google Calendar'daki etkinlikler buraya görev olarak aktarılır.",
-          userId: user.id,
-        },
-      });
-
-      // "Planner Takvimi" için "Genel" bölümü oluştur
-      await tx.section.create({
-        data: {
-          name: "Genel",
-          projectId: inboxProject.id,
-          order: 0,
-        },
-      });
 
       // Default "Kişisel" etiketini oluştur
       await tx.tag.create({
