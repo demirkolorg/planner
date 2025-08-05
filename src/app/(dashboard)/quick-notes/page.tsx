@@ -38,7 +38,7 @@ export default function QuickNotesPage() {
     refreshTaskCommentCount,
   } = useTaskStore()
 
-  const { projects, fetchProjects } = useProjectStore()
+  const { fetchProjects } = useProjectStore()
   const { fetchTags } = useTagStore()
 
   const quickNoteTasks = getQuickNoteTasks()

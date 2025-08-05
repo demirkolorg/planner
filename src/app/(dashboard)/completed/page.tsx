@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle2, Folder, Tag, Flag, ArrowRight, Calendar, ChevronDown } from "lucide-react"
+import { CheckCircle2, Folder, Tag, Flag, ArrowRight, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { useTaskStore } from "@/store/taskStore"

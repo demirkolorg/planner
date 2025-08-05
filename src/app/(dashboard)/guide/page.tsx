@@ -1,6 +1,10 @@
 "use client"
 
-import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye, FileText } from "lucide-react"
+import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye, CalendarX, StickyNote, Folder } from "lucide-react"
+import { RiCalendarScheduleLine } from "react-icons/ri"
+import { PiTagSimpleBold } from "react-icons/pi"
+import { FaRegStar, FaRegCheckCircle } from "react-icons/fa"
+import { BsPin } from "react-icons/bs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -117,42 +121,122 @@ const keyboardShortcuts = [
   { key: "Tab", description: "Form elemanları arasında gezinir", category: "Genel" }
 ]
 
-const newFeatures = [
+
+const sidebarPages = [
   {
-    title: "Google Calendar Entegrasyonu",
-    description: "Görevlerinizi Google Calendar ile senkronize edin",
-    icon: RefreshCw,
-    color: "text-red-600",
-    bgColor: "bg-red-50 dark:bg-red-950/20",
-    version: "v2.1.0",
-    isNew: true
+    category: "Standart Hiyerarşik Sayfalar",
+    description: "HierarchicalTaskList bileşeni kullanır, tam alt görev desteği",
+    bgColor: "bg-green-50 dark:bg-green-950/20",
+    borderColor: "border-green-200 dark:border-green-800",
+    pages: [
+      {
+        name: "Bugün",
+        icon: FaRegStar,
+        route: "/today",
+        purpose: "Günlük odaklanma için bugün bitiş tarihi olan görevleri görüntüler",
+        filter: "task.dueDate === today && !task.completed",
+        display: "Hiyerarşik ağaç yapısı, proje/etiket/öncelik grupları",
+        hierarchy: "Tam destek - alt görev ekleme, tree connectors",
+        features: ["Bugün odaklı filtreleme", "Dinamik sayı hesaplama", "Görünüm modları"],
+        scenarios: ["Günlük görev planlaması", "Acil görevlerin takibi", "Günlük hedeflerin belirlenmesi"]
+      },
+      {
+        name: "Bu Hafta", 
+        icon: RiCalendarScheduleLine,
+        route: "/thisweek",
+        purpose: "Haftalık planlama için bu hafta bitiş tarihi olan görevleri takvim görünümünde gösterir",
+        filter: "isTaskDueInCurrentWeek(task.dueDate)",
+        display: "Haftalık takvim + hiyerarşik görev listeleri, gün bazlı gruplandırma",
+        hierarchy: "Tam destek - her gün içinde hiyerarşik yapı",
+        features: ["Haftalık progress bar", "Gün bazlı istatistikler", "Gecikmiş görev vurgulama"],
+        scenarios: ["Haftalık iş planlaması", "Toplantı hazırlıkları", "Dönemsel görev takibi"]
+      },
+      {
+        name: "Tamamlandı",
+        icon: FaRegCheckCircle,
+        route: "/completed", 
+        purpose: "Başarı takibi için tamamlanan görevleri bugün/hafta/ay gruplarında gösterir",
+        filter: "task.completed === true",
+        display: "Zaman bazlı gruplandırma + hiyerarşik yapı",
+        hierarchy: "Tam destek - tamamlanan alt görevler parent altında",
+        features: ["Zaman bazlı filtreleme", "Tamamlanma istatistikleri", "Başarı özeti"],
+        scenarios: ["İlerleme takibi", "Performans değerlendirmesi", "Motivasyon artırma"]
+      },
+      {
+        name: "Gecikmiş",
+        icon: CalendarX,
+        route: "/overdue",
+        purpose: "Kritik takip için bitiş tarihi geçmiş tamamlanmamış görevleri gösterir",
+        filter: "task.dueDate < today && !task.completed",
+        display: "Gecikme süresine göre renkli kodlama + hiyerarşik yapı",
+        hierarchy: "Tam destek - gecikmiş alt görevler parent altında",
+        features: ["Gecikme süresi hesaplama", "Kritik görev vurgulama", "Aciliyet sıralaması"],
+        scenarios: ["Acil müdahale gereken görevler", "Risk yönetimi", "Öncelik belirleme"]
+      },
+      {
+        name: "Etiketler",
+        icon: PiTagSimpleBold,
+        route: "/tags",
+        purpose: "Kategorisel organizasyon için etiketli görevleri yönetir ve filtreler",
+        filter: "task.tags.includes(selectedTag)",
+        display: "Etiket listesi + seçilen etiketteki hiyerarşik görevler",
+        hierarchy: "Tam destek - etiketli alt görev varsa parent'ı da gösterir",
+        features: ["Etiket yönetimi", "Renk kodlaması", "Kök görev bulma algoritması"],
+        scenarios: ["Kategorisel görev takibi", "Departman bazlı organizasyon", "Proje etiketleme"]
+      },
+      {
+        name: "Pano",
+        icon: BsPin,
+        route: "/board",
+        purpose: "Hızlı erişim için sabitlenmiş (pinned) görevleri gösterir",
+        filter: "task.isPinned === true", 
+        display: "Öncelik sırasına göre hiyerarşik yapı",
+        hierarchy: "Tam destek - sabitlenmiş alt görevler parent altında",
+        features: ["Pin/unpin toggle", "Öncelik bazlı sıralama", "Hızlı erişim"],
+        scenarios: ["Önemli görev vurgulama", "Günlük takip", "VIP görev listesi"]
+      },
+      {
+        name: "Projeler",
+        icon: Folder,
+        route: "/projects",
+        purpose: "Kapsamlı proje yönetimi - section bazlı organizasyon ve tam hiyerarşik yapı",
+        filter: "task.projectId === selectedProject",
+        display: "Section accordion + hiyerarşik görev listeleri, sıralama seçenekleri",
+        hierarchy: "En detaylı hiyerarşik yapı - 4 seviye derinlik",
+        features: ["Section yönetimi", "Sıralama seçenekleri", "Proje notları", "Timeline görünümü"],
+        scenarios: ["Büyük proje yönetimi", "Ekip koordinasyonu", "Detaylı planlama"]
+      }
+    ]
   },
   {
-    title: "AI Destekli Etiket Önerileri",
-    description: "Görev içeriğine göre otomatik etiket önerileri alın",
-    icon: Brain,
-    color: "text-violet-600",
-    bgColor: "bg-violet-50 dark:bg-violet-950/20",
-    version: "v2.0.5",
-    isNew: true
-  },
-  {
-    title: "Gelişmiş Ayarlar Sayfası",
-    description: "Yeniden tasarlanan tab bazlı ayarlar arayüzü",
-    icon: Settings,
-    color: "text-gray-600",
-    bgColor: "bg-gray-50 dark:bg-gray-950/20",
-    version: "v2.1.0",
-    isNew: true
-  },
-  {
-    title: "Keyboard Shortcuts",
-    description: "Hızlı erişim için klavye kısayolları desteği",
-    icon: Keyboard,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50 dark:bg-blue-950/20",
-    version: "v2.0.0",
-    isNew: false
+    category: "Özel Görünüm Sayfaları", 
+    description: "TaskCard bileşeni kullanır, düz liste görünümü",
+    bgColor: "bg-orange-50 dark:bg-orange-950/20",
+    borderColor: "border-orange-200 dark:border-orange-800",
+    pages: [
+      {
+        name: "Google Takvim",
+        icon: Calendar,
+        route: "/calendar-tasks",
+        purpose: "Google Calendar entegrasyonu - takvim etkinliklerini görev olarak yönetir",
+        filter: "task.taskType === 'CALENDAR'",
+        display: "Haftalık/aylık takvim görünümü, TaskCard düz listesi",
+        hierarchy: "YOK - Google Calendar kısıtı nedeniyle hiyerarşi desteklenmiyor",
+        features: ["Takvim görünümü", "İki yönlü senkronizasyon", "Zaman çakışma kontrolü"],
+        scenarios: ["Toplantı yönetimi", "Takvim entegrasyonu", "Etkinlik takibi"]
+      },
+      {
+        name: "Hızlı Notlar", 
+        icon: StickyNote,
+        route: "/quick-notes",
+        purpose: "Basit not sistemi - hızlı görev/hatırlatma oluşturma",
+        filter: "task.taskType === 'QUICK_NOTE'",
+        display: "Basit liste görünümü, TaskCard düz sıralama",
+        hierarchy: "YOK - Tasarım kararı olarak basit yapı tercih edildi",
+        features: ["Hızlı ekleme", "Minimal arayüz", "Not tarzı görevler"],
+        scenarios: ["Hızlı not alma", "Günlük hatırlatmalar", "Basit görev listesi"]
+      }
+    ]
   }
 ]
 
@@ -221,11 +305,16 @@ export default function GuidePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="quickstart" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-8">
             <TabsTrigger value="quickstart" className="flex items-center space-x-2">
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">Hızlı Başlangıç</span>
               <span className="sm:hidden">Başlangıç</span>
+            </TabsTrigger>
+            <TabsTrigger value="pages" className="flex items-center space-x-2">
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Sayfa Rehberi</span>
+              <span className="sm:hidden">Sayfa</span>
             </TabsTrigger>
             <TabsTrigger value="features" className="flex items-center space-x-2">
               <Star className="h-4 w-4" />
@@ -303,6 +392,149 @@ export default function GuidePage() {
                       Ayarları Yapılandırın
                     </Link>
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Sayfa Rehberi Tab */}
+          <TabsContent value="pages" className="space-y-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Sayfa Rehberi</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                Sidebar&apos;daki her sayfanın amacını, görev filtreleme mantığını ve kullanım senaryolarını öğrenin
+              </p>
+            </div>
+
+            <div className="space-y-8">
+              {sidebarPages.map((category) => (
+                <div key={category.category} className={`rounded-xl ${category.bgColor} ${category.borderColor} border p-6`}>
+                  <div className="mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      {category.category}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      {category.description}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {category.pages.map((page) => (
+                      <Card key={page.name} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="p-2 rounded-lg bg-primary/10">
+                              <page.icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <CardTitle className="text-lg flex items-center justify-between">
+                                {page.name}
+                                <Badge variant="outline" className="text-xs font-mono">
+                                  {page.route}
+                                </Badge>
+                              </CardTitle>
+                            </div>
+                          </div>
+                          <CardDescription className="text-sm leading-relaxed">
+                            {page.purpose}
+                          </CardDescription>
+                        </CardHeader>
+                        
+                        <CardContent className="space-y-4">
+                          {/* Filtre Mantığı */}
+                          <div>
+                            <h5 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 flex items-center">
+                              <Search className="h-4 w-4 mr-2" />
+                              Filtre Mantığı
+                            </h5>
+                            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                              {page.filter}
+                            </code>
+                          </div>
+
+                          {/* Görüntüleme */}
+                          <div>
+                            <h5 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 flex items-center">
+                              <Eye className="h-4 w-4 mr-2" />
+                              Görüntüleme
+                            </h5>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {page.display}
+                            </p>
+                          </div>
+
+                          {/* Hiyerarşi */}
+                          <div>
+                            <h5 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 flex items-center">
+                              <BarChart3 className="h-4 w-4 mr-2" />
+                              Alt Görev Desteği
+                            </h5>
+                            <p className={`text-sm ${page.hierarchy.includes('YOK') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                              {page.hierarchy}
+                            </p>
+                          </div>
+
+                          {/* Özellikler */}
+                          <div>
+                            <h5 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 flex items-center">
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Özellikler
+                            </h5>
+                            <div className="flex flex-wrap gap-1">
+                              {page.features.map((feature, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Kullanım Senaryoları */}
+                          <div>
+                            <h5 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 flex items-center">
+                              <Target className="h-4 w-4 mr-2" />
+                              Kullanım Senaryoları
+                            </h5>
+                            <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                              {page.scenarios.map((scenario, index) => (
+                                <li key={index} className="flex items-start space-x-2">
+                                  <div className="w-1 h-1 bg-primary rounded-full mt-2 flex-shrink-0" />
+                                  <span>{scenario}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Teknik Notlar */}
+            <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+              <CardContent className="py-6">
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Brain className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                      Teknik Detaylar
+                    </h3>
+                    <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                      <p>
+                        <strong>HierarchicalTaskList:</strong> Tam hiyerarşik yapı, tree connectors, expand/collapse, alt görev ekleme
+                      </p>
+                      <p>
+                        <strong>TaskCard:</strong> Düz liste görünümü, hiyerarşi yok, basit kart yapısı
+                      </p>
+                      <p>
+                        <strong>Sidebar Sayıları:</strong> Her kartın sağ üst köşesindeki sayılar ilgili filtreleme mantığına göre hesaplanır
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -399,7 +631,7 @@ export default function GuidePage() {
                           <div>
                             <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
                             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                              <li>• Proje sabitleme sistemi - sadece sabitlenmiş projeler sidebar'da gösteriliyor</li>
+                              <li>• Proje sabitleme sistemi - sadece sabitlenmiş projeler sidebar&apos;da gösteriliyor</li>
                               <li>• Optimistic UI - tüm değişiklikler anlık olarak yansıyor</li>
                               <li>• Sidebar kartlarında: Projeler → toplam proje sayısı, liste → bekleyen görev sayısı</li>
                               <li>• Sidebar kapalı konumda tüm ayarlar tek dropdown menüde toplanıyor</li>
@@ -420,8 +652,8 @@ export default function GuidePage() {
                           <div>
                             <h5 className="font-medium text-card-foreground text-sm mb-1">🛠️ Teknik</h5>
                             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                              <li>• Project store'da toggleProjectPin fonksiyonu optimistic UI ile çalışıyor</li>
-                              <li>• Sistem projelerden "Hızlı Notlar" ve "Planner Takvimi" kaldırıldı</li>
+                              <li>• Project store&apos;da toggleProjectPin fonksiyonu optimistic UI ile çalışıyor</li>
+                              <li>• Sistem projelerden &quot;Hızlı Notlar&quot; ve &quot;Planner Takvimi&quot; kaldırıldı</li>
                               <li>• Next.js 15 async params desteği eklendi</li>
                               <li>• DropdownMenuSeparator import hatası düzeltildi</li>
                             </ul>
@@ -444,7 +676,7 @@ export default function GuidePage() {
                           <div>
                             <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
                             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                              <li>• Hızlı görev ekleme butonu (⚡) sidebar'a eklendi</li>
+                              <li>• Hızlı görev ekleme butonu (⚡) sidebar&apos;a eklendi</li>
                               <li>• Ocean teması renk seçeneklerine eklendi</li>
                               <li>• Google Calendar ayarları 2 sütunlu tasarıma geçirildi</li>
                               <li>• Görev ekleme butonlarında tooltip ile kısayol bilgileri</li>
@@ -485,7 +717,7 @@ export default function GuidePage() {
                           <div>
                             <h5 className="font-medium text-card-foreground text-sm mb-1">🔧 İyileştirmeler</h5>
                             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                              <li>• Görev kartı indentasyon 24px'den 48px'e çıkarıldı</li>
+                              <li>• Görev kartı indentasyon 24px&apos;den 48px&apos;e çıkarıldı</li>
                               <li>• Alt görev ekleme kısıtlamaları uygulandı</li>
                             </ul>
                           </div>

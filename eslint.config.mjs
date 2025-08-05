@@ -18,6 +18,8 @@ const eslintConfig = [
       "prisma/migrations/**/*",
       "node_modules/**/*",
     ],
+  },
+  {
     rules: {
       // Deploy için geçici olarak devre dışı
       "@typescript-eslint/no-unused-vars": "warn",
