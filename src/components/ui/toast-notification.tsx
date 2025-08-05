@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { CheckCircle, AlertCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ToastNotificationProps {}
 
 interface ToastMessage {

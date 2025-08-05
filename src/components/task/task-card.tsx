@@ -111,29 +111,22 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Force expand prop
   forceExpand = false
 }, ref) => {
-  
-  // Task validation
-  if (!task || !task.id) {
-    return null
-  }
-  // İç expansion state (eski davranış için fallback)
+  // Hook'ları erken çağır (early return'den önce)
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
   const [isTimelineOpen, setIsTimelineOpen] = useState(false)
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
   const [isToggling, setIsToggling] = useState(false)
-  const [optimisticCompleted, setOptimisticCompleted] = useState(task.completed)
+  const [optimisticCompleted, setOptimisticCompleted] = useState(task?.completed || false)
   const [isHovered, setIsHovered] = useState(false)
   const pathname = usePathname()
-
-  // External prop'lar varsa onları kullan, yoksa internal state'i kullan
-  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
-  const hasChildren = externalHasChildren !== undefined ? externalHasChildren : (task.subTasks && task.subTasks.length > 0)
   
   // Task completed state'i task prop'undan gelen değer ile senkronize et
   React.useEffect(() => {
-    setOptimisticCompleted(task.completed)
-  }, [task.completed])
+    if (task?.completed !== undefined) {
+      setOptimisticCompleted(task.completed)
+    }
+  }, [task?.completed])
   
   // Force expand useEffect with scroll
   React.useEffect(() => {
@@ -150,6 +143,15 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       }, 100) // Small delay to allow expansion animation
     }
   }, [forceExpand, externalIsExpanded, ref])
+  
+  // Task validation
+  if (!task || !task.id) {
+    return null
+  }
+
+  // External prop'lar varsa onları kullan, yoksa internal state'i kullan
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
+  const hasChildren = externalHasChildren !== undefined ? externalHasChildren : (task.subTasks && task.subTasks.length > 0)
   
   // Görünen completed değeri (optimistic veya gerçek)
   const displayCompleted = optimisticCompleted

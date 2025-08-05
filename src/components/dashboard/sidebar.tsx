@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Palette, Settings, RefreshCw, Zap, Type, Folder, Calendar, FileText } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Settings, RefreshCw, Zap, Type, Folder, Calendar, FileText } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -21,7 +21,6 @@ import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
-import { ColorThemeModal } from "@/components/modals/color-theme-modal"
 import { FontSizeModal } from "@/components/modals/font-size-modal"
 import { isProtectedProject } from "@/lib/project-utils"
 import {
@@ -134,7 +133,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
-  const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false)
   const [isFontSizeModalOpen, setIsFontSizeModalOpen] = useState(false)
   const { projects, fetchProjects, createProject } = useProjectStore()
   const { tags, fetchTags } = useTagStore()
@@ -622,21 +620,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setIsColorThemeModalOpen(true)}
-                    className="h-9 w-9"
-                  >
-                    <Palette className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Renk Teması</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
                     onClick={() => setIsFontSizeModalOpen(true)}
                     className="h-9 w-9"
                   >
@@ -751,12 +734,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                       {theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}
                     </DropdownMenuItem>
                     
-                    {/* Renk Teması */}
-                    <DropdownMenuItem onClick={() => setIsColorThemeModalOpen(true)} className="flex items-center gap-2">
-                      <Palette className="h-4 w-4" />
-                      Renk Teması
-                    </DropdownMenuItem>
-                    
                     {/* Font Boyutu */}
                     <DropdownMenuItem onClick={() => setIsFontSizeModalOpen(true)} className="flex items-center gap-2">
                       <Type className="h-4 w-4" />
@@ -824,11 +801,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
         onSave={handleCreateTask}
-      />
-      
-      <ColorThemeModal
-        isOpen={isColorThemeModalOpen}
-        onClose={() => setIsColorThemeModalOpen(false)}
       />
       
       <QuickTaskModal
