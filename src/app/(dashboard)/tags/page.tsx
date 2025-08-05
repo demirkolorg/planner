@@ -343,14 +343,14 @@ export default function TagsPage() {
             {!isLoading && filteredTags.length > 0 && filteredTags.map((tag) => (
               <div 
                 key={tag.id} 
-                className={`group relative overflow-hidden rounded-md border cursor-pointer transition-all duration-200 hover:shadow-sm ${
+                className={`group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-200 ${
                   selectedTagId === tag.id 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' 
-                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-500 shadow-lg shadow-blue-500/20 ring-2 ring-blue-200 dark:ring-blue-800' 
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
                 }`}
                 onClick={() => setSelectedTagId(tag.id)}
                 style={selectedTagId === tag.id ? {
-                  background: `linear-gradient(135deg, ${tag.color}10 0%, ${tag.color}05 100%)`
+                  background: `linear-gradient(135deg, ${tag.color}20 0%, ${tag.color}10 100%)`
                 } : {}}
               >
                 <div className="p-2">
@@ -409,76 +409,50 @@ export default function TagsPage() {
         <div className="flex-1 flex flex-col space-y-4">
           {selectedTag ? (
             <>
-              {/* Seçilen tag header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: selectedTag.color + '20' }}>
-                    <PiTagSimpleFill
-                      className="w-6 h-6"
-                      style={{ color: selectedTag.color }}
-                    />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">{selectedTag.name}</h2>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <span className="flex items-center space-x-1 text-green-600 dark:text-green-400">
-                        <Check className="h-3 w-3" />
-                        <span>{selectedTagId ? getCompletedTasksCountByTag(selectedTagId) : 0} tamamlandı</span>
-                      </span>
-                      <span className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
-                        <Clock className="h-3 w-3" />
-                        <span>{selectedTagId ? getPendingTasksCountByTag(selectedTagId) : 0} bekleyen</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Filtreler ve arama */}
-              <div className="bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/30 rounded-xl p-4 backdrop-blur-sm">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Görevlerde ara..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 h-9 rounded-lg"
-                    />
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Görevlerde ara..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-9"
+                  />
+                </div>
 
-                  <div className="flex gap-2">
-                    <Select value={sortBy} onValueChange={(value: "date" | "priority" | "project") => setSortBy(value)}>
-                      <SelectTrigger className="w-40 h-9 rounded-lg">
-                        <SelectValue placeholder="Sıralama" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">📅 Tarihe göre</SelectItem>
-                        <SelectItem value="priority">🔥 Önceliğe göre</SelectItem>
-                        <SelectItem value="project">📁 Projeye göre</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="flex gap-2">
+                  <Select value={sortBy} onValueChange={(value: "date" | "priority" | "project") => setSortBy(value)}>
+                    <SelectTrigger className="w-40 h-9">
+                      <SelectValue placeholder="Sıralama" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">📅 Tarihe göre</SelectItem>
+                      <SelectItem value="priority">🔥 Önceliğe göre</SelectItem>
+                      <SelectItem value="project">📁 Projeye göre</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                    <Select value={filterBy} onValueChange={(value: "all" | "pending" | "completed") => setFilterBy(value)}>
-                      <SelectTrigger className="w-32 h-9 rounded-lg">
-                        <SelectValue placeholder="Filtrele" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">🔍 Tümü</SelectItem>
-                        <SelectItem value="pending">⏳ Bekleyen</SelectItem>
-                        <SelectItem value="completed">✅ Tamamlanan</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <Select value={filterBy} onValueChange={(value: "all" | "pending" | "completed") => setFilterBy(value)}>
+                    <SelectTrigger className="w-32 h-9">
+                      <SelectValue placeholder="Filtrele" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">🔍 Tümü</SelectItem>
+                      <SelectItem value="pending">⏳ Bekleyen</SelectItem>
+                      <SelectItem value="completed">✅ Tamamlanan</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                    <Button
-                      variant={showCompletedTasks ? "default" : "outline"}
-                      size="sm"
-                      onClick={toggleShowCompletedTasks}
-                      className="h-9 px-4 rounded-lg"
-                    >
-                      {showCompletedTasks ? "✅ Gizle" : "👀 Göster"}
-                    </Button>
-                  </div>
+                  <Button
+                    variant={showCompletedTasks ? "default" : "outline"}
+                    size="sm"
+                    onClick={toggleShowCompletedTasks}
+                    className="h-9 px-4"
+                  >
+                    {showCompletedTasks ? "✅ Gizle" : "👀 Göster"}
+                  </Button>
                 </div>
               </div>
 

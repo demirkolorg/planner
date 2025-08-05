@@ -28,6 +28,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -251,7 +252,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       case "Pano":
         return getPinnedTasks().length
       case "Projeler":
-        return pinnedProjects.length
+        return projects.length
       case "Google Takvim":
         // Calendar task'ları say
         return tasks.filter(task => task.taskType === 'CALENDAR' && !task.completed).length
@@ -414,12 +415,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
           <div className="flex-1 px-4 overflow-y-auto">
             <div className="space-y-0.5 pb-2">
               {pinnedProjects.map((project) => {
-                // TaskStore'dan bekleyen görev sayısını al
+                // Sadece bekleyen görev sayısını göster
                 const pendingCount = getPendingTasksCount(project.id)
-                // API'den gelen sayı
-                const apiCount = project._count?.tasks || 0
-                // Eğer taskStore'da görevler yüklendiyse pending sayısını kullan, yoksa API'den gelen sayıyı kullan
-                const displayCount = tasks.length > 0 ? pendingCount : apiCount
                 
                 const completionPercentage = getProjectCompletionPercentage(project.id)
                 
@@ -438,7 +435,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                       <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{project.name}</span>
                     </div>
                     <div className="flex items-center space-x-1.5 flex-shrink-0">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{displayCount}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{pendingCount}</span>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div>
@@ -721,132 +718,88 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
             </div>
           </>
         ) : (
-          /* Collapsed state - vertical icon stack */
-          <div className="flex flex-col items-center space-y-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  className="h-9 w-9"
-                >
-                  <Link href="/guide">
-                    <Info className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Kullanım Kılavuzu</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleTheme}
-                  className="h-9 w-9"
-                >
-                  {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsColorThemeModalOpen(true)}
-                  className="h-9 w-9"
-                >
-                  <Palette className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Renk Teması</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsFontSizeModalOpen(true)}
-                  className="h-9 w-9"
-                >
-                  <Type className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Font Boyutu</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Google Calendar Sync Button - Collapsed */}
-            {googleCalendarConnected && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleGoogleCalendarSync}
-                    disabled={isSyncing}
-                    className="h-9 w-9"
-                  >
-                    <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <div className="text-center">
-                    <p className="font-medium">Google Calendar Sync</p>
-                    {lastSyncAt ? (
-                      <p className="text-xs text-muted-foreground">
-                        Son sync: {new Date(lastSyncAt).toLocaleString('tr-TR')}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Henüz sync yapılmamış</p>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            
-            
+          /* Collapsed state - single settings dropdown */
+          <div className="flex flex-col items-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-9 w-9 rounded-full">
-                      <User className="h-4 w-4" />
+                    <Button variant="ghost" className="h-9 w-9">
+                      <Settings className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <div className="flex items-center justify-start gap-2 p-2">
+                  <DropdownMenuContent align="end" side="right">
+                    {/* Kullanıcı Bilgisi */}
+                    <div className="flex items-center justify-start gap-2 p-2 border-b">
                       <div className="flex flex-col space-y-1 leading-none">
                         <p className="font-medium">{user?.firstName} {user?.lastName}</p>
                         <p className="text-sm text-muted-foreground">{user?.email}</p>
                       </div>
                     </div>
+                    
+                    {/* Kılavuz */}
+                    <DropdownMenuItem asChild>
+                      <Link href="/guide" className="flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        Kullanım Kılavuzu
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    {/* Tema Değiştir */}
+                    <DropdownMenuItem onClick={toggleTheme} className="flex items-center gap-2">
+                      {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                      {theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}
+                    </DropdownMenuItem>
+                    
+                    {/* Renk Teması */}
+                    <DropdownMenuItem onClick={() => setIsColorThemeModalOpen(true)} className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Renk Teması
+                    </DropdownMenuItem>
+                    
+                    {/* Font Boyutu */}
+                    <DropdownMenuItem onClick={() => setIsFontSizeModalOpen(true)} className="flex items-center gap-2">
+                      <Type className="h-4 w-4" />
+                      Font Boyutu
+                    </DropdownMenuItem>
+                    
+                    {/* Google Calendar Sync */}
+                    {googleCalendarConnected && (
+                      <DropdownMenuItem 
+                        onClick={handleGoogleCalendarSync} 
+                        disabled={isSyncing} 
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+                        Google Calendar Sync
+                        {lastSyncAt && (
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {new Date(lastSyncAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuSeparator />
+                    
+                    {/* Profil */}
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Profil
                       </Link>
                     </DropdownMenuItem>
+                    
+                    {/* Ayarlar */}
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="flex items-center gap-2">
                         <Settings className="h-4 w-4" />
                         Ayarlar
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                    
+                    {/* Çıkış */}
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 dark:text-red-400">
                       <LogOut className="h-4 w-4" />
                       Çıkış Yap
                     </DropdownMenuItem>
@@ -854,7 +807,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 </DropdownMenu>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Kullanıcı Menüsü</p>
+                <p>Ayarlar & Menü</p>
               </TooltipContent>
             </Tooltip>
           </div>

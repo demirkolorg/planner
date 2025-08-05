@@ -212,7 +212,7 @@ export default function GuidePage() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="outline" className="hidden sm:flex">
-                v2.1.0
+                v1.3.0
               </Badge>
             </div>
           </div>
@@ -374,7 +374,7 @@ export default function GuidePage() {
                     <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
                     <h3 className="text-lg font-semibold text-foreground">Güncel Sürüm</h3>
                   </div>
-                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.2.0</Badge>
+                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.3.0</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   En son güncellemeyi kullanıyorsunuz. Tüm yeni özellikler ve iyileştirmeler aktif durumda.
@@ -386,14 +386,59 @@ export default function GuidePage() {
                 <h3 className="text-lg font-semibold text-card-foreground mb-6">Sürüm Geçmişi</h3>
                 
                 <div className="space-y-6">
-                  {/* v1.2.0 */}
+                  {/* v1.3.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.3.0</h4>
+                          <Badge variant="secondary" className="text-xs">5 Ağustos 2025</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Proje sabitleme sistemi - sadece sabitlenmiş projeler sidebar'da gösteriliyor</li>
+                              <li>• Optimistic UI - tüm değişiklikler anlık olarak yansıyor</li>
+                              <li>• Sidebar kartlarında: Projeler → toplam proje sayısı, liste → bekleyen görev sayısı</li>
+                              <li>• Sidebar kapalı konumda tüm ayarlar tek dropdown menüde toplanıyor</li>
+                              <li>• Cyberpunk tarzı agresif sidebar tasarımı (sonra geri alındı)</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🔧 İyileştirmeler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Proje detay sayfası header butonları reorganize edildi - 6 buton → 3 element</li>
+                              <li>• Special fields sayfası header tasarımı diğer sayfalarla uyumlu hale getirildi</li>
+                              <li>• Font boyutları tüm sayfalarda standartlaştırıldı</li>
+                              <li>• Etiketler sayfasında header kaldırıldı, filtre kısmı sade yapıldı</li>
+                              <li>• Seçili etiket daha belirgin görünümle vurgulanıyor</li>
+                              <li>• Sidebar compact tasarıma geçirildi - daha az alan kaplıyor</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🛠️ Teknik</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Project store'da toggleProjectPin fonksiyonu optimistic UI ile çalışıyor</li>
+                              <li>• Sistem projelerden "Hızlı Notlar" ve "Planner Takvimi" kaldırıldı</li>
+                              <li>• Next.js 15 async params desteği eklendi</li>
+                              <li>• DropdownMenuSeparator import hatası düzeltildi</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* v1.2.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.2.0</h4>
-                          <Badge variant="secondary" className="text-xs">1 Ağustos 2025</Badge>
+                          <Badge variant="outline" className="text-xs">1 Ağustos 2025</Badge>
                         </div>
                         <div className="space-y-3">
                           <div>
