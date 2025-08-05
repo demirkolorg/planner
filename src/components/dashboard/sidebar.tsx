@@ -394,7 +394,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
           {/* Projects Section - Compact */}
           <div className="px-4 pb-1 pt-2">
             <div className="flex items-center justify-between mb-2 px-2 border-b border-gray-300 dark:border-gray-600 pb-1.5 text-primary">
-              <h3 className="text-xs font-medium uppercase tracking-wide">Projeler</h3>
+              <h3 className="text-xs font-medium uppercase tracking-wide">Sabitlenmiş Projeler</h3>
               <div className="flex items-center space-x-1">
                 <Tooltip>
                   <TooltipTrigger asChild>

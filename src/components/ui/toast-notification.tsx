@@ -16,6 +16,21 @@ interface ToastMessage {
 export function ToastNotification({}: ToastNotificationProps) {
   const [toasts, setToasts] = useState<ToastMessage[]>([])
 
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id))
+  }, [])
+
+  const addToast = useCallback((toast: ToastMessage) => {
+    setToasts(prev => [...prev, toast])
+
+    // Auto remove after duration
+    if (toast.duration) {
+      setTimeout(() => {
+        removeToast(toast.id)
+      }, toast.duration)
+    }
+  }, [removeToast])
+
   useEffect(() => {
     const handleSuccess = (event: CustomEvent) => {
       addToast({
@@ -43,21 +58,6 @@ export function ToastNotification({}: ToastNotificationProps) {
       window.removeEventListener('quickTaskError', handleError as EventListener)
     }
   }, [addToast])
-
-  const addToast = useCallback((toast: ToastMessage) => {
-    setToasts(prev => [...prev, toast])
-
-    // Auto remove after duration
-    if (toast.duration) {
-      setTimeout(() => {
-        removeToast(toast.id)
-      }, toast.duration)
-    }
-  }, [removeToast])
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
-  }, [])
 
   if (toasts.length === 0) return null
 
