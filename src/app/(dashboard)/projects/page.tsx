@@ -54,7 +54,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchProjectsData()
     fetchTasks()
-  }, [])
+  }, [fetchTasks])
 
   const fetchProjectsData = async () => {
     try {

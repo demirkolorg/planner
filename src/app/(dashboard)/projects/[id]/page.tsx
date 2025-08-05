@@ -300,7 +300,7 @@ export default function ProjectDetailPage() {
     }
     
     fetchProjectData()
-  }, [projectId])
+  }, [projectId, fetchProjectData, projects])
 
   // Expand task effect - görevler yüklendikten sonra çalışsın
   useEffect(() => {
@@ -340,7 +340,7 @@ export default function ProjectDetailPage() {
       }
       setOpenSections(sectionsToOpen)
     }
-  }, [sectionIds.length, getOverdueTasksCountByProject, projectId, getSortedTasksWithoutSection]) // openSections.length kaldırıldı - infinite loop prevention
+  }, [sectionIds, openSections.length, getOverdueTasksCountByProject, projectId, getSortedTasksWithoutSection])
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {

@@ -105,7 +105,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       if (tags.length === 0) fetchTags()
       if (projects.length === 0) fetchProjects()
     }
-  }, [isOpen]) // Sadece isOpen dependency'si
+  }, [isOpen, tags.length, projects.length, fetchTags, fetchProjects])
 
   // Modal açıldığında form state'ini initialize et
   useEffect(() => {

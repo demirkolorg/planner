@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { CheckCircle, AlertCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -42,9 +42,9 @@ export function ToastNotification({}: ToastNotificationProps) {
       window.removeEventListener('quickTaskSuccess', handleSuccess as EventListener)
       window.removeEventListener('quickTaskError', handleError as EventListener)
     }
-  }, [])
+  }, [addToast])
 
-  const addToast = (toast: ToastMessage) => {
+  const addToast = useCallback((toast: ToastMessage) => {
     setToasts(prev => [...prev, toast])
 
     // Auto remove after duration
@@ -53,11 +53,11 @@ export function ToastNotification({}: ToastNotificationProps) {
         removeToast(toast.id)
       }, toast.duration)
     }
-  }
+  }, [removeToast])
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
-  }
+  }, [])
 
   if (toasts.length === 0) return null
 

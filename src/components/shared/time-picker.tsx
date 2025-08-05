@@ -52,7 +52,7 @@ export function TimePicker({ initialTime, onSave, onCancel, position, isModal = 
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isModal, onCancel])
+  }, [isModal, onCancel, handleSave])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

@@ -222,7 +222,7 @@ export default function SettingsPage() {
     return () => {
       clearTimeout(loadingTimeout)
     }
-  }, [updateSyncStatus])
+  }, [updateSyncStatus, isInitialLoading])
 
   // Google Calendar bağla
   const handleConnectGoogle = async () => {

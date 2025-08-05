@@ -250,7 +250,7 @@ export default function TagDetailPage() {
     }
 
     fetchTagAndTasks()
-  }, [tagId, fetchTasksByTag, fetchProjects])
+  }, [tagId, fetchTasksByTag, fetchProjects, allTasks])
 
   if (isLoading && !tag) {
     return (
