@@ -15,8 +15,6 @@ export const TaskActivityTypes = {
   MOVED: "moved",
   DELETED: "deleted",
   SUBTASK_ADDED: "subtask_added",
-  REMINDER_ADDED: "reminder_added",
-  REMINDER_REMOVED: "reminder_removed",
   CLONED: "cloned",
   TITLE_CHANGED: "title_changed",
   DESCRIPTION_CHANGED: "description_changed"
@@ -90,10 +88,6 @@ export function getActivityDescription(
       return "Görev silindi"
     case TaskActivityTypes.SUBTASK_ADDED:
       return `Alt görev eklendi: ${newValue}`
-    case TaskActivityTypes.REMINDER_ADDED:
-      return `Hatırlatıcı eklendi: ${newValue}`
-    case TaskActivityTypes.REMINDER_REMOVED:
-      return `Hatırlatıcı kaldırıldı: ${oldValue}`
     case TaskActivityTypes.CLONED:
       return "Görev klonlandı"
     case TaskActivityTypes.TITLE_CHANGED:

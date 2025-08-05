@@ -30,7 +30,6 @@ export interface AITaskSuggestion {
   priority?: string
   tags?: string[]
   dueDate?: string | null
-  reminders?: string[]
 }
 
 // Rastgele değer seçimi için yardımcı fonksiyonlar
@@ -76,45 +75,6 @@ const getRandomDueDate = (parentTaskDueDate?: Date | null): string | null => {
   return dueDate.toISOString()
 }
 
-const getRandomReminders = (dueDate?: string | null, parentTaskDueDate?: Date | null): string[] => {
-  if (!dueDate || Math.random() > 0.5) return [] // %50 olasılık
-  
-  const due = new Date(dueDate)
-  const reminders: string[] = []
-  
-  // Rastgele hatırlatıcılar ekle
-  const options = [
-    new Date(due.getTime() - 24 * 60 * 60 * 1000), // 1 gün önce
-    new Date(due.getTime() - 2 * 60 * 60 * 1000),  // 2 saat önce
-    new Date(due.getTime() - 60 * 60 * 1000),      // 1 saat önce
-  ]
-  
-  const numReminders = Math.floor(Math.random() * 2) + 1 // 1-2 hatırlatıcı
-  for (let i = 0; i < numReminders && i < options.length; i++) {
-    const reminderDate = options[i]
-    
-    // Parent task kontrolü - hatırlatıcı parent task'ın bitiş tarihinden sonra olamaz
-    if (parentTaskDueDate) {
-      const parentEndOfDay = parentTaskDueDate.getHours() === 0 && parentTaskDueDate.getMinutes() === 0
-        ? new Date(parentTaskDueDate.getFullYear(), parentTaskDueDate.getMonth(), parentTaskDueDate.getDate(), 23, 59, 59)
-        : parentTaskDueDate
-      
-      if (reminderDate > parentEndOfDay) {
-        continue // Bu hatırlatıcıyı atla
-      }
-    }
-    
-    reminders.push(reminderDate.toLocaleString('tr-TR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }))
-  }
-  
-  return reminders
-}
 
 export async function generateTaskSuggestion(
   prompt: string, 
@@ -169,7 +129,6 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
     const randomPriority = getRandomPriority()
     const randomTags = getRandomTags(availableTags)
     const randomDueDate = getRandomDueDate(parentTaskDueDate)
-    const randomReminders = getRandomReminders(randomDueDate, parentTaskDueDate)
     
     return {
       title: parsedResult.title || prompt,
@@ -177,7 +136,6 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
       priority: randomPriority,
       tags: randomTags,
       dueDate: randomDueDate,
-      reminders: randomReminders
     }
   } catch (error) {
     console.error('Cerebras AI error:', error)
@@ -185,7 +143,6 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
     const fallbackPriority = getRandomPriority()
     const fallbackTags = getRandomTags(availableTags)
     const fallbackDueDate = getRandomDueDate(parentTaskDueDate)
-    const fallbackReminders = getRandomReminders(fallbackDueDate, parentTaskDueDate)
     
     // Daha akıllı fallback title oluştur
     const smartTitle = prompt.includes(' ') 
@@ -200,7 +157,6 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
       priority: fallbackPriority,
       tags: fallbackTags,
       dueDate: fallbackDueDate,
-      reminders: fallbackReminders
     }
   }
 }

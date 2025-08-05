@@ -158,10 +158,6 @@ export function convertTaskToCalendarEvent(task: Task) {
         date: dateStr,
       },
       colorId,
-      reminders: {
-        useDefault: false,
-        overrides: getPriorityReminders(task.priority),
-      },
     }
   } else {
     // Timed event olarak oluştur
@@ -179,10 +175,6 @@ export function convertTaskToCalendarEvent(task: Task) {
         timeZone: 'Europe/Istanbul',
       },
       colorId,
-      reminders: {
-        useDefault: false,
-        overrides: getPriorityReminders(task.priority),
-      },
     }
   }  
 }
@@ -229,28 +221,6 @@ function getPriorityColor(priority: string): string {
   }
 }
 
-// Priority'ye göre hatırlatıcılar
-function getPriorityReminders(priority: string) {
-  switch (priority) {
-    case 'CRITICAL':
-      return [
-        { method: 'popup', minutes: 60 },
-        { method: 'popup', minutes: 15 },
-      ]
-    case 'HIGH':
-      return [
-        { method: 'popup', minutes: 30 },
-      ]
-    case 'MEDIUM':
-      return [
-        { method: 'popup', minutes: 15 },
-      ]
-    default:
-      return [
-        { method: 'popup', minutes: 10 },
-      ]
-  }
-}
 
 // Token yenileme
 export async function refreshAccessToken(refreshToken: string): Promise<string | null> {

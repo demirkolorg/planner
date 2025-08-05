@@ -116,13 +116,6 @@ export default function ProjectDetailPage() {
         color: string
       }
     }>
-    reminders?: Array<{
-      id: string
-      taskId: string
-      datetime: Date
-      message?: string
-      isActive: boolean
-    }>
   } | null>(null)
   
   // Task edit handler
@@ -144,13 +137,6 @@ export default function ProjectDetailPage() {
         color: string
       }
     }>
-    reminders?: Array<{
-      id: string
-      taskId: string
-      datetime: Date
-      message?: string
-      isActive: boolean
-    }>
   }) => {
     setEditingTask(task)
     setIsTaskModalOpen(true)
@@ -170,7 +156,6 @@ export default function ProjectDetailPage() {
     toggleTaskPin,
     addSubTask,
     updateTaskTags,
-    updateTaskReminders,
     showCompletedTasks,
     toggleShowCompletedTasks,
     getCompletedTasksCount,
@@ -893,14 +878,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to update priority:', error)
                     }
                   }}
-                  onUpdateReminders={async (taskId, reminders) => {
-                    try {
-                      await updateTaskReminders(taskId, reminders)
-                    } catch (error) {
-                      console.error('Failed to update reminders:', error)
-                    }
-                  }}
-                  onComment={handleCommentTask}
+                                    onComment={handleCommentTask}
                   showTreeConnectors={true}
                   enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
@@ -997,14 +975,7 @@ export default function ProjectDetailPage() {
                       console.error('Failed to update priority:', error)
                     }
                   }}
-                  onUpdateReminders={async (taskId, reminders) => {
-                    try {
-                      await updateTaskReminders(taskId, reminders)
-                    } catch (error) {
-                      console.error('Failed to update reminders:', error)
-                    }
-                  }}
-                  onComment={handleCommentTask}
+                                    onComment={handleCommentTask}
                   showTreeConnectors={true}
                   enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
@@ -1196,13 +1167,6 @@ export default function ProjectDetailPage() {
                           await updateTask(taskId, { priority })
                         } catch (error) {
                           console.error('Failed to update priority:', error)
-                        }
-                      }}
-                      onUpdateReminders={async (taskId, reminders) => {
-                        try {
-                          await updateTaskReminders(taskId, reminders)
-                        } catch (error) {
-                          console.error('Failed to update reminders:', error)
                         }
                       }}
                       onComment={handleCommentTask}

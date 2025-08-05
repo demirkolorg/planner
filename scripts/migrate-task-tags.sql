@@ -1,23 +1,12 @@
 -- Migration script to move existing task-tag relationships to junction table
 
--- First, create TaskTag and Reminder tables if they don't exist
+-- First, create TaskTag table if it doesn't exist
 CREATE TABLE IF NOT EXISTS "TaskTag" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "taskId" TEXT NOT NULL,
     "tagId" TEXT NOT NULL,
     CONSTRAINT "TaskTag_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "TaskTag_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "Tag" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS "Reminder" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "taskId" TEXT NOT NULL,
-    "datetime" TIMESTAMP(3) NOT NULL,
-    "message" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Reminder_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Add unique constraint on TaskTag

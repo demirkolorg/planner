@@ -56,10 +56,6 @@ const getActivityIcon = (actionType: string) => {
       return { icon: Trash2, color: "text-red-500" }
     case "subtask_added":
       return { icon: Plus, color: "text-green-500" }
-    case "reminder_added":
-      return { icon: Bell, color: "text-blue-500" }
-    case "reminder_removed":
-      return { icon: Minus, color: "text-red-500" }
     case "cloned":
       return { icon: Copy, color: "text-purple-500" }
     case "title_changed":
@@ -115,10 +111,6 @@ const getActivityTypeLabel = (actionType: string): string => {
       return "Silindi"
     case "subtask_added":
       return "Alt Görev Eklendi"
-    case "reminder_added":
-      return "Hatırlatıcı Eklendi"
-    case "reminder_removed":
-      return "Hatırlatıcı Kaldırıldı"
     case "cloned":
       return "Klonlandı"
     case "title_changed":

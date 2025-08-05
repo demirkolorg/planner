@@ -62,7 +62,6 @@ const createMockTask = (overrides = {}) => ({
       }
     }
   ],
-  reminders: [
     {
       id: "reminder-1",
       taskId: "mock-task-1",
@@ -159,7 +158,6 @@ const generateMockTasks = () => {
       level,
       dueDate: hasDate ? new Date(Date.now() + (Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString() : undefined,
       tags: selectedTags,
-      reminders: Math.random() > 0.6 ? [{
         id: `reminder-${index + 1}`,
         taskId: `mock-task-${index + 1}`,
         datetime: new Date(Date.now() + (Math.random() * 3 * 24 * 60 * 60 * 1000)),
@@ -229,7 +227,6 @@ export default function TasksPage() {
           tag: { id: "tag-id-2", name: "İş", color: "#3b82f6" }
         }
       ] : [],
-      reminders: hasReminders ? [
         {
           id: "reminder-1",
           taskId: "mock-task-1",
@@ -360,7 +357,6 @@ export default function TasksPage() {
     setPriority(priority)
   }
 
-  const handleUpdateReminders = (taskId: string, reminders: string[]) => {
   }
 
   return (
@@ -686,7 +682,6 @@ export default function TasksPage() {
                     onAddSubTask={handleAddSubTask}
                     onUpdateTags={handleUpdateTags}
                     onUpdatePriority={handleUpdatePriority}
-                    onUpdateReminders={handleUpdateReminders}
                     onComment={handleCommentTask}
                   />
                 </div>
@@ -715,7 +710,6 @@ export default function TasksPage() {
                         onAddSubTask={(parentTaskId) => {}}
                         onUpdateTags={(taskId, tags) => {}}
                         onUpdatePriority={(taskId, priority) => {}}
-                        onUpdateReminders={(taskId, reminders) => {}}
                       />
                     ))}
                   </div>
@@ -750,8 +744,7 @@ export default function TasksPage() {
                       onAddSubTask={handleAddSubTask}
                       onUpdateTags={handleUpdateTags}
                       onUpdatePriority={handleUpdatePriority}
-                      onUpdateReminders={handleUpdateReminders}
-                      onComment={handleCommentTask}
+                        onComment={handleCommentTask}
                     />
                   ))}
                 </div>
@@ -776,8 +769,7 @@ export default function TasksPage() {
                       onAddSubTask={handleAddSubTask}
                       onUpdateTags={handleUpdateTags}
                       onUpdatePriority={handleUpdatePriority}
-                      onUpdateReminders={handleUpdateReminders}
-                      onComment={handleCommentTask}
+                        onComment={handleCommentTask}
                     />
                   ))}
                 </div>

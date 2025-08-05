@@ -71,7 +71,6 @@ export default function TagDetailPage() {
     deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     showCompletedTasks,
     toggleShowCompletedTasks,
     getCompletedTasksCountByTag,
@@ -451,13 +450,6 @@ export default function TagDetailPage() {
               await updateTask(taskId, { priority })
             } catch (error) {
               console.error('Failed to update priority:', error)
-            }
-          }}
-          onUpdateReminders={async (taskId, reminders) => {
-            try {
-              await updateTaskReminders(taskId, reminders)
-            } catch (error) {
-              console.error('Failed to update reminders:', error)
             }
           }}
           showTreeConnectors={true}

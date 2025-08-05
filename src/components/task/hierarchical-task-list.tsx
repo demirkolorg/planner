@@ -16,7 +16,6 @@ interface HierarchicalTaskListProps {
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
-  onUpdateReminders?: (taskId: string, reminders: string[]) => void
   onEdit?: (task: Task) => void
   onComment?: (taskId: string, taskTitle: string) => void
   className?: string
@@ -36,7 +35,6 @@ export function HierarchicalTaskList({
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
-  onUpdateReminders,
   onEdit,
   onComment,
   className = "",
@@ -147,7 +145,6 @@ export function HierarchicalTaskList({
             onAddSubTask={handleAddSubTask}
             onUpdateTags={onUpdateTags}
             onUpdatePriority={onUpdatePriority}
-            onUpdateReminders={onUpdateReminders}
             onEdit={onEdit}
             onComment={onComment}
             isHighlighted={highlightTaskId === task.id}

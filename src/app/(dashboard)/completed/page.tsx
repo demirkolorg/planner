@@ -24,7 +24,6 @@ export default function CompletedPage() {
     deleteTask,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     getCompletedTasks,
     getCompletedTasksToday,
     getCompletedTasksThisWeek,
@@ -335,14 +334,7 @@ export default function CompletedPage() {
                     console.error('Failed to update priority:', error)
                   }
                 }}
-                onUpdateReminders={async (taskId, reminders) => {
-                  try {
-                    await updateTaskReminders(taskId, reminders)
-                  } catch (error) {
-                    console.error('Failed to update reminders:', error)
-                  }
-                }}
-              />
+                              />
             </div>
           ) : (
             /* Empty State */
@@ -432,13 +424,6 @@ export default function CompletedPage() {
                         console.error('Failed to update priority:', error)
                       }
                     }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
-                      }
-                    }}
                   />
                 </CollapsibleContent>
               </Collapsible>
@@ -521,13 +506,6 @@ export default function CompletedPage() {
                           console.error('Failed to update priority:', error)
                         }
                       }}
-                      onUpdateReminders={async (taskId, reminders) => {
-                        try {
-                          await updateTaskReminders(taskId, reminders)
-                        } catch (error) {
-                          console.error('Failed to update reminders:', error)
-                        }
-                      }}
                     />
                   </CollapsibleContent>
                 </Collapsible>
@@ -608,13 +586,6 @@ export default function CompletedPage() {
                         await updateTask(taskId, { priority })
                       } catch (error) {
                         console.error('Failed to update priority:', error)
-                      }
-                    }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
                       }
                     }}
                   />

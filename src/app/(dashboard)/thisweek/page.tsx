@@ -45,7 +45,6 @@ export default function ScheduledPage() {
     deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     addSubTask,
     cloneTask,
     moveTask,
@@ -533,7 +532,6 @@ export default function ScheduledPage() {
                           onDelete={handleDeleteTask}
                           onPin={toggleTaskPin}
                           onUpdateTags={updateTaskTags}
-                          onUpdateReminders={updateTaskReminders}
                           onAddSubTask={handleAddSubTask}
                           onEdit={handleEditTask}
                           onCopy={handleCopyTask}

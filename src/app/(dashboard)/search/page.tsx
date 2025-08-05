@@ -65,7 +65,6 @@ export default function SearchPage() {
     deleteTask,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     addSubTask,
     cloneTask,
     moveTask,
@@ -643,7 +642,6 @@ export default function SearchPage() {
                 onAddSubTask={handleAddSubTask}
                 onUpdateTags={updateTaskTags}
                 onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                onUpdateReminders={updateTaskReminders}
                 onEdit={handleEditTask}
                 onComment={handleCommentTask}
               />
@@ -722,8 +720,7 @@ export default function SearchPage() {
                         onAddSubTask={handleAddSubTask}
                         onUpdateTags={updateTaskTags}
                         onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                        onUpdateReminders={updateTaskReminders}
-                        onEdit={handleEditTask}
+                                onEdit={handleEditTask}
                         onComment={handleCommentTask}
                       />
                     ))}
@@ -809,8 +806,7 @@ export default function SearchPage() {
                       onAddSubTask={handleAddSubTask}
                       onUpdateTags={updateTaskTags}
                       onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                      onUpdateReminders={updateTaskReminders}
-                      onEdit={handleEditTask}
+                            onEdit={handleEditTask}
                     />
                   ))}
                   </div>
@@ -888,8 +884,7 @@ export default function SearchPage() {
                         onAddSubTask={handleAddSubTask}
                         onUpdateTags={updateTaskTags}
                         onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                        onUpdateReminders={updateTaskReminders}
-                        onEdit={handleEditTask}
+                                onEdit={handleEditTask}
                         onComment={handleCommentTask}
                       />
                     ))}

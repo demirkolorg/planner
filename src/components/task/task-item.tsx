@@ -21,7 +21,6 @@ interface TaskItemProps {
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
-  onUpdateReminders?: (taskId: string, reminders: string[]) => void
   onEdit?: (task: TaskWithHierarchy) => void
   onComment?: (taskId: string, taskTitle: string) => void
   isHighlighted?: boolean
@@ -43,7 +42,6 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
-  onUpdateReminders,
   onEdit,
   onComment,
   isHighlighted,
@@ -103,7 +101,6 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
           onAddSubTask={onAddSubTask}
           onUpdateTags={onUpdateTags}
           onUpdatePriority={onUpdatePriority}
-          onUpdateReminders={onUpdateReminders}
           onEdit={onEdit}
           onComment={onComment}
           // Tree expansion state

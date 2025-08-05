@@ -24,7 +24,6 @@ export default function BoardPage() {
     deleteTask,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     getPinnedTasks,
     cloneTask,
     addSubTask,
@@ -390,14 +389,7 @@ export default function BoardPage() {
                     console.error('Failed to update priority:', error)
                   }
                 }}
-                onUpdateReminders={async (taskId, reminders) => {
-                  try {
-                    await updateTaskReminders(taskId, reminders)
-                  } catch (error) {
-                    console.error('Failed to update reminders:', error)
-                  }
-                }}
-              />
+                              />
             </div>
           ) : (
             /* Empty State */
@@ -515,13 +507,6 @@ export default function BoardPage() {
                         console.error('Failed to update priority:', error)
                       }
                     }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
-                      }
-                    }}
                   />
                 </CollapsibleContent>
               </Collapsible>
@@ -623,13 +608,6 @@ export default function BoardPage() {
                           await updateTask(taskId, { priority })
                         } catch (error) {
                           console.error('Failed to update priority:', error)
-                        }
-                      }}
-                      onUpdateReminders={async (taskId, reminders) => {
-                        try {
-                          await updateTaskReminders(taskId, reminders)
-                        } catch (error) {
-                          console.error('Failed to update reminders:', error)
                         }
                       }}
                     />
@@ -740,13 +718,6 @@ export default function BoardPage() {
                         await updateTask(taskId, { priority })
                       } catch (error) {
                         console.error('Failed to update priority:', error)
-                      }
-                    }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
                       }
                     }}
                   />

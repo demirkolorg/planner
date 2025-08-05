@@ -641,7 +641,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 
             {/* Footer with Date and Actions */}
             <div className="flex items-center justify-between mt-4 pt-3">
-              {/* Left side - Date and Reminders */}
+              {/* Left side - Date */}
               <div className="text-xs text-muted-foreground flex items-center space-x-3">
                 {/* Date */}
                 <div>

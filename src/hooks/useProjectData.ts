@@ -43,13 +43,6 @@ interface Task {
       color: string
     }
   }>
-  reminders?: Array<{
-    id: string
-    taskId: string
-    datetime: Date
-    message?: string
-    isActive: boolean
-  }>
   project?: {
     id: string
     name: string

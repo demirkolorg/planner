@@ -44,7 +44,6 @@ export function DashboardOverview() {
     deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     addSubTask,
     cloneTask,
     moveTask,
@@ -598,7 +597,6 @@ export function DashboardOverview() {
                   onAddSubTask={handleAddSubTask}
                   onUpdateTags={updateTaskTags}
                   onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                  onUpdateReminders={updateTaskReminders}
                   onEdit={handleEditTask}
                 />
               ))}
@@ -644,7 +642,6 @@ export function DashboardOverview() {
                   onAddSubTask={handleAddSubTask}
                   onUpdateTags={updateTaskTags}
                   onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                  onUpdateReminders={updateTaskReminders}
                   onEdit={handleEditTask}
                 />
               ))}
@@ -695,7 +692,6 @@ export function DashboardOverview() {
                   onAddSubTask={handleAddSubTask}
                   onUpdateTags={updateTaskTags}
                   onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                  onUpdateReminders={updateTaskReminders}
                   onEdit={handleEditTask}
                 />
               ))}

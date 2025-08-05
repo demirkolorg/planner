@@ -49,13 +49,6 @@ interface TaskWithRelations {
       color: string
     }
   }>
-  reminders?: Array<{
-    id: string
-    taskId: string
-    datetime: Date
-    message?: string
-    isActive: boolean
-  }>
   subTasks?: Array<{
     id: string
     title: string
@@ -94,7 +87,6 @@ export default function TodayPage() {
     deleteTask: deleteTaskFromStore,
     toggleTaskPin,
     updateTaskTags,
-    updateTaskReminders,
     addSubTask,
     cloneTask,
     moveTask,
@@ -527,14 +519,7 @@ export default function TodayPage() {
                               console.error('Failed to update priority:', error)
                             }
                           }}
-                          onUpdateReminders={async (taskId, reminders) => {
-                            try {
-                              await updateTaskReminders(taskId, reminders)
-                            } catch (error) {
-                              console.error('Failed to update reminders:', error)
-                            }
-                          }}
-                        />
+                                                  />
                       </div>
                     </div>
                   )
@@ -580,14 +565,7 @@ export default function TodayPage() {
                                 console.error('Failed to update priority:', error)
                               }
                             }}
-                            onUpdateReminders={async (taskId, reminders) => {
-                              try {
-                                await updateTaskReminders(taskId, reminders)
-                              } catch (error) {
-                                console.error('Failed to update reminders:', error)
-                              }
-                            }}
-                          />
+                                                      />
                         </div>
                       </div>
                     )
@@ -685,14 +663,7 @@ export default function TodayPage() {
                         console.error('Failed to update priority:', error)
                       }
                     }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
-                      }
-                    }}
-                  />
+                                      />
                 </CollapsibleContent>
               </Collapsible>
             ))
@@ -775,13 +746,6 @@ export default function TodayPage() {
                           await updateTask(taskId, { priority })
                         } catch (error) {
                           console.error('Failed to update priority:', error)
-                        }
-                      }}
-                      onUpdateReminders={async (taskId, reminders) => {
-                        try {
-                          await updateTaskReminders(taskId, reminders)
-                        } catch (error) {
-                          console.error('Failed to update reminders:', error)
                         }
                       }}
                     />
@@ -869,14 +833,7 @@ export default function TodayPage() {
                         console.error('Failed to update priority:', error)
                       }
                     }}
-                    onUpdateReminders={async (taskId, reminders) => {
-                      try {
-                        await updateTaskReminders(taskId, reminders)
-                      } catch (error) {
-                        console.error('Failed to update reminders:', error)
-                      }
-                    }}
-                  />
+                                      />
                 </CollapsibleContent>
               </Collapsible>
             ))
@@ -929,14 +886,7 @@ export default function TodayPage() {
                 console.error('Failed to update priority:', error)
               }
             }}
-            onUpdateReminders={async (taskId, reminders) => {
-              try {
-                await updateTaskReminders(taskId, reminders)
-              } catch (error) {
-                console.error('Failed to update reminders:', error)
-              }
-            }}
-          />
+                      />
         </div>
       )}
 
