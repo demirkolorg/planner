@@ -636,13 +636,6 @@ export default function OverduePage() {
             </div>
           ) : (
             Object.entries(groupTasksByPriority()).map(([priority, group]) => {
-              const priorityColors = {
-                'CRITICAL': 'bg-destructive/10',
-                'HIGH': 'bg-secondary/30',
-                'MEDIUM': 'bg-secondary/20',
-                'LOW': 'bg-primary/10',
-                'NONE': 'bg-muted/50'
-              }
               const priorityIcons = {
                 'CRITICAL': '🔴',
                 'HIGH': '🟠', 

@@ -141,7 +141,6 @@ export default function ProjectDetailPage() {
   const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection, toggleProjectPin } = useProjectStore()
   const { 
     fetchTasksByProject, 
-    createTask, 
     getTasksByProject, 
     getTasksBySection,
     getTasksWithoutSection,
@@ -151,7 +150,6 @@ export default function ProjectDetailPage() {
     cloneTask,
     moveTask,
     toggleTaskPin,
-    addSubTask,
     updateTaskTags,
     showCompletedTasks,
     toggleShowCompletedTasks,
@@ -1283,7 +1281,7 @@ export default function ProjectDetailPage() {
           setTaskModalContext({})
           setEditingTask(null)
         }}
-        onTaskCreated={async (newTask) => {
+        onTaskCreated={async () => {
           // Task oluşturulduktan sonra project data'yı yenile
           await fetchProjectData()
         }}

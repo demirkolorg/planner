@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { LoginForm } from "@/components/auth/login-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Logo } from "@/components/ui/logo";
-import { BRAND_SLOGANS, BRAND_STORY } from "@/lib/constants";
+import { BRAND_SLOGANS } from "@/lib/constants";
 
 export default function LoginPage() {
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Pin, CheckCircle2, Circle, AlertTriangle, Timer } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertTriangle, Timer } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
@@ -117,8 +117,6 @@ export default function ScheduledPage() {
     
     // Ayın ilk günü
     const firstDay = new Date(year, month, 1)
-    // Ayın son günü
-    const lastDay = new Date(year, month + 1, 0)
     
     // Haftanın başlangıcını pazartesi yap
     const startDate = new Date(firstDay)

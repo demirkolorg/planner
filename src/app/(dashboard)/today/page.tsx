@@ -686,13 +686,6 @@ export default function TodayPage() {
             </div>
           ) : (
             Object.entries(groupTasksByPriority()).map(([priority, group]) => {
-              const priorityColors = {
-                'CRITICAL': 'bg-destructive/10 dark:bg-destructive/5',
-                'HIGH': 'bg-primary/10 dark:bg-primary/5',
-                'MEDIUM': 'bg-secondary/20 dark:bg-secondary/10',
-                'LOW': 'bg-muted/50 dark:bg-muted/20',
-                'NONE': 'bg-muted/30 dark:bg-muted/10'
-              }
               const priorityIcons = {
                 'CRITICAL': '🔴',
                 'HIGH': '🟠', 
