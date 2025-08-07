@@ -1,12 +1,15 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink, Users } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink, Users, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { useCurrentUser } from "@/hooks/use-current-user"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
 import { TaskTimelineModal } from "../modals/task-timeline-modal"
+import { ApprovalActionDialog } from "../modals/approval-action-dialog"
+import { SubmitForApprovalDialog } from "../modals/submit-for-approval-dialog"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
@@ -32,6 +35,12 @@ interface TaskWithRelations {
   taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
   calendarSourceId?: string                          // Google Calendar kaynak ID'si
   quickNoteCategory?: string                         // Hızlı Not kategorisi
+  approvalStatus?: 'NOT_REQUIRED' | 'PENDING' | 'APPROVED' | 'REJECTED'
+  approvalMessage?: string
+  approvalRequestedBy?: string
+  approvalRequestedAt?: string
+  approvedBy?: string
+  approvedAt?: string
   project?: {
     id: string
     name: string
@@ -101,6 +110,7 @@ interface TaskCardProps {
   onUnassignUser?: (taskId: string, userId: string) => void
   onEdit?: (task: TaskWithRelations) => void
   onComment?: (taskId: string, taskTitle: string) => void
+  onSubmitForApproval?: (taskId: string, taskTitle: string) => void
   className?: string
   isFirstInSection?: boolean
   // Hiyerarşik görünüm için yeni props
@@ -131,6 +141,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onUnassignUser,
   onEdit,
   onComment,
+  onSubmitForApproval,
   className,
   isFirstInSection = false,
   // Hiyerarşik görünüm props
@@ -146,11 +157,14 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
   const [isEditingDate, setIsEditingDate] = useState(false)
   const [isTimelineOpen, setIsTimelineOpen] = useState(false)
+  const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false)
+  const [isSubmitForApprovalOpen, setIsSubmitForApprovalOpen] = useState(false)
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
   const [isToggling, setIsToggling] = useState(false)
   const [optimisticCompleted, setOptimisticCompleted] = useState(task?.completed || false)
   const [isHovered, setIsHovered] = useState(false)
   const pathname = usePathname()
+  const { currentUser } = useCurrentUser()
   
   // Task completed state'i task prop'undan gelen değer ile senkronize et
   React.useEffect(() => {
@@ -234,6 +248,11 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const handleDateClick = (e: React.MouseEvent) => {
     e.stopPropagation()
 
+    // Atanmış kullanıcılar tarih düzenleyemez (sadece task sahibi düzenleyebilir)
+    if (isAssignedUser && !isTaskOwner) {
+      return
+    }
+
     // Click pozisyonunu hesapla
     const rect = e.currentTarget.getBoundingClientRect()
     setEditorPosition({
@@ -261,6 +280,92 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 
   const handleTimelineOpen = () => {
     setIsTimelineOpen(true)
+  }
+
+  const handleApprovalClick = () => {
+    setIsApprovalDialogOpen(true)
+  }
+
+  const handleApprovalApprove = async (message?: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'approve',
+          message: message
+        })
+      })
+
+      if (response.ok) {
+        // Sayfayı yenile veya state güncelle
+        window.location.reload()
+      } else {
+        console.error('Onay işlemi başarısız')
+      }
+    } catch (error) {
+      console.error('Onay işlemi sırasında hata:', error)
+    } finally {
+      setIsApprovalDialogOpen(false)
+    }
+  }
+
+  const handleApprovalReject = async (message: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'reject',
+          message: message
+        })
+      })
+
+      if (response.ok) {
+        // Sayfayı yenile veya state güncelle
+        window.location.reload()
+      } else {
+        console.error('Reddetme işlemi başarısız')
+      }
+    } catch (error) {
+      console.error('Reddetme işlemi sırasında hata:', error)
+    } finally {
+      setIsApprovalDialogOpen(false)
+    }
+  }
+
+  const handleSubmitForApprovalClick = () => {
+    setIsSubmitForApprovalOpen(true)
+  }
+
+  const handleSubmitForApproval = async (message: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/submit-approval`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ message })
+      })
+
+      if (response.ok) {
+        // Sayfayı yenile veya state güncelle
+        window.location.reload()
+      } else {
+        console.error('Onaya gönderme başarısız')
+      }
+    } catch (error) {
+      console.error('Onaya gönderme sırasında hata:', error)
+    } finally {
+      setIsSubmitForApprovalOpen(false)
+    }
   }
 
   const formatDate = (dateString?: string) => {
@@ -335,6 +440,76 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 
   // Tamamlanmış görevlerde tüm düzenleme işlemlerini disable et
   const isTaskCompleted = task.completed
+  
+  // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
+  const isAssignedUser = currentUser && task.assignments && 
+    task.assignments.some(assignment => assignment.assigneeId === currentUser.id)
+  
+  // Task sahibi mi kontrol et
+  const isTaskOwner = currentUser && task.userId === currentUser.id
+
+  // Onay durumu göstergesi
+  const getApprovalStatusBadge = () => {
+    if (!task.approvalStatus || task.approvalStatus === 'NOT_REQUIRED') {
+      return null
+    }
+
+    switch (task.approvalStatus) {
+      case 'PENDING':
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full transition-colors",
+                  isTaskOwner && "cursor-pointer hover:bg-yellow-200 dark:hover:bg-yellow-900/50"
+                )}
+                onClick={isTaskOwner ? (e) => {
+                  e.stopPropagation()
+                  handleApprovalClick()
+                } : undefined}
+              >
+                <Clock className="h-3 w-3" />
+                <span>Onay Bekliyor</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isTaskOwner ? 'Onay vermek için tıklayın' : 'Bu görev onay bekliyor'}</p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      case 'APPROVED':
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+                <CheckCircle className="h-3 w-3" />
+                <span>Onaylandı</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Bu görev onaylandı ve tamamlandı</p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      case 'REJECTED':
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 px-2 py-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-full">
+                <XCircle className="h-3 w-3" />
+                <span>Reddedildi</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Bu görev reddedildi</p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      default:
+        return null
+    }
+  }
 
 
   return (
@@ -372,7 +547,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               const hasIncompleteSubTasks = task.subTasks && task.subTasks.length > 0
                 ? task.subTasks.some(subTask => !subTask.completed)
                 : false
-              const isDisabled = (hasIncompleteSubTasks && !displayCompleted) || isToggling
+              // Atanmış kullanıcılar checkbox'ı kullanamaz (sadece task sahibi kullanabilir)
+              const isDisabled = (hasIncompleteSubTasks && !displayCompleted) || isToggling || 
+                (isAssignedUser && !isTaskOwner)
 
               return (
                 <>
@@ -442,8 +619,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               "font-medium text-xs truncate flex items-center gap-3 task-title",
               displayCompleted && "line-through text-muted-foreground"
             )}>
-              <div className="flex items-center gap-1 flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="truncate">{task.title}</span>
+                {getApprovalStatusBadge()}
                 {/* Debug: Level bilgisi - gizli */}
                 {/* <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded font-mono">
                   L{task.level}
@@ -704,11 +882,11 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
-                          className={isTaskCompleted 
+                          className={isTaskCompleted || (isAssignedUser && !isTaskOwner)
                             ? "cursor-not-allowed opacity-50" 
                             : "cursor-pointer hover:text-foreground transition-colors"
                           }
-                          onClick={isTaskCompleted ? undefined : handleDateClick}
+                          onClick={isTaskCompleted || (isAssignedUser && !isTaskOwner) ? undefined : handleDateClick}
                         >
                           📅 {formatDateTime(task.dueDate)}
                         </span>
@@ -770,6 +948,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 onEdit={onEdit}
                 onTimeline={handleTimelineOpen}
                 onComment={onComment}
+                onSubmitForApproval={handleSubmitForApprovalClick}
                 onAssignUser={onAssignUser}
                 onUnassignUser={onUnassignUser}
                 isFirstInSection={isFirstInSection}
@@ -786,6 +965,30 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         taskId={task.id}
         taskTitle={task.title}
       />
+
+      {/* Approval Action Dialog */}
+      {isApprovalDialogOpen && task.approvalStatus === 'PENDING' && (
+        <ApprovalActionDialog
+          isOpen={isApprovalDialogOpen}
+          onClose={() => setIsApprovalDialogOpen(false)}
+          onApprove={handleApprovalApprove}
+          onReject={handleApprovalReject}
+          taskTitle={task.title}
+          approvalMessage={task.approvalMessage}
+          requesterName={task.assignments?.[0]?.assignee?.firstName + " " + task.assignments?.[0]?.assignee?.lastName}
+          requestedAt={task.approvalRequestedAt}
+        />
+      )}
+
+      {/* Submit for Approval Dialog */}
+      {isSubmitForApprovalOpen && (
+        <SubmitForApprovalDialog
+          isOpen={isSubmitForApprovalOpen}
+          onClose={() => setIsSubmitForApprovalOpen(false)}
+          onSubmit={handleSubmitForApproval}
+          taskTitle={task.title}
+        />
+      )}
     </TooltipProvider>
   )
 })

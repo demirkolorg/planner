@@ -33,6 +33,8 @@ model User {
   notifications         Notification[]
   notificationSettings  NotificationSettings?
   createdNotifications  Notification[]             @relation("NotificationCreator")
+  approvalRequestedTasks Task[]                    @relation("TaskApprovalRequester")
+  approvedTasks         Task[]                     @relation("TaskApprover")
 }
 
 model EmailOTP {
@@ -86,6 +88,12 @@ model Task {
   calendarSourceId  String?
   quickNoteCategory String?
   taskType          TaskType           @default(PROJECT)
+  approvalStatus    TaskApprovalStatus @default(NOT_REQUIRED)
+  approvalMessage   String?
+  approvalRequestedBy String?
+  approvalRequestedAt DateTime?
+  approvedBy        String?
+  approvedAt        DateTime?
   comments          Comment[]
   parentTask        Task?              @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
   subTasks          Task[]             @relation("SubTasks")
@@ -96,6 +104,8 @@ model Task {
   assignments       TaskAssignment[]
   calendarEvent     TaskCalendarEvent?
   tags              TaskTag[]
+  approvalRequester User?              @relation("TaskApprovalRequester", fields: [approvalRequestedBy], references: [id])
+  approver          User?              @relation("TaskApprover", fields: [approvedBy], references: [id])
 }
 
 model Section {
@@ -262,6 +272,13 @@ enum TaskType {
   PROJECT
   CALENDAR
   QUICK_NOTE
+}
+
+enum TaskApprovalStatus {
+  NOT_REQUIRED    // Onay gerekmiyor (normal durum)
+  PENDING         // Onay bekliyor
+  APPROVED        // Onaylandı
+  REJECTED        // Reddedildi
 }
 
 model Notification {

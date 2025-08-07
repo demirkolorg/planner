@@ -13,7 +13,8 @@ import {
   Edit,
   Clock,
   MessageCircle,
-  UserPlus
+  UserPlus,
+  Send
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +29,7 @@ import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
 import { AssignmentDropdown } from "./assignment-dropdown"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
+import { useCurrentUser } from "@/hooks/use-current-user"
 import type { Task } from "@/types/task"
 
 interface TaskCardActionsProps {
@@ -71,6 +73,7 @@ interface TaskCardActionsProps {
   }) => void
   onTimeline?: (taskId: string, taskTitle: string) => void
   onComment?: (taskId: string, taskTitle: string) => void
+  onSubmitForApproval?: (taskId: string, taskTitle: string) => void
   onAssignUser?: (taskId: string, userId: string) => void
   onUnassignUser?: (taskId: string, userId: string) => void
   isFirstInSection?: boolean
@@ -89,15 +92,24 @@ export function TaskCardActions({
   onEdit,
   onTimeline,
   onComment,
+  onSubmitForApproval,
   onAssignUser,
   onUnassignUser,
   isFirstInSection = false
 }: TaskCardActionsProps) {
+  const { currentUser } = useCurrentUser()
   
   // Task validation - Safety check
   if (!task || !task.id) {
     return null
   }
+
+  // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
+  const isAssignedUser = currentUser && task.assignments && 
+    task.assignments.some((assignment: any) => assignment.assigneeId === currentUser.id)
+  
+  // Task sahibi mi kontrol et
+  const isTaskOwner = currentUser && task.userId === currentUser.id
 
   const getPriorityColorHex = () => {
     // İngilizce priority değerlerini Türkçe'ye eşleştir
@@ -170,14 +182,22 @@ export function TaskCardActions({
     onComment?.(task.id, task.title)
   }
 
+  const handleSubmitForApproval = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onSubmitForApproval?.(task.id, task.title)
+  }
+
   // Tamamlanmış görevlerde tüm aksiyonları disable et
   const isTaskCompleted = task.completed
+  
+  // Atanmış kullanıcı mı kontrolü
+  const isDisabledForAssignedUser = isAssignedUser && !isTaskOwner
   
   return (
     <TooltipProvider>
       <div className="flex items-center space-x-1 task-card-actions pointer-events-auto">
-        {/* Add Sub-task - Level 4+ görevlerde gizli */}
-        {canAddSubTask && (
+        {/* Add Sub-task - Level 4+ görevlerde ve atanmış kullanıcılar için gizli */}
+        {canAddSubTask && !isDisabledForAssignedUser && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -197,7 +217,8 @@ export function TaskCardActions({
         )}
 
 
-        {/* Tag Selector */}
+        {/* Tag Selector - Atanmış kullanıcılar için gizli */}
+        {!isDisabledForAssignedUser && (
         <TagSelector
           taskTags={task.tags}
           onUpdateTags={isTaskCompleted ? undefined : handleUpdateTags}
@@ -226,8 +247,10 @@ export function TaskCardActions({
             </Tooltip>
           }
         />
+        )}
 
-        {/* User Assignment */}
+        {/* User Assignment - Atanmış kullanıcılar için gizli */}
+        {!isDisabledForAssignedUser && (
         <AssignmentDropdown
           task={task}
           onAssignUser={onAssignUser}
@@ -235,8 +258,10 @@ export function TaskCardActions({
           onUpdateAssignment={onUpdateAssignment}
           isTaskCompleted={isTaskCompleted}
         />
+        )}
 
-        {/* Priority Selector */}
+        {/* Priority Selector - Atanmış kullanıcılar için gizli */}
+        {!isDisabledForAssignedUser && (
         <PrioritySelector
           currentPriority={task.priority}
           onUpdatePriority={isTaskCompleted ? undefined : handleUpdatePriority}
@@ -263,8 +288,10 @@ export function TaskCardActions({
             </Tooltip>
           }
         />
+        )}
 
-        {/* Timeline */}
+        {/* Timeline - Atanmış kullanıcılar için gizli */}
+        {!isDisabledForAssignedUser && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -280,8 +307,9 @@ export function TaskCardActions({
             <p>Zaman çizelgesi</p>
           </TooltipContent>
         </Tooltip>
+        )}
 
-        {/* Comments */}
+        {/* Comments - Her zaman görünür */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -298,7 +326,27 @@ export function TaskCardActions({
           </TooltipContent>
         </Tooltip>
 
-        {/* Pin/Unpin */}
+        {/* Submit for Approval - Sadece atanmış kullanıcılar için görünür */}
+        {isAssignedUser && !isTaskOwner && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleSubmitForApproval}
+              >
+                <Send className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Onaya gönder</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Pin/Unpin - Atanmış kullanıcılar için gizli */}
+        {!isDisabledForAssignedUser && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -315,8 +363,10 @@ export function TaskCardActions({
             <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : (task.isPinned ? 'Sabitlemeyi kaldır' : 'Sabitle')}</p>
           </TooltipContent>
         </Tooltip>
+        )}
 
-        {/* More Actions */}
+        {/* More Actions - Atanmış kullanıcılar için gizli */}
+        {!isDisabledForAssignedUser && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -355,6 +405,7 @@ export function TaskCardActions({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
       </div>
     </TooltipProvider>
   )

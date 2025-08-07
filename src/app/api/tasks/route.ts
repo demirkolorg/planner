@@ -367,6 +367,22 @@ export async function GET(request: NextRequest) {
             }
           }
         },
+        approvalRequester: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        approver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
         _count: {
           select: {
             comments: true
