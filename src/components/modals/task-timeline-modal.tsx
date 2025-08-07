@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Clock, User, CheckCircle, XCircle, Star, StarOff, Calendar, Tag, ArrowRight, Plus, Minus, Trash2, Edit, Bell, Copy } from "lucide-react"
+import { Clock, User, CheckCircle, XCircle, Star, StarOff, Calendar, Tag, ArrowRight, Plus, Minus, Trash2, Edit, Bell, Copy, Users, UserPlus, UserMinus } from "lucide-react"
 
 interface TaskActivity {
   id: string
@@ -61,6 +61,12 @@ const getActivityIcon = (actionType: string) => {
     case "title_changed":
     case "description_changed":
       return { icon: Edit, color: "text-blue-500" }
+    case "user_assigned":
+      return { icon: UserPlus, color: "text-green-500" }
+    case "user_unassigned":
+      return { icon: UserMinus, color: "text-red-500" }
+    case "user_reassigned":
+      return { icon: Users, color: "text-orange-500" }
     default:
       return { icon: Clock, color: "text-gray-500" }
   }
@@ -71,11 +77,14 @@ const getActivityBadgeVariant = (actionType: string): "default" | "secondary" | 
   switch (actionType) {
     case "created":
     case "completed":
+    case "user_assigned":
       return "default"
     case "deleted":
+    case "user_unassigned":
       return "destructive"  
     case "tag_added":
     case "pinned":
+    case "user_reassigned":
       return "secondary"
     default:
       return "outline"
@@ -117,6 +126,12 @@ const getActivityTypeLabel = (actionType: string): string => {
       return "Başlık Değişti"
     case "description_changed":
       return "Açıklama Değişti"
+    case "user_assigned":
+      return "Kullanıcı Atandı"
+    case "user_unassigned":
+      return "Atama Kaldırıldı"
+    case "user_reassigned":
+      return "Yeniden Atandı"
     default:
       return "Bilinmeyen"
   }

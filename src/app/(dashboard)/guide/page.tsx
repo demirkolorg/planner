@@ -296,7 +296,7 @@ export default function GuidePage() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="outline" className="hidden sm:flex">
-                v1.3.0
+                v1.4.0
               </Badge>
             </div>
           </div>
@@ -606,7 +606,7 @@ export default function GuidePage() {
                     <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
                     <h3 className="text-lg font-semibold text-foreground">Güncel Sürüm</h3>
                   </div>
-                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.3.0</Badge>
+                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.4.0</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   En son güncellemeyi kullanıyorsunuz. Tüm yeni özellikler ve iyileştirmeler aktif durumda.
@@ -618,14 +618,59 @@ export default function GuidePage() {
                 <h3 className="text-lg font-semibold text-card-foreground mb-6">Sürüm Geçmişi</h3>
                 
                 <div className="space-y-6">
-                  {/* v1.3.0 */}
+                  {/* v1.4.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.4.0</h4>
+                          <Badge variant="secondary" className="text-xs">7 Ağustos 2025</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Görev atama sistemi - ekip üyelerine görev atayabilme</li>
+                              <li>• Proje üyesi yönetimi - projeler için ekip organizasyonu</li>
+                              <li>• Atanmış görevler sayfası - size atanan görevleri görüntüleme</li>
+                              <li>• Kullanıcı seçici bileşeni - gelişmiş kullanıcı seçimi</li>
+                              <li>• Atama göstergesi - görev kartlarında atama bilgisi</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🔧 İyileştirmeler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Görev kartlarında atama bilgisi görüntüleniyor</li>
+                              <li>• Sidebar'a "Bana Atananlar" sekmesi eklendi</li>
+                              <li>• Proje detay sayfasında üye yönetimi eklenedi</li>
+                              <li>• API rotalarında assignment desteği</li>
+                              <li>• Database şemasında assignment ve project member tabloları</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🛠️ Teknik</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• TaskAssignment ve ProjectMember model'ları eklendi</li>
+                              <li>• Assignment dropdown bileşeni</li>
+                              <li>• User picker UI bileşeni</li>
+                              <li>• Task assignment API endpoints</li>
+                              <li>• Prisma migration for assignment system</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* v1.3.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.3.0</h4>
-                          <Badge variant="secondary" className="text-xs">5 Ağustos 2025</Badge>
+                          <Badge variant="outline" className="text-xs">5 Ağustos 2025</Badge>
                         </div>
                         <div className="space-y-3">
                           <div>
@@ -666,7 +711,7 @@ export default function GuidePage() {
                   {/* v1.2.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
-                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 bg-muted-foreground/30 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.2.0</h4>
@@ -699,7 +744,7 @@ export default function GuidePage() {
                   {/* v1.1.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
-                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 bg-muted-foreground/20 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.1.0</h4>
@@ -729,7 +774,7 @@ export default function GuidePage() {
                   {/* v1.0.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
-                      <div className="w-2 h-2 bg-muted-foreground/30 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 bg-muted-foreground/10 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.0.0</h4>

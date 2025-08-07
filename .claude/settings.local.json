@@ -48,7 +48,8 @@
       "Bash(bunx next:*)",
       "Bash(bun prisma migrate dev:*)",
       "Bash(node scripts/update-task-levels.js:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebFetch(domain:docs.convex.dev)"
     ],
     "deny": []
   }

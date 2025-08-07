@@ -25,6 +25,30 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
       updatedAt: Date
     }
   }>
+  assignments?: Array<{
+    id: string
+    assigneeId: string
+    assignedBy: string
+    assignedAt: string
+    assignee: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+    }
+    assigner: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+    }
+  }>
+  user?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
   subTasks?: TaskWithRelations[]
   project?: {
     id: string
@@ -63,6 +87,11 @@ interface TaskStore {
   addSubTask: (parentTaskId: string, taskData: CreateTaskRequest) => Promise<void>
   updateTaskTags: (taskId: string, tagIds: string[]) => Promise<void>
   refreshTaskCommentCount: (taskId: string) => Promise<void>
+  
+  // Assignment methods
+  assignUser: (taskId: string, userId: string) => Promise<void>
+  unassignUser: (taskId: string, userId: string) => Promise<void>
+  getAssignedTasks: (userId?: string) => TaskWithRelations[]
   
   // Utility methods
   getTasksByProject: (projectId: string) => TaskWithRelations[]
@@ -1228,5 +1257,86 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       task.quickNoteCategory === category &&
       (showCompletedTasks || !task.completed)
     )
+  },
+
+  // Assignment methods implementation
+  assignUser: async (taskId: string, userId: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assigneeId: userId }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to assign user')
+      }
+      
+      const { assignment } = await response.json()
+      
+      // Update task in store - add assignment
+      set(state => ({
+        tasks: state.tasks.map(task => {
+          if (task.id === taskId) {
+            const existingAssignments = task.assignments || []
+            const updatedAssignments = [...existingAssignments, assignment]
+            return { ...task, assignments: updatedAssignments }
+          }
+          return task
+        })
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  unassignUser: async (taskId: string, userId: string) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign?assigneeId=${userId}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to unassign user')
+      }
+      
+      // Update task in store - remove assignment
+      set(state => ({
+        tasks: state.tasks.map(task => {
+          if (task.id === taskId) {
+            const updatedAssignments = (task.assignments || []).filter(
+              assignment => assignment.assigneeId !== userId
+            )
+            return { ...task, assignments: updatedAssignments }
+          }
+          return task
+        })
+      }))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      set({ error: errorMessage })
+      throw error
+    }
+  },
+
+  getAssignedTasks: (userId?: string) => {
+    const { tasks, showCompletedTasks } = get()
+    return tasks.filter(task => {
+      if (!showCompletedTasks && task.completed) return false
+      
+      // Eğer userId verilmemişse, mevcut kullanıcıya atanan görevleri döndür
+      // Bu kısım auth store'dan current user ID'si alındığında güncellenebilir
+      if (!userId) return false
+      
+      return task.assignments?.some(assignment => assignment.assigneeId === userId)
+    })
   }
 }))

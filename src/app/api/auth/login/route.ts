@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as jose from 'jose';
 import { VALIDATION, MESSAGES } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
@@ -53,12 +53,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JWT token oluştur
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
+    // JWT token oluştur - Edge runtime uyumlu
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const token = await new jose.SignJWT({ userId: user.id })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('7d')
+      .setIssuedAt()
+      .sign(secret)
 
     // Başarılı login - şifreyi response'tan çıkar
     const { password: _, ...userWithoutPassword } = user;

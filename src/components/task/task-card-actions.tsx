@@ -12,7 +12,8 @@ import {
   Move,
   Edit,
   Clock,
-  MessageCircle
+  MessageCircle,
+  UserPlus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,6 +26,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
+import { AssignmentDropdown } from "./assignment-dropdown"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import type { Task } from "@/types/task"
 
@@ -47,6 +49,7 @@ interface TaskCardActionsProps {
   onAddSubTask?: (taskId: string) => void
   onUpdateTags?: (taskId: string, tagIds: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
+  onUpdateAssignment?: (taskId: string, userId: string | null) => void
   onPin?: (taskId: string) => void
   onDelete?: (taskId: string) => void
   onCopy?: (taskId: string) => void
@@ -68,6 +71,8 @@ interface TaskCardActionsProps {
   }) => void
   onTimeline?: (taskId: string, taskTitle: string) => void
   onComment?: (taskId: string, taskTitle: string) => void
+  onAssignUser?: (taskId: string, userId: string) => void
+  onUnassignUser?: (taskId: string, userId: string) => void
   isFirstInSection?: boolean
 }
 
@@ -76,6 +81,7 @@ export function TaskCardActions({
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
+  onUpdateAssignment,
   onPin,
   onDelete,
   onCopy,
@@ -83,6 +89,8 @@ export function TaskCardActions({
   onEdit,
   onTimeline,
   onComment,
+  onAssignUser,
+  onUnassignUser,
   isFirstInSection = false
 }: TaskCardActionsProps) {
   
@@ -90,8 +98,6 @@ export function TaskCardActions({
   if (!task || !task.id) {
     return null
   }
-  // DropdownMenu state'ini tamamen Radix UI'ye bırakalım
-  // const [showMoreActions, setShowMoreActions] = useState(false)
 
   const getPriorityColorHex = () => {
     // İngilizce priority değerlerini Türkçe'ye eşleştir
@@ -123,6 +129,10 @@ export function TaskCardActions({
 
   const handleUpdatePriority = (priority: string) => {
     onUpdatePriority?.(task.id, priority)
+  }
+
+  const handleUpdateAssignment = (userId: string | null) => {
+    onUpdateAssignment?.(task.id, userId)
   }
 
 
@@ -217,6 +227,15 @@ export function TaskCardActions({
           }
         />
 
+        {/* User Assignment */}
+        <AssignmentDropdown
+          task={task}
+          onAssignUser={onAssignUser}
+          onUnassignUser={onUnassignUser}
+          onUpdateAssignment={onUpdateAssignment}
+          isTaskCompleted={isTaskCompleted}
+        />
+
         {/* Priority Selector */}
         <PrioritySelector
           currentPriority={task.priority}
@@ -244,7 +263,6 @@ export function TaskCardActions({
             </Tooltip>
           }
         />
-
 
         {/* Timeline */}
         <Tooltip>

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink, Users } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { AssignmentIndicator } from "@/components/ui/assignment-indicator"
 import { getTaskDateStatus, getDueDateMessage, getDateStatusColor } from "@/lib/date-utils"
 
 interface TaskWithRelations {
@@ -50,6 +51,30 @@ interface TaskWithRelations {
       color: string
     }
   }>
+  assignments?: Array<{
+    id: string
+    assigneeId: string
+    assignedBy: string
+    assignedAt: string
+    assignee: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+    }
+    assigner: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+    }
+  }>
+  user?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
   subTasks?: Array<{
     id: string
     title: string
@@ -71,6 +96,9 @@ interface TaskCardProps {
   onAddSubTask?: (parentTaskId: string) => void
   onUpdateTags?: (taskId: string, tags: string[]) => void
   onUpdatePriority?: (taskId: string, priority: string) => void
+  onUpdateAssignment?: (taskId: string, userId: string | null) => void
+  onAssignUser?: (taskId: string, userId: string) => void
+  onUnassignUser?: (taskId: string, userId: string) => void
   onEdit?: (task: TaskWithRelations) => void
   onComment?: (taskId: string, taskTitle: string) => void
   className?: string
@@ -98,6 +126,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onAddSubTask,
   onUpdateTags,
   onUpdatePriority,
+  onUpdateAssignment,
+  onAssignUser,
+  onUnassignUser,
   onEdit,
   onComment,
   className,
@@ -127,6 +158,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       setOptimisticCompleted(task.completed)
     }
   }, [task?.completed])
+
+  // TaskCard memoized - re-render optimization
   
   // Force expand useEffect with scroll
   React.useEffect(() => {
@@ -470,6 +503,26 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                   </TooltipContent>
                 </Tooltip>
               )}
+
+              {/* Assignment Indicator - Icon + Count */}
+              {task.assignments && task.assignments.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1">
+                      <p className="font-medium">Atanan Kişi:</p>
+                      <p className="text-xs">
+                        {task.assignments[0].assignee.firstName} {task.assignments[0].assignee.lastName}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               {/* SubTasks Icon and Count */}
               {task.subTasks && task.subTasks.length > 0 && (
                 <Tooltip>
@@ -709,6 +762,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 onAddSubTask={onAddSubTask}
                 onUpdateTags={onUpdateTags}
                 onUpdatePriority={onUpdatePriority}
+                onUpdateAssignment={onUpdateAssignment}
                 onPin={onPin}
                 onDelete={onDelete}
                 onCopy={onCopy}
@@ -716,6 +770,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 onEdit={onEdit}
                 onTimeline={handleTimelineOpen}
                 onComment={onComment}
+                onAssignUser={onAssignUser}
+                onUnassignUser={onUnassignUser}
                 isFirstInSection={isFirstInSection}
               />
             </div>

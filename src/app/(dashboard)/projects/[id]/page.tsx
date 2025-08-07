@@ -134,10 +134,29 @@ export default function ProjectDetailPage() {
         color: string
       }
     }>
+    assignments?: Array<{
+      id: string
+      assigneeId: string
+      assignedBy: string
+      assignedAt: string
+      assignee: {
+        id: string
+        firstName: string
+        lastName: string
+        email: string
+      }
+      assigner: {
+        id: string
+        firstName: string
+        lastName: string
+        email: string
+      }
+    }>
   }) => {
     setEditingTask(task)
     setIsTaskModalOpen(true)
   }, [])
+  
   const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection, toggleProjectPin } = useProjectStore()
   const { 
     fetchTasksByProject, 
@@ -160,6 +179,72 @@ export default function ProjectDetailPage() {
     refreshTaskCommentCount,
     getTaskById
   } = useTaskStore()
+
+  // Assignment handlers - optimistic update ile
+  const handleAssignUser = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigneeId: userId })
+      })
+
+      if (response.ok) {
+        // API düzeltildi, daha hızlı refresh yapabiliriz
+        setTimeout(() => {
+          fetchTasksByProject(projectId!)
+        }, 100)
+      }
+    } catch (error) {
+      console.error('User assignment error:', error)
+    }
+  }, [fetchTasksByProject, projectId])
+
+  const handleUnassignUser = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigneeId: userId })
+      })
+
+      if (response.ok) {
+        // API düzeltildi, daha hızlı refresh yapabiliriz
+        setTimeout(() => {
+          fetchTasksByProject(projectId!)
+        }, 100)
+      }
+    } catch (error) {
+      console.error('User unassignment error:', error)
+    }
+  }, [fetchTasksByProject, projectId])
+
+  // Assignment güncelleme fonksiyonu (inline düzenleme için)
+  const handleUpdateAssignment = useCallback(async (taskId: string, userId: string | null) => {
+    try {
+      if (userId) {
+        // Yeni kullanıcı ata
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assigneeId: userId })
+        })
+      } else {
+        // Mevcut atamayı kaldır
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Hızlı refresh
+      setTimeout(() => {
+        fetchTasksByProject(projectId!)
+      }, 100)
+    } catch (error) {
+      console.error('Assignment update error:', error)
+    }
+  }, [fetchTasksByProject, projectId])
 
   const fetchProjectData = useCallback(async () => {
     try {
@@ -873,7 +958,10 @@ export default function ProjectDetailPage() {
                       console.error('Failed to update priority:', error)
                     }
                   }}
-                                    onComment={handleCommentTask}
+                  onUpdateAssignment={handleUpdateAssignment}
+                  onAssignUser={handleAssignUser}
+                  onUnassignUser={handleUnassignUser}
+                  onComment={handleCommentTask}
                   showTreeConnectors={true}
                   enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
@@ -970,7 +1058,10 @@ export default function ProjectDetailPage() {
                       console.error('Failed to update priority:', error)
                     }
                   }}
-                                    onComment={handleCommentTask}
+                  onUpdateAssignment={handleUpdateAssignment}
+                  onAssignUser={handleAssignUser}
+                  onUnassignUser={handleUnassignUser}
+                  onComment={handleCommentTask}
                   showTreeConnectors={true}
                   enableDragAndDrop={false}
                   onMoveTask={async (taskId, newParentId) => {
@@ -1164,6 +1255,9 @@ export default function ProjectDetailPage() {
                           console.error('Failed to update priority:', error)
                         }
                       }}
+                      onUpdateAssignment={handleUpdateAssignment}
+                      onAssignUser={handleAssignUser}
+                      onUnassignUser={handleUnassignUser}
                       onComment={handleCommentTask}
                       showTreeConnectors={true}
                       enableDragAndDrop={false}

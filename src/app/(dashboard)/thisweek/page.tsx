@@ -321,6 +321,73 @@ export default function ScheduledPage() {
     }
   }, [tasks])
 
+  // Kullanıcı atama fonksiyonu - optimized refresh
+  const handleAssignUser = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigneeId: userId })
+      })
+
+      if (response.ok) {
+        // API düzeltildi, daha hızlı refresh yapabiliriz
+        setTimeout(() => {
+          fetchTasks()
+        }, 100)
+      }
+    } catch (error) {
+      console.error('User assignment error:', error)
+    }
+  }, [fetchTasks])
+
+  // Kullanıcı atama kaldırma fonksiyonu - optimized refresh  
+  const handleUnassignUser = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigneeId: userId })
+      })
+
+      if (response.ok) {
+        // API düzeltildi, daha hızlı refresh yapabiliriz
+        setTimeout(() => {
+          fetchTasks()
+        }, 100)
+      }
+    } catch (error) {
+      console.error('User unassignment error:', error)
+    }
+  }, [fetchTasks])
+
+  // Assignment güncelleme fonksiyonu (inline düzenleme için)
+  const handleUpdateAssignment = useCallback(async (taskId: string, userId: string | null) => {
+    try {
+      if (userId) {
+        // Yeni kullanıcı ata
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assigneeId: userId })
+        })
+      } else {
+        // Mevcut atamayı kaldır
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Hızlı refresh
+      setTimeout(() => {
+        fetchTasks()
+      }, 100)
+    } catch (error) {
+      console.error('Assignment update error:', error)
+    }
+  }, [fetchTasks])
+
   useEffect(() => {
     Promise.all([
       fetchTasks(),
@@ -530,11 +597,14 @@ export default function ScheduledPage() {
                           onDelete={handleDeleteTask}
                           onPin={toggleTaskPin}
                           onUpdateTags={updateTaskTags}
+                          onUpdateAssignment={handleUpdateAssignment}
                           onAddSubTask={handleAddSubTask}
                           onEdit={handleEditTask}
                           onCopy={handleCopyTask}
                           onMove={handleMoveTaskModal}
                           onComment={handleCommentTask}
+                          onAssignUser={handleAssignUser}
+                          onUnassignUser={handleUnassignUser}
                           className="hover:shadow-sm transition-shadow"
                         />
                       ))}

@@ -17,7 +17,10 @@ export const TaskActivityTypes = {
   SUBTASK_ADDED: "subtask_added",
   CLONED: "cloned",
   TITLE_CHANGED: "title_changed",
-  DESCRIPTION_CHANGED: "description_changed"
+  DESCRIPTION_CHANGED: "description_changed",
+  USER_ASSIGNED: "user_assigned",
+  USER_UNASSIGNED: "user_unassigned",
+  USER_REASSIGNED: "user_reassigned"
 } as const
 
 export type TaskActivityType = typeof TaskActivityTypes[keyof typeof TaskActivityTypes]
@@ -100,6 +103,12 @@ export function getActivityDescription(
       } else {
         return "Açıklama değiştirildi"
       }
+    case TaskActivityTypes.USER_ASSIGNED:
+      return `Kullanıcı atandı: ${newValue}`
+    case TaskActivityTypes.USER_UNASSIGNED:
+      return `Kullanıcı atama kaldırıldı: ${oldValue}`
+    case TaskActivityTypes.USER_REASSIGNED:
+      return `Kullanıcı yeniden atandı: ${oldValue} → ${newValue}`
     default:
       return "Bilinmeyen aktivite"
   }

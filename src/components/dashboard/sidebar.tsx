@@ -90,6 +90,15 @@ const cardItems = [
     href: ROUTES.BOARD 
   },
   { 
+    name: "Atanan Görevler", 
+    count: null, 
+    icon: User, 
+    activeIcon: User, 
+    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
+    activeColor: "bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/70 dark:to-purple-900/70 text-indigo-800 dark:text-indigo-200 border-indigo-300/70 dark:border-indigo-700/70 shadow-lg shadow-indigo-500/10", 
+    href: "/assigned" 
+  },
+  { 
     name: "Google Takvim", 
     count: null, 
     icon: Calendar, 

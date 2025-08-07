@@ -3,17 +3,18 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    
-    // JWT token'ı cookie'den sil
-    cookieStore.delete('token')
-    
     const response = NextResponse.json({ 
       message: 'Başarıyla çıkış yapıldı' 
     })
     
-    // Cookie'yi response'da da sil
-    response.cookies.delete('token')
+    // Cookie'yi temizle
+    response.cookies.set('token', '', {
+      httpOnly: true,
+      expires: new Date(0),
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    })
     
     return response
   } catch (error) {

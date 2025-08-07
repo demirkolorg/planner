@@ -66,6 +66,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             }
           }
         },
+        assignments: {
+          include: {
+            assignee: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            },
+            assigner: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        },
         _count: {
           select: {
             comments: true

@@ -141,6 +141,31 @@ export default function QuickNotesPage() {
     }
   }, [quickNoteTasks])
 
+  // Assignment güncelleme fonksiyonu
+  const handleUpdateAssignment = useCallback(async (taskId: string, userId: string | null) => {
+    try {
+      if (userId) {
+        // Yeni kullanıcı ata
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assigneeId: userId })
+        })
+      } else {
+        // Mevcut atamayı kaldır
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Görevleri yeniden yükle
+      await fetchTasks()
+    } catch (error) {
+      console.error('Assignment update error:', error)
+    }
+  }, [fetchTasks])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -188,6 +213,7 @@ export default function QuickNotesPage() {
               onDelete={handleDeleteTask}
               onPin={toggleTaskPin}
               onUpdateTags={updateTaskTags}
+              onUpdateAssignment={handleUpdateAssignment}
               onEdit={() => {}}
               onCopy={handleCopyTask}
               onMove={handleMoveTaskModal}

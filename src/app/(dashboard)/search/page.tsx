@@ -222,6 +222,31 @@ export default function SearchPage() {
     setIsCommentsModalOpen(true)
   }
 
+  // Assignment güncelleme fonksiyonu
+  const handleUpdateAssignment = async (taskId: string, userId: string | null) => {
+    try {
+      if (userId) {
+        // Yeni kullanıcı ata
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assigneeId: userId })
+        })
+      } else {
+        // Mevcut atamayı kaldır
+        await fetch(`/api/tasks/${taskId}/assign`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Arama sonuçlarını yeniden yükle
+      handleSearch()
+    } catch (error) {
+      console.error('Assignment update error:', error)
+    }
+  }
+
   const priorities = [
     { value: 'CRITICAL', label: 'Kritik', color: '#dc2626' },
     { value: 'HIGH', label: 'Yüksek', color: '#ea580c' },
@@ -642,6 +667,7 @@ export default function SearchPage() {
                 onAddSubTask={handleAddSubTask}
                 onUpdateTags={updateTaskTags}
                 onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
+                onUpdateAssignment={handleUpdateAssignment}
                 onEdit={handleEditTask}
                 onComment={handleCommentTask}
               />
@@ -720,7 +746,8 @@ export default function SearchPage() {
                         onAddSubTask={handleAddSubTask}
                         onUpdateTags={updateTaskTags}
                         onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                                onEdit={handleEditTask}
+                        onUpdateAssignment={handleUpdateAssignment}
+                        onEdit={handleEditTask}
                         onComment={handleCommentTask}
                       />
                     ))}
@@ -884,7 +911,8 @@ export default function SearchPage() {
                         onAddSubTask={handleAddSubTask}
                         onUpdateTags={updateTaskTags}
                         onUpdatePriority={(taskId, priority) => updateTask(taskId, { priority })}
-                                onEdit={handleEditTask}
+                        onUpdateAssignment={handleUpdateAssignment}
+                        onEdit={handleEditTask}
                         onComment={handleCommentTask}
                       />
                     ))}
