@@ -3,10 +3,11 @@ import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
 import { createTaskActivity, TaskActivityTypes, getActivityDescription } from '@/lib/task-activity'
+import { createTaskAssignmentNotification } from '@/lib/notification-utils'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const cookieStore = await cookies()
@@ -19,7 +20,7 @@ export async function POST(
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const userId = decoded.userId
 
-    const taskId = params.id
+    const { id: taskId } = await params
     const { assigneeId } = await request.json()
 
     if (!assigneeId) {
@@ -165,6 +166,21 @@ export async function POST(
       description: description
     })
 
+    // Notification gönder (sadece kendine atama yapılmadıysa)
+    if (assigneeId !== userId) {
+      try {
+        await createTaskAssignmentNotification(
+          taskId,
+          assigneeId,
+          userId,
+          task.title
+        )
+      } catch (notificationError) {
+        // Notification hatası ana işlemi etkilememelidir
+        console.error('Task assignment notification error:', notificationError)
+      }
+    }
+
     return NextResponse.json({
       message: 'Görev başarıyla atandı',
       assignment
@@ -180,7 +196,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const cookieStore = await cookies()
@@ -193,7 +209,7 @@ export async function DELETE(
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const userId = decoded.userId
 
-    const taskId = params.id
+    const { id: taskId } = await params
 
     // Görevin var olup olmadığını ve yetkisini kontrol et
     const task = await db.task.findFirst({

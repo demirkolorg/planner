@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useCallback } from "react"
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Calendar, CheckCircle2, Timer, AlertTriangle } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"

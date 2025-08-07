@@ -23,6 +23,24 @@ async function main() {
   })
 
   console.log('✅ Admin kullanıcısı oluşturuldu:', adminUser.email)
+
+  // Normal kullanıcı: user@planner.com
+  const userHashedPassword = await bcrypt.hash('user@planner.com', 12)
+  
+  const normalUser = await prisma.user.upsert({
+    where: { email: 'user@planner.com' },
+    update: {},
+    create: {
+      email: 'user@planner.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      password: userHashedPassword,
+      role: 'USER',
+      emailVerified: true,
+    },
+  })
+
+  console.log('✅ Normal kullanıcı oluşturuldu:', normalUser.email)
   console.log('🎉 Seed işlemi tamamlandı!')
 }
 

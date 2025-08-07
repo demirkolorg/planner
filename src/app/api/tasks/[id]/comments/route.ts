@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { createCommentNotification } from "@/lib/notification-utils"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -155,6 +156,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
       return comment
     })
+
+    // Notification gönder (görev sahibine)
+    if (task.userId !== decoded.userId) {
+      try {
+        await createCommentNotification(
+          taskId,
+          decoded.userId,
+          task.userId,
+          task.title,
+          content.trim()
+        )
+      } catch (notificationError) {
+        // Notification hatası ana işlemi etkilememelidir
+        console.error('Comment notification error:', notificationError)
+      }
+    }
 
     return NextResponse.json(result)
   } catch (error) {

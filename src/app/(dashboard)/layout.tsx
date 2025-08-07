@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to avoid SSR issues with EventSource
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
@@ -12,6 +15,7 @@ import { QuickTaskModal } from "@/components/modals/quick-task-modal"
 import { QuickSearchModal } from "@/components/modals/quick-search-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { ToastNotification } from "@/components/ui/toast-notification"
+import { useAutoNotifications } from "@/hooks/use-notifications"
 import { useCtrlK, useCtrlS, useCtrlJ, useCtrlB } from "@/hooks/use-keyboard-shortcut"
 import { useFontSize } from "@/hooks/use-font-size"
 
@@ -33,6 +37,9 @@ export default function DashboardLayout({
 
   // Font size hook'unu kullan
   useFontSize()
+  
+  // Notification system'i aktif et
+  useAutoNotifications()
 
   // Ctrl+K shortcut
   useCtrlK(() => {

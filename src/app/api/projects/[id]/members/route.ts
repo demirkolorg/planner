@@ -22,7 +22,7 @@ async function getAuthenticatedUser() {
 // Proje üyelerini listele
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getAuthenticatedUser()
@@ -31,7 +31,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const projectId = params.id
+    const { id: projectId } = await params
 
     // Proje erişimi kontrolü
     const project = await db.project.findFirst({
@@ -67,7 +67,7 @@ export async function GET(
             }
           },
           orderBy: {
-            createdAt: 'asc'
+            addedAt: 'asc'
           }
         }
       }
@@ -84,7 +84,7 @@ export async function GET(
         userId: project.user.id,
         projectId: project.id,
         role: 'OWNER' as const,
-        createdAt: project.createdAt,
+        addedAt: project.createdAt,
         addedBy: project.user.id,
         user: project.user
       },
@@ -104,7 +104,7 @@ export async function GET(
 // Proje üyesi ekle
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getAuthenticatedUser()
@@ -113,7 +113,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const projectId = params.id
+    const { id: projectId } = await params
     const { userIds, role = 'MEMBER' } = await request.json()
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -197,7 +197,7 @@ export async function POST(
 // Proje üyesini kaldır
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getAuthenticatedUser()
@@ -206,7 +206,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const projectId = params.id
+    const { id: projectId } = await params
     const { searchParams } = new URL(request.url)
     const memberUserId = searchParams.get('userId')
 

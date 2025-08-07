@@ -18,6 +18,7 @@ import { useTaskStore } from "@/store/taskStore"
 import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
 import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
@@ -362,6 +363,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <p className="text-xs text-muted-foreground">Ctrl+S</p>
                 </TooltipContent>
               </Tooltip>
+              <NotificationDropdown className="px-1.5 h-8 w-8" />
             </div>
           </div>
 
@@ -518,6 +520,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 <p className="text-xs text-muted-foreground">Ctrl+S</p>
               </TooltipContent>
             </Tooltip>
+            <NotificationDropdown className="w-full h-9" />
           </div>
 
           {/* Divider */}

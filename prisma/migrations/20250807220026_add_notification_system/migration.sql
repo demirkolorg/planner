@@ -1,6 +1,15 @@
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER');
 
+-- CreateEnum
+CREATE TYPE "TaskType" AS ENUM ('PROJECT', 'CALENDAR', 'QUICK_NOTE');
+
+-- CreateEnum
+CREATE TYPE "NotificationType" AS ENUM ('TASK_ASSIGNED', 'TASK_COMMENT', 'TASK_STATUS_CHANGED', 'TASK_DUE_SOON', 'PROJECT_INVITE', 'PROJECT_UPDATE', 'MENTION', 'GENERAL');
+
+-- CreateEnum
+CREATE TYPE "ProjectRole" AS ENUM ('OWNER', 'MEMBER', 'VIEWER');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -39,6 +48,8 @@ CREATE TABLE "Project" (
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isPinned" BOOLEAN NOT NULL DEFAULT false,
+    "isPublic" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Project_pkey" PRIMARY KEY ("id")
 );
@@ -54,11 +65,15 @@ CREATE TABLE "Task" (
     "isPinned" BOOLEAN NOT NULL DEFAULT false,
     "syncToCalendar" BOOLEAN NOT NULL DEFAULT false,
     "parentTaskId" TEXT,
-    "projectId" TEXT NOT NULL,
+    "projectId" TEXT,
     "sectionId" TEXT,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "level" INTEGER NOT NULL DEFAULT 0,
+    "calendarSourceId" TEXT,
+    "quickNoteCategory" TEXT,
+    "taskType" "TaskType" NOT NULL DEFAULT 'PROJECT',
 
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
@@ -174,6 +189,77 @@ CREATE TABLE "TaskCalendarEvent" (
     CONSTRAINT "TaskCalendarEvent_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "ProjectCustomField" (
+    "id" TEXT NOT NULL,
+    "projectId" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ProjectCustomField_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TaskAssignment" (
+    "id" TEXT NOT NULL,
+    "taskId" TEXT NOT NULL,
+    "assigneeId" TEXT NOT NULL,
+    "assignedBy" TEXT NOT NULL,
+    "assignedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "TaskAssignment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProjectMember" (
+    "id" TEXT NOT NULL,
+    "projectId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "role" "ProjectRole" NOT NULL DEFAULT 'MEMBER',
+    "addedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "addedBy" TEXT,
+
+    CONSTRAINT "ProjectMember_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Notification" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "type" "NotificationType" NOT NULL,
+    "entityType" TEXT,
+    "entityId" TEXT,
+    "actionUrl" TEXT,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "createdBy" TEXT,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "NotificationSettings" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "emailNotifications" BOOLEAN NOT NULL DEFAULT true,
+    "pushNotifications" BOOLEAN NOT NULL DEFAULT true,
+    "taskAssignment" BOOLEAN NOT NULL DEFAULT true,
+    "taskComments" BOOLEAN NOT NULL DEFAULT true,
+    "taskStatusChanges" BOOLEAN NOT NULL DEFAULT true,
+    "projectUpdates" BOOLEAN NOT NULL DEFAULT true,
+    "mentionsOnly" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "NotificationSettings_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -203,6 +289,45 @@ CREATE INDEX "TaskCalendarEvent_taskId_idx" ON "TaskCalendarEvent"("taskId");
 
 -- CreateIndex
 CREATE INDEX "TaskCalendarEvent_googleEventId_idx" ON "TaskCalendarEvent"("googleEventId");
+
+-- CreateIndex
+CREATE INDEX "ProjectCustomField_projectId_idx" ON "ProjectCustomField"("projectId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProjectCustomField_projectId_key_key" ON "ProjectCustomField"("projectId", "key");
+
+-- CreateIndex
+CREATE INDEX "TaskAssignment_taskId_idx" ON "TaskAssignment"("taskId");
+
+-- CreateIndex
+CREATE INDEX "TaskAssignment_assigneeId_idx" ON "TaskAssignment"("assigneeId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TaskAssignment_taskId_assigneeId_key" ON "TaskAssignment"("taskId", "assigneeId");
+
+-- CreateIndex
+CREATE INDEX "ProjectMember_projectId_idx" ON "ProjectMember"("projectId");
+
+-- CreateIndex
+CREATE INDEX "ProjectMember_userId_idx" ON "ProjectMember"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProjectMember_projectId_userId_key" ON "ProjectMember"("projectId", "userId");
+
+-- CreateIndex
+CREATE INDEX "Notification_userId_idx" ON "Notification"("userId");
+
+-- CreateIndex
+CREATE INDEX "Notification_userId_isRead_idx" ON "Notification"("userId", "isRead");
+
+-- CreateIndex
+CREATE INDEX "Notification_createdAt_idx" ON "Notification"("createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "NotificationSettings_userId_key" ON "NotificationSettings"("userId");
+
+-- CreateIndex
+CREATE INDEX "NotificationSettings_userId_idx" ON "NotificationSettings"("userId");
 
 -- AddForeignKey
 ALTER TABLE "EmailOTP" ADD CONSTRAINT "EmailOTP_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -260,3 +385,30 @@ ALTER TABLE "GoogleCalendarIntegration" ADD CONSTRAINT "GoogleCalendarIntegratio
 
 -- AddForeignKey
 ALTER TABLE "TaskCalendarEvent" ADD CONSTRAINT "TaskCalendarEvent_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectCustomField" ADD CONSTRAINT "ProjectCustomField_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskAssignment" ADD CONSTRAINT "TaskAssignment_assignedBy_fkey" FOREIGN KEY ("assignedBy") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskAssignment" ADD CONSTRAINT "TaskAssignment_assigneeId_fkey" FOREIGN KEY ("assigneeId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskAssignment" ADD CONSTRAINT "TaskAssignment_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NotificationSettings" ADD CONSTRAINT "NotificationSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
