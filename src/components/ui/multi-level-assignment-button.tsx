@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MultiLevelAssignmentModal } from '@/components/modals/multi-level-assignment-modal'
+import { AssignedUsersModal } from '@/components/modals/assigned-users-modal'
 
 type AssignmentTargetType = 'PROJECT' | 'SECTION' | 'TASK'
 
@@ -46,14 +47,21 @@ export function MultiLevelAssignmentButton({
   size = 'sm',
   showCounts = true
 }: MultiLevelAssignmentButtonProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   const totalAssignments = (counts?.userAssignments || 0) + (counts?.emailAssignments || 0)
   const hasAssignments = totalAssignments > 0
 
-  const handleOpenModal = () => {
+  const handleOpenAssignModal = () => {
     if (!disabled) {
-      setIsModalOpen(true)
+      setIsAssignModalOpen(true)
+    }
+  }
+
+  const handleOpenViewModal = () => {
+    if (!disabled) {
+      setIsViewModalOpen(true)
     }
   }
 
@@ -61,35 +69,60 @@ export function MultiLevelAssignmentButton({
     onRefresh?.()
   }
 
-  // Icon-only variant
+  // Icon-only variant with dropdown
   if (variant === 'icon') {
     return (
       <>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 relative"
-          onClick={handleOpenModal}
-          disabled={disabled}
-        >
-          {hasAssignments ? (
-            <Users className="h-3 w-3" />
-          ) : (
-            <UserPlus className="h-3 w-3" />
-          )}
-          {hasAssignments && (
-            <div 
-              className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-background"
-              style={{ backgroundColor: '#3b82f6' }}
-            />
-          )}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 relative"
+              disabled={disabled}
+            >
+              {hasAssignments ? (
+                <Users className="h-3 w-3" />
+              ) : (
+                <UserPlus className="h-3 w-3" />
+              )}
+              {hasAssignments && (
+                <div 
+                  className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-background"
+                  style={{ backgroundColor: '#3b82f6' }}
+                />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleOpenAssignModal}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              {hasAssignments ? 'Atamayı Değiştir' : 'Atama Yap'}
+            </DropdownMenuItem>
+            {hasAssignments && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleOpenViewModal}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Atanmış Kişi
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         <MultiLevelAssignmentModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isAssignModalOpen}
+          onClose={() => setIsAssignModalOpen(false)}
           target={target}
           onSuccess={handleSuccess}
+        />
+        
+        <AssignedUsersModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          target={target}
+          onRefresh={handleSuccess}
         />
       </>
     )
@@ -124,27 +157,17 @@ export function MultiLevelAssignmentButton({
         </DropdownMenuTrigger>
         
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleOpenModal}>
+          <DropdownMenuItem onClick={handleOpenAssignModal}>
             <UserPlus className="h-4 w-4 mr-2" />
-            Yeni Atama Yap
+            {hasAssignments ? 'Atamayı Değiştir' : 'Atama Yap'}
           </DropdownMenuItem>
           
           {hasAssignments && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <div className="flex flex-col gap-1 text-xs">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-3 w-3" />
-                    <span>{counts?.userAssignments || 0} kullanıcı atanmış</span>
-                  </div>
-                  {counts?.emailAssignments ? (
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-3 w-3" />
-                      <span>{counts.emailAssignments} email ataması bekliyor</span>
-                    </div>
-                  ) : null}
-                </div>
+              <DropdownMenuItem onClick={handleOpenViewModal}>
+                <Users className="h-4 w-4 mr-2" />
+                Atanmış Kişi
               </DropdownMenuItem>
             </>
           )}
@@ -152,10 +175,17 @@ export function MultiLevelAssignmentButton({
       </DropdownMenu>
 
       <MultiLevelAssignmentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
         target={target}
         onSuccess={handleSuccess}
+      />
+      
+      <AssignedUsersModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        target={target}
+        onRefresh={handleSuccess}
       />
     </>
   )

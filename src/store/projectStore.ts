@@ -62,17 +62,32 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   fetchProjects: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('/api/projects')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 saniye timeout
+
+      const response = await fetch('/api/projects', {
+        signal: controller.signal
+      })
+      
+      clearTimeout(timeoutId)
+      
       if (!response.ok) {
         throw new Error('Failed to fetch projects')
       }
       const projects = await response.json()
       set({ projects, isLoading: false })
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'An error occurred', 
-        isLoading: false 
-      })
+      if (error instanceof Error && error.name === 'AbortError') {
+        set({ 
+          error: 'Projeler yüklenirken zaman aşımı oluştu', 
+          isLoading: false 
+        })
+      } else {
+        set({ 
+          error: error instanceof Error ? error.message : 'An error occurred', 
+          isLoading: false 
+        })
+      }
     }
   },
 

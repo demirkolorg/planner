@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { API_ROUTES, ROUTES, VALIDATION, MESSAGES } from "@/lib/constants"
 import { Loader2, Mail, Lock, Eye, EyeOff, Chrome } from "lucide-react"
@@ -23,7 +23,16 @@ export function LoginForm({
   const [apiError, setApiError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
-  const { login } = useAuthStore()
+  const searchParams = useSearchParams()
+  const { login, addAccount } = useAuthStore()
+  
+  // Multi-account support kontrolü
+  const [isAddingAccount, setIsAddingAccount] = useState(false)
+  
+  useEffect(() => {
+    const addAccountParam = searchParams.get('addAccount')
+    setIsAddingAccount(addAccountParam === 'true')
+  }, [searchParams])
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {}
@@ -64,7 +73,12 @@ export function LoginForm({
     setApiError('')
     
     try {
-      const response = await fetch(API_ROUTES.AUTH.LOGIN, {
+      // Multi-account için API URL'yi ayarla
+      const apiUrl = isAddingAccount 
+        ? `${API_ROUTES.AUTH.LOGIN}?addAccount=true` 
+        : API_ROUTES.AUTH.LOGIN
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,9 +95,18 @@ export function LoginForm({
         throw new Error(data.error || MESSAGES.ERROR.GENERIC_ERROR)
       }
 
-      // Başarılı giriş - kullanıcı bilgilerini Zustand store'a kaydet ve ana sayfaya yönlendir
-      login(data.user)
-      router.push(ROUTES.HOME)
+      // Multi-account desteği
+      if (isAddingAccount && data.token) {
+        // Hesap ekleme modunda - mevcut hesaba yeni hesap ekle
+        addAccount(data.user, data.token)
+        // Ana sayfaya dön
+        router.push(ROUTES.HOME)
+      } else {
+        // Normal giriş - kullanıcı bilgilerini Zustand store'a kaydet
+        login(data.user, data.token)
+        router.push(ROUTES.HOME)
+      }
+      
       setIsSubmitting(false)
     } catch (error) {
       setApiError(error instanceof Error ? error.message : MESSAGES.ERROR.GENERIC_ERROR)
@@ -192,10 +215,10 @@ export function LoginForm({
             {isSubmitting ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Giriş Yapılıyor...</span>
+                <span>{isAddingAccount ? 'Hesap Ekleniyor...' : 'Giriş Yapılıyor...'}</span>
               </div>
             ) : (
-              'Giriş Yap'
+              isAddingAccount ? 'Hesap Ekle' : 'Giriş Yap'
             )}
           </Button>
           
@@ -221,17 +244,28 @@ export function LoginForm({
         </div>
       </form>
 
-      {/* Register Link */}
+      {/* Register Link / Back Link */}
       <div className="text-center">
-        <p className="text-muted-foreground text-sm">
-          Hesabınız yok mu?{" "}
-          <a 
-            href={ROUTES.REGISTER} 
-            className="text-primary hover:text-primary/80 font-medium transition-colors"
-          >
-            Kayıt Ol
-          </a>
-        </p>
+        {isAddingAccount ? (
+          <p className="text-muted-foreground text-sm">
+            <a 
+              href={ROUTES.HOME} 
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              ← Ana Sayfaya Dön
+            </a>
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Hesabınız yok mu?{" "}
+            <a 
+              href={ROUTES.REGISTER} 
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              Kayıt Ol
+            </a>
+          </p>
+        )}
       </div>
     </div>
   )

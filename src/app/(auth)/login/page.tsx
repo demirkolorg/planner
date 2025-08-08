@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { LoginForm } from "@/components/auth/login-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Logo } from "@/components/ui/logo";
@@ -8,12 +9,18 @@ import { BRAND_SLOGANS } from "@/lib/constants";
 
 export default function LoginPage() {
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
+  const searchParams = useSearchParams()
+  const [isAddingAccount, setIsAddingAccount] = useState(false)
   
   useEffect(() => {
     // Client-side'da rastgele slogan seç (hydration sorunu için)
     const randomIndex = Math.floor(Math.random() * BRAND_SLOGANS.length)
     setRandomSlogan(BRAND_SLOGANS[randomIndex])
-  }, [])
+    
+    // Multi-account kontrolü
+    const addAccountParam = searchParams.get('addAccount')
+    setIsAddingAccount(addAccountParam === 'true')
+  }, [searchParams])
   
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
@@ -78,9 +85,14 @@ export default function LoginPage() {
         
         <div className="w-full max-w-md space-y-8">
           <div className="text-center lg:text-left">
-            <h1 className="text-3xl font-bold tracking-tight">Hoş Geldiniz</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {isAddingAccount ? 'Hesap Ekle' : 'Hoş Geldiniz'}
+            </h1>
             <p className="text-muted-foreground mt-2">
-              Hesabınıza giriş yaparak devam edin
+              {isAddingAccount 
+                ? 'Yeni bir hesap ekleyerek çoklu hesap kullanımına geçin'
+                : 'Hesabınıza giriş yaparak devam edin'
+              }
             </p>
           </div>
           

@@ -686,47 +686,24 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 </Tooltip>
               )}
 
-              {/* Assignment Indicator + Assignment Button */}
-              <div className="flex items-center gap-1">
-                {/* Existing Assignment Indicator */}
-                {task.assignments && task.assignments.length > 0 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="space-y-1">
-                        <p className="font-medium">Atanan Kişi:</p>
-                        <p className="text-xs">
-                          {task.assignments[0].assignee.firstName} {task.assignments[0].assignee.lastName}
-                        </p>
-                      </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
-                {/* Multi-level Assignment Button - Only show on hover and if has project permissions */}
-                {isHovered && task.projectId && (
-                  <MultiLevelAssignmentButton
-                    target={{
-                      id: task.id,
-                      name: task.title,
-                      type: 'TASK',
-                      projectId: task.projectId
-                    }}
-                    onRefresh={() => {
-                      // Refresh callback - task'ı tekrar yükle
-                      if (onUpdateAssignment) {
-                        // Mevcut assignment state'ini refresh et
-                        onUpdateAssignment(task.id, task.assignments?.[0]?.assigneeId || null)
-                      }
-                    }}
-                    variant="icon"
-                  />
-                )}
-              </div>
+              {/* Assignment Indicator */}
+              {task.assignments && task.assignments.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1">
+                      <p className="font-medium">Atanan Kişi:</p>
+                      <p className="text-xs">
+                        {task.assignments[0].assignee.firstName} {task.assignments[0].assignee.lastName}
+                      </p>
+                    </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
               {/* SubTasks Icon and Count */}
               {task.subTasks && task.subTasks.length > 0 && (

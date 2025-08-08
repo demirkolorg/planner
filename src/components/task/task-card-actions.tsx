@@ -27,7 +27,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
-import { AssignmentDropdown } from "./assignment-dropdown"
+import { MultiLevelAssignmentButton } from "@/components/ui/multi-level-assignment-button"
+// import { AssignmentDropdown } from "./assignment-dropdown" // Kaldırıldı
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import type { Task } from "@/types/task"
@@ -254,16 +255,8 @@ export function TaskCardActions({
         />
         )}
 
-        {/* User Assignment - Atanmış kullanıcılar için gizli */}
-        {!isDisabledForAssignedUser && (
-        <AssignmentDropdown
-          task={task}
-          onAssignUser={onAssignUser}
-          onUnassignUser={onUnassignUser}
-          onUpdateAssignment={onUpdateAssignment}
-          isTaskCompleted={isTaskCompleted}
-        />
-        )}
+        {/* User Assignment - REMOVED: Duplicate with MultiLevelAssignmentButton in header */}
+        {/* AssignmentDropdown kaldırıldı - MultiLevelAssignmentButton kullanılıyor */}
 
         {/* Priority Selector - Atanmış kullanıcılar için gizli */}
         {!isDisabledForAssignedUser && (
@@ -293,6 +286,31 @@ export function TaskCardActions({
             </Tooltip>
           }
         />
+        )}
+
+        {/* Assignment Button - Öncelik ve zaman çizelgesi arasında */}
+        {!isDisabledForAssignedUser && task.projectId && (
+          <MultiLevelAssignmentButton
+            target={{
+              id: task.id,
+              name: task.title,
+              type: 'TASK',
+              projectId: task.projectId
+            }}
+            counts={{
+              userAssignments: task.assignments?.length || 0,
+              emailAssignments: 0 // Görevlerde şimdilik sadece user assignment var
+            }}
+            onRefresh={() => {
+              // Refresh callback - task'ı tekrar yükle
+              if (onUpdateAssignment) {
+                // Mevcut assignment state'ini refresh et
+                onUpdateAssignment(task.id, task.assignments?.[0]?.assigneeId || null)
+              }
+            }}
+            variant="icon"
+            disabled={isTaskCompleted}
+          />
         )}
 
         {/* Timeline - Atanmış kullanıcılar için gizli */}

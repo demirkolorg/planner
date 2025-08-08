@@ -1143,60 +1143,62 @@ export default function ProjectDetailPage() {
             const isOpen = openSections.includes(section.id)
             
             return (
-              <AccordionItem key={section.id} value={section.id} className="border-none overflow-visible">
-                <AccordionTrigger className="px-4 py-2 hover:bg-accent/50 rounded-lg border-b-1 mb-2 transition-colors hover:no-underline w-full">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center space-x-3 flex-1">
-                      {isOpen ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <h3 className="font-medium">{section.name}</h3>
-                      <span className="text-muted-foreground">
-                        {sectionTasks.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {/* Section Assignment Button */}
-                      {project.userAccess?.permissions.canAssignTasks && (
-                        <MultiLevelAssignmentButton
-                          target={{
-                            id: section.id,
-                            name: section.name,
-                            type: 'SECTION',
-                            projectId: project.id
-                          }}
-                          onRefresh={fetchProjectData}
-                          variant="icon"
-                        />
-                      )}
-                      
+              <AccordionItem key={section.id} value={section.id} className="border-none overflow-visible relative">
+                <AccordionTrigger className="px-4 py-2 hover:bg-secondary/10 rounded-lg border-b border-secondary/20 mb-1 transition-colors hover:no-underline w-full bg-secondary/10">
+                  <div className="flex items-center space-x-3 flex-1">
+                    {isOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <h3 className="font-medium">{section.name}</h3>
+                    <span className="text-muted-foreground">
+                      {sectionTasks.length}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                
+                {/* Action buttons - positioned absolutely to avoid nesting */}
+                <div className="absolute right-4 top-2 flex items-center space-x-2 z-10">
+                  {/* Section Assignment Button */}
+                  {project.userAccess?.permissions.canAssignTasks && (
+                    <MultiLevelAssignmentButton
+                      target={{
+                        id: section.id,
+                        name: section.name,
+                        type: 'SECTION',
+                        projectId: project.id
+                      }}
+                      onRefresh={fetchProjectData}
+                      variant="icon"
+                    />
+                  )}
+                  
+                  <div 
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setTaskModalContext({
+                        project: { id: project.id, name: project.name, emoji: project.emoji },
+                        section: { id: section.id, name: section.name, projectId: project.id }
+                      })
+                      setIsTaskModalOpen(true)
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Görev
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <div 
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setTaskModalContext({
-                            project: { id: project.id, name: project.name, emoji: project.emoji },
-                            section: { id: section.id, name: section.name, projectId: project.id }
-                          })
-                          setIsTaskModalOpen(true)
-                        }}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Görev
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <div 
-                            className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                            }}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </div>
-                        </DropdownMenuTrigger>
+                        className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </div>
+                      </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation()
@@ -1237,9 +1239,8 @@ export default function ProjectDetailPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
                   </div>
-                </AccordionTrigger>
+                
                 <AccordionContent className="px-4 pb-3 overflow-visible">
                   {isLoading ? (
                     <div className="space-y-3">

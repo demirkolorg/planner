@@ -34,6 +34,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { CircularProgress } from "@/components/ui/circular-progress"
 import { useRouter } from "next/navigation"
+import { AccountSwitcher } from "@/components/auth/account-switcher"
 
 const cardItems = [
   { 
@@ -674,40 +675,12 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
               
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-9 w-9 rounded-full">
-                        <User className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <div className="flex items-center justify-start gap-2 p-2">
-                        <div className="flex flex-col space-y-1 leading-none">
-                          <p className="font-medium">{user?.firstName} {user?.lastName}</p>
-                          <p className="text-sm text-muted-foreground">{user?.email}</p>
-                        </div>
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile" className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          Profil
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/settings" className="flex items-center gap-2">
-                          <Settings className="h-4 w-4" />
-                          Ayarlar
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
-                        <LogOut className="h-4 w-4" />
-                        Çıkış Yap
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center">
+                    <AccountSwitcher className="h-9 w-auto p-1" />
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Kullanıcı Menüsü</p>
+                  <p>Hesap Değiştir</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -724,12 +697,9 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" side="right">
-                    {/* Kullanıcı Bilgisi */}
-                    <div className="flex items-center justify-start gap-2 p-2 border-b">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium">{user?.firstName} {user?.lastName}</p>
-                        <p className="text-sm text-muted-foreground">{user?.email}</p>
-                      </div>
+                    {/* Account Switcher */}
+                    <div className="p-2 border-b">
+                      <AccountSwitcher className="w-full justify-start h-auto p-2" />
                     </div>
                     
                     {/* Kılavuz */}

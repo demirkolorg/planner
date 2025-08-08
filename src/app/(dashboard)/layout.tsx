@@ -75,7 +75,11 @@ export default function DashboardLayout({
     const timer = setTimeout(async () => {
       if (!isAuthenticated) {
         router.push(ROUTES.LOGIN)
-      } else {
+        setIsLoading(false)
+        return
+      }
+
+      try {
         // Kullanıcı değişti mi kontrol et
         const currentUserId = user?.id || null
         if (lastUserIdRef.current !== currentUserId) {
@@ -105,13 +109,39 @@ export default function DashboardLayout({
         
         // Kullanıcı giriş yapmışsa ve store boşsa verileri yükle
         if (tasks.length === 0) {
-          await Promise.all([
-            fetchTasks(),
-            fetchProjects()
-          ])
+          // Timeout ile API çağrılarını sınırla
+          const loadingTimeout = setTimeout(() => {
+            console.warn('Data loading taking too long, proceeding without data')
+            setIsLoading(false)
+          }, 8000) // 8 saniye timeout
+
+          try {
+            await Promise.race([
+              Promise.all([
+                fetchTasks().catch(error => {
+                  console.error('Failed to fetch tasks:', error)
+                  return [] // Silent fail, dashboard'u engellemez
+                }),
+                fetchProjects().catch(error => {
+                  console.error('Failed to fetch projects:', error)
+                  return [] // Silent fail, dashboard'u engellemez
+                })
+              ]),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 7000)
+              )
+            ])
+            clearTimeout(loadingTimeout)
+          } catch (error) {
+            console.warn('Data loading failed or timed out:', error)
+            clearTimeout(loadingTimeout)
+          }
         }
+      } catch (error) {
+        console.error('Dashboard loading error:', error)
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }, 100)
 
     return () => clearTimeout(timer)

@@ -149,17 +149,32 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('/api/tasks')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 saniye timeout
+
+      const response = await fetch('/api/tasks', {
+        signal: controller.signal
+      })
+      
+      clearTimeout(timeoutId)
+      
       if (!response.ok) {
         throw new Error('Failed to fetch tasks')
       }
       const tasks = await response.json()
       set({ tasks, isLoading: false })
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'An error occurred', 
-        isLoading: false 
-      })
+      if (error instanceof Error && error.name === 'AbortError') {
+        set({ 
+          error: 'Görevler yüklenirken zaman aşımı oluştu', 
+          isLoading: false 
+        })
+      } else {
+        set({ 
+          error: error instanceof Error ? error.message : 'An error occurred', 
+          isLoading: false 
+        })
+      }
     }
   },
 

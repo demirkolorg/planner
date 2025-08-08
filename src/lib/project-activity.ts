@@ -16,7 +16,12 @@ export const ProjectActivityTypes = {
   TASK_CREATED: "task_created",
   TASK_COMPLETED: "task_completed",
   TASK_UNCOMPLETED: "task_uncompleted",
-  TASK_DELETED: "task_deleted"
+  TASK_DELETED: "task_deleted",
+  
+  // Atama işlemleri
+  USER_ASSIGNED: "user_assigned",
+  EMAIL_ASSIGNED: "email_assigned",
+  ASSIGNMENT_REMOVED: "assignment_removed"
 } as const
 
 export type ProjectActivityType = typeof ProjectActivityTypes[keyof typeof ProjectActivityTypes]
@@ -88,6 +93,16 @@ export function getProjectActivityDescription(
       return `Görev tamamlandı: "${entityName}"`
     case ProjectActivityTypes.TASK_UNCOMPLETED:
       return `Görev tamamlanmamış olarak işaretlendi: "${entityName}"`
+    case ProjectActivityTypes.TASK_DELETED:
+      return `Görev silindi: "${entityName}"`
+    
+    // Atama işlemleri
+    case ProjectActivityTypes.USER_ASSIGNED:
+      return `${entityName} projeye ${newValue || 'VIEWER'} rolüyle atandı`
+    case ProjectActivityTypes.EMAIL_ASSIGNED:
+      return `${entityName} email ile projeye davet edildi`
+    case ProjectActivityTypes.ASSIGNMENT_REMOVED:
+      return `${entityName} projeden çıkarıldı`
     
     default:
       return "Bilinmeyen aktivite"
@@ -120,6 +135,16 @@ export function getProjectActivityIcon(actionType: ProjectActivityType): string 
       return "✅"
     case ProjectActivityTypes.TASK_UNCOMPLETED:
       return "↩️"
+    case ProjectActivityTypes.TASK_DELETED:
+      return "🗑️"
+    
+    // Atama işlemleri
+    case ProjectActivityTypes.USER_ASSIGNED:
+      return "👤"
+    case ProjectActivityTypes.EMAIL_ASSIGNED:
+      return "📧"
+    case ProjectActivityTypes.ASSIGNMENT_REMOVED:
+      return "👋"
     
     default:
       return "📝"
@@ -152,6 +177,16 @@ export function getProjectActivityColor(actionType: ProjectActivityType): string
       return "text-emerald-600"
     case ProjectActivityTypes.TASK_UNCOMPLETED:
       return "text-yellow-600"
+    case ProjectActivityTypes.TASK_DELETED:
+      return "text-red-600"
+    
+    // Atama işlemleri
+    case ProjectActivityTypes.USER_ASSIGNED:
+      return "text-blue-600"
+    case ProjectActivityTypes.EMAIL_ASSIGNED:
+      return "text-indigo-600"
+    case ProjectActivityTypes.ASSIGNMENT_REMOVED:
+      return "text-orange-600"
     
     default:
       return "text-gray-600"

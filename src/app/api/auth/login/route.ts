@@ -8,6 +8,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
+    
+    // Multi-account support için query parameter kontrolü
+    const url = new URL(request.url);
+    const isAddingAccount = url.searchParams.get('addAccount') === 'true';
 
     // Gerekli alanların kontrolü
     if (!email || !password) {
@@ -67,8 +71,14 @@ export async function POST(request: NextRequest) {
     // Cookie'ye token'ı kaydet
     const response = NextResponse.json(
       { 
-        message: MESSAGES.SUCCESS.LOGIN,
-        user: userWithoutPassword
+        message: isAddingAccount ? 'Hesap eklendi' : MESSAGES.SUCCESS.LOGIN,
+        user: {
+          ...userWithoutPassword,
+          createdAt: user.createdAt?.toISOString ? user.createdAt.toISOString() : user.createdAt,
+          updatedAt: user.updatedAt?.toISOString ? user.updatedAt.toISOString() : user.updatedAt,
+        },
+        token: token, // Multi-account için client-side storage
+        isAddingAccount
       },
       { status: 200 }
     );

@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { cookies } from 'next/headers'
+import jwt from 'jsonwebtoken'
+
+async function getAuthenticatedUser() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('token')?.value
+
+  if (!token) {
+    return null
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const user = await db.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, role: true }
+    })
+    return user
+  } catch (error) {
+    return null
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string, userId: string }> }
+) {
+  try {
+    const { id: taskId, userId: assigneeId } = await params
+    const user = await getAuthenticatedUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Kimlik doğrulama gerekli' },
+        { status: 401 }
+      )
+    }
+
+    // Görev var mı ve kullanıcının atama kaldırma yetkisi var mı kontrol et
+    const task = await db.task.findFirst({
+      where: {
+        id: taskId,
+        OR: [
+          { userId: user.id }, // Görev sahibi
+          {
+            project: {
+              OR: [
+                { userId: user.id }, // Proje sahibi
+                { 
+                  members: {
+                    some: { 
+                      userId: user.id,
+                      role: { in: ['OWNER', 'ADMIN'] }
+                    }
+                  }
+                } // Yetki sahibi proje üyesi
+              ]
+            }
+          }
+        ]
+      }
+    })
+
+    if (!task) {
+      return NextResponse.json(
+        { error: 'Görev bulunamadı veya atama kaldırma yetkiniz yok' },
+        { status: 404 }
+      )
+    }
+
+    // Mevcut atamayı kontrol et
+    const existingAssignment = await db.taskAssignment.findUnique({
+      where: {
+        taskId_assigneeId: {
+          taskId,
+          assigneeId
+        }
+      },
+      include: {
+        assignee: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    })
+
+    if (!existingAssignment) {
+      return NextResponse.json(
+        { error: 'Atama bulunamadı' },
+        { status: 404 }
+      )
+    }
+
+    // Atamayı kaldır
+    await db.taskAssignment.delete({
+      where: {
+        taskId_assigneeId: {
+          taskId,
+          assigneeId
+        }
+      }
+    })
+
+    return NextResponse.json({
+      message: 'Görev ataması başarıyla kaldırıldı'
+    })
+
+  } catch (error) {
+    console.error('Remove task assignment error:', error)
+    return NextResponse.json(
+      { error: 'Görev ataması kaldırılırken hata oluştu' },
+      { status: 500 }
+    )
+  }
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { X, Users, Mail, User, FolderKanban, List, CheckSquare, AlertCircle } from 'lucide-react'
+import { X, Users, Mail, User, FolderKanban, List, CheckSquare, AlertCircle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { UserPicker } from '@/components/ui/user-picker'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -64,7 +65,7 @@ export function MultiLevelAssignmentModal({
   const [selectedUsers, setSelectedUsers] = useState<User[]>([])
   const [emailInputs, setEmailInputs] = useState<EmailInput[]>([])
   const [newEmail, setNewEmail] = useState('')
-  const [selectedRole, setSelectedRole] = useState<string>('')
+  // Rol seçimi kaldırıldı - basit atama sistemi
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -75,14 +76,6 @@ export function MultiLevelAssignmentModal({
       setEmailInputs([])
       setNewEmail('')
       setMessage('')
-      setSelectedRole('')
-    } else {
-      // Set default role based on target type
-      if (target.type === 'PROJECT') {
-        setSelectedRole('COLLABORATOR')
-      } else {
-        setSelectedRole('MEMBER')
-      }
     }
   }, [isOpen, target])
 
@@ -131,6 +124,15 @@ export function MultiLevelAssignmentModal({
       return
     }
 
+    // Görevler için tek atama sınırlaması
+    if (target.type === 'TASK') {
+      const totalAssignments = userIds.length + validEmails.length
+      if (totalAssignments > 1) {
+        toast.error('Bir göreve sadece tek kişi atayabilirsiniz')
+        return
+      }
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -153,7 +155,7 @@ export function MultiLevelAssignmentModal({
         body: JSON.stringify({
           assigneeIds: userIds.length > 0 ? userIds : undefined,
           emails: validEmails.length > 0 ? validEmails : undefined,
-          role: selectedRole,
+          role: 'MEMBER', // Basit atama sistemi - hep MEMBER
           message: message.trim() || undefined
         })
       })
@@ -197,20 +199,7 @@ export function MultiLevelAssignmentModal({
     }
   }
 
-  // Get role options based on target type
-  const getRoleOptions = () => {
-    if (target?.type === 'PROJECT') {
-      return [
-        { value: 'COLLABORATOR', label: 'İş Ortağı', description: 'Tüm projede çalışabilir' },
-        { value: 'VIEWER', label: 'İzleyici', description: 'Sadece görüntüleyebilir' }
-      ]
-    } else {
-      return [
-        { value: 'OWNER', label: 'Sorumlu', description: 'Tam yetki sahibi' },
-        { value: 'MEMBER', label: 'Üye', description: 'Çalışma yetkisi' }
-      ]
-    }
-  }
+  // Rol seçimi kaldırıldı - basit atama sistemi
 
   // Get target icon
   const getTargetIcon = () => {
@@ -229,8 +218,6 @@ export function MultiLevelAssignmentModal({
   }
 
   if (!target) return null
-
-  const roleOptions = getRoleOptions()
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -254,24 +241,22 @@ export function MultiLevelAssignmentModal({
             </div>
           </div>
 
-          {/* Role Selection */}
-          <div className="space-y-2">
-            <Label>Rol Seçin</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Rol seçin..." />
-              </SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{option.label}</span>
-                      <span className="text-xs text-muted-foreground">{option.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Basit Atama Bilgisi */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+              <div>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {target.type === 'TASK' ? 'Tek Kişi Atama' : 'Basit Atama Sistemi'}
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  {target.type === 'TASK' 
+                    ? 'Bir göreve sadece tek kişi atayabilirsiniz. Atanan kişi görevi görebilir ve onaya gönderebilir.'
+                    : `Atanan kişiler bu ${target?.type === 'PROJECT' ? 'projeyi' : 'bölümü'} görebilir ve onaya gönderebilir.`
+                  }
+                </p>
+              </div>
+            </div>
           </div>
 
           <Separator />
@@ -286,19 +271,21 @@ export function MultiLevelAssignmentModal({
               selectedUsers={selectedUsers}
               onSelectionChange={setSelectedUsers}
               projectId={target.projectId}
-              multiple={true}
-              placeholder="Kullanıcı ara ve seç..."
+              multiple={target.type !== 'TASK'} // Görevler için tek seçim
+              placeholder={target.type === 'TASK' ? "Kullanıcı ara ve seç... (tek kişi)" : "Kullanıcı ara ve seç..."}
             />
           </div>
 
-          <Separator />
-
-          {/* Email Assignment */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email ile Ata (Kayıtsız kullanıcılar için)
-            </Label>
+          {/* Email Assignment - Sadece proje ve bölümler için */}
+          {target.type !== 'TASK' && (
+            <>
+              <Separator />
+              
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email ile Ata (Kayıtsız kullanıcılar için)
+                </Label>
             
             {/* Add Email Input */}
             <div className="flex gap-2">
@@ -351,7 +338,9 @@ export function MultiLevelAssignmentModal({
                 </div>
               </div>
             )}
-          </div>
+              </div>
+            </>
+          )}
 
           {/* Optional Message */}
           <div className="space-y-2">
@@ -371,9 +360,17 @@ export function MultiLevelAssignmentModal({
             </Button>
             <Button 
               onClick={handleSubmit} 
-              disabled={isSubmitting || (!selectedUsers.length && !emailInputs.some(item => item.isValid))}
+              disabled={isSubmitting || (
+                target.type === 'TASK' 
+                  ? selectedUsers.length === 0 
+                  : (!selectedUsers.length && !emailInputs.some(item => item.isValid))
+              )}
             >
-              {isSubmitting ? 'Atama Yapılıyor...' : 'Atama Yap'}
+              {isSubmitting ? 'Atama Yapılıyor...' : (
+                target.type === 'TASK' && selectedUsers.length > 0 
+                  ? 'Atamayı Değiştir' 
+                  : 'Atama Yap'
+              )}
             </Button>
           </div>
         </div>

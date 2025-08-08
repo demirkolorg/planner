@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { getUserAccessibleProjects } from "@/lib/access-control"
+import { withRetry } from "@/lib/db-retry"
 
 export async function GET(request: NextRequest) {
   try {

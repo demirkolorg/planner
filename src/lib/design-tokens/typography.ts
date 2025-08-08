@@ -68,7 +68,7 @@ export const TYPOGRAPHY_SCALE = {
 
 // Font families
 export const FONT_FAMILIES = {
-  sans: ['Inter', 'system-ui', 'sans-serif'],
+  sans: ['Poppins', 'system-ui', 'sans-serif'],
   mono: ['JetBrains Mono', 'Consolas', 'monospace'],
 } as const
 

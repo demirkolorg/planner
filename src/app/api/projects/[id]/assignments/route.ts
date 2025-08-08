@@ -196,6 +196,7 @@ export async function POST(
             entityType: 'project',
             entityId: assigneeId,
             entityName: `${assignee.firstName} ${assignee.lastName}`,
+            newValue: role,
             description: `${assignee.firstName} ${assignee.lastName} projeye ${role} rolüyle atandı`
           })
 
@@ -266,6 +267,18 @@ export async function POST(
           })
 
           results.emailAssignments.push(emailAssignment)
+
+          // Activity oluştur
+          await createProjectActivity({
+            projectId,
+            userId,
+            actionType: ProjectActivityTypes.EMAIL_ASSIGNED,
+            entityType: 'project',
+            entityId: null,
+            entityName: email,
+            newValue: role,
+            description: `${email} email ile projeye ${role} rolüyle davet edildi`
+          })
 
           // Email gönder
           try {
