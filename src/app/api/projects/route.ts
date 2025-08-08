@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { getUserAccessibleProjects } from "@/lib/access-control"
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,21 +16,8 @@ export async function GET(request: NextRequest) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     
-    const projects = await db.project.findMany({
-      where: {
-        userId: decoded.userId
-      },
-      include: {
-        _count: {
-          select: {
-            tasks: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    // Yeni access control sistemi ile tüm erişilebilir projeleri getir
+    const projects = await getUserAccessibleProjects(decoded.userId)
 
     return NextResponse.json(projects)
   } catch (error) {

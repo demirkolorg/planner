@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
+import { getUserProjectAccess } from "@/lib/access-control"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,15 +17,74 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
-    const project = await db.project.findFirst({
-      where: {
-        id,
-        userId: decoded.userId
-      },
+    
+    // Access control kontrolü yap
+    const access = await getUserProjectAccess(decoded.userId, id)
+    
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
+    }
+
+    // Proje bilgilerini getir
+    const project = await db.project.findUnique({
+      where: { id },
       include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        },
+        assignments: {
+          include: {
+            assignee: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        },
+        sections: {
+          where: access.permissions.canViewAllSections 
+            ? {}
+            : { id: { in: access.visibleContent.sectionIds } },
+          include: {
+            assignments: {
+              include: {
+                assignee: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { order: 'asc' }
+        },
         _count: {
           select: {
-            tasks: true
+            tasks: access.permissions.canViewAllTasks 
+              ? { where: {} }
+              : { where: { id: { in: access.visibleContent.taskIds } } }
           }
         }
       }
@@ -34,7 +94,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    return NextResponse.json(project)
+    // Response'a access bilgilerini de ekle
+    const response = {
+      ...project,
+      userAccess: access
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error("Error fetching project:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

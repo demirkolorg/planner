@@ -77,6 +77,7 @@ interface TaskCardActionsProps {
   onAssignUser?: (taskId: string, userId: string) => void
   onUnassignUser?: (taskId: string, userId: string) => void
   isFirstInSection?: boolean
+  isPermissionLoading?: boolean
 }
 
 export function TaskCardActions({
@@ -95,21 +96,25 @@ export function TaskCardActions({
   onSubmitForApproval,
   onAssignUser,
   onUnassignUser,
-  isFirstInSection = false
+  isFirstInSection = false,
+  isPermissionLoading = false
 }: TaskCardActionsProps) {
-  const { currentUser } = useCurrentUser()
+  const { currentUser, isLoading: isUserLoading } = useCurrentUser()
   
   // Task validation - Safety check
   if (!task || !task.id) {
     return null
   }
 
+  // Permission loading durumu - dışarıdan gelen ve kendi loading'imizi birleştir
+  const isActualPermissionLoading = isPermissionLoading || isUserLoading
+
   // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
-  const isAssignedUser = currentUser && task.assignments && 
+  const isAssignedUser = !isActualPermissionLoading && currentUser && task.assignments && 
     task.assignments.some((assignment: any) => assignment.assigneeId === currentUser.id)
   
   // Task sahibi mi kontrol et
-  const isTaskOwner = currentUser && task.userId === currentUser.id
+  const isTaskOwner = !isActualPermissionLoading && currentUser && task.userId === currentUser.id
 
   const getPriorityColorHex = () => {
     // İngilizce priority değerlerini Türkçe'ye eşleştir
@@ -190,8 +195,8 @@ export function TaskCardActions({
   // Tamamlanmış görevlerde tüm aksiyonları disable et
   const isTaskCompleted = task.completed
   
-  // Atanmış kullanıcı mı kontrolü
-  const isDisabledForAssignedUser = isAssignedUser && !isTaskOwner
+  // Atanmış kullanıcı mı kontrolü - permission loading sırasında güvenli taraftan sakla
+  const isDisabledForAssignedUser = isActualPermissionLoading || (isAssignedUser && !isTaskOwner)
   
   return (
     <TooltipProvider>
@@ -327,7 +332,7 @@ export function TaskCardActions({
         </Tooltip>
 
         {/* Submit for Approval - Sadece atanmış kullanıcılar için görünür */}
-        {isAssignedUser && !isTaskOwner && (
+        {!isActualPermissionLoading && isAssignedUser && !isTaskOwner && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

@@ -23,13 +23,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [] })
     }
 
-    // Kullanıcı arama - email ve isim bazında
+    // Kullanıcı arama - email, ad ve soyad bazında (kendini her zaman hariç tut)
     const users = await db.user.findMany({
       where: {
         AND: [
           {
             NOT: {
-              id: userId // Kendi kullanıcısını hariç tut
+              id: userId // Kendi kullanıcısını her zaman hariç tut
             }
           },
           {
@@ -51,6 +51,23 @@ export async function GET(request: NextRequest) {
                   contains: query,
                   mode: 'insensitive'
                 }
+              },
+              {
+                // Tam ad araması (ad + soyad birleşik)
+                AND: [
+                  {
+                    firstName: {
+                      contains: query.split(' ')[0] || '',
+                      mode: 'insensitive'
+                    }
+                  },
+                  {
+                    lastName: {
+                      contains: query.split(' ')[1] || '',
+                      mode: 'insensitive'
+                    }
+                  }
+                ]
               }
             ]
           }

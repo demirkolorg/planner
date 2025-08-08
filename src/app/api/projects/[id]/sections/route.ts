@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { getUserProjectAccess } from "@/lib/access-control"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,22 +17,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     
-    // Check if project exists and belongs to user
-    const project = await db.project.findFirst({
-      where: {
-        id,
-        userId: decoded.userId
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    // Access control kontrolü yap
+    const access = await getUserProjectAccess(decoded.userId, id)
+    
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
     }
 
-    // Get sections associated with this project
+    // Sections görüntüleme izni kontrolü
+    if (!access.permissions.canViewAllSections && access.visibleContent.sectionIds.length === 0) {
+      return NextResponse.json([]) // Boş array döndür
+    }
+
+    // Get sections associated with this project (with access control)
     const sections = await db.section.findMany({
       where: {
-        projectId: id
+        projectId: id,
+        ...(access.permissions.canViewAllSections 
+          ? {}
+          : { id: { in: access.visibleContent.sectionIds } }
+        )
       },
       orderBy: {
         order: 'asc'
@@ -70,16 +75,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
-    // Check if project exists and belongs to user
-    const project = await db.project.findFirst({
-      where: {
-        id,
-        userId: decoded.userId
-      }
-    })
+    // Access control kontrolü yap
+    const access = await getUserProjectAccess(decoded.userId, id)
+    
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
+    }
 
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    // Section oluşturma izni kontrolü
+    if (!access.permissions.canCreateSection) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 })
     }
 
     // Get the highest order number for sections in this project

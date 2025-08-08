@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { API_ROUTES, ROUTES, VALIDATION, MESSAGES } from "@/lib/constants"
 import { Loader2, Mail, Lock, Eye, EyeOff, Chrome, User } from "lucide-react"
 import { OTPVerification } from "@/components/auth/otp-verification"
@@ -31,6 +31,15 @@ export function RegisterForm({
   const [step, setStep] = useState<'form' | 'otp' | 'success'>('form');
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // URL parametrelerinden email al (assignment davetiyesi için)
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    if (emailParam) {
+      setFormData(prev => ({ ...prev, email: emailParam }))
+    }
+  }, [searchParams])
   
   // Form alanlarını günceller
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,8 +152,13 @@ export function RegisterForm({
         throw new Error(data.error || MESSAGES.ERROR.GENERIC_ERROR);
       }
 
-      // Başarılı kayıt - login sayfasına yönlendir
-      router.push(ROUTES.LOGIN);
+      // Başarılı kayıt - redirect parametresi varsa oraya, yoksa login sayfasına yönlendir
+      const redirectUrl = searchParams.get('redirect')
+      if (redirectUrl) {
+        router.push(redirectUrl)
+      } else {
+        router.push(ROUTES.LOGIN)
+      }
     } catch (error) {
       setApiError(error instanceof Error ? error.message : MESSAGES.ERROR.GENERIC_ERROR);
       // Hata durumunda form adımına geri dön

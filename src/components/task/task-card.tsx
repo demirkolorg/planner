@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AssignmentIndicator } from "@/components/ui/assignment-indicator"
+import { MultiLevelAssignmentButton } from "@/components/ui/multi-level-assignment-button"
 import { getTaskDateStatus, getDueDateMessage, getDateStatusColor } from "@/lib/date-utils"
 
 interface TaskWithRelations {
@@ -164,7 +165,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const [optimisticCompleted, setOptimisticCompleted] = useState(task?.completed || false)
   const [isHovered, setIsHovered] = useState(false)
   const pathname = usePathname()
-  const { currentUser } = useCurrentUser()
+  const { currentUser, isLoading: isUserLoading } = useCurrentUser()
   
   // Task completed state'i task prop'undan gelen değer ile senkronize et
   React.useEffect(() => {
@@ -442,11 +443,14 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const isTaskCompleted = task.completed
   
   // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
-  const isAssignedUser = currentUser && task.assignments && 
+  const isAssignedUser = !isUserLoading && currentUser && task.assignments && 
     task.assignments.some(assignment => assignment.assigneeId === currentUser.id)
   
   // Task sahibi mi kontrol et
-  const isTaskOwner = currentUser && task.userId === currentUser.id
+  const isTaskOwner = !isUserLoading && currentUser && task.userId === currentUser.id
+  
+  // Permission kontrolü için loading durumu
+  const isPermissionLoading = isUserLoading
 
   // Onay durumu göstergesi
   const getApprovalStatusBadge = () => {
@@ -682,24 +686,47 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 </Tooltip>
               )}
 
-              {/* Assignment Indicator - Icon + Count */}
-              {task.assignments && task.assignments.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="space-y-1">
-                      <p className="font-medium">Atanan Kişi:</p>
-                      <p className="text-xs">
-                        {task.assignments[0].assignee.firstName} {task.assignments[0].assignee.lastName}
-                      </p>
-                    </div>
+              {/* Assignment Indicator + Assignment Button */}
+              <div className="flex items-center gap-1">
+                {/* Existing Assignment Indicator */}
+                {task.assignments && task.assignments.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="space-y-1">
+                        <p className="font-medium">Atanan Kişi:</p>
+                        <p className="text-xs">
+                          {task.assignments[0].assignee.firstName} {task.assignments[0].assignee.lastName}
+                        </p>
+                      </div>
                   </TooltipContent>
                 </Tooltip>
               )}
+
+                {/* Multi-level Assignment Button - Only show on hover and if has project permissions */}
+                {isHovered && task.projectId && (
+                  <MultiLevelAssignmentButton
+                    target={{
+                      id: task.id,
+                      name: task.title,
+                      type: 'TASK',
+                      projectId: task.projectId
+                    }}
+                    onRefresh={() => {
+                      // Refresh callback - task'ı tekrar yükle
+                      if (onUpdateAssignment) {
+                        // Mevcut assignment state'ini refresh et
+                        onUpdateAssignment(task.id, task.assignments?.[0]?.assigneeId || null)
+                      }
+                    }}
+                    variant="icon"
+                  />
+                )}
+              </div>
 
               {/* SubTasks Icon and Count */}
               {task.subTasks && task.subTasks.length > 0 && (
@@ -882,11 +909,11 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
-                          className={isTaskCompleted || (isAssignedUser && !isTaskOwner)
+                          className={isTaskCompleted || isPermissionLoading || (isAssignedUser && !isTaskOwner)
                             ? "cursor-not-allowed opacity-50" 
                             : "cursor-pointer hover:text-foreground transition-colors"
                           }
-                          onClick={isTaskCompleted || (isAssignedUser && !isTaskOwner) ? undefined : handleDateClick}
+                          onClick={isTaskCompleted || isPermissionLoading || (isAssignedUser && !isTaskOwner) ? undefined : handleDateClick}
                         >
                           📅 {formatDateTime(task.dueDate)}
                         </span>
@@ -952,6 +979,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 onAssignUser={onAssignUser}
                 onUnassignUser={onUnassignUser}
                 isFirstInSection={isFirstInSection}
+                isPermissionLoading={isPermissionLoading}
               />
             </div>
           </div>

@@ -42,6 +42,24 @@ export function UserPicker({
   const [searchResults, setSearchResults] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [projectMembers, setProjectMembers] = useState<User[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  // Current user'ı al
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/auth/profile')
+        if (response.ok) {
+          const data = await response.json()
+          setCurrentUserId(data.id || null)
+        }
+      } catch (error) {
+        console.error('Current user fetch error:', error)
+      }
+    }
+    
+    fetchCurrentUser()
+  }, [])
 
   // Kullanıcı arama
   useEffect(() => {
@@ -113,16 +131,11 @@ export function UserPicker({
 
   // Gösterilecek kullanıcıları belirle
   const getDisplayUsers = () => {
-    if (projectId && projectMembers.length > 0) {
-      // Proje üyelerini filtrele
-      return projectMembers.filter(user => 
-        searchQuery.length < 2 || 
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    if (projectId && projectMembers.length > 0 && searchQuery.length < 2) {
+      // Proje üyelerini filtrele - kendini hariç tut (sadece arama yoksa)
+      return projectMembers.filter(user => user.id !== currentUserId)
     }
-    // Normal arama sonuçları
+    // Normal arama sonuçları veya proje varsa ama arama metni yazılmışsa (API zaten kendini hariç tutuyor)
     return searchResults
   }
 

@@ -35,6 +35,12 @@ model User {
   createdNotifications  Notification[]             @relation("NotificationCreator")
   approvalRequestedTasks Task[]                    @relation("TaskApprovalRequester")
   approvedTasks         Task[]                     @relation("TaskApprover")
+  sectionAssignments    SectionAssignment[]        @relation("SectionAssignee")
+  assignedSections      SectionAssignment[]        @relation("SectionAssigner")
+  projectAssignments    ProjectAssignment[]        @relation("ProjectAssignee")
+  assignedProjects      ProjectAssignment[]        @relation("ProjectAssigner")
+  emailAssignments      EmailAssignment[]          @relation("EmailAssignmentAssigner")
+  sentInvitations       PendingUserInvitation[]    @relation("UserInvitations")
 }
 
 model EmailOTP {
@@ -52,19 +58,21 @@ model EmailOTP {
 }
 
 model Project {
-  id           String               @id @default(cuid())
+  id           String                @id @default(cuid())
   name         String
   emoji        String?
   notes        String?
   userId       String
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  isPinned     Boolean              @default(false)
-  isPublic     Boolean              @default(false)
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  isPinned     Boolean               @default(false)
+  isPublic     Boolean               @default(false)
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   activities   ProjectActivity[]
   customFields ProjectCustomField[]
   members      ProjectMember[]
+  assignments  ProjectAssignment[]
+  invitations  PendingUserInvitation[] @relation("ProjectInvitations")
   sections     Section[]
   tasks        Task[]
 }
@@ -109,14 +117,15 @@ model Task {
 }
 
 model Section {
-  id        String   @id @default(cuid())
-  name      String
-  projectId String
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tasks     Task[]
+  id          String              @id @default(cuid())
+  name        String
+  projectId   String
+  order       Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  assignments SectionAssignment[]
 }
 
 model Tag {
@@ -263,6 +272,38 @@ model ProjectMember {
   @@index([userId])
 }
 
+model SectionAssignment {
+  id         String      @id @default(cuid())
+  sectionId  String
+  assigneeId String
+  assignedBy String
+  role       SectionRole @default(MEMBER)
+  assignedAt DateTime    @default(now())
+  section    Section     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  assignee   User        @relation("SectionAssignee", fields: [assigneeId], references: [id], onDelete: Cascade)
+  assigner   User        @relation("SectionAssigner", fields: [assignedBy], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, assigneeId])
+  @@index([sectionId])
+  @@index([assigneeId])
+}
+
+model ProjectAssignment {
+  id         String                @id @default(cuid())
+  projectId  String
+  assigneeId String
+  assignedBy String
+  role       ProjectAssignmentRole @default(COLLABORATOR)
+  assignedAt DateTime              @default(now())
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee   User                  @relation("ProjectAssignee", fields: [assigneeId], references: [id], onDelete: Cascade)
+  assigner   User                  @relation("ProjectAssigner", fields: [assignedBy], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, assigneeId])
+  @@index([projectId])
+  @@index([assigneeId])
+}
+
 enum UserRole {
   ADMIN
   USER
@@ -335,6 +376,76 @@ enum NotificationType {
 
 enum ProjectRole {
   OWNER
-  MEMBER
+  MEMBER  
   VIEWER
+}
+
+enum SectionRole {
+  OWNER       // Bölüm sorumlusu
+  MEMBER      // Bölüm üyesi
+}
+
+enum ProjectAssignmentRole {
+  COLLABORATOR  // Tüm projede çalışabilir
+  VIEWER        // Sadece görüntüleyebilir
+}
+
+// Email tabanlı atama türleri
+enum AssignmentTargetType {
+  PROJECT       // Proje seviyesi atama
+  SECTION       // Bölüm seviyesi atama  
+  TASK          // Görev seviyesi atama
+}
+
+enum AssignmentStatus {
+  PENDING       // Kullanıcı henüz kayıt olmadı
+  ACTIVE        // Kullanıcı kayıt oldu, atama aktif
+  EXPIRED       // Davetiye süresi doldu
+  CANCELLED     // Atama iptal edildi
+}
+
+// Email ile atama tablosu - kayıtsız kullanıcılar için
+model EmailAssignment {
+  id          String                @id @default(cuid())
+  email       String                // Atanan email
+  targetType  AssignmentTargetType  // Ne türü atama (project/section/task)
+  targetId    String                // Hedef ID'si (projectId/sectionId/taskId)
+  role        String                // Rol bilgisi (JSON string olarak saklanacak)
+  assignedBy  String                // Atamayı yapan kullanıcı
+  status      AssignmentStatus      @default(PENDING)
+  message     String?               // Davetiye mesajı
+  expiresAt   DateTime?             // Davetiye sona erme tarihi
+  assignedAt  DateTime              @default(now())
+  acceptedAt  DateTime?             // Kullanıcı kabul ettiği tarih
+  
+  // Relations
+  assigner    User                  @relation("EmailAssignmentAssigner", fields: [assignedBy], references: [id], onDelete: Cascade)
+  
+  @@index([email, status])
+  @@index([targetType, targetId])
+  @@index([assignedBy])
+}
+
+// Kullanıcı davetiye sistemi
+model PendingUserInvitation {
+  id            String            @id @default(cuid())
+  email         String            // Davet edilen email
+  invitedBy     String            // Daveti gönderen kullanıcı
+  inviteType    String            // 'project' | 'assignment'
+  projectId     String?           // İlgili proje ID'si
+  projectName   String?           // Proje adı (email için)
+  metadata      Json?             // Ek bilgiler (assignment detayları vs)
+  message       String?           // Kişiselleştirilmiş mesaj
+  status        String            @default("PENDING") // PENDING, ACCEPTED, EXPIRED
+  expiresAt     DateTime          // Davetiye sona erme tarihi
+  createdAt     DateTime          @default(now())
+  acceptedAt    DateTime?         // Kabul edilme tarihi
+  
+  // Relations
+  inviter       User              @relation("UserInvitations", fields: [invitedBy], references: [id], onDelete: Cascade)
+  project       Project?          @relation("ProjectInvitations", fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([email, status])
+  @@index([invitedBy])
+  @@index([projectId])
 }

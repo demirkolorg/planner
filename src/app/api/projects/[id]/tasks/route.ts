@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { getUserProjectAccess } from "@/lib/access-control"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,23 +16,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     
-    // Check if project exists and belongs to user
-    const project = await db.project.findFirst({
-      where: {
-        id,
-        userId: decoded.userId
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+    // Access control kontrolü
+    const access = await getUserProjectAccess(decoded.userId, id)
+    
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
     }
 
-    // Get all tasks associated with this project (both parent and sub-tasks)
+    // Görülebilir görevleri getir
+    const whereClause: any = { projectId: id }
+    
+    if (!access.permissions.canViewAllTasks) {
+      whereClause.id = { in: access.visibleContent.taskIds }
+    }
+
     const tasks = await db.task.findMany({
-      where: {
-        projectId: id
-      },
+      where: whereClause,
       include: {
         project: {
           select: {

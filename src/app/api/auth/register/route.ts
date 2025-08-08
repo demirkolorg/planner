@@ -86,6 +86,96 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Email assignment'larını kontrol et ve inherit et
+      const pendingEmailAssignments = await tx.emailAssignment.findMany({
+        where: {
+          email,
+          status: 'PENDING'
+        }
+      });
+
+      if (pendingEmailAssignments.length > 0) {
+        console.log(`Found ${pendingEmailAssignments.length} pending email assignments for ${email}`);
+
+        for (const emailAssignment of pendingEmailAssignments) {
+          try {
+            // Email assignment'ı ACTIVE duruma güncelle
+            await tx.emailAssignment.update({
+              where: { id: emailAssignment.id },
+              data: {
+                status: 'ACTIVE',
+                acceptedAt: new Date()
+              }
+            });
+
+            // Target tipine göre gerçek assignment oluştur
+            if (emailAssignment.targetType === 'PROJECT') {
+              // Zaten var olan assignment kontrol et
+              const existing = await tx.projectAssignment.findFirst({
+                where: {
+                  projectId: emailAssignment.targetId,
+                  assigneeId: user.id
+                }
+              });
+
+              if (!existing) {
+                await tx.projectAssignment.create({
+                  data: {
+                    projectId: emailAssignment.targetId,
+                    assigneeId: user.id,
+                    assignedBy: emailAssignment.assignedBy,
+                    role: emailAssignment.role
+                  }
+                });
+                console.log(`Created project assignment for user ${user.id} to project ${emailAssignment.targetId}`);
+              }
+
+            } else if (emailAssignment.targetType === 'SECTION') {
+              // Zaten var olan assignment kontrol et
+              const existing = await tx.sectionAssignment.findFirst({
+                where: {
+                  sectionId: emailAssignment.targetId,
+                  assigneeId: user.id
+                }
+              });
+
+              if (!existing) {
+                await tx.sectionAssignment.create({
+                  data: {
+                    sectionId: emailAssignment.targetId,
+                    assigneeId: user.id,
+                    assignedBy: emailAssignment.assignedBy,
+                    role: emailAssignment.role
+                  }
+                });
+                console.log(`Created section assignment for user ${user.id} to section ${emailAssignment.targetId}`);
+              }
+
+            } else if (emailAssignment.targetType === 'TASK') {
+              // Task assignment için önce mevcut atamaları temizle (tek kişilik sistem)
+              await tx.taskAssignment.deleteMany({
+                where: {
+                  taskId: emailAssignment.targetId
+                }
+              });
+
+              await tx.taskAssignment.create({
+                data: {
+                  taskId: emailAssignment.targetId,
+                  assigneeId: user.id,
+                  assignedBy: emailAssignment.assignedBy
+                }
+              });
+              console.log(`Created task assignment for user ${user.id} to task ${emailAssignment.targetId}`);
+            }
+
+          } catch (assignmentError) {
+            console.error('Error processing email assignment during registration:', assignmentError);
+            // Atama hatası ana kayıt işlemini engellememelidir
+          }
+        }
+      }
+
       return user;
     });
 

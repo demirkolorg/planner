@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
+import { AccessLevelBadge } from "@/components/ui/access-level-badge"
+import { MultiLevelAssignmentButton } from "@/components/ui/multi-level-assignment-button"
 import { toast } from "sonner"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
@@ -52,6 +54,26 @@ interface Project extends Omit<ProjectType, 'createdAt' | 'updatedAt'> {
   updatedAt: string
   _count: {
     tasks: number
+  }
+  userAccess?: {
+    accessLevel: 'OWNER' | 'PROJECT_MEMBER' | 'PROJECT_ASSIGNED' | 'SECTION_ASSIGNED' | 'TASK_ASSIGNED'
+    permissions: {
+      canViewProject: boolean
+      canEditProject: boolean
+      canViewSettings: boolean
+      canViewAllSections: boolean
+      canViewAllTasks: boolean
+      canCreateTask: boolean
+      canCreateSection: boolean
+      canAssignTasks: boolean
+      canManageMembers: boolean
+      canEditSettings: boolean
+      canDeleteProject: boolean
+    }
+    visibleContent: {
+      taskIds: string[]
+      sectionIds: string[]
+    }
   }
 }
 
@@ -647,11 +669,20 @@ export default function ProjectDetailPage() {
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold">
-                {project?.name || (
-                  <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold">
+                  {project?.name || (
+                    <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+                  )}
+                </h1>
+                {project?.userAccess && (
+                  <AccessLevelBadge 
+                    accessLevel={project.userAccess.accessLevel}
+                    visibleTaskCount={project.userAccess.visibleContent.taskIds.length}
+                    totalTaskCount={project._count.tasks}
+                  />
                 )}
-              </h1>
+              </div>
               {project && (
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <Tooltip>
@@ -727,32 +758,51 @@ export default function ProjectDetailPage() {
         {/* Right: Actions */}
         {project && (
           <div className="flex items-center space-x-3">
-            {/* Ana Eylem Butonları */}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => {
-                // İlk bölümü default section olarak seç
-                const firstSection = sections.length > 0 ? sections[0] : undefined
-                setTaskModalContext({
-                  project: { id: project.id, name: project.name, emoji: project.emoji },
-                  section: firstSection ? { id: firstSection.id, name: firstSection.name, projectId: project.id } : undefined
-                })
-                setIsTaskModalOpen(true)
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Görev Ekle
-            </Button>
+            {/* Ana Eylem Butonları - Conditional rendering based on permissions */}
+            {project.userAccess?.permissions.canCreateTask && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  // İlk bölümü default section olarak seç
+                  const firstSection = sections.length > 0 ? sections[0] : undefined
+                  setTaskModalContext({
+                    project: { id: project.id, name: project.name, emoji: project.emoji },
+                    section: firstSection ? { id: firstSection.id, name: firstSection.name, projectId: project.id } : undefined
+                  })
+                  setIsTaskModalOpen(true)
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Görev Ekle
+              </Button>
+            )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSectionModalOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Bölüm
-            </Button>
+            {project.userAccess?.permissions.canCreateSection && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSectionModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Bölüm
+              </Button>
+            )}
+
+            {/* Assignment Button */}
+            {project.userAccess?.permissions.canAssignTasks && (
+              <MultiLevelAssignmentButton
+                target={{
+                  id: project.id,
+                  name: project.name,
+                  type: 'PROJECT',
+                  projectId: project.id
+                }}
+                onRefresh={fetchProjectData}
+                variant="outline"
+                size="sm"
+              />
+            )}
             
             {/* Proje Menüsü - Birleştirilmiş */}
             <DropdownMenu>
@@ -769,33 +819,38 @@ export default function ProjectDetailPage() {
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end" className="w-72">
-                {/* Proje Yönetimi */}
-                <DropdownMenuItem onClick={handleTogglePin}>
-                  {project?.isPinned ? (
-                    <PinOff className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Pin className="h-4 w-4 mr-2" />
-                  )}
-                  {project?.isPinned ? 'Projeyi Sabitleme Kaldır' : 'Projeyi Sabitle'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Projeyi Düzenle
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
+                {/* Proje Yönetimi - Based on permissions */}
+                {project.userAccess?.permissions.canEditProject && (
+                  <>
+                    <DropdownMenuItem onClick={handleTogglePin}>
+                      {project?.isPinned ? (
+                        <PinOff className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Pin className="h-4 w-4 mr-2" />
+                      )}
+                      {project?.isPinned ? 'Projeyi Sabitleme Kaldır' : 'Projeyi Sabitle'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Projeyi Düzenle
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 
                 {/* Proje Araçları */}
                 <DropdownMenuItem onClick={() => setIsTimelineModalOpen(true)}>
                   <Clock className="h-4 w-4 mr-2" />
                   Proje Zaman Çizelgesi
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/projects/${projectId}/special-fields`}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Projeye Özel Alanlar
-                  </Link>
-                </DropdownMenuItem>
+                {project.userAccess?.permissions.canViewSettings && (
+                  <DropdownMenuItem asChild>
+                    <Link href={`/projects/${projectId}/special-fields`}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Projeye Özel Alanlar
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 
                 <DropdownMenuSeparator />
                 
@@ -831,7 +886,7 @@ export default function ProjectDetailPage() {
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 
-                {!isProtectedProject(project?.name || '') && (
+                {!isProtectedProject(project?.name || '') && project.userAccess?.permissions.canDeleteProject && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
@@ -862,13 +917,19 @@ export default function ProjectDetailPage() {
           />
         ) : (
           <div 
-            className="min-h-[32px] cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center"
-            onClick={handleStartEditingNotes}
+            className={`min-h-[32px] text-sm text-muted-foreground flex items-center ${
+              project.userAccess?.permissions.canEditProject 
+                ? 'cursor-pointer hover:text-foreground transition-colors' 
+                : 'cursor-default'
+            }`}
+            onClick={project.userAccess?.permissions.canEditProject ? handleStartEditingNotes : undefined}
           >
             {project.notes ? (
               <p className="flex-1">{project.notes}</p>
-            ) : (
+            ) : project.userAccess?.permissions.canEditProject ? (
               <p className="italic flex-1">Projeyle ilgili not girin...</p>
+            ) : (
+              <p className="italic flex-1 text-muted-foreground/50">Not bulunmuyor</p>
             )}
           </div>
         )
@@ -1097,6 +1158,20 @@ export default function ProjectDetailPage() {
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
+                      {/* Section Assignment Button */}
+                      {project.userAccess?.permissions.canAssignTasks && (
+                        <MultiLevelAssignmentButton
+                          target={{
+                            id: section.id,
+                            name: section.name,
+                            type: 'SECTION',
+                            projectId: project.id
+                          }}
+                          onRefresh={fetchProjectData}
+                          variant="icon"
+                        />
+                      )}
+                      
                       <div 
                         className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
                         onClick={(e) => {

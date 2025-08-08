@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
+import { AccessLevelBadge } from "@/components/ui/access-level-badge"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
@@ -27,6 +28,23 @@ interface Project {
   updatedAt: string
   _count: {
     tasks: number
+  }
+  userAccess?: {
+    accessLevel: 'OWNER' | 'PROJECT_MEMBER' | 'PROJECT_ASSIGNED' | 'SECTION_ASSIGNED' | 'TASK_ASSIGNED'
+    permissions: {
+      canViewProject: boolean
+      canEditProject: boolean
+      canViewSettings: boolean
+    }
+    visibleContent?: {
+      taskIds: string[]
+      sectionIds: string[]
+    }
+  }
+  user?: {
+    id: string
+    firstName: string
+    lastName: string
   }
 }
 
@@ -343,7 +361,16 @@ export default function ProjectsPage() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-medium truncate">{project.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium truncate">{project.name}</h3>
+                          {project.userAccess && (
+                            <AccessLevelBadge 
+                              accessLevel={project.userAccess.accessLevel}
+                              visibleTaskCount={project.userAccess.visibleContent?.taskIds.length}
+                              totalTaskCount={project._count.tasks}
+                            />
+                          )}
+                        </div>
                         {project.notes && (
                           <p className="text-xs text-muted-foreground truncate">
                             {project.notes}
