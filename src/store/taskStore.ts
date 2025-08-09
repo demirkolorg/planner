@@ -27,10 +27,14 @@ interface TaskWithRelations extends Omit<Task, 'createdAt' | 'updatedAt' | 'dueD
   }>
   assignments?: Array<{
     id: string
-    assigneeId: string
+    targetType: 'PROJECT' | 'SECTION' | 'TASK'
+    targetId: string
+    userId?: string
+    email?: string
     assignedBy: string
+    status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED'
     assignedAt: string
-    assignee: {
+    user?: {
       id: string
       firstName: string
       lastName: string
@@ -89,8 +93,9 @@ interface TaskStore {
   refreshTaskCommentCount: (taskId: string) => Promise<void>
   
   // Assignment methods
-  assignUser: (taskId: string, userId: string) => Promise<void>
-  unassignUser: (taskId: string, userId: string) => Promise<void>
+  // DEPRECATED: Use /api/assignments endpoint instead
+  // assignUser: (taskId: string, userId: string) => Promise<void>
+  // unassignUser: (taskId: string, userId: string) => Promise<void>
   getAssignedTasks: (userId?: string) => TaskWithRelations[]
   
   // Utility methods
@@ -1274,73 +1279,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     )
   },
 
-  // Assignment methods implementation
-  assignUser: async (taskId: string, userId: string) => {
-    set({ error: null })
-    try {
-      const response = await fetch(`/api/tasks/${taskId}/assign`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ assigneeId: userId }),
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to assign user')
-      }
-      
-      const { assignment } = await response.json()
-      
-      // Update task in store - add assignment
-      set(state => ({
-        tasks: state.tasks.map(task => {
-          if (task.id === taskId) {
-            const existingAssignments = task.assignments || []
-            const updatedAssignments = [...existingAssignments, assignment]
-            return { ...task, assignments: updatedAssignments }
-          }
-          return task
-        })
-      }))
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
-      throw error
-    }
-  },
-
-  unassignUser: async (taskId: string, userId: string) => {
-    set({ error: null })
-    try {
-      const response = await fetch(`/api/tasks/${taskId}/assign?assigneeId=${userId}`, {
-        method: 'DELETE',
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to unassign user')
-      }
-      
-      // Update task in store - remove assignment
-      set(state => ({
-        tasks: state.tasks.map(task => {
-          if (task.id === taskId) {
-            const updatedAssignments = (task.assignments || []).filter(
-              assignment => assignment.assigneeId !== userId
-            )
-            return { ...task, assignments: updatedAssignments }
-          }
-          return task
-        })
-      }))
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
-      throw error
-    }
-  },
+  // DEPRECATED: Assignment methods - Use /api/assignments endpoint instead
+  /*
+  // These methods have been removed. Use the new unified assignment system:
+  // - POST /api/assignments (create assignment)
+  // - DELETE /api/assignments/{id} (remove assignment)
+  // - GET /api/assignments (list assignments)
+  */
 
   getAssignedTasks: (userId?: string) => {
     const { tasks, showCompletedTasks } = get()
@@ -1351,7 +1296,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Bu kısım auth store'dan current user ID'si alındığında güncellenebilir
       if (!userId) return false
       
-      return task.assignments?.some(assignment => assignment.assigneeId === userId)
+      return task.assignments?.some(assignment => assignment.userId === userId && assignment.status === 'ACTIVE')
     })
   }
 }))

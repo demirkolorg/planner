@@ -14,10 +14,14 @@ import type { Task } from '@/types/task'
 interface AssignedTask extends Task {
   assignments: Array<{
     id: string
-    assigneeId: string
+    targetType: 'PROJECT' | 'SECTION' | 'TASK'
+    targetId: string
+    userId?: string
+    email?: string
     assignedBy: string
+    status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED'
     assignedAt: string
-    assignee: {
+    user?: {
       id: string
       firstName: string
       lastName: string
@@ -95,44 +99,18 @@ export default function AssignedTasksPage() {
     }
   }
 
-  // Kullanıcı atama fonksiyonu - smooth refresh
+  // DEPRECATED: Assignment methods - Use new unified assignment system
+  // These methods will be handled by SimpleAssignmentButton component
   const handleAssignUser = async (taskId: string, userId: string) => {
-    try {
-      const response = await fetch(`/api/tasks/${taskId}/assign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assigneeId: userId })
-      })
-
-      if (response.ok) {
-        // API düzeltildi, daha hızlı refresh yapabiliriz
-        setTimeout(async () => {
-          await fetchAssignedTasks()
-        }, 100)
-      }
-    } catch (error) {
-      console.error('User assignment error:', error)
-    }
+    console.warn('handleAssignUser is deprecated - use SimpleAssignmentButton component')
+    // Refresh the task list after assignment changes
+    await fetchAssignedTasks()
   }
 
-  // Kullanıcı atama kaldırma fonksiyonu - smooth refresh
   const handleUnassignUser = async (taskId: string, userId: string) => {
-    try {
-      const response = await fetch(`/api/tasks/${taskId}/assign`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assigneeId: userId })
-      })
-
-      if (response.ok) {
-        // API düzeltildi, daha hızlı refresh yapabiliriz
-        setTimeout(async () => {
-          await fetchAssignedTasks()
-        }, 100)
-      }
-    } catch (error) {
-      console.error('User unassignment error:', error)
-    }
+    console.warn('handleUnassignUser is deprecated - use SimpleAssignmentButton component')
+    // Refresh the task list after assignment changes
+    await fetchAssignedTasks()
   }
 
   // Atama güncelleme fonksiyonu - TaskCard için gerekli

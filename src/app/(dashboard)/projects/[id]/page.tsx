@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
 import { AccessLevelBadge } from "@/components/ui/access-level-badge"
-import { MultiLevelAssignmentButton } from "@/components/ui/multi-level-assignment-button"
+import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
 import { toast } from "sonner"
 
 import type { Project as ProjectType, Section as SectionType } from "@/types/task"
@@ -89,14 +89,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isTasksLoading, setIsTasksLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [assignmentCounts, setAssignmentCounts] = useState<{
-    userAssignments: number
-    emailAssignments: number
-  }>({ userAssignments: 0, emailAssignments: 0 })
-  const [sectionAssignmentCounts, setSectionAssignmentCounts] = useState<Record<string, {
-    userAssignments: number
-    emailAssignments: number
-  }>>({})
+  // Eski assignment counts kaldırıldı - SimpleAssignmentButton kendi sayılarını yönetiyor
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false)
@@ -277,57 +270,7 @@ export default function ProjectDetailPage() {
     }
   }, [fetchTasksByProject, projectId])
 
-  // Assignment counts'ları fetch et
-  const fetchAssignmentCounts = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/assignments`)
-      if (response.ok) {
-        const data = await response.json()
-        setAssignmentCounts({
-          userAssignments: data.userAssignments?.length || 0,
-          emailAssignments: data.emailAssignments?.length || 0
-        })
-      }
-    } catch (error) {
-      console.error('Assignment counts fetch error:', error)
-    }
-  }, [projectId])
-
-  // Section assignment counts'ları fetch et
-  const fetchSectionAssignmentCounts = useCallback(async () => {
-    try {
-      const sectionsData = getSectionsByProject(projectId)
-      const countPromises = sectionsData.map(async (section) => {
-        const response = await fetch(`/api/sections/${section.id}/assignments`)
-        if (response.ok) {
-          const data = await response.json()
-          return {
-            sectionId: section.id,
-            userAssignments: data.userAssignments?.length || 0,
-            emailAssignments: data.emailAssignments?.length || 0
-          }
-        }
-        return {
-          sectionId: section.id,
-          userAssignments: 0,
-          emailAssignments: 0
-        }
-      })
-      
-      const results = await Promise.all(countPromises)
-      const countsMap = results.reduce((acc, result) => {
-        acc[result.sectionId] = {
-          userAssignments: result.userAssignments,
-          emailAssignments: result.emailAssignments
-        }
-        return acc
-      }, {} as Record<string, { userAssignments: number; emailAssignments: number }>)
-      
-      setSectionAssignmentCounts(countsMap)
-    } catch (error) {
-      console.error('Section assignment counts fetch error:', error)
-    }
-  }, [projectId, getSectionsByProject])
+  // Eski assignment count fonksiyonları kaldırıldı - SimpleAssignmentButton kendi verilerini yönetiyor
 
   const fetchProjectData = useCallback(async () => {
     try {
@@ -359,8 +302,7 @@ export default function ProjectDetailPage() {
       const [projectResponse, sectionsResult, tasksResult] = await Promise.allSettled([
         fetch(`/api/projects/${projectId}`),
         fetchSections(projectId),
-        fetchTasksByProject(projectId),
-        fetchAssignmentCounts()
+        fetchTasksByProject(projectId)
       ])
 
       // Proje bilgisini işle
@@ -388,7 +330,7 @@ export default function ProjectDetailPage() {
       setIsLoading(false)
       setIsTasksLoading(false)
     }
-  }, [projectId, fetchSections, fetchTasksByProject, fetchAssignmentCounts, projects])
+  }, [projectId, fetchSections, fetchTasksByProject, projects])
 
   // Sıralama fonksiyonu
   const sortTasks = useCallback((tasks: any[], sortOption: SortOption) => {
@@ -521,13 +463,7 @@ export default function ProjectDetailPage() {
     }
   }, [sectionIds, openSections.length, getOverdueTasksCountByProject, projectId, getSortedTasksWithoutSection])
 
-  // Sections yüklendikten sonra assignment counts'ları fetch et
-  useEffect(() => {
-    const sectionsData = getSectionsByProject(projectId)
-    if (sectionsData.length > 0) {
-      fetchSectionAssignmentCounts()
-    }
-  }, [projectId, getSectionsByProject, fetchSectionAssignmentCounts])
+  // Eski section assignment counts useEffect kaldırıldı
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -873,17 +809,12 @@ export default function ProjectDetailPage() {
 
             {/* Assignment Button */}
             {project.userAccess?.permissions.canAssignTasks && (
-              <MultiLevelAssignmentButton
-                target={{
-                  id: project.id,
-                  name: project.name,
-                  type: 'PROJECT',
-                  projectId: project.id
-                }}
-                counts={assignmentCounts}
+              <SimpleAssignmentButton
+                targetType="PROJECT"
+                targetId={project.id}
+                targetName={project.name}
                 onRefresh={() => {
                   fetchProjectData()
-                  fetchAssignmentCounts()
                 }}
                 variant="outline"
                 size="sm"
@@ -1248,17 +1179,12 @@ export default function ProjectDetailPage() {
                 <div className="absolute right-4 top-2 flex items-center space-x-2 z-10">
                   {/* Section Assignment Button */}
                   {project.userAccess?.permissions.canAssignTasks && (
-                    <MultiLevelAssignmentButton
-                      target={{
-                        id: section.id,
-                        name: section.name,
-                        type: 'SECTION',
-                        projectId: project.id
-                      }}
-                      counts={sectionAssignmentCounts[section.id] || { userAssignments: 0, emailAssignments: 0 }}
+                    <SimpleAssignmentButton
+                      targetType="SECTION"
+                      targetId={section.id}
+                      targetName={section.name}
                       onRefresh={() => {
                         fetchProjectData()
-                        fetchSectionAssignmentCounts()
                       }}
                       variant="icon"
                     />

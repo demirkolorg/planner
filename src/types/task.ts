@@ -19,7 +19,7 @@ export interface Task {
   userId: string
   user?: User
   tags?: TaskTag[]
-  assignments?: TaskAssignment[]                // Görev atamaları
+  assignments?: Assignment[]                    // Görev atamaları
   taskType?: 'PROJECT' | 'CALENDAR' | 'QUICK_NOTE'  // Görev türü
   calendarSourceId?: string                     // Google Calendar kaynak ID'si
   quickNoteCategory?: string                    // Hızlı Not kategorisi
@@ -46,14 +46,19 @@ export interface TaskTag {
   tag?: Tag
 }
 
-export interface TaskAssignment {
+export interface Assignment {
   id: string
-  taskId: string
-  assigneeId: string
+  targetType: 'PROJECT' | 'SECTION' | 'TASK'
+  targetId: string
+  userId?: string
+  email?: string
   assignedBy: string
+  status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED'
   assignedAt: Date
-  task?: Task
-  assignee?: User
+  expiresAt?: Date
+  message?: string
+  acceptedAt?: Date
+  user?: User
   assigner?: User
 }
 

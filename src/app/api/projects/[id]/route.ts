@@ -48,35 +48,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             }
           }
         },
-        assignments: {
-          include: {
-            assignee: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
-          }
-        },
         sections: {
           where: access.permissions.canViewAllSections 
             ? {}
             : { id: { in: access.visibleContent.sectionIds } },
           include: {
-            assignments: {
-              include: {
-                assignee: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true
-                  }
-                }
-              }
-            }
           },
           orderBy: { order: 'asc' }
         },

@@ -27,8 +27,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
-import { MultiLevelAssignmentButton } from "@/components/ui/multi-level-assignment-button"
-// import { AssignmentDropdown } from "./assignment-dropdown" // Kaldırıldı
+import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import type { Task } from "@/types/task"
@@ -112,7 +111,7 @@ export function TaskCardActions({
 
   // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
   const isAssignedUser = !isActualPermissionLoading && currentUser && task.assignments && 
-    task.assignments.some((assignment: any) => assignment.assigneeId === currentUser.id)
+    task.assignments.some((assignment: any) => assignment.userId === currentUser.id && assignment.status === 'ACTIVE')
   
   // Task sahibi mi kontrol et
   const isTaskOwner = !isActualPermissionLoading && currentUser && task.userId === currentUser.id
@@ -255,8 +254,6 @@ export function TaskCardActions({
         />
         )}
 
-        {/* User Assignment - REMOVED: Duplicate with MultiLevelAssignmentButton in header */}
-        {/* AssignmentDropdown kaldırıldı - MultiLevelAssignmentButton kullanılıyor */}
 
         {/* Priority Selector - Atanmış kullanıcılar için gizli */}
         {!isDisabledForAssignedUser && (
@@ -289,23 +286,16 @@ export function TaskCardActions({
         )}
 
         {/* Assignment Button - Öncelik ve zaman çizelgesi arasında */}
-        {!isDisabledForAssignedUser && task.projectId && (
-          <MultiLevelAssignmentButton
-            target={{
-              id: task.id,
-              name: task.title,
-              type: 'TASK',
-              projectId: task.projectId
-            }}
-            counts={{
-              userAssignments: task.assignments?.length || 0,
-              emailAssignments: 0 // Görevlerde şimdilik sadece user assignment var
-            }}
+        {!isDisabledForAssignedUser && (
+          <SimpleAssignmentButton
+            targetType="TASK"
+            targetId={task.id}
+            targetName={task.title}
             onRefresh={() => {
               // Refresh callback - task'ı tekrar yükle
               if (onUpdateAssignment) {
                 // Mevcut assignment state'ini refresh et
-                onUpdateAssignment(task.id, task.assignments?.[0]?.assigneeId || null)
+                onUpdateAssignment(task.id, task.assignments?.[0]?.userId || null)
               }
             }}
             variant="icon"

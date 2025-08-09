@@ -24,21 +24,33 @@ export async function GET(request: NextRequest) {
     const completed = searchParams.get('completed')
     const projectId = searchParams.get('projectId')
 
-    // TaskAssignment sayısını kontrol et
-    const assignmentCount = await db.taskAssignment.count({
+    // Kullanıcıya atanan tüm Assignment kayıtlarını al
+    const activeAssignments = await db.assignment.findMany({
       where: {
-        assigneeId: userId
+        userId: userId,
+        targetType: 'TASK',
+        status: 'ACTIVE'
+      },
+      select: {
+        targetId: true
       }
     })
 
-    // Bana atanan görevleri getir
+    const assignedTaskIds = activeAssignments.map(a => a.targetId)
+
+    if (assignedTaskIds.length === 0) {
+      return NextResponse.json({
+        tasks: [],
+        total: 0,
+        completed: 0,
+        pending: 0
+      })
+    }
+
+    // Atanan görevleri getir
     const tasks = await db.task.findMany({
       where: {
-        assignments: {
-          some: {
-            assigneeId: userId
-          }
-        },
+        id: { in: assignedTaskIds },
         ...(completed !== null && { completed: completed === 'true' }),
         ...(projectId && { projectId })
       },
@@ -62,26 +74,6 @@ export async function GET(request: NextRequest) {
             firstName: true,
             lastName: true,
             email: true
-          }
-        },
-        assignments: {
-          include: {
-            assignee: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            assigner: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
           }
         },
         tags: {
@@ -109,8 +101,44 @@ export async function GET(request: NextRequest) {
       ]
     })
 
+    // Assignment bilgilerini ekle
+    const tasksWithAssignments = await Promise.all(
+      tasks.map(async (task) => {
+        const assignments = await db.assignment.findMany({
+          where: {
+            targetType: 'TASK',
+            targetId: task.id,
+            status: 'ACTIVE'
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            },
+            assigner: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        })
+
+        return {
+          ...task,
+          assignments
+        }
+      })
+    )
+
     // Görevleri formatla
-    const formattedTasks = tasks.map(task => ({
+    const formattedTasks = tasksWithAssignments.map(task => ({
       ...task,
       dueDate: task.dueDate?.toISOString(),
       createdAt: task.createdAt.toISOString(),
@@ -119,9 +147,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       tasks: formattedTasks || [],
-      total: tasks.length,
-      completed: tasks.filter(t => t.completed).length,
-      pending: tasks.filter(t => !t.completed).length
+      total: tasksWithAssignments.length,
+      completed: tasksWithAssignments.filter(t => t.completed).length,
+      pending: tasksWithAssignments.filter(t => !t.completed).length
     })
   } catch (error) {
     console.error('Get assigned tasks error:', error)

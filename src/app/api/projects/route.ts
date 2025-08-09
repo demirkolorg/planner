@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cookies } from "next/headers"
-import jwt from "jsonwebtoken"
+import { authenticateUser } from "@/lib/auth"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { getUserAccessibleProjects } from "@/lib/access-control"
 import { withRetry } from "@/lib/db-retry"
@@ -15,14 +15,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const { userId } = await authenticateUser(token)
     
     // Yeni access control sistemi ile tüm erişilebilir projeleri getir
-    const projects = await getUserAccessibleProjects(decoded.userId)
+    const projects = await getUserAccessibleProjects(userId)
 
     return NextResponse.json(projects)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching projects:", error)
+    if (error.message === 'Authentication failed') {
+      return NextResponse.json({ error: "Please login again" }, { status: 401 })
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -36,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
+    const { userId } = await authenticateUser(token)
     
     const body = await request.json()
     const { name, emoji } = body
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
     const existingProject = await db.project.findFirst({
       where: {
         name,
-        userId: decoded.userId
+        userId: userId
       }
     })
 
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest) {
         data: {
           name,
           emoji,
-          userId: decoded.userId
+          userId: userId
         },
         include: {
           _count: {
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
         await tx.projectActivity.create({
           data: {
             projectId: project.id,
-            userId: decoded.userId,
+            userId: userId,
             actionType: ProjectActivityTypes.PROJECT_CREATED,
             entityType: "project",
             description: `Proje oluşturuldu: "${project.name}"`
@@ -102,7 +105,7 @@ export async function POST(request: NextRequest) {
         await tx.projectActivity.create({
           data: {
             projectId: project.id,
-            userId: decoded.userId,
+            userId: userId,
             actionType: ProjectActivityTypes.SECTION_CREATED,
             entityType: "section",
             entityId: defaultSection.id,
@@ -119,8 +122,11 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(result, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating project:", error)
+    if (error.message === 'Authentication failed') {
+      return NextResponse.json({ error: "Please login again" }, { status: 401 })
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

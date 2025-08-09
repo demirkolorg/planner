@@ -101,7 +101,7 @@ export async function createNotification(params: CreateNotificationParams) {
 // Görev ataması bildirimi
 export async function createTaskAssignmentNotification(
   taskId: string, 
-  assigneeId: string, 
+  userId: string, 
   assignedBy: string,
   taskTitle: string
 ) {
@@ -111,7 +111,7 @@ export async function createTaskAssignmentNotification(
   })
 
   return createNotification({
-    userId: assigneeId,
+    userId: userId,
     title: "Yeni Görev Ataması",
     message: `${assigner?.firstName} ${assigner?.lastName} size "${taskTitle}" görevini atadı`,
     type: NotificationType.TASK_ASSIGNED,
@@ -122,7 +122,7 @@ export async function createTaskAssignmentNotification(
     metadata: {
       taskId,
       taskTitle,
-      assignerId: assignedBy,
+      assignedBy: assignedBy,
       assignerName: `${assigner?.firstName} ${assigner?.lastName}`
     }
   })
@@ -166,13 +166,13 @@ export async function createCommentNotification(
 // Görev durumu değişikliği bildirimi
 export async function createTaskStatusChangeNotification(
   taskId: string,
-  assigneeId: string,
+  userId: string,
   changedBy: string,
   taskTitle: string,
   newStatus: boolean // completed durumu
 ) {
   // Değiştiren kişi atanan kişi ise bildirim gönderme
-  if (changedBy === assigneeId) return null
+  if (changedBy === userId) return null
 
   const changer = await db.user.findUnique({
     where: { id: changedBy },
@@ -182,7 +182,7 @@ export async function createTaskStatusChangeNotification(
   const statusText = newStatus ? "tamamlandı" : "yeniden açıldı"
 
   return createNotification({
-    userId: assigneeId,
+    userId: userId,
     title: "Görev Durumu Değişti",
     message: `${changer?.firstName} ${changer?.lastName} "${taskTitle}" görevini ${statusText} olarak işaretledi`,
     type: NotificationType.TASK_STATUS_CHANGED,

@@ -14,8 +14,7 @@ import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { AssignmentIndicator } from "@/components/ui/assignment-indicator"
-import { MultiLevelAssignmentButton } from "@/components/ui/multi-level-assignment-button"
+import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
 import { getTaskDateStatus, getDueDateMessage, getDateStatusColor } from "@/lib/date-utils"
 
 interface TaskWithRelations {
@@ -63,10 +62,14 @@ interface TaskWithRelations {
   }>
   assignments?: Array<{
     id: string
-    assigneeId: string
+    targetType: 'PROJECT' | 'SECTION' | 'TASK'
+    targetId: string
+    userId?: string
+    email?: string
     assignedBy: string
+    status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED'
     assignedAt: string
-    assignee: {
+    user?: {
       id: string
       firstName: string
       lastName: string
@@ -444,7 +447,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   
   // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
   const isAssignedUser = !isUserLoading && currentUser && task.assignments && 
-    task.assignments.some(assignment => assignment.assigneeId === currentUser.id)
+    task.assignments.some(assignment => assignment.userId === currentUser.id && assignment.status === 'ACTIVE')
   
   // Task sahibi mi kontrol et
   const isTaskOwner = !isUserLoading && currentUser && task.userId === currentUser.id

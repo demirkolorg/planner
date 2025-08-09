@@ -47,7 +47,7 @@ export async function getUserProjectAccess(
   const [
     project, 
     projectMember, 
-    projectAssignment,
+    projectAssignments,
     sectionAssignments,
     taskAssignments
   ] = await Promise.all([
@@ -69,31 +69,39 @@ export async function getUserProjectAccess(
         select: { role: true }
       })
     ),
-    // User's project assignment
+    // User's assignments (all types)
     withReadRetry(async () =>
-      db.projectAssignment.findFirst({
-        where: { projectId, assigneeId: userId },
-        select: { role: true }
+      db.assignment.findMany({
+        where: { 
+          targetId: projectId,
+          targetType: 'PROJECT',
+          OR: [
+            { userId: userId, status: 'ACTIVE' },
+            { email: null } // Only user assignments, not email
+          ]
+        }
       })
     ),
-    // User's section assignments
+    // User's section assignments in this project
     withReadRetry(async () =>
-      db.sectionAssignment.findMany({
+      db.assignment.findMany({
         where: { 
-          section: { projectId },
-          assigneeId: userId 
+          targetType: 'SECTION',
+          userId: userId,
+          status: 'ACTIVE'
         },
-        select: { sectionId: true }
+        select: { targetId: true }
       })
     ),
-    // User's task assignments  
+    // User's task assignments in this project
     withReadRetry(async () =>
-      db.taskAssignment.findMany({
+      db.assignment.findMany({
         where: { 
-          task: { projectId },
-          assigneeId: userId 
+          targetType: 'TASK',
+          userId: userId,
+          status: 'ACTIVE'
         },
-        select: { taskId: true }
+        select: { targetId: true }
       })
     )
   ])
@@ -106,8 +114,9 @@ export async function getUserProjectAccess(
   const isProjectOwner = project.userId === userId
 
   // Assignment listelerini hazırla
-  const sectionAssignmentIds = sectionAssignments.map(sa => sa.sectionId)
-  const taskAssignmentIds = taskAssignments.map(ta => ta.taskId)
+  const sectionAssignmentIds = sectionAssignments.map(sa => sa.targetId)
+  const taskAssignmentIds = taskAssignments.map(ta => ta.targetId)
+  const projectAssignment = projectAssignments.length > 0 ? projectAssignments[0] : null
 
 
   // Access Level hesapla - En spesifik erişimden genel erişime doğru
@@ -127,7 +136,7 @@ export async function getUserProjectAccess(
   }
 
   // Permissions hesapla
-  const permissions = calculatePermissions(accessLevel, projectMember?.role, projectAssignment?.role)
+  const permissions = calculatePermissions(accessLevel, projectMember?.role, 'COLLABORATOR')
 
   // Görülebilir içeriği hesapla (simplified)
   const visibleContent = {
@@ -329,30 +338,7 @@ export async function getUserAccessibleProjects(userId: string) {
           members: {
             some: { userId }
           }
-        },                            // Üye olduğu projeler
-        {
-          assignments: {
-            some: { assigneeId: userId }
-          }
-        },                            // Proje ataması olan projeler
-        {
-          sections: {
-            some: {
-              assignments: {
-                some: { assigneeId: userId }
-              }
-            }
-          }
-        },                            // Bölüm ataması olan projeler
-        {
-          tasks: {
-            some: {
-              assignments: {
-                some: { assigneeId: userId }
-              }
-            }
-          }
-        }                             // Görev ataması olan projeler
+        }                             // Üye olduğu projeler
       ]
     },
     include: {
@@ -365,10 +351,6 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       members: {
         where: { userId },
-        select: { role: true }
-      },
-      assignments: {
-        where: { assigneeId: userId },
         select: { role: true }
       },
       _count: {

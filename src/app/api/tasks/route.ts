@@ -347,26 +347,6 @@ export async function GET(request: NextRequest) {
             },
           }
         },
-        assignments: {
-          include: {
-            assignee: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            assigner: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
-          }
-        },
         approvalRequester: {
           select: {
             id: true,
