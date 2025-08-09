@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
-import { NotificationType } from "@/generated/prisma"
+import { NotificationType } from "@prisma/client"
 
 // Kullanıcının bildirimlerini getir
 export async function GET(request: NextRequest) {

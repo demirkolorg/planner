@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { createNotification } from "@/lib/notification-utils"
-import { NotificationType } from "@/generated/prisma"
+import { NotificationType } from "@prisma/client"
 
 export async function POST(
   request: NextRequest,

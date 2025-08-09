@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { LoginForm } from "@/components/auth/login-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Logo } from "@/components/ui/logo";
 import { BRAND_SLOGANS } from "@/lib/constants";
 
-export default function LoginPage() {
+function LoginContent() {
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
   const searchParams = useSearchParams()
   const [isAddingAccount, setIsAddingAccount] = useState(false)
@@ -100,5 +100,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Yükleniyor...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

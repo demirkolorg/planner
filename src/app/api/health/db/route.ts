@@ -1,53 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { testConnection } from '@/lib/db'
-import { withReadRetry } from '@/lib/db-retry'
+import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
   
   try {
-    // Retry ile database connection test
-    const isConnected = await withReadRetry(async () => {
-      return await testConnection()
-    }, {
-      maxAttempts: 3,
-      baseDelay: 500,
-    })
-    
+    await db.$queryRaw`SELECT 1`
     const responseTime = Date.now() - startTime
     
-    if (isConnected) {
-      return NextResponse.json({
-        status: 'healthy',
-        database: 'connected',
-        responseTime: `${responseTime}ms`,
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV
-      }, { 
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      })
-    } else {
-      return NextResponse.json({
-        status: 'unhealthy',
-        database: 'disconnected',
-        responseTime: `${responseTime}ms`,
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
-        error: 'Database connection test failed'
-      }, { 
-        status: 503,
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache', 
-          'Expires': '0'
-        }
-      })
-    }
+    return NextResponse.json({
+      status: 'healthy',
+      database: 'connected',
+      responseTime: `${responseTime}ms`,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV
+    }, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
   } catch (error) {
     const responseTime = Date.now() - startTime
     

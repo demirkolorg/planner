@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { RegisterForm } from "@/components/auth/register-form";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Users, Shield, Zap } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { BRAND_SLOGANS } from "@/lib/constants";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
   
   useEffect(() => {
@@ -98,5 +98,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Yükleniyor...</div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }

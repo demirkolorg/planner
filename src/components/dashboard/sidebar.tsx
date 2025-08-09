@@ -19,6 +19,7 @@ import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
 import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
+import { DbStatusIndicator } from "@/components/ui/db-status-indicator"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { QuickTaskModal } from "@/components/modals/quick-task-modal"
@@ -683,11 +684,14 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <p>Hesap Değiştir</p>
                 </TooltipContent>
               </Tooltip>
+              
+              {/* Database Status Indicator */}
+              <DbStatusIndicator />
             </div>
           </>
         ) : (
           /* Collapsed state - single settings dropdown */
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center space-y-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenu>
@@ -769,6 +773,9 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 <p>Ayarlar & Menü</p>
               </TooltipContent>
             </Tooltip>
+            
+            {/* Database Status Indicator - Collapsed */}
+            <DbStatusIndicator />
           </div>
         )}
       </div>

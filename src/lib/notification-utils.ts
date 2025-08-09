@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { NotificationType } from "@/generated/prisma"
+import { NotificationType } from "@prisma/client"
 
 // Bildirim gönderme fonksiyonu helper'ı
 export interface CreateNotificationParams {
