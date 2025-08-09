@@ -118,7 +118,7 @@ export async function POST(
 
     const { id: projectId } = await params
     const body = await request.json()
-    const { assigneeIds, emails, role = 'COLLABORATOR', message } = body
+    const { assigneeIds, emails, message } = body
 
     // Access control kontrolü
     const access = await getUserProjectAccess(userId, projectId)
@@ -172,7 +172,7 @@ export async function POST(
               projectId,
               assigneeId,
               assignedBy: userId,
-              role
+              role: 'COLLABORATOR' // Sabit rol - herkes işbirlikçi
             },
             include: {
               assignee: {
@@ -196,8 +196,8 @@ export async function POST(
             entityType: 'project',
             entityId: assigneeId,
             entityName: `${assignee.firstName} ${assignee.lastName}`,
-            newValue: role,
-            description: `${assignee.firstName} ${assignee.lastName} projeye ${role} rolüyle atandı`
+            newValue: 'ATANDI',
+            description: `${assignee.firstName} ${assignee.lastName} projeye atandı`
           })
 
         } catch (error) {
@@ -249,7 +249,7 @@ export async function POST(
               email,
               targetType: 'PROJECT',
               targetId: projectId,
-              role,
+              role: 'COLLABORATOR', // Sabit rol
               assignedBy: userId,
               message,
               expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 gün sonra expire
@@ -276,8 +276,8 @@ export async function POST(
             entityType: 'project',
             entityId: null,
             entityName: email,
-            newValue: role,
-            description: `${email} email ile projeye ${role} rolüyle davet edildi`
+            newValue: 'DAVET_EDILDI',
+            description: `${email} email ile projeye davet edildi`
           })
 
           // Email gönder
@@ -297,7 +297,6 @@ export async function POST(
                 targetType: 'PROJECT',
                 targetId: projectId,
                 targetName: project.name,
-                role,
                 assignerName: `${assigner.firstName} ${assigner.lastName}`,
                 assignmentId: emailAssignment.id,
                 message

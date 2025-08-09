@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, targetType, targetId, role, message } = body
+    const { email, targetType, targetId, message } = body
 
     // Parametreleri kontrol et
     if (!email || !targetType || !targetId) {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         email,
         targetType,
         targetId,
-        role: role || (targetType === 'PROJECT' ? 'COLLABORATOR' : 'MEMBER'),
+        role: (targetType === 'PROJECT' ? 'COLLABORATOR' : 'MEMBER'), // Sabit rol
         assignedBy: userId,
         message,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 gün sonra expire
@@ -198,7 +198,6 @@ export async function POST(request: NextRequest) {
           targetId,
           targetName,
           projectName,
-          role,
           assignerName: `${assigner.firstName} ${assigner.lastName}`,
           assignmentId: emailAssignment.id,
           message

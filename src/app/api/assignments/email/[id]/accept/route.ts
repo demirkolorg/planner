@@ -91,21 +91,40 @@ export async function POST(
 
       // Target tipine göre gerçek assignment oluştur
       if (emailAssignment.targetType === 'PROJECT') {
-        // Zaten var olan assignment kontrol et
-        const existing = await tx.projectAssignment.findFirst({
+        // Önce ProjectMember olarak ekle (projeyi görebilmesi için)
+        const existingMember = await tx.projectMember.findFirst({
+          where: {
+            projectId: emailAssignment.targetId,
+            userId: userId
+          }
+        })
+
+        if (!existingMember) {
+          await tx.projectMember.create({
+            data: {
+              projectId: emailAssignment.targetId,
+              userId: userId,
+              role: 'MEMBER', // ProjectRole enum'unda MEMBER var
+              addedBy: emailAssignment.assignedBy
+            }
+          })
+        }
+
+        // Sonra ProjectAssignment oluştur (daha spesifik rol kontrolü için)
+        const existingAssignment = await tx.projectAssignment.findFirst({
           where: {
             projectId: emailAssignment.targetId,
             assigneeId: userId
           }
         })
 
-        if (!existing) {
+        if (!existingAssignment) {
           realAssignment = await tx.projectAssignment.create({
             data: {
               projectId: emailAssignment.targetId,
               assigneeId: userId,
               assignedBy: emailAssignment.assignedBy,
-              role: emailAssignment.role
+              role: 'COLLABORATOR' // Sabit rol
             }
           })
         }
@@ -125,7 +144,7 @@ export async function POST(
               sectionId: emailAssignment.targetId,
               assigneeId: userId,
               assignedBy: emailAssignment.assignedBy,
-              role: emailAssignment.role
+              role: 'MEMBER' // SectionRole için MEMBER
             }
           })
         }
@@ -182,8 +201,7 @@ export async function POST(
         await sendAssignmentAcceptedEmail(assigner.email, {
           targetType: emailAssignment.targetType,
           targetName,
-          accepterName: `${user.firstName} ${user.lastName}`,
-          role: emailAssignment.role
+          accepterName: `${user.firstName} ${user.lastName}`
         })
       }
     } catch (emailError) {

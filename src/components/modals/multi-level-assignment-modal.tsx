@@ -155,7 +155,7 @@ export function MultiLevelAssignmentModal({
         body: JSON.stringify({
           assigneeIds: userIds.length > 0 ? userIds : undefined,
           emails: validEmails.length > 0 ? validEmails : undefined,
-          role: 'MEMBER', // Basit atama sistemi - hep MEMBER
+          // Rol sistemi kaldırıldı - sadece atama/atamama var
           message: message.trim() || undefined
         })
       })

@@ -176,18 +176,14 @@ const getAssignmentInvitationTemplate = (
     targetType: string
     targetName: string
     projectName?: string
-    role: string
     assignerName: string
     message?: string
     acceptUrl: string
   }
 ) => {
-  const { targetType, targetName, projectName, role, assignerName, message, acceptUrl } = assignmentData
+  const { targetType, targetName, projectName, assignerName, message, acceptUrl } = assignmentData
   
   const typeLabel = targetType === 'PROJECT' ? 'Proje' : targetType === 'SECTION' ? 'Bölüm' : 'Görev'
-  const roleLabel = role === 'COLLABORATOR' ? 'İş Ortağı' : 
-                   role === 'VIEWER' ? 'İzleyici' : 
-                   role === 'OWNER' ? 'Sorumlu' : 'Üye'
 
   return {
     subject: `Planner - ${typeLabel} Ataması Davetiyesi`,
@@ -242,10 +238,6 @@ const getAssignmentInvitationTemplate = (
                   </div>
                   ` : ''}
                   <div class="detail-row">
-                    <span class="detail-label">Rol:</span>
-                    <span class="detail-value"><span class="role-badge">${roleLabel}</span></span>
-                  </div>
-                  <div class="detail-row">
                     <span class="detail-label">Davet Eden:</span>
                     <span class="detail-value">${assignerName}</span>
                   </div>
@@ -292,7 +284,6 @@ export const sendAssignmentInvitationEmail = async (
     targetId: string
     targetName: string
     projectName?: string
-    role: string
     assignerName: string
     assignmentId: string
     message?: string
@@ -332,15 +323,11 @@ export const sendAssignmentAcceptedEmail = async (
     targetType: string
     targetName: string
     accepterName: string
-    role: string
   }
 ): Promise<boolean> => {
   try {
-    const { targetType, targetName, accepterName, role } = assignmentData
+    const { targetType, targetName, accepterName } = assignmentData
     const typeLabel = targetType === 'PROJECT' ? 'Proje' : targetType === 'SECTION' ? 'Bölüm' : 'Görev'
-    const roleLabel = role === 'COLLABORATOR' ? 'İş Ortağı' : 
-                     role === 'VIEWER' ? 'İzleyici' : 
-                     role === 'OWNER' ? 'Sorumlu' : 'Üye'
 
     await transporter.sendMail({
       from: {
@@ -373,7 +360,7 @@ export const sendAssignmentAcceptedEmail = async (
               <div class="content">
                 <div class="success-card">
                   <h2 style="color: #059669; margin-top: 0;">🎉 Harika Haber!</h2>
-                  <p><strong>${accepterName}</strong> davetinizi kabul etti ve <strong>${targetName}</strong> ${typeLabel.toLowerCase()}'sine <strong>${roleLabel}</strong> rolüyle katıldı.</p>
+                  <p><strong>${accepterName}</strong> davetinizi kabul etti ve <strong>${targetName}</strong> ${typeLabel.toLowerCase()}'sine katıldı.</p>
                 </div>
                 
                 <p>Artık ${accepterName} ile birlikte çalışmaya başlayabilirsiniz!</p>

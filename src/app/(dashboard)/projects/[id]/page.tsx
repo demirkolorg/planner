@@ -87,7 +87,16 @@ export default function ProjectDetailPage() {
   const [expandTaskId, setExpandTaskId] = useState<string | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isTasksLoading, setIsTasksLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [assignmentCounts, setAssignmentCounts] = useState<{
+    userAssignments: number
+    emailAssignments: number
+  }>({ userAssignments: 0, emailAssignments: 0 })
+  const [sectionAssignmentCounts, setSectionAssignmentCounts] = useState<Record<string, {
+    userAssignments: number
+    emailAssignments: number
+  }>>({})
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false)
@@ -268,6 +277,58 @@ export default function ProjectDetailPage() {
     }
   }, [fetchTasksByProject, projectId])
 
+  // Assignment counts'ları fetch et
+  const fetchAssignmentCounts = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/assignments`)
+      if (response.ok) {
+        const data = await response.json()
+        setAssignmentCounts({
+          userAssignments: data.userAssignments?.length || 0,
+          emailAssignments: data.emailAssignments?.length || 0
+        })
+      }
+    } catch (error) {
+      console.error('Assignment counts fetch error:', error)
+    }
+  }, [projectId])
+
+  // Section assignment counts'ları fetch et
+  const fetchSectionAssignmentCounts = useCallback(async () => {
+    try {
+      const sectionsData = getSectionsByProject(projectId)
+      const countPromises = sectionsData.map(async (section) => {
+        const response = await fetch(`/api/sections/${section.id}/assignments`)
+        if (response.ok) {
+          const data = await response.json()
+          return {
+            sectionId: section.id,
+            userAssignments: data.userAssignments?.length || 0,
+            emailAssignments: data.emailAssignments?.length || 0
+          }
+        }
+        return {
+          sectionId: section.id,
+          userAssignments: 0,
+          emailAssignments: 0
+        }
+      })
+      
+      const results = await Promise.all(countPromises)
+      const countsMap = results.reduce((acc, result) => {
+        acc[result.sectionId] = {
+          userAssignments: result.userAssignments,
+          emailAssignments: result.emailAssignments
+        }
+        return acc
+      }, {} as Record<string, { userAssignments: number; emailAssignments: number }>)
+      
+      setSectionAssignmentCounts(countsMap)
+    } catch (error) {
+      console.error('Section assignment counts fetch error:', error)
+    }
+  }, [projectId, getSectionsByProject])
+
   const fetchProjectData = useCallback(async () => {
     try {
       // Store'da proje varsa header için hemen yükle
@@ -289,11 +350,17 @@ export default function ProjectDetailPage() {
         setIsLoading(true)
       }
       
+      // Tasks loading'i başlat
+      if (!hasProjectTasks) {
+        setIsTasksLoading(true)
+      }
+      
       // Tüm API çağrılarını paralel yap (arka planda güncelleme için)
       const [projectResponse, sectionsResult, tasksResult] = await Promise.allSettled([
         fetch(`/api/projects/${projectId}`),
         fetchSections(projectId),
-        fetchTasksByProject(projectId)
+        fetchTasksByProject(projectId),
+        fetchAssignmentCounts()
       ])
 
       // Proje bilgisini işle
@@ -314,12 +381,14 @@ export default function ProjectDetailPage() {
 
       // Loading'i kapat
       setIsLoading(false)
+      setIsTasksLoading(false)
     } catch (error) {
       console.error('Proje verileri alınırken hata oluştu:', error)
       setError(error instanceof Error ? error.message : 'Bilinmeyen hata')
       setIsLoading(false)
+      setIsTasksLoading(false)
     }
-  }, [projectId, fetchSections, fetchTasksByProject, projects])
+  }, [projectId, fetchSections, fetchTasksByProject, fetchAssignmentCounts, projects])
 
   // Sıralama fonksiyonu
   const sortTasks = useCallback((tasks: any[], sortOption: SortOption) => {
@@ -402,6 +471,11 @@ export default function ProjectDetailPage() {
       if (hasProjectSections || hasProjectTasks) {
         setIsLoading(false)
       }
+      
+      // Tasks varsa tasks loading'i kapat
+      if (hasProjectTasks) {
+        setIsTasksLoading(false)
+      }
     }
     
     fetchProjectData()
@@ -446,6 +520,14 @@ export default function ProjectDetailPage() {
       setOpenSections(sectionsToOpen)
     }
   }, [sectionIds, openSections.length, getOverdueTasksCountByProject, projectId, getSortedTasksWithoutSection])
+
+  // Sections yüklendikten sonra assignment counts'ları fetch et
+  useEffect(() => {
+    const sectionsData = getSectionsByProject(projectId)
+    if (sectionsData.length > 0) {
+      fetchSectionAssignmentCounts()
+    }
+  }, [projectId, getSectionsByProject, fetchSectionAssignmentCounts])
 
   const handleUpdateProject = async (name: string, emoji: string) => {
     try {
@@ -798,7 +880,11 @@ export default function ProjectDetailPage() {
                   type: 'PROJECT',
                   projectId: project.id
                 }}
-                onRefresh={fetchProjectData}
+                counts={assignmentCounts}
+                onRefresh={() => {
+                  fetchProjectData()
+                  fetchAssignmentCounts()
+                }}
                 variant="outline"
                 size="sm"
               />
@@ -1169,7 +1255,11 @@ export default function ProjectDetailPage() {
                         type: 'SECTION',
                         projectId: project.id
                       }}
-                      onRefresh={fetchProjectData}
+                      counts={sectionAssignmentCounts[section.id] || { userAssignments: 0, emailAssignments: 0 }}
+                      onRefresh={() => {
+                        fetchProjectData()
+                        fetchSectionAssignmentCounts()
+                      }}
                       variant="icon"
                     />
                   )}
@@ -1242,7 +1332,7 @@ export default function ProjectDetailPage() {
                   </div>
                 
                 <AccordionContent className="px-4 pb-3 overflow-visible">
-                  {isLoading ? (
+                  {isTasksLoading ? (
                     <div className="space-y-3">
                       <div className="h-16 bg-muted rounded-lg animate-pulse" />
                       <div className="h-16 bg-muted rounded-lg animate-pulse" />
