@@ -329,42 +329,137 @@ function createNoAccessResult(): UserProjectAccess {
  * Kullanıcının erişebileceği projeleri getirir
  */
 export async function getUserAccessibleProjects(userId: string) {
-  const projects = await withReadRetry(async () => {
+  // Step 1: Kullanıcının sahip olduğu ve üye olduğu projeler
+  const ownedAndMemberProjects = await withReadRetry(async () => {
     return await db.project.findMany({
-    where: {
-      OR: [
-        { userId },                    // Sahip olduğu projeler
-        { 
-          members: {
-            some: { userId }
+      where: {
+        OR: [
+          { userId },                    // Sahip olduğu projeler
+          { 
+            members: {
+              some: { userId }
+            }
+          }                             // Üye olduğu projeler
+        ]
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
           }
-        }                             // Üye olduğu projeler
-      ]
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true
-        }
-      },
-      members: {
-        where: { userId },
-        select: { role: true }
-      },
-      _count: {
-        select: {
-          tasks: true,
-          sections: true
+        },
+        members: {
+          where: { userId },
+          select: { role: true }
+        },
+        _count: {
+          select: {
+            tasks: true,
+            sections: true
+          }
         }
       }
-    },
-    orderBy: {
-      updatedAt: 'desc'
+    })
+  })
+  
+  // Step 2: Kullanıcının assignment'ları olan projeleri bul
+  const userAssignments = await withReadRetry(async () => {
+    return await db.assignment.findMany({
+      where: {
+        userId: userId,
+        status: 'ACTIVE',
+        targetType: { in: ['PROJECT', 'SECTION', 'TASK'] }
+      },
+      include: {
+        // İlgili target entityleri include etmeyeceğiz, sadece ID'leri alacağız
+      }
+    })
+  })
+
+  // Project ID'leri topla (direkt PROJECT assignments)
+  const assignedProjectIds = new Set(
+    userAssignments
+      .filter(a => a.targetType === 'PROJECT')
+      .map(a => a.targetId)
+  )
+
+  // Section ve Task assignment'larından da proje ID'lerini bul
+  if (userAssignments.some(a => a.targetType === 'SECTION')) {
+    const sectionIds = userAssignments
+      .filter(a => a.targetType === 'SECTION')
+      .map(a => a.targetId)
+    
+    if (sectionIds.length > 0) {
+      const sections = await withReadRetry(async () => {
+        return await db.section.findMany({
+          where: { id: { in: sectionIds } },
+          select: { projectId: true }
+        })
+      })
+      sections.forEach(s => assignedProjectIds.add(s.projectId))
     }
-  });
-  });
+  }
+
+  if (userAssignments.some(a => a.targetType === 'TASK')) {
+    const taskIds = userAssignments
+      .filter(a => a.targetType === 'TASK')
+      .map(a => a.targetId)
+    
+    if (taskIds.length > 0) {
+      const tasks = await withReadRetry(async () => {
+        return await db.task.findMany({
+          where: { id: { in: taskIds } },
+          select: { projectId: true }
+        })
+      })
+      tasks.forEach(t => t.projectId && assignedProjectIds.add(t.projectId))
+    }
+  }
+
+  // Atanmış olduğu ama member olmadığı projeleri getir
+  const assignedOnlyProjectIds = Array.from(assignedProjectIds).filter(
+    projectId => !ownedAndMemberProjects.some(p => p.id === projectId)
+  )
+
+  let assignedOnlyProjects: any[] = []
+  if (assignedOnlyProjectIds.length > 0) {
+    assignedOnlyProjects = await withReadRetry(async () => {
+      return await db.project.findMany({
+        where: {
+          id: { in: assignedOnlyProjectIds }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          members: {
+            where: { userId },
+            select: { role: true }
+          },
+          _count: {
+            select: {
+              tasks: true,
+              sections: true
+            }
+          }
+        }
+      })
+    })
+  }
+
+  // Tüm projeleri birleştir
+  const allProjects = [...ownedAndMemberProjects, ...assignedOnlyProjects]
+  
+  // Tarihe göre sırala
+  const projects = allProjects.sort((a, b) => 
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  )
 
   // Her proje için access level hesapla
   const projectsWithAccess = await Promise.all(

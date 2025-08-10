@@ -77,7 +77,43 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     })
 
-    return NextResponse.json(tasks)
+    // Assignment bilgilerini ayrı olarak ekle
+    const tasksWithAssignments = await Promise.all(
+      tasks.map(async (task) => {
+        const assignments = await db.assignment.findMany({
+          where: {
+            targetType: 'TASK',
+            targetId: task.id,
+            status: 'ACTIVE'
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            },
+            assigner: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        })
+
+        return {
+          ...task,
+          assignments
+        }
+      })
+    )
+
+    return NextResponse.json(tasksWithAssignments)
   } catch (error) {
     console.error("❌ Error fetching tasks for project:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

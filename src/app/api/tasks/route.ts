@@ -374,7 +374,43 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(tasks)
+    // Assignment bilgilerini ayrı olarak ekle
+    const tasksWithAssignments = await Promise.all(
+      tasks.map(async (task) => {
+        const assignments = await db.assignment.findMany({
+          where: {
+            targetType: 'TASK',
+            targetId: task.id,
+            status: 'ACTIVE'
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            },
+            assigner: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        })
+
+        return {
+          ...task,
+          assignments
+        }
+      })
+    )
+
+    return NextResponse.json(tasksWithAssignments)
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
