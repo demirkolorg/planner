@@ -24,7 +24,7 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, addAccount } = useAuthStore()
+  const { login, addAccount, switchAccount } = useAuthStore()
   
   // Multi-account support kontrolü
   const [isAddingAccount, setIsAddingAccount] = useState(false)
@@ -99,8 +99,16 @@ export function LoginForm({
       if (isAddingAccount && data.token) {
         // Hesap ekleme modunda - mevcut hesaba yeni hesap ekle
         addAccount(data.user, data.token)
-        // Ana sayfaya dön
-        router.push(ROUTES.HOME)
+        
+        // Yeni eklenen hesaba otomatik switch yap
+        const success = await switchAccount(data.user.id)
+        if (success) {
+          // Switch başarılı, sayfa reload edilecek
+          window.location.href = ROUTES.HOME
+        } else {
+          // Switch başarısız, ana sayfaya yönlendir
+          router.push(ROUTES.HOME)
+        }
       } else {
         // Normal giriş - kullanıcı bilgilerini Zustand store'a kaydet
         login(data.user, data.token)
