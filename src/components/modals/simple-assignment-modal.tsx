@@ -124,6 +124,17 @@ export function SimpleAssignmentModal({
       return
     }
 
+    // TASK türü için çoklu atama kontrolü
+    if (targetType === 'TASK') {
+      const totalNewAssignments = selectedUserIds.length + emails.length
+      const currentActiveAssignments = assignments.filter(a => a.status === 'ACTIVE').length
+      
+      if (currentActiveAssignments + totalNewAssignments > 1) {
+        toast.error('Bir görev sadece bir kullanıcıya atanabilir. Önce mevcut atamayı kaldırın.')
+        return
+      }
+    }
+
     try {
       setIsSubmitting(true)
       
@@ -307,44 +318,61 @@ export function SimpleAssignmentModal({
 
           {/* Yeni Atama Formu */}
           <div>
-            <h3 className="text-sm font-medium mb-3">Yeni Atama</h3>
+            <h3 className="text-sm font-medium mb-3">
+              {targetType === 'TASK' ? 'Atama (Maksimum 1 Kullanıcı)' : 'Yeni Atama'}
+            </h3>
             
             <div className="space-y-4">
               {/* Kullanıcı Seçici */}
               <div>
                 <Label className="text-sm font-medium">Kullanıcı Seç</Label>
-                <UserPicker
-                  selectedUserIds={selectedUserIds}
-                  onSelectionChangeIds={setSelectedUserIds}
-                  placeholder="Kullanıcı ara ve seç..."
-                />
+                {targetType === 'TASK' && assignments.filter(a => a.status === 'ACTIVE').length > 0 ? (
+                  <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                    Bu görev zaten bir kullanıcıya atanmış. Yeni kullanıcı atamak için önce mevcut atamayı kaldırın.
+                  </div>
+                ) : (
+                  <UserPicker
+                    selectedUserIds={selectedUserIds}
+                    onSelectionChangeIds={setSelectedUserIds}
+                    placeholder="Kullanıcı ara ve seç..."
+                    disabled={targetType === 'TASK' && assignments.filter(a => a.status === 'ACTIVE').length > 0}
+                  />
+                )}
               </div>
 
               {/* Email Girişi */}
               <div>
                 <Label className="text-sm font-medium">Email Davetiyesi</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    type="email"
-                    placeholder="ornek@email.com"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        addEmail()
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addEmail}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+                {targetType === 'TASK' && assignments.filter(a => a.status === 'ACTIVE').length > 0 ? (
+                  <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                    Bu görev zaten bir kullanıcıya atanmış. Email davetiyesi gönderemezsiniz.
+                  </div>
+                ) : (
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      type="email"
+                      placeholder="ornek@email.com"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addEmail()
+                        }
+                      }}
+                      disabled={targetType === 'TASK' && assignments.filter(a => a.status === 'ACTIVE').length > 0}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addEmail}
+                      disabled={targetType === 'TASK' && assignments.filter(a => a.status === 'ACTIVE').length > 0}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
                 
                 {emails.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">

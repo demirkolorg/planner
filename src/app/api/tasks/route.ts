@@ -68,14 +68,25 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // PROJECT türü görevler için proje kontrolü
+    // PROJECT türü görevler için proje kontrolü ve access control
     let project = null
     if (taskType === 'PROJECT' && projectId) {
-      project = await db.project.findFirst({
-        where: {
-          id: projectId,
-          userId: decoded.userId
-        }
+      // Access control importu ekle
+      const { getUserProjectAccess } = await import('@/lib/access-control')
+      
+      const access = await getUserProjectAccess(decoded.userId, projectId)
+      
+      if (access.accessLevel === 'NO_ACCESS') {
+        return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
+      }
+
+      // Görev oluşturma izni kontrolü
+      if (!access.permissions.canCreateTask) {
+        return NextResponse.json({ error: "Permission denied - cannot create tasks" }, { status: 403 })
+      }
+
+      project = await db.project.findUnique({
+        where: { id: projectId }
       })
 
       if (!project) {

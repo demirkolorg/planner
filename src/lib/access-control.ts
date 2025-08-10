@@ -29,6 +29,8 @@ export interface UserProjectAccess {
     canViewSettings: boolean
     canEditSettings: boolean
     canDeleteProject: boolean
+    canCompleteTask: boolean
+    canSubmitForApproval: boolean
   }
   visibleContent: {
     sectionIds: string[]
@@ -138,11 +140,13 @@ export async function getUserProjectAccess(
   // Permissions hesapla
   const permissions = calculatePermissions(accessLevel, projectMember?.role, 'COLLABORATOR')
 
-  // Görülebilir içeriği hesapla (simplified)
-  const visibleContent = {
-    sectionIds: sectionAssignmentIds,
-    taskIds: taskAssignmentIds
-  }
+  // Görülebilir içeriği hesapla 
+  const visibleContent = await calculateVisibleContent(
+    accessLevel,
+    sectionAssignmentIds, 
+    taskAssignmentIds,
+    project.id
+  )
 
   return {
     accessLevel,
@@ -174,7 +178,9 @@ function calculatePermissions(
     canManageMembers: false,
     canViewSettings: false,
     canEditSettings: false,
-    canDeleteProject: false
+    canDeleteProject: false,
+    canCompleteTask: false,
+    canSubmitForApproval: false
   }
 
   switch (accessLevel) {
@@ -190,7 +196,9 @@ function calculatePermissions(
         canManageMembers: true,
         canViewSettings: true,
         canEditSettings: true,
-        canDeleteProject: true
+        canDeleteProject: true,
+        canCompleteTask: true,              // ✅ Görevleri tamamlayabilir
+        canSubmitForApproval: true          // ✅ Onaya gönderebilir
       }
 
     case 'PROJECT_MEMBER':
@@ -203,43 +211,51 @@ function calculatePermissions(
         canCreateTask: memberRole !== 'VIEWER',
         canCreateSection: memberRole !== 'VIEWER',
         canAssignTasks: memberRole === 'OWNER',
-        canViewSettings: true
+        canViewSettings: true,
+        canCompleteTask: memberRole !== 'VIEWER',  // ✅ Viewer hariç tamamlayabilir
+        canSubmitForApproval: true                 // ✅ Onaya gönderebilir
       }
 
     case 'PROJECT_ASSIGNED':
       return {
         ...basePermissions,
         canViewProject: true,
-        canEditProject: assignmentRole === 'COLLABORATOR',
-        canViewAllSections: true,
-        canViewAllTasks: true,
-        canCreateTask: assignmentRole === 'COLLABORATOR',
-        canCreateSection: assignmentRole === 'COLLABORATOR',
-        canAssignTasks: false
+        canEditProject: false,              // ❌ Proje düzenleyemez
+        canViewAllSections: true,           // ✅ Tüm bölümleri görebilir
+        canViewAllTasks: true,              // ✅ Tüm görevleri görebilir
+        canCreateTask: false,               // ❌ Görev oluşturamaz
+        canCreateSection: false,            // ❌ Bölüm oluşturamaz
+        canAssignTasks: false,              // ❌ Atama yapamaz
+        canCompleteTask: false,             // ❌ Direkt tamamlayamaz
+        canSubmitForApproval: true          // ✅ Onaya gönderebilir
       }
 
     case 'SECTION_ASSIGNED':
       return {
         ...basePermissions,
-        canViewProject: true,
-        canEditProject: false,
-        canViewAllSections: false,
-        canViewAllTasks: false,
-        canCreateTask: false,
-        canCreateSection: false,
-        canAssignTasks: false
+        canViewProject: true,               // ✅ Projeyi görebilir
+        canEditProject: false,              // ❌ Proje düzenleyemez
+        canViewAllSections: false,          // ❌ Sadece atandığı bölümleri görebilir
+        canViewAllTasks: false,             // ❌ Sadece bölümündeki görevleri görebilir
+        canCreateTask: false,               // ❌ Görev oluşturamaz
+        canCreateSection: false,            // ❌ Bölüm oluşturamaz
+        canAssignTasks: false,              // ❌ Atama yapamaz
+        canCompleteTask: false,             // ❌ Direkt tamamlayamaz
+        canSubmitForApproval: true          // ✅ Onaya gönderebilir
       }
 
     case 'TASK_ASSIGNED':
       return {
         ...basePermissions,
-        canViewProject: true,
-        canEditProject: false,
-        canViewAllSections: false,
-        canViewAllTasks: false,
-        canCreateTask: false,
-        canCreateSection: false,
-        canAssignTasks: false
+        canViewProject: true,               // ✅ Projeyi görebilir
+        canEditProject: false,              // ❌ Proje düzenleyemez
+        canViewAllSections: false,          // ❌ Sadece görevin bulunduğu bölümü görebilir
+        canViewAllTasks: false,             // ❌ Sadece atandığı görevi görebilir
+        canCreateTask: false,               // ❌ Görev oluşturamaz
+        canCreateSection: false,            // ❌ Bölüm oluşturamaz
+        canAssignTasks: false,              // ❌ Atama yapamaz
+        canCompleteTask: false,             // ❌ Direkt tamamlayamaz
+        canSubmitForApproval: true          // ✅ Onaya gönderebilir
       }
 
     default:
@@ -251,43 +267,70 @@ function calculatePermissions(
  * Görülebilir içeriği hesaplar
  */
 async function calculateVisibleContent(
-  project: any,
   accessLevel: AccessLevel,
   sectionAssignments: string[],
-  taskAssignments: string[]
+  taskAssignments: string[],
+  projectId: string
 ) {
   let visibleSectionIds: string[] = []
   let visibleTaskIds: string[] = []
-
 
   switch (accessLevel) {
     case 'OWNER':
     case 'PROJECT_MEMBER':
     case 'PROJECT_ASSIGNED':
-      // Tüm bölümler ve görevler görülebilir
-      visibleSectionIds = project.sections.map((s: any) => s.id)
-      visibleTaskIds = project.tasks.map((t: any) => t.id)
+      // Tüm bölümler ve görevler görülebilir - API'den gelecek
+      visibleSectionIds = []  // Boş array = hepsini göster
+      visibleTaskIds = []     // Boş array = hepsini göster
       break
 
     case 'SECTION_ASSIGNED':
       // Sadece atanmış bölümler ve o bölümlerdeki görevler
       visibleSectionIds = sectionAssignments
-      visibleTaskIds = project.tasks
-        .filter((task: any) => sectionAssignments.includes(task.sectionId))
-        .map((task: any) => task.id)
+      
+      // Bu bölümlerdeki tüm görevleri getir
+      if (sectionAssignments.length > 0) {
+        const tasks = await withReadRetry(async () =>
+          db.task.findMany({
+            where: {
+              projectId: projectId,
+              sectionId: { in: sectionAssignments }
+            },
+            select: { id: true }
+          })
+        )
+        visibleTaskIds = tasks.map(task => task.id)
+      }
       break
 
     case 'TASK_ASSIGNED':
       // Sadece atanmış görevler ve onların bulunduğu bölümler
       visibleTaskIds = taskAssignments
-      // Simplified - section bilgisini şimdilik atla 
-      visibleSectionIds = []
+      
+      // Bu görevlerin bulunduğu bölümleri getir
+      if (taskAssignments.length > 0) {
+        const tasks = await withReadRetry(async () =>
+          db.task.findMany({
+            where: {
+              id: { in: taskAssignments },
+              projectId: projectId
+            },
+            select: { sectionId: true }
+          })
+        )
+        
+        // Unique section ID'leri al
+        const sectionIds = tasks
+          .map(task => task.sectionId)
+          .filter((id, index, arr) => id && arr.indexOf(id) === index) as string[]
+        
+        visibleSectionIds = sectionIds
+      }
       break
 
     default:
       break
   }
-
 
   return {
     sectionIds: visibleSectionIds,
@@ -316,7 +359,9 @@ function createNoAccessResult(): UserProjectAccess {
       canManageMembers: false,
       canViewSettings: false,
       canEditSettings: false,
-      canDeleteProject: false
+      canDeleteProject: false,
+      canCompleteTask: false,
+      canSubmitForApproval: false
     },
     visibleContent: {
       sectionIds: [],

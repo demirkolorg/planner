@@ -65,6 +65,8 @@ interface Project extends Omit<ProjectType, 'createdAt' | 'updatedAt'> {
       canViewAllTasks: boolean
       canCreateTask: boolean
       canCreateSection: boolean
+      canCompleteTask: boolean
+      canSubmitForApproval: boolean
       canAssignTasks: boolean
       canManageMembers: boolean
       canEditSettings: boolean
@@ -1190,71 +1192,81 @@ export default function ProjectDetailPage() {
                     />
                   )}
                   
-                  <div 
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setTaskModalContext({
-                        project: { id: project.id, name: project.name, emoji: project.emoji },
-                        section: { id: section.id, name: section.name, projectId: project.id }
-                      })
-                      setIsTaskModalOpen(true)
-                    }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Görev
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <div 
-                        className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                          }}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </div>
-                      </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            setEditingSectionId(section.id)
-                            setEditingSectionName(section.name)
-                          }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Bölümü Düzenle
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            setSectionToMove(section)
-                            setIsSectionMoveModalOpen(true)
-                          }}>
-                            <div className="h-4 w-4 mr-2 flex items-center justify-center">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="5 9 2 12 5 15"></polyline>
-                                <polyline points="9 5 12 2 15 5"></polyline>
-                                <polyline points="15 19 12 22 9 19"></polyline>
-                                <polyline points="19 9 22 12 19 15"></polyline>
-                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                <line x1="12" y1="2" x2="12" y2="22"></line>
-                              </svg>
-                            </div>
-                            Bölümü Taşı
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            variant="destructive" 
+                  {project.userAccess?.permissions.canCreateTask && (
+                    <div 
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background px-2 h-7 font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setTaskModalContext({
+                          project: { id: project.id, name: project.name, emoji: project.emoji },
+                          section: { id: section.id, name: section.name, projectId: project.id }
+                        })
+                        setIsTaskModalOpen(true)
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Görev
+                    </div>
+                  )}
+                  {project.userAccess?.permissions.canCreateSection && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <div 
+                          className="p-1 hover:bg-accent rounded cursor-pointer inline-flex items-center justify-center"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setSectionToDelete(section)
-                              setIsSectionDeleteDialogOpen(true)
                             }}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Bölümü Sil
-                          </DropdownMenuItem>
+                            <MoreVertical className="h-4 w-4" />
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {project.userAccess?.permissions.canCreateSection && (
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingSectionId(section.id)
+                              setEditingSectionName(section.name)
+                            }}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Bölümü Düzenle
+                            </DropdownMenuItem>
+                          )}
+                          {project.userAccess?.permissions.canCreateSection && (
+                            <>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                setSectionToMove(section)
+                                setIsSectionMoveModalOpen(true)
+                              }}>
+                                <div className="h-4 w-4 mr-2 flex items-center justify-center">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="5 9 2 12 5 15"></polyline>
+                                    <polyline points="9 5 12 2 15 5"></polyline>
+                                    <polyline points="15 19 12 22 9 19"></polyline>
+                                    <polyline points="19 9 22 12 19 15"></polyline>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <line x1="12" y1="2" x2="12" y2="22"></line>
+                                  </svg>
+                                </div>
+                                Bölümü Taşı
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                variant="destructive" 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSectionToDelete(section)
+                                  setIsSectionDeleteDialogOpen(true)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Bölümü Sil
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    )}
                   </div>
                 
                 <AccordionContent className="px-4 pb-3 overflow-visible">

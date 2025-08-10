@@ -78,6 +78,8 @@ interface TaskCardActionsProps {
   onUnassignUser?: (taskId: string, userId: string) => void
   isFirstInSection?: boolean
   isPermissionLoading?: boolean
+  canEditTask?: boolean
+  canSubmitForApproval?: boolean
 }
 
 export function TaskCardActions({
@@ -97,7 +99,9 @@ export function TaskCardActions({
   onAssignUser,
   onUnassignUser,
   isFirstInSection = false,
-  isPermissionLoading = false
+  isPermissionLoading = false,
+  canEditTask = true,
+  canSubmitForApproval = true
 }: TaskCardActionsProps) {
   const { currentUser, isLoading: isUserLoading } = useCurrentUser()
   
@@ -196,7 +200,7 @@ export function TaskCardActions({
   const isTaskCompleted = task.completed
   
   // Atanmış kullanıcı mı kontrolü - permission loading sırasında güvenli taraftan sakla
-  const isDisabledForAssignedUser = isActualPermissionLoading || (isAssignedUser && !isTaskOwner)
+  const isDisabledForAssignedUser = isActualPermissionLoading || !canEditTask
   
   return (
     <TooltipProvider>
@@ -340,7 +344,7 @@ export function TaskCardActions({
         </Tooltip>
 
         {/* Submit for Approval - Sadece atanmış kullanıcılar için görünür */}
-        {!isActualPermissionLoading && isAssignedUser && !isTaskOwner && (
+        {!isActualPermissionLoading && canSubmitForApproval && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

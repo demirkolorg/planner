@@ -252,8 +252,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const handleDateClick = (e: React.MouseEvent) => {
     e.stopPropagation()
 
-    // Atanmış kullanıcılar tarih düzenleyemez (sadece task sahibi düzenleyebilir)
-    if (isAssignedUser && !isTaskOwner) {
+    // Permission kontrolü - assigned users tarih düzenleyemez
+    if (!canEditTask) {
       return
     }
 
@@ -454,6 +454,11 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   
   // Permission kontrolü için loading durumu
   const isPermissionLoading = isUserLoading
+  
+  // Assigned kullanıcıların permission'ları - sadece görüntüleyebilir ve onaya gönderebilir
+  const canCompleteTask = !isAssignedUser && (isTaskOwner || currentUser) // Assigned user task tamamlayamaz
+  const canEditTask = !isAssignedUser && (isTaskOwner || currentUser)     // Assigned user task düzenleyemez  
+  const canSubmitForApproval = isAssignedUser || isTaskOwner             // Her ikisi de onaya gönderebilir
 
   // Onay durumu göstergesi
   const getApprovalStatusBadge = () => {
@@ -554,9 +559,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               const hasIncompleteSubTasks = task.subTasks && task.subTasks.length > 0
                 ? task.subTasks.some(subTask => !subTask.completed)
                 : false
-              // Atanmış kullanıcılar checkbox'ı kullanamaz (sadece task sahibi kullanabilir)
+              // Permission kontrolü - assigned users task tamamlayamaz
               const isDisabled = (hasIncompleteSubTasks && !displayCompleted) || isToggling || 
-                (isAssignedUser && !isTaskOwner)
+                !canCompleteTask || isTaskCompleted
 
               return (
                 <>
@@ -889,17 +894,18 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
-                          className={isTaskCompleted || isPermissionLoading || (isAssignedUser && !isTaskOwner)
+                          className={isTaskCompleted || isPermissionLoading || !canEditTask
                             ? "cursor-not-allowed opacity-50" 
                             : "cursor-pointer hover:text-foreground transition-colors"
                           }
-                          onClick={isTaskCompleted || isPermissionLoading || (isAssignedUser && !isTaskOwner) ? undefined : handleDateClick}
+                          onClick={isTaskCompleted || isPermissionLoading || !canEditTask ? undefined : handleDateClick}
                         >
                           📅 {formatDateTime(task.dueDate)}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 'Bitiş Tarihi'}</p>
+                        <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : 
+                           !canEditTask ? 'Atanmış kullanıcılar tarihi düzenleyemez' : 'Bitiş Tarihi'}</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
@@ -960,6 +966,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 onUnassignUser={onUnassignUser}
                 isFirstInSection={isFirstInSection}
                 isPermissionLoading={isPermissionLoading}
+                canEditTask={canEditTask}
+                canSubmitForApproval={canSubmitForApproval}
               />
             </div>
           </div>
