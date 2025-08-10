@@ -187,8 +187,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isPinned: newPinState }),
+        }
       })
       
       if (!response.ok) {

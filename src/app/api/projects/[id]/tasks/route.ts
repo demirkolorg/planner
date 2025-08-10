@@ -77,7 +77,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     })
 
-    // Assignment bilgilerini ayrı olarak ekle
+    // Assignment ve pin bilgilerini ayrı olarak ekle
     const tasksWithAssignments = await Promise.all(
       tasks.map(async (task) => {
         const assignments = await db.assignment.findMany({
@@ -106,9 +106,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           }
         })
 
+        // User-specific pin durumunu kontrol et
+        const userPin = await db.userPin.findUnique({
+          where: {
+            userId_targetType_targetId: {
+              userId: decoded.userId,
+              targetType: 'TASK',
+              targetId: task.id
+            }
+          }
+        })
+
         return {
           ...task,
-          assignments
+          assignments,
+          isPinned: !!userPin  // UserPin var ise pinned, yoksa unpinned
         }
       })
     )

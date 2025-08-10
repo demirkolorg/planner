@@ -461,13 +461,28 @@ export async function getUserAccessibleProjects(userId: string) {
     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   )
 
-  // Her proje için access level hesapla
+  // Her proje için access level ve pin durumu hesapla
   const projectsWithAccess = await Promise.all(
     projects.map(async (project) => {
       const access = await getUserProjectAccess(userId, project.id)
+      
+      // User-specific pin durumunu kontrol et
+      const userPin = await withReadRetry(async () =>
+        db.userPin.findUnique({
+          where: {
+            userId_targetType_targetId: {
+              userId: userId,
+              targetType: 'PROJECT',
+              targetId: project.id
+            }
+          }
+        })
+      )
+      
       return {
         ...project,
-        userAccess: access
+        userAccess: access,
+        isPinned: !!userPin  // UserPin var ise pinned, yoksa unpinned
       }
     })
   )

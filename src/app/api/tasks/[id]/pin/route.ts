@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
     
-    // Check if task exists and belongs to user
+    // Check if task exists and user has access to it
     const existingTask = await db.task.findFirst({
       where: {
         id,
@@ -28,13 +28,44 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
+    // Check current pin status for this user
+    const existingPin = await db.userPin.findUnique({
+      where: {
+        userId_targetType_targetId: {
+          userId: decoded.userId,
+          targetType: 'TASK',
+          targetId: id
+        }
+      }
+    })
+
     // Toggle pin status
-    const newPinStatus = !existingTask.isPinned
-    const updatedTask = await db.task.update({
+    const newPinStatus = !existingPin
+    if (newPinStatus) {
+      // Pin the task
+      await db.userPin.create({
+        data: {
+          userId: decoded.userId,
+          targetType: 'TASK',
+          targetId: id
+        }
+      })
+    } else {
+      // Unpin the task
+      await db.userPin.delete({
+        where: {
+          userId_targetType_targetId: {
+            userId: decoded.userId,
+            targetType: 'TASK',
+            targetId: id
+          }
+        }
+      })
+    }
+
+    // Get updated task with pin status
+    const updatedTask = await db.task.findUnique({
       where: { id },
-      data: {
-        isPinned: newPinStatus
-      },
       include: {
         tags: {
           include: {
@@ -63,7 +94,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       description: getActivityDescription(newPinStatus ? TaskActivityTypes.PINNED : TaskActivityTypes.UNPINNED)
     })
 
-    return NextResponse.json(updatedTask)
+    // Add user-specific pin status to response
+    const taskWithPinStatus = {
+      ...updatedTask,
+      isPinned: newPinStatus
+    }
+
+    return NextResponse.json(taskWithPinStatus)
   } catch (error) {
     console.error("Error toggling task pin:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

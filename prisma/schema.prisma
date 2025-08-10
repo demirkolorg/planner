@@ -37,6 +37,9 @@ model User {
   // Yeni Basit Atama Sistemi
   assignments           Assignment[]               @relation("AssignmentUser")
   assignmentsCreated    Assignment[]               @relation("AssignmentAssigner")
+  
+  // Kullanıcıya Özgü Pin Durumları
+  pins                  UserPin[]
 }
 
 model EmailOTP {
@@ -383,4 +386,20 @@ model Assignment {
   @@index([targetType, targetId])
   @@index([userId])
   @@index([email, status])
+}
+
+// Kullanıcıya Özgü Pin Durumları
+model UserPin {
+  id         String   @id @default(cuid())
+  userId     String
+  targetType String   // 'PROJECT' | 'TASK'
+  targetId   String
+  createdAt  DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Bir kullanıcı aynı item'ı sadece bir kez pinleyebilir
+  @@unique([userId, targetType, targetId])
+  @@index([userId, targetType])
 }

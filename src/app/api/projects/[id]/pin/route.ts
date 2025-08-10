@@ -21,45 +21,85 @@ export async function PATCH(
     const userId = decoded.userId
     const { id: projectId } = await params
 
-    // Request body'den isPinned değerini al
-    const { isPinned } = await request.json()
-
-    if (typeof isPinned !== 'boolean') {
-      return NextResponse.json(
-        { success: false, error: 'isPinned değeri boolean olmalıdır' },
-        { status: 400 }
-      )
-    }
-
-    // Projeyi bul ve sahipliğini kontrol et
-    const project = await db.project.findUnique({
-      where: { id: projectId }
+    // Check if user has access to this project
+    // Not: Access control check ekleyeceğiz - user projenin sahibi veya assigned olmalı
+    const hasAccess = await db.project.findFirst({
+      where: {
+        id: projectId,
+        OR: [
+          { userId: userId }, // Owner
+          { 
+            // Assigned project
+            id: {
+              in: (await db.assignment.findMany({
+                where: {
+                  targetType: 'PROJECT',
+                  targetId: projectId,
+                  userId: userId,
+                  status: 'ACTIVE'
+                },
+                select: { targetId: true }
+              })).map(a => a.targetId)
+            }
+          }
+        ]
+      }
     })
 
-    if (!project) {
+    if (!hasAccess) {
       return NextResponse.json(
-        { success: false, error: 'Proje bulunamadı' },
-        { status: 404 }
-      )
-    }
-
-    if (project.userId !== userId) {
-      return NextResponse.json(
-        { success: false, error: 'Bu projeyi sabitleme yetkiniz yok' },
+        { success: false, error: 'Projeye erişim yetkiniz yok' },
         { status: 403 }
       )
     }
 
-    // Projeyi güncelle
-    const updatedProject = await db.project.update({
-      where: { id: projectId },
-      data: { isPinned }
+    // Check current pin status for this user
+    const existingPin = await db.userPin.findUnique({
+      where: {
+        userId_targetType_targetId: {
+          userId: userId,
+          targetType: 'PROJECT',
+          targetId: projectId
+        }
+      }
+    })
+
+    // Toggle pin status
+    const newPinStatus = !existingPin
+    if (newPinStatus) {
+      // Pin the project
+      await db.userPin.create({
+        data: {
+          userId: userId,
+          targetType: 'PROJECT',
+          targetId: projectId
+        }
+      })
+    } else {
+      // Unpin the project
+      await db.userPin.delete({
+        where: {
+          userId_targetType_targetId: {
+            userId: userId,
+            targetType: 'PROJECT',
+            targetId: projectId
+          }
+        }
+      })
+    }
+
+    // Get updated project
+    const updatedProject = await db.project.findUnique({
+      where: { id: projectId }
     })
 
     return NextResponse.json({
       success: true,
-      message: isPinned ? 'Proje sabitlendi' : 'Proje sabitleme kaldırıldı',
-      project: updatedProject
+      message: newPinStatus ? 'Proje sabitlendi' : 'Proje sabitleme kaldırıldı',
+      project: {
+        ...updatedProject,
+        isPinned: newPinStatus
+      }
     })
 
   } catch (error) {
