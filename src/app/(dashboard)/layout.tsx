@@ -17,7 +17,6 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { ToastNotification } from "@/components/ui/toast-notification"
 import { useAutoNotifications } from "@/hooks/use-notifications"
 import { useCtrlK, useCtrlS, useCtrlJ, useCtrlB } from "@/hooks/use-keyboard-shortcut"
-import { useFontSize } from "@/hooks/use-font-size"
 
 export default function DashboardLayout({
   children,
@@ -35,8 +34,6 @@ export default function DashboardLayout({
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false)
   const lastUserIdRef = useRef<string | null>(null)
 
-  // Font size hook'unu kullan
-  useFontSize()
   
   // Notification system'i aktif et
   useAutoNotifications()
