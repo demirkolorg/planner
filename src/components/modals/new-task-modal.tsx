@@ -6,14 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Clock, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain, Users } from "lucide-react"
+import { X, Calendar, Clock, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain } from "lucide-react"
 import { generateTaskSuggestion, improveBrief, improveTitle } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DatePicker } from "../shared/date-picker"
 import { TimePicker } from "../shared/time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 import { TagPicker } from "@/components/ui/tag-picker"
-import { UserPicker } from "@/components/ui/user-picker"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
@@ -96,7 +95,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
-  const [selectedAssignees, setSelectedAssignees] = useState<Array<{id: string, firstName: string, lastName: string, email: string}>>([])
   const { tags, fetchTags, createTag } = useTagStore()
   const { updateTaskTags } = useTaskStore()
   const { createTask, updateTask, getTaskById } = useTaskStore()
@@ -126,6 +124,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       if (projects.length === 0) fetchProjects()
     }
   }, [isOpen, tags.length, projects.length, fetchTags, fetchProjects])
+
 
   // Modal açıldığında form state'ini initialize et
   useEffect(() => {
@@ -161,10 +160,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         }
         setSelectedTags(editingTask.tags?.map(t => t.tag.name) || [])
         
-        // Atanmış kullanıcıyı yükle (tek atama sistemi)
-        if (editingTask.assignments && editingTask.assignments.length > 0) {
-          setSelectedAssignees([editingTask.assignments[0].assignee])
-        }
+        // Not: Atama bilgileri artık SimpleAssignmentButton ile yönetiliyor
       } else {
         // Yeni görev modunda temiz başla
         setTitle("")
@@ -173,7 +169,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setSelectedPriority("Yok")
         setSelectedDate(null)
         setSelectedTime(null)
-        setSelectedAssignees([])
+        // Atamalar artık SimpleAssignmentButton ile yönetiliyor
       }
       
       // UI state'leri reset et
@@ -445,27 +441,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         // Tüm işlemleri paralel bekle
         await Promise.all(updatePromises)
         
-        // Assignment güncellemesi (paralel işlemlerden sonra)
-        const currentAssignee = editingTask.assignments?.[0]?.assignee
-        const newAssignee = selectedAssignees[0]
-        
-        // Assignment değişmişse güncelle
-        if (currentAssignee?.id !== newAssignee?.id) {
-          if (newAssignee) {
-            // Yeni kullanıcı ata
-            await fetch(`/api/tasks/${editingTask.id}/assign`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ assigneeId: newAssignee.id })
-            })
-          } else if (currentAssignee) {
-            // Mevcut atamayı kaldır
-            await fetch(`/api/tasks/${editingTask.id}/assign`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' }
-            })
-          }
-        }
+        // Assignment güncellemesi artık SimpleAssignmentModal ile yapılıyor
       } else {
         // Yeni görev modu: yeni görev oluştur  
         console.log('🆕 Yeni görev oluşturma modu:', { parentTaskId, parentTask })
@@ -494,20 +470,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         const newTask = await createTask(taskData)
         console.log('✅ Yeni task oluşturuldu:', newTask)
         
-        // Kullanıcı ataması yap (tek kişi)
-        if (selectedAssignees.length > 0 && newTask?.id) {
-          try {
-            const assignee = selectedAssignees[0] // Tek kişi seçimi
-            await fetch(`/api/tasks/${newTask.id}/assign`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ assigneeId: assignee.id })
-            })
-            console.log('✅ Kullanıcı ataması tamamlandı:', assignee.firstName, assignee.lastName)
-          } catch (error) {
-            console.error('Atama sırasında hata:', error)
-          }
-        }
         
         if (onTaskCreated) {
           onTaskCreated(newTask)
@@ -1212,35 +1174,6 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 </TooltipContent>
               </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <UserPicker
-                    selectedUsers={selectedAssignees}
-                    onSelectionChange={setSelectedAssignees}
-                    projectId={selectedProject?.id}
-                    placeholder="Kullanıcı ara..."
-                    multiple={false}
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 relative"
-                        type="button"
-                      >
-                        <Users className="h-4 w-4" />
-                        {selectedAssignees.length > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] rounded-full min-w-3 h-3 flex items-center justify-center px-0.5">
-                            {selectedAssignees.length}
-                          </span>
-                        )}
-                      </Button>
-                    }
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Görevi atanacak kişiler</p>
-                </TooltipContent>
-              </Tooltip>
               
               <Tooltip>
                 <TooltipTrigger asChild>
