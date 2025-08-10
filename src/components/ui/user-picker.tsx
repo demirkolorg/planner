@@ -18,7 +18,9 @@ interface User {
 
 interface UserPickerProps {
   selectedUsers?: User[]
-  onSelectionChange: (users: User[]) => void
+  selectedUserIds?: string[]
+  onSelectionChange?: (users: User[]) => void
+  onSelectionChangeIds?: (userIds: string[]) => void
   placeholder?: string
   multiple?: boolean
   disabled?: boolean
@@ -29,7 +31,9 @@ interface UserPickerProps {
 
 export function UserPicker({
   selectedUsers = [],
+  selectedUserIds = [],
   onSelectionChange,
+  onSelectionChangeIds,
   placeholder = "Kullanıcı ara...",
   multiple = true,
   disabled = false,
@@ -43,6 +47,7 @@ export function UserPicker({
   const [isLoading, setIsLoading] = useState(false)
   const [projectMembers, setProjectMembers] = useState<User[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [allUsers, setAllUsers] = useState<User[]>([]) // selectedUserIds için kullanıcı verilerini cache'le
 
   // Current user'ı al
   useEffect(() => {
@@ -74,7 +79,13 @@ export function UserPicker({
         const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`)
         if (response.ok) {
           const data = await response.json()
-          setSearchResults(data.users || [])
+          const users = data.users || []
+          setSearchResults(users)
+          // Cache'e ekle
+          setAllUsers(prev => {
+            const newUsers = users.filter(user => !prev.some(p => p.id === user.id))
+            return [...prev, ...newUsers]
+          })
         }
       } catch (error) {
         console.error('User search error:', error)
@@ -98,6 +109,11 @@ export function UserPicker({
             const data = await response.json()
             const members = data.members?.map((member: any) => member.user) || []
             setProjectMembers(members)
+            // Cache'e ekle
+            setAllUsers(prev => {
+              const newUsers = members.filter(user => !prev.some(p => p.id === user.id))
+              return [...prev, ...newUsers]
+            })
           }
         } catch (error) {
           console.error('Project members fetch error:', error)
@@ -107,26 +123,71 @@ export function UserPicker({
       fetchProjectMembers()
     }
   }, [projectId, isOpen])
+  
+  // selectedUserIds için user verilerini fetch et
+  useEffect(() => {
+    if (selectedUserIds.length > 0 && onSelectionChangeIds) {
+      const missingUserIds = selectedUserIds.filter(id => !allUsers.some(user => user.id === id))
+      if (missingUserIds.length > 0) {
+        // Bu kullanıcıları fetch etmek için API çağrısı yapabiliriz
+        // Şimdilik basit bir search yaparak çözebiliriz
+        const fetchMissingUsers = async () => {
+          try {
+            // Her eksik ID için mini search yap
+            for (const userId of missingUserIds) {
+              const response = await fetch(`/api/users/search?id=${userId}`)
+              if (response.ok) {
+                const data = await response.json()
+                const user = data.user
+                if (user && !allUsers.some(u => u.id === user.id)) {
+                  setAllUsers(prev => [...prev, user])
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Failed to fetch selected user data:', error)
+          }
+        }
+        fetchMissingUsers()
+      }
+    }
+  }, [selectedUserIds, allUsers, onSelectionChangeIds])
 
   // Kullanıcı seçimi
   const handleUserSelect = (user: User) => {
-    if (multiple) {
-      // Çoklu seçim - zaten seçili mi kontrol et
-      const isSelected = selectedUsers.some(u => u.id === user.id)
-      if (!isSelected) {
-        onSelectionChange([...selectedUsers, user])
+    if (onSelectionChangeIds) {
+      // ID-based callback kullan
+      if (multiple) {
+        const isSelected = selectedUserIds.includes(user.id)
+        if (!isSelected) {
+          onSelectionChangeIds([...selectedUserIds, user.id])
+        }
+      } else {
+        onSelectionChangeIds([user.id])
+        setIsOpen(false)
       }
-    } else {
-      // Tekli seçim
-      onSelectionChange([user])
-      setIsOpen(false)
+    } else if (onSelectionChange) {
+      // User object callback kullan
+      if (multiple) {
+        const isSelected = selectedUsers.some(u => u.id === user.id)
+        if (!isSelected) {
+          onSelectionChange([...selectedUsers, user])
+        }
+      } else {
+        onSelectionChange([user])
+        setIsOpen(false)
+      }
     }
     setSearchQuery('')
   }
 
   // Kullanıcı kaldırma
   const handleUserRemove = (userId: string) => {
-    onSelectionChange(selectedUsers.filter(u => u.id !== userId))
+    if (onSelectionChangeIds) {
+      onSelectionChangeIds(selectedUserIds.filter(id => id !== userId))
+    } else if (onSelectionChange) {
+      onSelectionChange(selectedUsers.filter(u => u.id !== userId))
+    }
   }
 
   // Gösterilecek kullanıcıları belirle
@@ -150,18 +211,26 @@ export function UserPicker({
   }
 
   const displayUsers = getDisplayUsers()
+  
+  // selectedUserIds'den actual user objeleri çıkar
+  const getSelectedUserObjects = (): User[] => {
+    if (selectedUserIds.length === 0) return selectedUsers
+    return selectedUserIds.map(id => allUsers.find(user => user.id === id)).filter(Boolean) as User[]
+  }
+  
+  const actualSelectedUsers = onSelectionChangeIds ? getSelectedUserObjects() : selectedUsers
 
   // Popover content'i oluştur
   const popoverContent = (
     <PopoverContent className="w-80 p-0" align="start">
       {/* Seçili kullanıcılar - sadece 1'den fazla varsa göster */}
-      {selectedUsers.length > 0 && (
+      {actualSelectedUsers.length > 0 && (
         <div className="p-3 border-b bg-muted/30">
           <div className="text-xs font-medium text-muted-foreground mb-2">
-            Seçilen Kişiler ({selectedUsers.length})
+            Seçilen Kişiler ({actualSelectedUsers.length})
           </div>
           <div className="flex flex-wrap gap-1">
-            {selectedUsers.map((user) => (
+            {actualSelectedUsers.map((user) => (
               <Badge
                 key={user.id}
                 variant="secondary"
@@ -220,7 +289,9 @@ export function UserPicker({
         ) : (
           <div className="p-2">
             {displayUsers.map((user) => {
-              const isSelected = selectedUsers.some(u => u.id === user.id)
+              const isSelected = onSelectionChangeIds 
+                ? selectedUserIds.includes(user.id)
+                : actualSelectedUsers.some(u => u.id === user.id)
               return (
                 <Button
                   key={user.id}
@@ -275,9 +346,9 @@ export function UserPicker({
   return (
     <div className={cn("space-y-2", className)}>
       {/* Seçili kullanıcılar */}
-      {selectedUsers.length > 0 && (
+      {actualSelectedUsers.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedUsers.map((user) => (
+          {actualSelectedUsers.map((user) => (
             <Badge
               key={user.id}
               variant="secondary"
@@ -313,10 +384,10 @@ export function UserPicker({
             className="w-full justify-start text-left font-normal"
           >
             <Users className="mr-2 h-4 w-4" />
-            {selectedUsers.length > 0
+            {actualSelectedUsers.length > 0
               ? multiple 
-                ? `${selectedUsers.length} kullanıcı seçildi`
-                : getUserFullName(selectedUsers[0])
+                ? `${actualSelectedUsers.length} kullanıcı seçildi`
+                : getUserFullName(actualSelectedUsers[0])
               : placeholder
             }
           </Button>

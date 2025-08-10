@@ -701,7 +701,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                     <div className="space-y-1">
                       <p className="font-medium">Atanan Kişi:</p>
                       <p className="text-xs">
-                        {task.assignments[0].assignee.firstName} {task.assignments[0].assignee.lastName}
+                        {task.assignments[0].user?.firstName} {task.assignments[0].user?.lastName}
                       </p>
                     </div>
                 </TooltipContent>
@@ -983,7 +983,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           onReject={handleApprovalReject}
           taskTitle={task.title}
           approvalMessage={task.approvalMessage}
-          requesterName={task.assignments?.[0]?.assignee?.firstName + " " + task.assignments?.[0]?.assignee?.lastName}
+          requesterName={task.assignments?.[0]?.user?.firstName + " " + task.assignments?.[0]?.user?.lastName}
           requestedAt={task.approvalRequestedAt}
         />
       )}

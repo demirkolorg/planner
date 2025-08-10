@@ -18,6 +18,21 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q') || ''
+    const id = searchParams.get('id')
+    
+    // ID ile tek kullanıcı getir
+    if (id) {
+      const user = await db.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true
+        }
+      })
+      return NextResponse.json({ user })
+    }
     
     if (query.length < 2) {
       return NextResponse.json({ users: [] })

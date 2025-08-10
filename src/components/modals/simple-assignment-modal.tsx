@@ -315,7 +315,7 @@ export function SimpleAssignmentModal({
                 <Label className="text-sm font-medium">Kullanıcı Seç</Label>
                 <UserPicker
                   selectedUserIds={selectedUserIds}
-                  onSelectionChange={setSelectedUserIds}
+                  onSelectionChangeIds={setSelectedUserIds}
                   placeholder="Kullanıcı ara ve seç..."
                 />
               </div>
