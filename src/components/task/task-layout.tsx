@@ -16,7 +16,7 @@ export function TaskLayout({ task, onTaskUpdate }: TaskLayoutProps) {
   const [activeTab, setActiveTab] = useState("content")
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 max-w-7xl">
+    <div className="px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
       {/* Desktop Layout (3 columns) */}
       <div className="hidden lg:grid lg:grid-cols-12 gap-6">
         {/* Sol Panel - Details */}

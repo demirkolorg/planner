@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
-import { DateTimePicker } from "../shared/date-time-picker"
+import { SimpleDatePicker } from "@/components/ui/simple-date-picker"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { getTaskDateStatus, getDueDateMessage, getDateStatusColor } from "@/lib/date-utils"
 import { formatDistanceToNow } from "date-fns"
@@ -127,20 +127,22 @@ export function TaskDetailsPanel({ task, onTaskUpdate }: TaskDetailsPanelProps) 
 
   return (
     <div className="space-y-6">
-      {/* Durum ve Tamamlama */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
+      {/* Compact Durum Section */}
+      <div key="status-section" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4" />
             Durum
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </h3>
+        </div>
+        
+        <div className="bg-muted/30 rounded-lg p-3 space-y-3">
           <div className="flex items-center space-x-3">
             <Checkbox
               checked={task.completed}
               onCheckedChange={handleToggleComplete}
-              disabled={isUpdating}
+              disabled={isUpdating || (subTaskProgress && subTaskProgress.total > 0)}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             />
             <div className="flex-1">
               <div className="text-sm font-medium">
@@ -154,149 +156,144 @@ export function TaskDetailsPanel({ task, onTaskUpdate }: TaskDetailsPanelProps) 
                   })} tamamlandı
                 </div>
               )}
+              {subTaskProgress && subTaskProgress.total > 0 && !task.completed && (
+                <div className="text-xs text-muted-foreground">
+                  Önce alt görevleri tamamlayın
+                </div>
+              )}
             </div>
           </div>
 
           {/* Alt Görev İlerlemesi */}
           {subTaskProgress && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2 border-t border-border/50">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Alt Görevler</span>
                 <span className="font-medium">
                   {subTaskProgress.completed}/{subTaskProgress.total}
                 </span>
               </div>
-              <Progress value={subTaskProgress.percentage} className="h-2" />
+              <Progress value={subTaskProgress.percentage} className="h-1.5" />
               <div className="text-xs text-muted-foreground">
                 %{subTaskProgress.percentage} tamamlandı
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Öncelik */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
+      {/* Compact Properties */}
+      <div key="properties-section" className="space-y-4">
+        {/* Öncelik */}
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-foreground flex items-center gap-2">
             <Flag className="h-4 w-4" />
             Öncelik
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={task.priority}
-            onValueChange={handlePriorityChange}
-            disabled={isUpdating}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PRIORITIES.map((priority) => (
-                <SelectItem key={priority.value} value={priority.value}>
-                  <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "w-3 h-3 rounded-full",
-                      PRIORITY_COLORS[priority.value as keyof typeof PRIORITY_COLORS]
-                    )} />
-                    {priority.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+          </label>
+          <div className="flex-1 max-w-[140px]">
+            <Select
+              value={task.priority}
+              onValueChange={handlePriorityChange}
+              disabled={isUpdating}
+            >
+              <SelectTrigger className="h-8 text-xs border-muted-foreground/20 bg-muted/20">
+                <SelectValue placeholder="Öncelik seç" />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((priority) => (
+                  <SelectItem key={priority.value} value={priority.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-2.5 h-2.5 rounded-full",
+                        PRIORITY_COLORS[priority.value as keyof typeof PRIORITY_COLORS]
+                      )} />
+                      <span className="text-xs">{priority.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-      {/* Teslim Tarihi */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
+        {/* Teslim Tarihi */}
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-foreground flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Teslim Tarihi
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <DateTimePicker
-            value={task.dueDate ? new Date(task.dueDate) : null}
-            onChange={handleDueDateChange}
-            placeholder="Teslim tarihi seç"
-            disabled={isUpdating}
-          />
-          
-          {dueDateStatus && dueDateMessage && (
-            <div className={cn(
-              "text-xs px-2 py-1 rounded",
-              getDateStatusColor(dueDateStatus)
-            )}>
-              {dueDateMessage}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </label>
+          <div className="flex-1 max-w-[140px]">
+            <SimpleDatePicker
+              date={task.dueDate ? new Date(task.dueDate) : undefined}
+              onSelect={(date) => handleDueDateChange(date || null)}
+              placeholder="Tarih seç"
+              disabled={isUpdating}
+            />
+          </div>
+        </div>
 
-      {/* Atama */}
-      {task.projectId && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
+        {dueDateStatus && dueDateMessage && (
+          <div className={cn(
+            "text-xs px-2 py-1 rounded-md ml-6",
+            getDateStatusColor(dueDateStatus)
+          )}>
+            {dueDateMessage}
+          </div>
+        )}
+
+        {/* Atama */}
+        {task.projectId && (
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground flex items-center gap-2">
               <Users className="h-4 w-4" />
               Atama
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SimpleAssignmentButton
-              targetType="TASK"
-              targetId={task.id}
-              targetName={task.title}
-              buttonVariant="outline"
-              buttonClassName="w-full justify-start"
-            />
-          </CardContent>
-        </Card>
-      )}
+            </label>
+            <div className="flex-1 max-w-[140px]">
+              <SimpleAssignmentButton
+                targetType="TASK"
+                targetId={task.id}
+                targetName={task.title}
+                buttonVariant="outline"
+                buttonClassName="w-full justify-center text-xs h-8 border-muted-foreground/20 bg-muted/20"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Etiketler */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
+      {/* Compact Etiketler */}
+      {task.tags && task.tags.length > 0 && (
+        <div key="tags-section" className="space-y-2">
+          <label className="text-sm font-medium text-foreground flex items-center gap-2">
             <Tag className="h-4 w-4" />
             Etiketler
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {task.tags && task.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {task.tags.map((taskTag: any) => (
-                <Badge 
-                  key={taskTag.tag.id} 
-                  variant="secondary"
-                  style={{ 
-                    backgroundColor: `${taskTag.tag.color}20`,
-                    borderColor: taskTag.tag.color,
-                    color: taskTag.tag.color
-                  }}
-                >
-                  {taskTag.tag.name}
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              Henüz etiket eklenmedi
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {task.tags.map((taskTag: any) => (
+              <Badge 
+                key={taskTag.tag.id} 
+                variant="secondary"
+                className="text-xs px-2 py-0.5"
+                style={{ 
+                  backgroundColor: `${taskTag.tag.color}15`,
+                  borderColor: `${taskTag.tag.color}30`,
+                  color: taskTag.tag.color
+                }}
+              >
+                {taskTag.tag.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
-      <Separator />
-
-      {/* Meta Bilgiler */}
-      <div className="space-y-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4" />
-          <span>Oluşturuldu:</span>
+      {/* Compact Meta Bilgiler */}
+      <div key="meta-section" className="space-y-2 pt-4 border-t border-border/30">
+        <div key="created-at" className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5" />
+            Oluşturuldu
+          </span>
           <span>
             {formatDistanceToNow(new Date(task.createdAt), { 
               addSuffix: true, 
@@ -306,9 +303,11 @@ export function TaskDetailsPanel({ task, onTaskUpdate }: TaskDetailsPanelProps) 
         </div>
         
         {task.updatedAt !== task.createdAt && (
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>Güncellendi:</span>
+          <div key="updated-at" className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Güncellendi
+            </span>
             <span>
               {formatDistanceToNow(new Date(task.updatedAt), { 
                 addSuffix: true, 
@@ -319,11 +318,13 @@ export function TaskDetailsPanel({ task, onTaskUpdate }: TaskDetailsPanelProps) 
         )}
 
         {task.taskType && task.taskType !== 'PROJECT' && (
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            <span>Tür:</span>
-            <Badge variant="outline" className="text-xs">
-              {task.taskType === 'CALENDAR' ? 'Takvim Görevi' : 'Hızlı Not'}
+          <div key="task-type" className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5" />
+              Tür
+            </span>
+            <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+              {task.taskType === 'CALENDAR' ? 'Takvim' : 'Hızlı Not'}
             </Badge>
           </div>
         )}

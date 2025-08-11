@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink, Users, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react"
+import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink, Users, Clock, CheckCircle, XCircle, AlertCircle, Eye } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import Link from "next/link"
@@ -652,6 +652,27 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                   L{task.level}
                 </span> */}
                 
+                {/* Task Detail Button - Always show on hover */}
+                {isHovered && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link 
+                        href={`/tasks/${task.id}`}
+                        className={cn(
+                          "flex-shrink-0 transition-opacity duration-200",
+                          isHovered ? "opacity-100" : "opacity-0"
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Eye className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Detayları görüntüle</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
                 {/* Project Link Button - Only show on hover and not on project page */}
                 {isHovered && !isOnProjectPage && task.projectId && (
                   <Tooltip>

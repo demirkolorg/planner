@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Pin,
   PinOff,
-  ExternalLink
+  ExternalLink,
+  CheckCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -134,35 +135,28 @@ export function TaskHeader({ task, onTaskUpdate, onBack }: TaskHeaderProps) {
 
   return (
     <TooltipProvider>
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 max-w-7xl">
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Geri Butonu */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onBack}
-                  className="h-8 w-8 p-0"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Geri Dön</p>
-              </TooltipContent>
-            </Tooltip>
+      <header className="bg-background/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
+        <div className="container mx-auto px-4 sm:px-6 py-3 max-w-7xl">
+          <div className="flex items-center gap-3">
+            {/* Compact Geri Butonu */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="h-8 w-8 p-0 hover:bg-muted/50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
 
-            {/* Öncelik İndikatörü */}
+            {/* Compact Öncelik İndikatörü */}
             <div 
               className={cn(
-                "w-1 h-8 rounded-full",
+                "w-1 h-8 rounded-full opacity-80",
                 getPriorityColor()
               )} 
             />
 
-            {/* Görev Başlığı */}
+            {/* Compact Görev Başlığı */}
             <div className="flex-1 min-w-0">
               {isEditing ? (
                 <div className="flex items-center gap-2">
@@ -176,7 +170,7 @@ export function TaskHeader({ task, onTaskUpdate, onBack }: TaskHeaderProps) {
                         setEditTitle(task.title)
                       }
                     }}
-                    className="text-base sm:text-lg font-semibold"
+                    className="text-lg font-semibold border-muted-foreground/20"
                     autoFocus
                     disabled={isLoading}
                   />
@@ -184,8 +178,9 @@ export function TaskHeader({ task, onTaskUpdate, onBack }: TaskHeaderProps) {
                     size="sm"
                     onClick={handleSaveTitle}
                     disabled={isLoading}
+                    className="h-8 px-3"
                   >
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3 w-3" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -195,121 +190,113 @@ export function TaskHeader({ task, onTaskUpdate, onBack }: TaskHeaderProps) {
                       setEditTitle(task.title)
                     }}
                     disabled={isLoading}
+                    className="h-8 px-3"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 group">
-                  <h1 
-                    className="text-base sm:text-lg font-semibold truncate cursor-pointer hover:text-primary"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    {task.title}
-                  </h1>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Edit3 className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 group">
+                    <h1 
+                      className="text-lg font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      {task.title}
+                    </h1>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="h-5 w-5 p-0 opacity-0 group-hover:opacity-60 transition-opacity"
+                    >
+                      <Edit3 className="h-3 w-3" />
+                    </Button>
+                  </div>
 
-              {/* Breadcrumb */}
-              {(task.project || task.section) && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                  {task.project && (
-                    <>
-                      <Link 
-                        href={`/projects/${task.project.id}`}
-                        className="hover:text-primary flex items-center gap-1"
-                      >
-                        <Folder className="h-3 w-3" />
-                        {task.project.emoji && <span>{task.project.emoji}</span>}
-                        {task.project.name}
-                      </Link>
-                      
-                      {task.section && (
+                  {/* Compact Breadcrumb */}
+                  {(task.project || task.section) && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      {task.project && (
                         <>
-                          <ChevronRight className="h-3 w-3" />
-                          <span>{task.section.name}</span>
+                          <Link 
+                            href={`/projects/${task.project.id}`}
+                            className="hover:text-primary flex items-center gap-1 max-w-32 truncate"
+                          >
+                            <Folder className="h-3 w-3 flex-shrink-0" />
+                            {task.project.emoji && <span>{task.project.emoji}</span>}
+                            <span className="truncate">{task.project.name}</span>
+                          </Link>
+                          
+                          {task.section && (
+                            <>
+                              <ChevronRight className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate max-w-24">{task.section.name}</span>
+                            </>
+                          )}
                         </>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Durum Badge'leri */}
-            <div className="flex items-center gap-2">
+            {/* Compact Durum Badge'leri */}
+            <div className="flex items-center gap-1.5">
               {task.completed && (
-                <Badge variant="outline" className="text-green-600">
-                  Tamamlandı
+                <Badge className="text-xs px-2 py-1 bg-green-500/10 text-green-700 border-green-500/20">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  <span className="hidden sm:inline">Tamamlandı</span>
+                  <span className="sm:hidden">✓</span>
                 </Badge>
               )}
               
               {getApprovalStatusBadge()}
               
               {task.isPinned && (
-                <Badge variant="outline">
+                <Badge className="text-xs px-2 py-1 bg-amber-500/10 text-amber-700 border-amber-500/20">
                   <Pin className="h-3 w-3 mr-1" />
-                  Sabitlenmiş
+                  <span className="hidden sm:inline">Sabitli</span>
+                  <span className="sm:hidden">📌</span>
                 </Badge>
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            {/* Compact Action Buttons */}
+            <div className="flex items-center gap-1">
               {/* Sabitleme Butonu */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleTogglePin}
-                    className="h-8 w-8 p-0"
-                  >
-                    {task.isPinned ? (
-                      <PinOff className="h-4 w-4" />
-                    ) : (
-                      <Pin className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{task.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTogglePin}
+                className="h-8 w-8 p-0 hover:bg-muted/50"
+              >
+                {task.isPinned ? (
+                  <PinOff className="h-3 w-3 text-amber-600" />
+                ) : (
+                  <Pin className="h-3 w-3 text-muted-foreground hover:text-amber-600" />
+                )}
+              </Button>
 
               {/* Projeye Git Butonu */}
               {task.project && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href={`/projects/${task.project.id}?highlight=${task.id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Projeye Git</p>
-                  </TooltipContent>
-                </Tooltip>
+                <Link href={`/projects/${task.project.id}?highlight=${task.id}`}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-muted/50"
+                  >
+                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                  </Button>
+                </Link>
               )}
 
               {/* Daha Fazla Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted/50">
+                    <MoreVertical className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

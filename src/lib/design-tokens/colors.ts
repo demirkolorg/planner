@@ -5,11 +5,20 @@
 
 // Priority colors - semantic naming ile
 export const PRIORITY_COLORS = {
-  CRITICAL: "hsl(0 84% 60%)",    // #ef4444 -> modern HSL equivalent
-  HIGH: "hsl(25 95% 53%)",       // #f97316 -> turuncu
-  MEDIUM: "hsl(221 83% 53%)",    // #3b82f6 -> mavi  
-  LOW: "hsl(258 90% 66%)",       // #8b5cf6 -> mor
-  NONE: "hsl(220 9% 46%)",       // #9ca3af -> gri
+  CRITICAL: "bg-red-500",        // kritik -> kırmızı
+  HIGH: "bg-orange-500",         // yüksek -> turuncu
+  MEDIUM: "bg-blue-500",         // orta -> mavi  
+  LOW: "bg-purple-500",          // düşük -> mor
+  NONE: "bg-gray-500",           // yok -> gri
+} as const
+
+// Priority HSL values for custom styling
+export const PRIORITY_HSL = {
+  CRITICAL: "hsl(0 84% 60%)",    
+  HIGH: "hsl(25 95% 53%)",       
+  MEDIUM: "hsl(221 83% 53%)",    
+  LOW: "hsl(258 90% 66%)",       
+  NONE: "hsl(220 9% 46%)",       
 } as const
 
 // Status colors - semantic naming
@@ -34,13 +43,13 @@ export const GRADIENTS = {
   SUCCESS: "linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(160 84% 39%) 100%)",
 } as const
 
-// Priority mapping for backward compatibility
+// Priority mapping for components
 export const PRIORITIES = [
-  { name: "Kritik", color: PRIORITY_COLORS.CRITICAL, key: "CRITICAL" },
-  { name: "Yüksek", color: PRIORITY_COLORS.HIGH, key: "HIGH" },
-  { name: "Orta", color: PRIORITY_COLORS.MEDIUM, key: "MEDIUM" },
-  { name: "Düşük", color: PRIORITY_COLORS.LOW, key: "LOW" },
-  { name: "Yok", color: PRIORITY_COLORS.NONE, key: "NONE" }
+  { value: "CRITICAL", label: "Kritik", color: PRIORITY_COLORS.CRITICAL },
+  { value: "HIGH", label: "Yüksek", color: PRIORITY_COLORS.HIGH },
+  { value: "MEDIUM", label: "Orta", color: PRIORITY_COLORS.MEDIUM },
+  { value: "LOW", label: "Düşük", color: PRIORITY_COLORS.LOW },
+  { value: "NONE", label: "Yok", color: PRIORITY_COLORS.NONE }
 ] as const
 
 // Type exports

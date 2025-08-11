@@ -319,105 +319,108 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
   )
 
   return (
-    <div className="space-y-6">
-      <Card className="h-80 sm:h-96">
-        <CardHeader className="pb-3">
-          <Tabs defaultValue="comments" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="comments" className="text-xs">
-                <MessageCircle className="h-3 w-3 mr-1" />
-                Yorumlar ({comments.length})
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="text-xs">
-                <Activity className="h-3 w-3 mr-1" />
-                Aktivite ({activities.length})
-              </TabsTrigger>
-            </TabsList>
+    <div className="space-y-4">
+      <div className="bg-muted/20 rounded-lg p-4 h-80 sm:h-96 flex flex-col">
+        <Tabs defaultValue="comments" className="flex flex-col flex-1">
+          <TabsList className="grid w-full grid-cols-2 mb-3 bg-muted/40">
+            <TabsTrigger value="comments" className="text-xs data-[state=active]:bg-background">
+              <MessageCircle className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Yorumlar</span>
+              <span className="sm:hidden">({comments.length})</span>
+              <span className="hidden sm:inline ml-1">({comments.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs data-[state=active]:bg-background">
+              <Activity className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Aktivite</span>
+              <span className="sm:hidden">({activities.length})</span>
+              <span className="hidden sm:inline ml-1">({activities.length})</span>
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="comments" className="mt-4">
-              <div className="space-y-4">
-                {/* Yorumlar Listesi */}
-                <ScrollArea className="h-48 sm:h-64">
-                  <div className="space-y-4 pr-4">
-                    {isLoadingComments ? (
-                      <div className="text-center py-4">
-                        <div className="text-sm text-muted-foreground">
-                          Yorumlar yükleniyor...
-                        </div>
-                      </div>
-                    ) : comments.length === 0 ? (
-                      <div className="text-center py-8">
-                        <MessageCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
-                          Henüz yorum yok
-                        </p>
-                      </div>
-                    ) : (
-                      comments.map((comment) => (
-                        <CommentItem key={comment.id} comment={comment} />
-                      ))
-                    )}
-                    <div ref={commentsEndRef} />
+          <TabsContent value="comments" className="flex-1 flex flex-col space-y-3">
+            {/* Yorumlar Listesi */}
+            <ScrollArea className="flex-1 -mx-1 px-1">
+              <div className="space-y-3">
+                {isLoadingComments ? (
+                  <div className="text-center py-4">
+                    <div className="text-sm text-muted-foreground">
+                      Yorumlar yükleniyor...
+                    </div>
                   </div>
-                </ScrollArea>
-
-                {/* Yorum Yazma Alanı */}
-                <div className="space-y-2">
-                  <Textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Yorum yazın..."
-                    className="min-h-20 resize-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.metaKey) {
-                        handleSendComment(newComment)
-                      }
-                    }}
-                  />
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">
-                      Cmd+Enter ile gönder
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() => handleSendComment(newComment)}
-                      disabled={!newComment.trim() || isSending}
-                    >
-                      <Send className="h-3 w-3 mr-1" />
-                      Gönder
-                    </Button>
+                ) : comments.length === 0 ? (
+                  <div className="text-center py-6">
+                    <MessageCircle className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-50" />
+                    <p className="text-sm text-muted-foreground">
+                      Henüz yorum yok
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  comments.map((comment) => (
+                    <CommentItem key={comment.id} comment={comment} />
+                  ))
+                )}
+                <div ref={commentsEndRef} />
               </div>
-            </TabsContent>
+            </ScrollArea>
 
-            <TabsContent value="activity" className="mt-4">
-              <ScrollArea className="h-64 sm:h-80">
-                <div className="space-y-3 pr-4">
-                  {isLoadingActivities ? (
-                    <div className="text-center py-4">
-                      <div className="text-sm text-muted-foreground">
-                        Aktiviteler yükleniyor...
-                      </div>
+            {/* Compact Yorum Yazma Alanı */}
+            <div className="space-y-2 pt-2 border-t border-border/30">
+              <Textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Yorum yazın..."
+                className="min-h-16 resize-none text-sm border-muted-foreground/20 bg-background/50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.metaKey) {
+                    handleSendComment(newComment)
+                  }
+                }}
+              />
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">
+                  Cmd+Enter
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => handleSendComment(newComment)}
+                  disabled={!newComment.trim() || isSending}
+                  className="h-7 px-3 text-xs"
+                >
+                  <Send className="h-3 w-3 mr-1" />
+                  Gönder
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="activity" className="flex-1 flex flex-col">
+            <ScrollArea className="flex-1 -mx-1 px-1">
+              <div className="space-y-3">
+                {isLoadingActivities ? (
+                  <div className="text-center py-4">
+                    <div className="text-sm text-muted-foreground">
+                      Aktiviteler yükleniyor...
                     </div>
-                  ) : activities.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Activity className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Henüz aktivite yok
-                      </p>
-                    </div>
-                  ) : (
-                    activities.map((activity, index) => (
-                      <div key={activity.id} className="flex gap-3">
+                  </div>
+                ) : activities.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Activity className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-50" />
+                    <p className="text-sm text-muted-foreground">
+                      Henüz aktivite yok
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {activities.map((activity, index) => (
+                      <div key={activity.id} className="flex gap-3 relative">
                         <div className={cn(
-                          "flex-shrink-0 w-6 h-6 rounded-full border-2 border-background flex items-center justify-center",
+                          "flex-shrink-0 w-5 h-5 rounded-full bg-background border-2 flex items-center justify-center z-10",
                           getActivityColor(activity.actionType)
                         )}>
                           {getActivityIcon(activity.actionType)}
                         </div>
 
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 pb-3">
                           <div className="text-sm">
                             <span className="font-medium">
                               {activity.user.firstName} {activity.user.lastName}
@@ -428,21 +431,21 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
                           </div>
 
                           {(activity.oldValue || activity.newValue) && (
-                            <div className="text-xs space-y-1">
+                            <div className="text-xs space-y-1 mt-1">
                               {activity.oldValue && (
                                 <div className="text-muted-foreground">
-                                  <span className="text-red-600">Eski:</span> {activity.oldValue}
+                                  <span className="text-red-600 font-medium">Eski:</span> {activity.oldValue}
                                 </div>
                               )}
                               {activity.newValue && (
                                 <div className="text-muted-foreground">
-                                  <span className="text-green-600">Yeni:</span> {activity.newValue}
+                                  <span className="text-green-600 font-medium">Yeni:</span> {activity.newValue}
                                 </div>
                               )}
                             </div>
                           )}
 
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-muted-foreground mt-1">
                             {formatDistanceToNow(new Date(activity.createdAt), { 
                               addSuffix: true, 
                               locale: tr 
@@ -451,17 +454,17 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
                         </div>
 
                         {index < activities.length - 1 && (
-                          <div className="absolute left-[11px] top-6 w-0.5 h-6 bg-border" />
+                          <div className="absolute left-[9px] top-5 w-0.5 h-full bg-border/50" />
                         )}
                       </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        </CardHeader>
-      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }

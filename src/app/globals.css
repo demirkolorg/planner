@@ -443,3 +443,86 @@ body {
   --card-padding-lg: 1.5rem;
   --card-gap: 0.5rem;
 }
+
+/* Modern Task Detail Page Styles */
+@layer components {
+  .task-detail-page {
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)/0.3) 100%);
+    min-height: 100vh;
+  }
+  
+  .task-detail-header {
+    background: hsl(var(--background)/0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid hsl(var(--border)/0.5);
+    box-shadow: 0 1px 3px -1px hsl(var(--foreground)/0.1);
+  }
+  
+  .glass-card {
+    background: hsl(var(--card)/0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border)/0.3);
+    box-shadow: 
+      0 4px 6px -1px hsl(var(--foreground)/0.05),
+      0 2px 4px -1px hsl(var(--foreground)/0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-card:hover {
+    background: hsl(var(--card)/0.9);
+    border-color: hsl(var(--border)/0.5);
+    box-shadow: 
+      0 10px 15px -3px hsl(var(--foreground)/0.08),
+      0 4px 6px -2px hsl(var(--foreground)/0.05);
+    transform: translateY(-1px);
+  }
+  
+  .priority-indicator {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .priority-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, currentColor 0%, transparent 100%);
+    opacity: 0.6;
+  }
+  
+  .status-badge {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 100%);
+    border: 1px solid hsl(var(--primary)/0.2);
+    box-shadow: 0 2px 4px -1px hsl(var(--primary)/0.2);
+  }
+  
+  .interactive-element {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .interactive-element:hover {
+    transform: translateY(-1px);
+  }
+  
+  .section-title {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  .modern-container {
+    background: linear-gradient(135deg, 
+      hsl(var(--background)) 0%, 
+      hsl(var(--card)/0.5) 50%, 
+      hsl(var(--background)) 100%);
+  }
+  
+  .floating-element {
+    box-shadow: 
+      0 20px 25px -5px hsl(var(--foreground)/0.08),
+      0 10px 10px -5px hsl(var(--foreground)/0.04);
+  }
+}
