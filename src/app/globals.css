@@ -39,8 +39,8 @@
   --sidebar-accent-foreground: oklch(0.2050 0 0);
   --sidebar-border: oklch(0.9220 0 0);
   --sidebar-ring: oklch(0.7080 0 0);
-  --font-sans: var(--font-poppins), ui-sans-serif, sans-serif, system-ui;
-  --font-serif: var(--font-poppins), ui-serif, serif, system-ui;
+  --font-sans: var(--font-poppins);
+  --font-serif: var(--font-poppins);
   --font-mono: ui-monospace, monospace, system-ui;
   --font-size-base: 16px;
   --font-size-base: 16px;
@@ -89,8 +89,8 @@
   --sidebar-accent-foreground: oklch(0.9850 0 0);
   --sidebar-border: oklch(0.2750 0 0);
   --sidebar-ring: oklch(0.4390 0 0);
-  --font-sans: var(--font-poppins), ui-sans-serif, sans-serif, system-ui;
-  --font-serif: var(--font-poppins), ui-serif, serif, system-ui;
+  --font-sans: var(--font-poppins);
+  --font-serif: var(--font-poppins);
   --font-mono: ui-monospace, monospace, system-ui;
   --font-size-base: 16px;
   --radius: 0.625rem;
