@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { X, User, Mail, Clock, UserX, Plus } from 'lucide-react'
+import { X, User, Mail, Clock, UserX, Plus, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -58,6 +58,7 @@ export function SimpleAssignmentModal({
   const [assignments, setAssignments] = useState<AssignedUser[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
   
   // Form state
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
@@ -217,12 +218,23 @@ export function SimpleAssignmentModal({
                    targetType === 'SECTION' ? 'Bölüm' : 'Görev'
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            {typeLabel} Atamaları - {targetName}
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              {typeLabel} Atamaları - {targetName}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsInfoModalOpen(true)}
+              className="h-8 w-8 p-0"
+            >
+              <Info className="h-4 w-4" />
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -420,5 +432,187 @@ export function SimpleAssignmentModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Bilgilendirme Modal'ı */}
+    <Dialog open={isInfoModalOpen} onOpenChange={setIsInfoModalOpen}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            Atama İşlemleri - Detaylı Bilgi
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {/* Hızlı Rehber */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">💡 Hızlı Rehber</h3>
+            <div className="bg-muted/50 border border-muted rounded-lg p-4">
+              <div className="space-y-2 text-sm">
+                <p><strong>Doğru Atama Türünü Seçin:</strong></p>
+                <ul className="space-y-1 ml-4 list-disc">
+                  <li>Tüm projeyi takip etmesi gereken kişiler için <strong>Proje Ataması</strong></li>
+                  <li>Belirli bir bölümden sorumlu kişiler için <strong>Bölüm Ataması</strong></li>
+                  <li>Spesifik bir görevle ilgilenen kişiler için <strong>Görev Ataması</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Genel Bilgiler */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Atama Sistemi Nasıl Çalışır?</h3>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                Projenizdeki görevleri farklı seviyelerde kullanıcılara atayabilirsiniz. 
+                Her atama türü farklı erişim yetkilerine sahiptir.
+              </p>
+            </div>
+          </div>
+
+          {/* Atama Türleri */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Atama Türleri ve Yetkileri</h3>
+            <div className="space-y-4">
+              
+              {/* Proje Ataması */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="secondary">Proje Ataması</Badge>
+                  <span className="text-sm font-medium">En Geniş Erişim</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-green-600 mb-2">✅ Yapabilecekleri:</h4>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Tüm projeyi görüntüleyebilir</li>
+                        <li>• Tüm bölümleri görebilir</li>
+                        <li>• Tüm görevleri görebilir</li>
+                        <li>• Görevleri onaya gönderebilir</li>
+                        <li>• Proje notlarını okuyabilir</li>
+                        <li>• Proje zaman çizelgesini görebilir</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-red-600 mb-2">❌ Yapamayacakları:</h4>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Yeni görev oluşturamaz</li>
+                        <li>• Yeni bölüm oluşturamaz</li>
+                        <li>• Görevleri direkt tamamlayamaz</li>
+                        <li>• Görevleri düzenleyemez</li>
+                        <li>• Proje ayarlarını değiştiremez</li>
+                        <li>• Kullanıcı atayamaz</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bölüm Ataması */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline">Bölüm Ataması</Badge>
+                  <span className="text-sm font-medium">Orta Seviye Erişim</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-green-600 mb-2">✅ Yapabilecekleri:</h4>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Atandığı bölümü görüntüleyebilir</li>
+                        <li>• Bölümündeki tüm görevleri görebilir</li>
+                        <li>• Görevleri onaya gönderebilir</li>
+                        <li>• Proje genel bilgilerini görebilir</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-red-600 mb-2">❌ Yapamayacakları:</h4>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Diğer bölümleri göremez</li>
+                        <li>• Yeni görev oluşturamaz</li>
+                        <li>• Görevleri direkt tamamlayamaz</li>
+                        <li>• Görevleri düzenleyemez</li>
+                        <li>• Bölüm ayarlarını değiştiremez</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Görev Ataması */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="destructive">Görev Ataması</Badge>
+                  <span className="text-sm font-medium">En Sınırlı Erişim</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-green-600 mb-2">✅ Yapabilecekleri:</h4>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Sadece atandığı görevi görebilir</li>
+                        <li>• Görevin bulunduğu bölümü görebilir</li>
+                        <li>• Görevi onaya gönderebilir</li>
+                        <li>• Görev yorumlarını okuyabilir/yazabilir</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-red-600 mb-2">❌ Yapamayacakları:</h4>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Diğer görevleri göremez</li>
+                        <li>• Yeni görev oluşturamaz</li>
+                        <li>• Görevi direkt tamamlayamaz</li>
+                        <li>• Görev detaylarını düzenleyemez</li>
+                        <li>• Alt görev ekleyemez</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Atama Kuralları */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Önemli Kurallar</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="mt-0.5">1</Badge>
+                <div className="text-sm">
+                  <strong>Görev Atama Sınırı:</strong> Bir görev sadece 1 kullanıcıya atanabilir. Yeni atama yapmak için önce mevcut atamayı kaldırmalısınız.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="mt-0.5">2</Badge>
+                <div className="text-sm">
+                  <strong>Hiyerarşik Erişim:</strong> Üst seviye atama, alt seviye erişimi de içerir. Örneğin proje ataması olan kullanıcı tüm bölüm ve görevleri görebilir.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="mt-0.5">3</Badge>
+                <div className="text-sm">
+                  <strong>Onay Sistemi:</strong> Atanmış kullanıcılar görevleri direkt tamamlayamaz, sadece onaya gönderebilir. Onay proje sahipleri tarafından verilir.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="mt-0.5">4</Badge>
+                <div className="text-sm">
+                  <strong>Email Ataması:</strong> Sisteme kayıtlı olmayan kullanıcılara email ile atama yapabilirsiniz. Kayıt olduktan sonra atama aktif olur.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Kapama Butonu */}
+          <div className="flex justify-end">
+            <Button onClick={() => setIsInfoModalOpen(false)}>
+              Anladım
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
