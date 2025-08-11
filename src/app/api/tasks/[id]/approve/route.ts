@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { createNotification } from "@/lib/notification-utils"
+import { createApprovalResponseNotification } from "@/lib/notification-utils"
 import { NotificationType } from "@prisma/client"
 
 export async function POST(
@@ -85,23 +85,14 @@ export async function POST(
       // Onay talep eden kişiye bildirim gönder
       if (task.approvalRequestedBy) {
         try {
-          await createNotification({
-            userId: task.approvalRequestedBy,
-            title: "Görev Onaylandı",
-            message: `"${task.title}" göreviniz onaylandı ve tamamlandı olarak işaretlendi`,
-            type: NotificationType.TASK_STATUS_CHANGED,
-            entityType: "task",
-            entityId: taskId,
-            actionUrl: `/tasks/${taskId}`,
-            createdBy: userId,
-            metadata: {
-              taskId,
-              taskTitle: task.title,
-              action: 'approved',
-              approverId: userId,
-              approverName: task.user.firstName + " " + task.user.lastName
-            }
-          })
+          await createApprovalResponseNotification(
+            taskId,
+            task.title,
+            userId, // Onay veren
+            task.approvalRequestedBy, // Onay talep eden
+            true, // approved = true
+            message
+          )
         } catch (notificationError) {
           console.error("Bildirim gönderilemedi:", notificationError)
         }
@@ -130,24 +121,14 @@ export async function POST(
       // Onay talep eden kişiye bildirim gönder
       if (task.approvalRequestedBy) {
         try {
-          await createNotification({
-            userId: task.approvalRequestedBy,
-            title: "Görev Reddedildi",
-            message: `"${task.title}" göreviniz reddedildi. ${message ? 'Sebep: ' + message : 'Tekrar çalışmanız gerekiyor.'}`,
-            type: NotificationType.TASK_STATUS_CHANGED,
-            entityType: "task",
-            entityId: taskId,
-            actionUrl: `/tasks/${taskId}`,
-            createdBy: userId,
-            metadata: {
-              taskId,
-              taskTitle: task.title,
-              action: 'rejected',
-              rejectionMessage: message || '',
-              approverId: userId,
-              approverName: task.user.firstName + " " + task.user.lastName
-            }
-          })
+          await createApprovalResponseNotification(
+            taskId,
+            task.title,
+            userId, // Onay veren
+            task.approvalRequestedBy, // Onay talep eden
+            false, // approved = false
+            message
+          )
         } catch (notificationError) {
           console.error("Bildirim gönderilemedi:", notificationError)
         }

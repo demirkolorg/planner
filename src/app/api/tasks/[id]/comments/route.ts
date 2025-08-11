@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createCommentNotification } from "@/lib/notification-utils"
+import { getUserProjectAccess } from "@/lib/access-control"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,15 +17,30 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id: taskId } = await params
     
-    // Görevin kullanıcıya ait olduğunu kontrol et
-    const task = await db.task.findFirst({
-      where: {
-        id: taskId,
-        userId: decoded.userId
-      }
+    // Görevi bul ve proje erişimi kontrol et
+    const task = await db.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, projectId: true, title: true, userId: true }
     })
 
     if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    // Kullanıcının bu projeye erişimi var mı kontrol et
+    const access = await getUserProjectAccess(decoded.userId, task.projectId)
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    // Göreve erişimi var mı kontrol et (atanmış kullanıcılar için)
+    const canAccessTask = access.accessLevel === 'OWNER' || 
+                         access.accessLevel === 'PROJECT_MEMBER' || 
+                         access.accessLevel === 'PROJECT_ASSIGNED' ||
+                         (access.accessLevel === 'SECTION_ASSIGNED' && access.visibleContent.taskIds.includes(taskId)) ||
+                         (access.accessLevel === 'TASK_ASSIGNED' && access.visibleContent.taskIds.includes(taskId))
+
+    if (!canAccessTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
@@ -93,15 +109,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Comment content is required" }, { status: 400 })
     }
 
-    // Görevin kullanıcıya ait olduğunu kontrol et
-    const task = await db.task.findFirst({
-      where: {
-        id: taskId,
-        userId: decoded.userId
-      }
+    // Görevi bul ve proje erişimi kontrol et
+    const task = await db.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, projectId: true, title: true, userId: true }
     })
 
     if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    // Kullanıcının bu projeye erişimi var mı kontrol et
+    const access = await getUserProjectAccess(decoded.userId, task.projectId)
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    // Göreve erişimi var mı kontrol et (atanmış kullanıcılar için)
+    const canAccessTask = access.accessLevel === 'OWNER' || 
+                         access.accessLevel === 'PROJECT_MEMBER' || 
+                         access.accessLevel === 'PROJECT_ASSIGNED' ||
+                         (access.accessLevel === 'SECTION_ASSIGNED' && access.visibleContent.taskIds.includes(taskId)) ||
+                         (access.accessLevel === 'TASK_ASSIGNED' && access.visibleContent.taskIds.includes(taskId))
+
+    if (!canAccessTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 

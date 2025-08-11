@@ -296,7 +296,7 @@ export default function GuidePage() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="outline" className="hidden sm:flex">
-                v1.4.0
+                v1.5.0
               </Badge>
             </div>
           </div>
@@ -606,7 +606,7 @@ export default function GuidePage() {
                     <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
                     <h3 className="text-lg font-semibold text-foreground">Güncel Sürüm</h3>
                   </div>
-                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.4.0</Badge>
+                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.5.0</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   En son güncellemeyi kullanıyorsunuz. Tüm yeni özellikler ve iyileştirmeler aktif durumda.
@@ -618,14 +618,61 @@ export default function GuidePage() {
                 <h3 className="text-lg font-semibold text-card-foreground mb-6">Sürüm Geçmişi</h3>
                 
                 <div className="space-y-6">
-                  {/* v1.4.0 */}
+                  {/* v1.5.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.5.0</h4>
+                          <Badge variant="secondary" className="text-xs">11 Ağustos 2025</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🎯 Yeni Özellikler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• <strong>Gelişmiş Atama Sistemi</strong> - 3 seviyeli hiyerarşik atama (Proje/Bölüm/Görev)</li>
+                              <li>• <strong>Access Control Sistemi</strong> - Kullanıcı yetkilerine göre erişim kontrolü</li>
+                              <li>• <strong>Atama Bilgilendirme Modal'ı</strong> - Detaylı atama rehberi ve kurallar</li>
+                              <li>• <strong>Email ile Atama</strong> - Sisteme kayıtlı olmayan kullanıcılara email atama</li>
+                              <li>• <strong>Görev Onay Sistemi</strong> - Atanan görevler için onay mekanizması</li>
+                              <li>• <strong>Access Level Badge</strong> - Kullanıcı erişim seviyesi gösterimi</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🔧 İyileştirmeler</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• Atanmış kullanıcılar sadece görüntüleyebilir, onaya gönderebilir</li>
+                              <li>• Görev ataması 1 kullanıcı sınırı ile kısıtlandı</li>
+                              <li>• Hiyerarşik erişim: üst seviye atama alt seviyeleri de kapsar</li>
+                              <li>• Atama modal'ında Info butonu ile detaylı rehber</li>
+                              <li>• Tüm atama türleri için tutarlı davranış</li>
+                              <li>• Proje activities endpoint'i access control ile uyumlu hale getirildi</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-card-foreground text-sm mb-1">🛠️ Teknik</h5>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                              <li>• <code>access-control.ts</code> - Merkezi yetkilendirme sistemi</li>
+                              <li>• <code>UserProjectAccess</code> interface - Gelişmiş erişim yapısı</li>
+                              <li>• <code>calculateVisibleContent</code> - İçerik görünürlük hesaplaması</li>
+                              <li>• <code>SimpleAssignmentModal</code> - İnfo modal entegrasyonu</li>
+                              <li>• TaskCard, TaskItem bileşenlerinde <code>userAccess</code> prop desteği</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* v1.4.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.4.0</h4>
-                          <Badge variant="secondary" className="text-xs">7 Ağustos 2025</Badge>
+                          <Badge variant="outline" className="text-xs">7 Ağustos 2025</Badge>
                         </div>
                         <div className="space-y-3">
                           <div>
@@ -666,7 +713,7 @@ export default function GuidePage() {
                   {/* v1.3.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
-                      <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 bg-muted-foreground/30 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h4 className="font-semibold text-card-foreground">v1.3.0</h4>

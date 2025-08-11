@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { createNotification } from "@/lib/notification-utils"
+import { createApprovalRequestNotification } from "@/lib/notification-utils"
 import { NotificationType } from "@prisma/client"
 
 export async function POST(
@@ -30,13 +30,7 @@ export async function POST(
     const task = await db.task.findUnique({
       where: { id: taskId },
       include: {
-        user: true, // Görev sahibi
-        assignments: {
-          where: { assigneeId: userId }, // Bu kullanıcıya atanmış mı kontrol et
-          include: {
-            assignee: true
-          }
-        }
+        user: true // Görev sahibi
       }
     })
 
@@ -44,8 +38,27 @@ export async function POST(
       return NextResponse.json({ error: "Görev bulunamadı" }, { status: 404 })
     }
 
+    // Bu kullanıcıya görev atanmış mı kontrol et
+    const assignment = await db.assignment.findFirst({
+      where: {
+        targetType: 'TASK',
+        targetId: taskId,
+        userId: userId,
+        status: 'ACTIVE'
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    })
+
     // Sadece atanmış kullanıcılar onay talep edebilir
-    if (task.assignments.length === 0) {
+    if (!assignment) {
       return NextResponse.json(
         { error: "Bu görevi onaya gönderme yetkiniz yok" },
         { status: 403 }
@@ -86,36 +99,19 @@ export async function POST(
         approvalRequestedAt: new Date()
       },
       include: {
-        user: true,
-        assignments: {
-          include: {
-            assignee: true
-          }
-        }
+        user: true
       }
     })
 
     // Görev sahibine bildirim gönder
     try {
-      const assigneeName = task.assignments[0]?.assignee.firstName + " " + task.assignments[0]?.assignee.lastName
-
-      await createNotification({
-        userId: task.userId, // Görev sahibine gönder
-        title: "Onay Talebi",
-        message: `${assigneeName} "${task.title}" görevini tamamladığını belirtti ve onayınızı bekliyor`,
-        type: NotificationType.TASK_STATUS_CHANGED,
-        entityType: "task",
-        entityId: taskId,
-        actionUrl: `/tasks/${taskId}`,
-        createdBy: userId,
-        metadata: {
-          taskId,
-          taskTitle: task.title,
-          approvalMessage: message.trim(),
-          requesterId: userId,
-          requesterName: assigneeName
-        }
-      })
+      await createApprovalRequestNotification(
+        taskId,
+        task.title,
+        userId,
+        task.userId, // Görev sahibine gönder
+        message.trim()
+      )
     } catch (notificationError) {
       console.error("Bildirim gönderilemedi:", notificationError)
       // Bildirim hatası görevin onaya gönderilmesini engellemez

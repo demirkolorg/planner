@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
 import { sendAssignmentInvitationEmail } from '@/lib/email'
+import { createAssignmentNotification } from '@/lib/notification-utils'
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies()
@@ -184,6 +185,42 @@ export async function POST(request: NextRequest) {
           })
 
           results.userAssignments.push(assignment)
+
+          // Bildirim gönder
+          try {
+            let targetName = 'Unknown Target'
+            
+            if (targetType === 'PROJECT') {
+              const project = await db.project.findUnique({
+                where: { id: targetId },
+                select: { name: true }
+              })
+              targetName = project?.name || 'Unknown Project'
+            } else if (targetType === 'SECTION') {
+              const section = await db.section.findUnique({
+                where: { id: targetId },
+                select: { name: true }
+              })
+              targetName = section?.name || 'Unknown Section'
+            } else if (targetType === 'TASK') {
+              const task = await db.task.findUnique({
+                where: { id: targetId },
+                select: { title: true }
+              })
+              targetName = task?.title || 'Unknown Task'
+            }
+
+            await createAssignmentNotification(
+              targetType as 'PROJECT' | 'SECTION' | 'TASK',
+              targetId,
+              targetName,
+              assigneeId,
+              userId
+            )
+          } catch (notificationError) {
+            console.error('Assignment notification error:', notificationError)
+            // Bildirim hatası ana işlemi etkilememelidir
+          }
 
         } catch (error) {
           console.error('User assignment error:', error)

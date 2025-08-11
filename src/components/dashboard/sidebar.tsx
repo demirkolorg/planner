@@ -589,180 +589,118 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       )}
       
       
-      {/* Bottom Actions Section */}
+      {/* Bottom Actions Section - Unified */}
       <div className="p-2 space-y-2">
-        {isOpen ? (
-          <>
-            {/* Action Buttons Row */}
-            <div className="flex items-center justify-center space-x-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    asChild
-                    className="h-9 w-9"
+        <div className="flex items-center justify-center">
+          {/* User Profile Card Dropdown */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={cn(
+                      "h-auto p-2 hover:bg-accent transition-colors",
+                      isOpen ? "w-full justify-start" : "w-9 justify-center"
+                    )}
                   >
-                    <Link href="/guide">
+                    {isOpen ? (
+                      <div className="flex items-center space-x-3 w-full">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {user?.firstName} {user?.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      </div>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align={isOpen ? "center" : "end"} side={isOpen ? "top" : "right"} className="w-56">
+                  {/* Account Switcher */}
+                  <div className="p-2 border-b">
+                    <AccountSwitcher className="w-full justify-start h-auto p-2" />
+                  </div>
+                  
+                  {/* Kılavuz */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/guide" className="flex items-center gap-2">
                       <Info className="h-4 w-4" />
+                      Kullanım Kılavuzu
                     </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Kullanım Kılavuzu</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleTheme}
-                    className="h-9 w-9"
-                  >
+                  </DropdownMenuItem>
+                  
+                  {/* Tema Değiştir */}
+                  <DropdownMenuItem onClick={toggleTheme} className="flex items-center gap-2">
                     {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Font Boyutu</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              {/* Google Calendar Sync Button */}
-              {googleCalendarConnected && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleGoogleCalendarSync}
-                      disabled={isSyncing}
-                      className="h-9 w-9"
+                    {theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}
+                  </DropdownMenuItem>
+                  
+                  {/* Google Calendar Sync */}
+                  {googleCalendarConnected && (
+                    <DropdownMenuItem 
+                      onClick={handleGoogleCalendarSync} 
+                      disabled={isSyncing} 
+                      className="flex items-center gap-2"
                     >
                       <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-center">
-                      <p className="font-medium">Google Calendar Sync</p>
-                      {lastSyncAt ? (
-                        <p className="text-xs text-muted-foreground">
-                          Son sync: {new Date(lastSyncAt).toLocaleString('tr-TR')}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Henüz sync yapılmamış</p>
+                      Google Calendar Sync
+                      {lastSyncAt && (
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {new Date(lastSyncAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center">
-                    <AccountSwitcher className="h-9 w-auto p-1" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Hesap Değiştir</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              {/* Database Status Indicator */}
-              <DbStatusIndicator />
-            </div>
-          </>
-        ) : (
-          /* Collapsed state - single settings dropdown */
-          <div className="flex flex-col items-center space-y-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-9 w-9">
+                    </DropdownMenuItem>
+                  )}
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Profil */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Profil
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  {/* Ayarlar */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" side="right">
-                    {/* Account Switcher */}
-                    <div className="p-2 border-b">
-                      <AccountSwitcher className="w-full justify-start h-auto p-2" />
-                    </div>
-                    
-                    {/* Kılavuz */}
-                    <DropdownMenuItem asChild>
-                      <Link href="/guide" className="flex items-center gap-2">
-                        <Info className="h-4 w-4" />
-                        Kullanım Kılavuzu
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    {/* Tema Değiştir */}
-                    <DropdownMenuItem onClick={toggleTheme} className="flex items-center gap-2">
-                      {theme === THEME.DARK ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                      {theme === THEME.DARK ? "Aydınlık Tema" : "Karanlık Tema"}
-                    </DropdownMenuItem>
-                    
-                    
-                    {/* Google Calendar Sync */}
-                    {googleCalendarConnected && (
-                      <DropdownMenuItem 
-                        onClick={handleGoogleCalendarSync} 
-                        disabled={isSyncing} 
-                        className="flex items-center gap-2"
-                      >
-                        <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
-                        Google Calendar Sync
-                        {lastSyncAt && (
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            {new Date(lastSyncAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                    )}
-                    
-                    <DropdownMenuSeparator />
-                    
-                    {/* Profil */}
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Profil
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    {/* Ayarlar */}
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        Ayarlar
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    {/* Çıkış */}
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                      <LogOut className="h-4 w-4" />
-                      Çıkış Yap
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Ayarlar & Menü</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            {/* Database Status Indicator - Collapsed */}
-            <DbStatusIndicator />
-          </div>
-        )}
+                      Ayarlar
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Database Status */}
+                  <div className="px-2 py-1.5 border-b">
+                    <DbStatusIndicator />
+                  </div>
+                  
+                  {/* Çıkış */}
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <LogOut className="h-4 w-4" />
+                    Çıkış Yap
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipTrigger>
+            <TooltipContent side={isOpen ? "top" : "right"}>
+              <p>Kullanıcı Menüsü</p>
+            </TooltipContent>
+          </Tooltip>
+          
+        </div>
       </div>
       
       <NewProjectModal

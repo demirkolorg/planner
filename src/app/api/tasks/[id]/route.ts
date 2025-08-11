@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken"
 import { createTaskActivity, TaskActivityTypes, getActivityDescription, getPriorityDisplayName } from "@/lib/task-activity"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { syncTaskToCalendar } from "@/lib/google-calendar"
+import { createTaskStatusChangeNotification } from "@/lib/notification-utils"
 
 // Öncelik mapping (Türkçe → İngilizce)
 const PRIORITY_MAP: Record<string, string> = {
@@ -153,6 +154,43 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         newValue: change.newValue,
         description: getActivityDescription(change.type, change.oldValue, change.newValue)
       })
+
+      // Görev durumu değişikliği bildirimi (tamamlanma/açma)
+      if (change.type === TaskActivityTypes.COMPLETED || change.type === TaskActivityTypes.UNCOMPLETED) {
+        try {
+          // Atanmış kullanıcıları bul
+          const assignments = await db.assignment.findMany({
+            where: {
+              targetType: 'TASK',
+              targetId: id,
+              status: 'ACTIVE'
+            },
+            include: {
+              user: {
+                select: {
+                  id: true
+                }
+              }
+            }
+          })
+
+          // Her atanmış kullanıcıya bildirim gönder
+          for (const assignment of assignments) {
+            if (assignment.userId && assignment.userId !== decoded.userId) {
+              await createTaskStatusChangeNotification(
+                id,
+                assignment.userId,
+                decoded.userId,
+                existingTask.title,
+                change.type === TaskActivityTypes.COMPLETED
+              )
+            }
+          }
+        } catch (notificationError) {
+          console.error('Task status change notification error:', notificationError)
+          // Bildirim hatası ana işlemi etkilememelidir
+        }
+      }
 
       // Proje aktivitesi kaydet (sadece completion/uncompletion için ve projeye bağlı görevler için)
       if (existingTask.project?.id) {
