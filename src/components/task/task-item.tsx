@@ -28,6 +28,13 @@ interface TaskItemProps {
   onComment?: (taskId: string, taskTitle: string) => void
   isHighlighted?: boolean
   forceExpand?: boolean
+  userAccess?: {
+    accessLevel: string
+    permissions: {
+      canCompleteTask: boolean
+      canSubmitForApproval: boolean
+    }
+  }
 }
 
 export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
@@ -52,6 +59,7 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
   onComment,
   isHighlighted,
   forceExpand,
+  userAccess,
   ...props
 }, ref) => {
   const level = task.level || 0
@@ -120,6 +128,8 @@ export const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({
           isHighlighted={isHighlighted}
           // Force expand state
           forceExpand={forceExpand}
+          // User access permissions
+          userAccess={userAccess}
         />
       </div>
     </div>

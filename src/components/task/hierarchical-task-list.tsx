@@ -25,6 +25,13 @@ interface HierarchicalTaskListProps {
   showTreeConnectors?: boolean
   highlightTaskId?: string | null
   expandTaskId?: string | null
+  userAccess?: {
+    accessLevel: string
+    permissions: {
+      canCompleteTask: boolean
+      canSubmitForApproval: boolean
+    }
+  }
 }
 
 export function HierarchicalTaskList({
@@ -46,7 +53,8 @@ export function HierarchicalTaskList({
   className = "",
   showTreeConnectors = true,
   highlightTaskId,
-  expandTaskId
+  expandTaskId,
+  userAccess
 }: HierarchicalTaskListProps) {
   // Expand/collapse state management
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set())
@@ -158,6 +166,7 @@ export function HierarchicalTaskList({
             onComment={onComment}
             isHighlighted={highlightTaskId === task.id}
             forceExpand={expandTaskId === task.id}
+            userAccess={userAccess}
           />
         )
       })}

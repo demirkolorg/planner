@@ -1052,6 +1052,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   expandTaskId={null} // Gecikmiş bölümünde expand etme
+                  userAccess={project?.userAccess}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -1152,6 +1153,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   expandTaskId={null} // Bölümsüz görevlerde expand etme
+                  userAccess={project?.userAccess}
                 />
               </AccordionContent>
             </AccordionItem>
@@ -1373,6 +1375,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       expandTaskId={expandTaskId}
+                      userAccess={project?.userAccess}
                     />
                   )}
                 </AccordionContent>

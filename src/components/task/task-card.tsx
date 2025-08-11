@@ -125,6 +125,14 @@ interface TaskCardProps {
   isHighlighted?: boolean
   // Force expand için prop
   forceExpand?: boolean
+  // User access information
+  userAccess?: {
+    accessLevel: string
+    permissions: {
+      canCompleteTask: boolean
+      canSubmitForApproval: boolean
+    }
+  }
 }
 
 
@@ -155,7 +163,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Highlight prop
   isHighlighted = false,
   // Force expand prop
-  forceExpand = false
+  forceExpand = false,
+  // User access prop
+  userAccess
 }, ref) => {
   // Hook'ları erken çağır (early return'den önce)
   const [internalIsExpanded, setInternalIsExpanded] = useState(false)
@@ -455,10 +465,13 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Permission kontrolü için loading durumu
   const isPermissionLoading = isUserLoading
   
-  // Assigned kullanıcıların permission'ları - sadece görüntüleyebilir ve onaya gönderebilir
-  const canCompleteTask = !isAssignedUser && (isTaskOwner || currentUser) // Assigned user task tamamlayamaz
-  const canEditTask = !isAssignedUser && (isTaskOwner || currentUser)     // Assigned user task düzenleyemez  
-  const canSubmitForApproval = isAssignedUser || isTaskOwner             // Her ikisi de onaya gönderebilir
+  // Permission kontrolü - userAccess prop'undan al, yoksa fallback mantık
+  const canCompleteTask = userAccess?.permissions.canCompleteTask ?? 
+    (!isAssignedUser && (isTaskOwner || currentUser))
+  const canEditTask = userAccess?.permissions.canCompleteTask ?? 
+    (!isAssignedUser && (isTaskOwner || currentUser))  
+  const canSubmitForApproval = userAccess?.permissions.canSubmitForApproval ?? 
+    (isAssignedUser || isTaskOwner)
 
   // Onay durumu göstergesi
   const getApprovalStatusBadge = () => {
