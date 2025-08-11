@@ -45,6 +45,11 @@ const isRetriableError = (error: any): boolean => {
     'socket timeout',
     'connection lost',
     'connection closed',
+    'timed out fetching a new connection',
+    'connection pool',
+    'transaction not found',
+    'transaction id is invalid',
+    'refers to an old closed transaction',
   ];
   
   // HTTP timeout hataları
@@ -60,6 +65,8 @@ const isRetriableError = (error: any): boolean => {
     'P1001', // Prisma connection error
     'P1008', // Prisma timeout
     'P1017', // Prisma server not found
+    'P2024', // Timed out fetching connection
+    'P2028', // Transaction timeout
   ];
   
   return retriablePatterns.some(pattern => errorMessage.includes(pattern)) ||
@@ -124,8 +131,9 @@ export async function withTransactionRetry<T>(
   options: RetryOptions = {}
 ): Promise<T> {
   return withRetry(operation, {
-    maxAttempts: 2, // Transaction'larda daha az retry
-    baseDelay: 500,
+    maxAttempts: 3, // Transaction'larda daha fazla retry
+    baseDelay: 1000, // Daha uzun delay
+    maxDelay: 5000,
     ...options,
   });
 }

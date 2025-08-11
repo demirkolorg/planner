@@ -80,6 +80,8 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
   const [isLoadingActivities, setIsLoadingActivities] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const commentsEndRef = useRef<HTMLDivElement>(null)
+  const newCommentRef = useRef<HTMLTextAreaElement>(null)
+  const replyRef = useRef<HTMLTextAreaElement>(null)
 
   // Yorumları yükle
   const fetchComments = useCallback(async () => {
@@ -209,6 +211,24 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
     }
   }
 
+  // Cursor position'ı koruyarak input değeri güncelle
+  const updateInputValue = (ref: React.RefObject<HTMLTextAreaElement>, newValue: string, setValue: (value: string) => void) => {
+    if (ref.current) {
+      const start = ref.current.selectionStart
+      const end = ref.current.selectionEnd
+      setValue(newValue)
+      
+      // Cursor position'ı restore et
+      requestAnimationFrame(() => {
+        if (ref.current) {
+          ref.current.setSelectionRange(start, end)
+        }
+      })
+    } else {
+      setValue(newValue)
+    }
+  }
+
   // Yorum component'i
   const CommentItem = ({ comment, isReply = false }: { comment: Comment, isReply?: boolean }) => (
     <div className={cn("space-y-2", isReply && "ml-6")}>
@@ -271,8 +291,9 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
           {replyTo === comment.id && (
             <div className="space-y-2 mt-2">
               <Textarea
+                ref={replyRef}
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                onChange={(e) => updateInputValue(replyRef, e.target.value, setReplyContent)}
                 placeholder="Yanıtınızı yazın..."
                 className="min-h-20 resize-none"
                 onKeyDown={(e) => {
@@ -366,8 +387,9 @@ export function TaskActivityPanel({ task }: TaskActivityPanelProps) {
             {/* Compact Yorum Yazma Alanı */}
             <div className="space-y-2 pt-2 border-t border-border/30">
               <Textarea
+                ref={newCommentRef}
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                onChange={(e) => updateInputValue(newCommentRef, e.target.value, setNewComment)}
                 placeholder="Yorum yazın..."
                 className="min-h-16 resize-none text-sm border-muted-foreground/20 bg-background/50"
                 onKeyDown={(e) => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { 
   FileText,
   Plus,
@@ -37,6 +37,7 @@ export function TaskContentPanel({ task, onTaskUpdate }: TaskContentPanelProps) 
   const [newSubTaskTitle, setNewSubTaskTitle] = useState("")
   const [isAddingSubTask, setIsAddingSubTask] = useState(false)
   const [isSubTaskSaving, setIsSubTaskSaving] = useState(false)
+  const subTaskInputRef = useRef<HTMLInputElement>(null)
 
   // Açıklama kaydetme
   const handleSaveDescription = async () => {
@@ -129,6 +130,24 @@ export function TaskContentPanel({ task, onTaskUpdate }: TaskContentPanelProps) 
       toast.error('Alt görev eklenirken hata oluştu')
     } finally {
       setIsSubTaskSaving(false)
+    }
+  }
+
+  // Cursor position'ı koruyarak input değeri güncelle
+  const updateInputValue = (ref: React.RefObject<HTMLInputElement>, newValue: string, setValue: (value: string) => void) => {
+    if (ref.current) {
+      const start = ref.current.selectionStart || 0
+      const end = ref.current.selectionEnd || 0
+      setValue(newValue)
+      
+      // Cursor position'ı restore et
+      requestAnimationFrame(() => {
+        if (ref.current) {
+          ref.current.setSelectionRange(start, end)
+        }
+      })
+    } else {
+      setValue(newValue)
     }
   }
 
@@ -277,8 +296,9 @@ export function TaskContentPanel({ task, onTaskUpdate }: TaskContentPanelProps) 
               <div className="w-4" />
               <Checkbox disabled className="opacity-40" />
               <Input
+                ref={subTaskInputRef}
                 value={newSubTaskTitle}
-                onChange={(e) => setNewSubTaskTitle(e.target.value)}
+                onChange={(e) => updateInputValue(subTaskInputRef, e.target.value, setNewSubTaskTitle)}
                 placeholder="Alt görev başlığı..."
                 className="flex-1 h-8 text-sm border-muted-foreground/20"
                 onKeyDown={(e) => {
