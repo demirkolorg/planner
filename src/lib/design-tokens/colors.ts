@@ -45,11 +45,11 @@ export const GRADIENTS = {
 
 // Priority mapping for components
 export const PRIORITIES = [
-  { value: "CRITICAL", label: "Kritik", color: PRIORITY_COLORS.CRITICAL },
-  { value: "HIGH", label: "Yüksek", color: PRIORITY_COLORS.HIGH },
-  { value: "MEDIUM", label: "Orta", color: PRIORITY_COLORS.MEDIUM },
-  { value: "LOW", label: "Düşük", color: PRIORITY_COLORS.LOW },
-  { value: "NONE", label: "Yok", color: PRIORITY_COLORS.NONE }
+  { value: "CRITICAL", label: "Kritik", color: PRIORITY_HSL.CRITICAL, cssClass: PRIORITY_COLORS.CRITICAL },
+  { value: "HIGH", label: "Yüksek", color: PRIORITY_HSL.HIGH, cssClass: PRIORITY_COLORS.HIGH },
+  { value: "MEDIUM", label: "Orta", color: PRIORITY_HSL.MEDIUM, cssClass: PRIORITY_COLORS.MEDIUM },
+  { value: "LOW", label: "Düşük", color: PRIORITY_HSL.LOW, cssClass: PRIORITY_COLORS.LOW },
+  { value: "NONE", label: "Yok", color: PRIORITY_HSL.NONE, cssClass: PRIORITY_COLORS.NONE }
 ] as const
 
 // Type exports

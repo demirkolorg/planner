@@ -7,14 +7,8 @@ import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activ
 import { syncTaskToCalendar } from "@/lib/google-calendar"
 import { createTaskStatusChangeNotification } from "@/lib/notification-utils"
 
-// Öncelik mapping (Türkçe → İngilizce)
-const PRIORITY_MAP: Record<string, string> = {
-  "Kritik": "CRITICAL",
-  "Yüksek": "HIGH", 
-  "Orta": "MEDIUM",
-  "Düşük": "LOW",
-  "Yok": "NONE"
-}
+// Öncelik mapping - İngilizce değerler doğrudan kullanılabilir
+const VALID_PRIORITIES = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE"]
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -44,10 +38,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
-    // Priority mapping uygula eğer priority güncellenmişse
+    // Priority validation uygula eğer priority güncellenmişse
     const updateData = { ...body }
-    if (updateData.priority && PRIORITY_MAP[updateData.priority]) {
-      updateData.priority = PRIORITY_MAP[updateData.priority]
+    if (updateData.priority && !VALID_PRIORITIES.includes(updateData.priority)) {
+      updateData.priority = "NONE"
     }
 
     // Değişiklikleri tespit et ve aktivite logları oluştur

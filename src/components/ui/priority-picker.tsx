@@ -36,7 +36,7 @@ export const PriorityPicker = ({ selectedPriority, onPrioritySelect, trigger, cl
   }, [showPicker])
 
   const getPriorityColor = () => {
-    const priority = PRIORITIES.find(p => p.name === selectedPriority)
+    const priority = PRIORITIES.find(p => p.value === selectedPriority)
     return priority?.color || PRIORITIES[4].color // Varsayılan olarak "Yok" rengini kullan
   }
 
@@ -82,15 +82,15 @@ export const PriorityPicker = ({ selectedPriority, onPrioritySelect, trigger, cl
           <div>
             {PRIORITIES.map((priority) => (
               <div
-                key={priority.name}
+                key={priority.value}
                 className="flex items-center space-x-2 px-2 py-1 hover:bg-muted rounded-md cursor-pointer"
-                onClick={() => handlePrioritySelect(priority.name)}
+                onClick={() => handlePrioritySelect(priority.value)}
               >
                 <Flag
                   className="h-4 w-4"
                   style={{ color: priority.color }}
                 />
-                <span className="text-xs">{priority.name}</span>
+                <span className="text-xs">{priority.label}</span>
               </div>
             ))}
           </div>

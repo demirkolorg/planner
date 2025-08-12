@@ -6,14 +6,8 @@ import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { syncTaskToCalendar } from "@/lib/google-calendar"
 
-// Öncelik mapping (Türkçe → İngilizce)
-const PRIORITY_MAP: Record<string, string> = {
-  "Kritik": "CRITICAL",
-  "Yüksek": "HIGH", 
-  "Orta": "MEDIUM",
-  "Düşük": "LOW",
-  "Yok": "NONE"
-}
+// Öncelik mapping - İngilizce değerler doğrudan kullanılabilir
+const VALID_PRIORITIES = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE"]
 
 interface CreateTaskRequest {
   title: string
@@ -46,7 +40,7 @@ export async function POST(request: NextRequest) {
       description, 
       projectId, 
       sectionId, 
-      priority = "Yok",
+      priority = "NONE",
       dueDate,
       tags = [],
       parentTaskId,
@@ -177,7 +171,7 @@ export async function POST(request: NextRequest) {
         data: {
           title,
           description,
-          priority: PRIORITY_MAP[priority] || "NONE",
+          priority: VALID_PRIORITIES.includes(priority) ? priority : "NONE",
           dueDate: parsedDueDate,
           projectId: taskType === 'PROJECT' ? projectId : null,
           sectionId: taskType === 'PROJECT' ? finalSectionId : null,

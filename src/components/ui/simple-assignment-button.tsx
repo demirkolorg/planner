@@ -15,6 +15,9 @@ interface SimpleAssignmentButtonProps {
   variant?: 'default' | 'outline' | 'ghost' | 'icon'
   size?: 'sm' | 'default' | 'lg'
   showCounts?: boolean
+  // Eğer assignment data dışarıdan verildiyse API çağrısı yapma
+  assignmentCount?: number
+  skipApiCall?: boolean
 }
 
 export function SimpleAssignmentButton({
@@ -25,14 +28,18 @@ export function SimpleAssignmentButton({
   disabled = false,
   variant = 'outline',
   size = 'sm',
-  showCounts = true
+  showCounts = true,
+  assignmentCount: externalAssignmentCount,
+  skipApiCall = false
 }: SimpleAssignmentButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [assignmentCount, setAssignmentCount] = useState(0)
+  const [assignmentCount, setAssignmentCount] = useState(externalAssignmentCount || 0)
   const [isLoading, setIsLoading] = useState(false)
 
   // Atama sayısını getir
   const fetchAssignmentCount = useCallback(async () => {
+    if (skipApiCall) return // API çağrısını skip et
+    
     try {
       setIsLoading(true)
       const response = await fetch(`/api/assignments?targetType=${targetType}&targetId=${targetId}`)
@@ -46,12 +53,21 @@ export function SimpleAssignmentButton({
     } finally {
       setIsLoading(false)
     }
-  }, [targetType, targetId])
+  }, [targetType, targetId, skipApiCall])
 
-  // Component mount edildiğinde sayıyı yükle
+  // Component mount edildiğinde sayıyı yükle (sadece external data yoksa)
   useEffect(() => {
-    fetchAssignmentCount()
-  }, [targetType, targetId, fetchAssignmentCount])
+    if (!skipApiCall && externalAssignmentCount === undefined) {
+      fetchAssignmentCount()
+    }
+  }, [targetType, targetId, fetchAssignmentCount, skipApiCall, externalAssignmentCount])
+  
+  // External assignment count değiştiğinde güncelle
+  useEffect(() => {
+    if (externalAssignmentCount !== undefined) {
+      setAssignmentCount(externalAssignmentCount)
+    }
+  }, [externalAssignmentCount])
 
   const handleSuccess = () => {
     fetchAssignmentCount()

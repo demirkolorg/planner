@@ -94,7 +94,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [parentTask, setParentTask] = useState<Task | null>(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [selectedPriority, setSelectedPriority] = useState<string>("Yok")
+  const [selectedPriority, setSelectedPriority] = useState<string>("NONE")
   const { tags, fetchTags, createTag } = useTagStore()
   const { updateTaskTags } = useTaskStore()
   const { createTask, updateTask, getTaskById } = useTaskStore()
@@ -134,16 +134,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setTitle(editingTask.title)
         setDescription(editingTask.description || "")
         
-        // Priority mapping (İngilizce'den Türkçe'ye)
-        const priorityMapping: Record<string, string> = {
-          'HIGH': 'Yüksek',
-          'MEDIUM': 'Orta',
-          'LOW': 'Düşük',
-          'NONE': 'Yok',
-          'CRITICAL': 'Kritik'
-        }
-        const mappedPriority = priorityMapping[editingTask.priority] || editingTask.priority
-        setSelectedPriority(mappedPriority)
+        // Priority mapping - editingTask.priority zaten İngilizce database değeri
+        setSelectedPriority(editingTask.priority)
         
         // DueDate'i tarih ve saat olarak ayır
         if (editingTask.dueDate) {
@@ -166,7 +158,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setTitle("")
         setDescription("")
         setSelectedTags([])
-        setSelectedPriority("Yok")
+        setSelectedPriority("NONE")
         setSelectedDate(null)
         setSelectedTime(null)
         // Atamalar artık SimpleAssignmentButton ile yönetiliyor
@@ -329,18 +321,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }
 
   const getPriorityColor = () => {
-    // İngilizce priority değerlerini Türkçe'ye eşleştir (edit modunda gelen değerler için)
-    const priorityMapping: Record<string, string> = {
-      'HIGH': 'Yüksek',
-      'MEDIUM': 'Orta',
-      'LOW': 'Düşük',
-      'NONE': 'Yok',
-      'CRITICAL': 'Kritik'
-    }
-    
-    const mappedPriority = priorityMapping[selectedPriority] || selectedPriority
-    const priority = PRIORITIES.find(p => p.name === mappedPriority)
-    return priority?.color || "#9ca3af" // Varsayılan olarak "Yok" rengini kullan
+    // Yeni priority yapısını kullan - value ile eşleştir
+    const priority = PRIORITIES.find(p => p.value === selectedPriority)
+    return priority?.color || PRIORITIES.find(p => p.value === "NONE")?.color || "#9ca3af"
   }
 
   const handlePrioritySelect = (priority: string) => {

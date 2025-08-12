@@ -77,53 +77,63 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     })
 
-    // Assignment ve pin bilgilerini ayrı olarak ekle
-    const tasksWithAssignments = await Promise.all(
-      tasks.map(async (task) => {
-        const assignments = await db.assignment.findMany({
-          where: {
-            targetType: 'TASK',
-            targetId: task.id,
-            status: 'ACTIVE'
+    // Batch olarak tüm görevlerin assignment'larını ve pin durumlarını getir
+    const taskIds = tasks.map(task => task.id)
+    
+    const [allAssignments, allUserPins] = await Promise.all([
+      // Tüm görevlerin assignment'larını tek sorguda getir
+      db.assignment.findMany({
+        where: {
+          targetType: 'TASK',
+          targetId: { in: taskIds },
+          status: 'ACTIVE'
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
           },
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            assigner: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
+          assigner: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
             }
           }
-        })
-
-        // User-specific pin durumunu kontrol et
-        const userPin = await db.userPin.findUnique({
-          where: {
-            userId_targetType_targetId: {
-              userId: decoded.userId,
-              targetType: 'TASK',
-              targetId: task.id
-            }
-          }
-        })
-
-        return {
-          ...task,
-          assignments,
-          isPinned: !!userPin  // UserPin var ise pinned, yoksa unpinned
+        }
+      }),
+      
+      // Tüm görevlerin pin durumlarını tek sorguda getir
+      db.userPin.findMany({
+        where: {
+          userId: decoded.userId,
+          targetType: 'TASK',
+          targetId: { in: taskIds }
         }
       })
-    )
+    ])
+    
+    // Assignment ve pin verilerini task'lere map et
+    const assignmentsByTaskId = allAssignments.reduce((acc, assignment) => {
+      if (!acc[assignment.targetId]) {
+        acc[assignment.targetId] = []
+      }
+      acc[assignment.targetId].push(assignment)
+      return acc
+    }, {} as Record<string, any[]>)
+    
+    const pinnedTaskIds = new Set(allUserPins.map(pin => pin.targetId))
+    
+    const tasksWithAssignments = tasks.map(task => ({
+      ...task,
+      assignments: assignmentsByTaskId[task.id] || [],
+      isPinned: pinnedTaskIds.has(task.id)
+    }))
 
     return NextResponse.json(tasksWithAssignments)
   } catch (error) {
