@@ -102,10 +102,6 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
         const comment = await response.json()
         setComments(prev => [comment, ...prev])
         setNewComment("")
-        // Uncontrolled input'u da temizle
-        if (mainTextareaRef.current) {
-          mainTextareaRef.current.value = ""
-        }
         // Parent component'e yorum eklendiğini bildir
         onCommentAdded?.()
       } else {
@@ -161,10 +157,6 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
           ...prev,
           [parentId]: ""
         }))
-        // Uncontrolled input'u da temizle
-        if (replyTextareaRefs.current[parentId]) {
-          replyTextareaRefs.current[parentId]!.value = ""
-        }
         setReplyingTo(null)
         // Parent component'e yorum eklendiğini bildir
         onCommentAdded?.()
@@ -345,8 +337,11 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                   <textarea
                     ref={setRef}
                     placeholder="Yanıtınızı yazın..."
-                    defaultValue=""
-                    onChange={(e) => updateReplyContent(comment.id, e.target.value)}
+                    value={replyContents[comment.id] || ""}
+                    onChange={(e) => {
+                      // Sadece state güncelle, cursor manipulation yok
+                      updateReplyContent(comment.id, e.target.value)
+                    }}
                     className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                     autoFocus
                     onFocus={(e) => e.stopPropagation()}
@@ -374,10 +369,6 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                           ...prev,
                           [comment.id]: ""
                         }))
-                        // Uncontrolled input'u da temizle
-                        if (replyTextareaRefs.current[comment.id]) {
-                          replyTextareaRefs.current[comment.id]!.value = ""
-                        }
                       }}
                     >
                       İptal
@@ -431,8 +422,11 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                 <textarea
                   ref={mainTextareaRef}
                   placeholder="Yorumunuzu yazın..."
-                  defaultValue=""
-                  onChange={(e) => setNewComment(e.target.value)}
+                  value={newComment}
+                  onChange={(e) => {
+                    // Sadece state güncelle, cursor manipulation yok
+                    setNewComment(e.target.value)
+                  }}
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                   onFocus={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
