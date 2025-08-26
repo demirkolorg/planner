@@ -192,6 +192,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const [editorPosition, setEditorPosition] = useState<{ x: number; y: number } | undefined>()
   const [isToggling, setIsToggling] = useState(false)
   const [optimisticCompleted, setOptimisticCompleted] = useState(task?.completed || false)
+  const [optimisticPinned, setOptimisticPinned] = useState(task?.isPinned || false)
+  const [optimisticPriority, setOptimisticPriority] = useState(task?.priority || 'NONE')
+  const [optimisticDueDate, setOptimisticDueDate] = useState<string | undefined>(task?.dueDate)
   const [isHovered, setIsHovered] = useState(false)
   const pathname = usePathname()
   const { user: currentUser } = useAuthStore()
@@ -202,6 +205,25 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       setOptimisticCompleted(task.completed)
     }
   }, [task?.completed])
+  
+  // Task pinned state'i task prop'undan gelen değer ile senkronize et
+  React.useEffect(() => {
+    if (task?.isPinned !== undefined) {
+      setOptimisticPinned(task.isPinned)
+    }
+  }, [task?.isPinned])
+  
+  // Task priority state'i task prop'undan gelen değer ile senkronize et
+  React.useEffect(() => {
+    if (task?.priority !== undefined) {
+      setOptimisticPriority(task.priority)
+    }
+  }, [task?.priority])
+  
+  // Task due date state'i task prop'undan gelen değer ile senkronize et
+  React.useEffect(() => {
+    setOptimisticDueDate(task?.dueDate)
+  }, [task?.dueDate])
 
   // TaskCard memoized - re-render optimization
   
@@ -232,6 +254,15 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   
   // Görünen completed değeri (optimistic veya gerçek)
   const displayCompleted = optimisticCompleted
+  
+  // Görünen pinned değeri (optimistic veya gerçek)
+  const displayPinned = optimisticPinned
+  
+  // Görünen priority değeri (optimistic veya gerçek)
+  const displayPriority = optimisticPriority
+  
+  // Görünen due date değeri (optimistic veya gerçek)
+  const displayDueDate = optimisticDueDate
   
   // Proje sayfasında mı kontrol et
   const isOnProjectPage = task.projectId && pathname.startsWith('/projects/') && pathname.includes(task.projectId)
@@ -265,6 +296,43 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     }
   }
 
+  const handleTogglePin = async () => {
+    // Permission kontrolü - assigned users pin edemez
+    if (!canEditTask) {
+      return
+    }
+    
+    // Optimistic update - UI'ı hemen güncelle
+    const newPinnedState = !task.isPinned
+    setOptimisticPinned(newPinnedState)
+    
+    try {
+      await onPin?.(task.id)
+    } catch (error) {
+      // Hata durumunda geri al
+      setOptimisticPinned(task.isPinned)
+      console.error('Task pin error:', error)
+    }
+  }
+
+  const handlePriorityUpdate = async (priority: string) => {
+    // Permission kontrolü - assigned users priority değiştiremez
+    if (!canEditTask) {
+      return
+    }
+    
+    // Optimistic update - UI'ı hemen güncelle
+    setOptimisticPriority(priority)
+    
+    try {
+      await onUpdatePriority?.(task.id, priority)
+    } catch (error) {
+      // Hata durumunda geri al
+      setOptimisticPriority(task.priority)
+      console.error('Task priority error:', error)
+    }
+  }
+
   const handleToggleExpanded = () => {
     if (externalOnToggleExpanded) {
       // Hiyerarşik modda external handler kullan - children olsun ya da olmasın çağır
@@ -294,13 +362,18 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   }
 
   const handleDateSave = async (dateTime: string | null) => {
+    // Optimistic update - UI'ı hemen güncelle
+    setOptimisticDueDate(dateTime ?? undefined)
+    setIsEditingDate(false)
+    
     try {
       // dueDate alanını Date object olarak gönder
       const updateData = dateTime ? { dueDate: new Date(dateTime) } : { dueDate: null }
       await onUpdate?.(task.id, updateData)
-      setIsEditingDate(false)
     } catch (error) {
-      setIsEditingDate(false) // Hata durumunda da edit modunu kapat
+      // Hata durumunda geri al
+      setOptimisticDueDate(task.dueDate)
+      console.error('Task due date error:', error)
     }
   }
 
@@ -449,8 +522,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 
 
   // Date status hesapla
-  const dateStatus = getTaskDateStatus(task.dueDate)
-  const dueDateMessage = getDueDateMessage(dateStatus, task.priority, task.dueDate)
+  const dateStatus = getTaskDateStatus(displayDueDate)
+  const dueDateMessage = getDueDateMessage(dateStatus, task.priority, displayDueDate)
 
   // Gradient background helper
   const getDateAlertGradient = () => {
@@ -642,7 +715,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           {/* Date Time Picker - for both collapsed and expanded views */}
           {isEditingDate && (
             <DateTimePicker
-              initialDateTime={task.dueDate}
+              initialDateTime={displayDueDate}
               onSave={handleDateSave}
               onCancel={handleDateCancel}
               position={editorPosition}
@@ -712,7 +785,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               </div>
               
               {/* Due Date Icon with Overdue Warning */}
-              {task.dueDate && (
+              {displayDueDate && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center space-x-1">
@@ -738,7 +811,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Son tarih: {formatDateTime(task.dueDate)}</p>
+                    <p>Son tarih: {formatDateTime(displayDueDate)}</p>
                     {dueDateMessage && <p className="font-medium">{dueDateMessage}</p>}
                   </TooltipContent>
                 </Tooltip>
@@ -940,7 +1013,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
               <div className="text-xs text-muted-foreground flex items-center space-x-3">
                 {/* Date */}
                 <div>
-                  {task.dueDate ? (
+                  {displayDueDate ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
@@ -950,7 +1023,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                           }
                           onClick={isTaskCompleted || isPermissionLoading || !canEditTask ? undefined : handleDateClick}
                         >
-                          📅 {formatDateTime(task.dueDate)}
+                          📅 {formatDateTime(displayDueDate)}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -1002,9 +1075,11 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 task={task}
                 onAddSubTask={onAddSubTask}
                 onUpdateTags={onUpdateTags}
-                onUpdatePriority={onUpdatePriority}
+                onUpdatePriority={handlePriorityUpdate}
+                displayPriority={displayPriority}
                 onUpdateAssignment={onUpdateAssignment}
-                onPin={onPin}
+                onPin={handleTogglePin}
+                displayPinned={displayPinned}
                 onDelete={onDelete}
                 onCopy={onCopy}
                 onMove={onMove}

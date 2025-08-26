@@ -80,6 +80,8 @@ interface TaskCardActionsProps {
   isPermissionLoading?: boolean
   canEditTask?: boolean
   canSubmitForApproval?: boolean
+  displayPinned?: boolean // Optimistic pin state
+  displayPriority?: string // Optimistic priority state
 }
 
 export function TaskCardActions({
@@ -101,7 +103,9 @@ export function TaskCardActions({
   isFirstInSection = false,
   isPermissionLoading = false,
   canEditTask = true,
-  canSubmitForApproval = true
+  canSubmitForApproval = true,
+  displayPinned,
+  displayPriority
 }: TaskCardActionsProps) {
   const { user: currentUser } = useAuthStore()
   
@@ -121,6 +125,9 @@ export function TaskCardActions({
   const isTaskOwner = !isActualPermissionLoading && currentUser && task.userId === currentUser.id
 
   const getPriorityColorHex = () => {
+    // Optimistic priority değerini kullan
+    const currentPriority = displayPriority ?? task.priority
+    
     // İngilizce priority değerlerini Türkçe'ye eşleştir
     const priorityMapping: Record<string, string> = {
       'HIGH': 'Yüksek',
@@ -130,7 +137,7 @@ export function TaskCardActions({
       'CRITICAL': 'Kritik'
     }
     
-    const mappedPriority = priorityMapping[task.priority] || task.priority
+    const mappedPriority = priorityMapping[currentPriority] || currentPriority
     const priority = PRIORITIES.find(p => p.name === mappedPriority)
     return priority?.color || PRIORITY_COLORS.YOK
   }
@@ -262,7 +269,7 @@ export function TaskCardActions({
         {/* Priority Selector - Atanmış kullanıcılar için gizli */}
         {!isDisabledForAssignedUser && (
         <PrioritySelector
-          currentPriority={task.priority}
+          currentPriority={displayPriority ?? task.priority}
           onUpdatePriority={isTaskCompleted ? undefined : handleUpdatePriority}
           disabled={isTaskCompleted}
           trigger={
@@ -369,7 +376,7 @@ export function TaskCardActions({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-7 w-7 ${task.isPinned ? 'text-red-500' : ''}`}
+              className={`h-7 w-7 ${(displayPinned ?? task.isPinned) ? 'text-red-500' : ''}`}
               onClick={isTaskCompleted ? undefined : handlePin}
               disabled={isTaskCompleted}
             >
@@ -377,7 +384,7 @@ export function TaskCardActions({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : (task.isPinned ? 'Sabitlemeyi kaldır' : 'Sabitle')}</p>
+            <p>{isTaskCompleted ? 'Tamamlanmış görevde düzenleme yapılamaz' : ((displayPinned ?? task.isPinned) ? 'Sabitlemeyi kaldır' : 'Sabitle')}</p>
           </TooltipContent>
         </Tooltip>
         )}
