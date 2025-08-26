@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { useProjectStore } from "@/store/projectStore"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
@@ -724,3 +724,13 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     </TooltipProvider>
   )
 }
+
+// Memoized version for performance optimization
+export const MemoizedDashboardSidebar = memo(DashboardSidebar, (prevProps, nextProps) => {
+  // Re-render sadece kritik prop'lar değiştiğinde
+  return (
+    prevProps.isOpen === nextProps.isOpen &&
+    prevProps.onToggle === nextProps.onToggle &&
+    prevProps.onOpenSearch === nextProps.onOpenSearch
+  )
+})

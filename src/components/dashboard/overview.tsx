@@ -30,7 +30,7 @@ import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { KeyboardShortcutsModal } from "@/components/modals/keyboard-shortcuts-modal"
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback, memo } from "react"
 import Link from "next/link"
 import { format, isToday, startOfWeek, endOfWeek, isWithinInterval, addWeeks } from "date-fns"
 import { tr } from "date-fns/locale"
@@ -795,3 +795,6 @@ export function DashboardOverview() {
     </div>
   )
 }
+
+// Memoized version for performance optimization
+export const MemoizedDashboardOverview = memo(DashboardOverview)

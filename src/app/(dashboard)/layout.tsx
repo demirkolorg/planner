@@ -3,13 +3,13 @@
 // Force dynamic rendering to avoid SSR issues with EventSource
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { ROUTES } from "@/lib/constants"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
+import { MemoizedDashboardSidebar as DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
 // Lazy load modals for better performance
 import { lazy, Suspense } from "react"
@@ -36,6 +36,31 @@ export default function DashboardLayout({
   const [isQuickSearchModalOpen, setIsQuickSearchModalOpen] = useState(false)
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false)
   const lastUserIdRef = useRef<string | null>(null)
+
+  // Optimized event handlers with useCallback
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarOpen(prev => !prev)
+  }, [])
+
+  const handleOpenSearch = useCallback(() => {
+    setIsQuickSearchModalOpen(true)
+  }, [])
+
+  const handleCloseQuickTask = useCallback(() => {
+    setIsQuickTaskModalOpen(false)
+  }, [])
+
+  const handleCloseQuickSearch = useCallback(() => {
+    setIsQuickSearchModalOpen(false)
+  }, [])
+
+  const handleCloseNewTask = useCallback(() => {
+    setIsNewTaskModalOpen(false)
+  }, [])
+
+  const handleTaskCreated = useCallback(() => {
+    setIsNewTaskModalOpen(false)
+  }, [])
 
   
   // Notification system'i aktif et
@@ -160,8 +185,8 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-background">
       <DashboardSidebar 
         isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)} 
-        onOpenSearch={() => setIsQuickSearchModalOpen(true)}
+        onToggle={handleSidebarToggle} 
+        onOpenSearch={handleOpenSearch}
       />
       <div className={`flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
         <main className="flex-1 overflow-y-auto p-6">
@@ -174,7 +199,7 @@ export default function DashboardLayout({
         <Suspense fallback={<div className="modal-loading">Loading...</div>}>
           <QuickTaskModal
             isOpen={isQuickTaskModalOpen}
-            onClose={() => setIsQuickTaskModalOpen(false)}
+            onClose={handleCloseQuickTask}
           />
         </Suspense>
       )}
@@ -183,7 +208,7 @@ export default function DashboardLayout({
         <Suspense fallback={<div className="modal-loading">Loading...</div>}>
           <QuickSearchModal
             isOpen={isQuickSearchModalOpen}
-            onClose={() => setIsQuickSearchModalOpen(false)}
+            onClose={handleCloseQuickSearch}
           />
         </Suspense>
       )}
@@ -192,10 +217,8 @@ export default function DashboardLayout({
         <Suspense fallback={<div className="modal-loading">Loading...</div>}>
           <NewTaskModal
             isOpen={isNewTaskModalOpen}
-            onClose={() => setIsNewTaskModalOpen(false)}
-            onTaskCreated={() => {
-              setIsNewTaskModalOpen(false)
-            }}
+            onClose={handleCloseNewTask}
+            onTaskCreated={handleTaskCreated}
           />
         </Suspense>
       )}
