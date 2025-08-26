@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { 
@@ -61,7 +62,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   const { user } = useAuthStore()
-  const replyTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+  const replyInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const mainTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Yorumları yükle
@@ -198,21 +199,21 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
     }
   }, [isOpen, taskId, fetchComments])
 
-  // Reply textarea focus yönetimi
+  // Reply input focus yönetimi
   useEffect(() => {
-    if (replyingTo && replyTextareaRefs.current[replyingTo]) {
-      const textarea = replyTextareaRefs.current[replyingTo]
-      if (textarea) {
+    if (replyingTo && replyInputRefs.current[replyingTo]) {
+      const input = replyInputRefs.current[replyingTo]
+      if (input) {
         // Kısa bir gecikme ile focus ver
         setTimeout(() => {
-          textarea.focus()
+          input.focus()
           // Cursor'u en sona taşı - sadece ilk focus'ta
-          const length = textarea.value.length
-          textarea.setSelectionRange(length, length)
+          const length = input.value.length
+          input.setSelectionRange(length, length)
         }, 100)
       }
     }
-  }, [replyingTo]) // replyContents dependency'yi kaldırdık!
+  }, [replyingTo])
 
   // Reply content güncelleme fonksiyonu
   const updateReplyContent = useCallback((commentId: string, content: string) => {
@@ -244,11 +245,11 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
     const [showReplies, setShowReplies] = useState(false)
     const isOwner = user?.id === comment.user.id
     
-    const setRef = useCallback((el: HTMLTextAreaElement | null) => {
+    const setRef = useCallback((el: HTMLInputElement | null) => {
       if (el) {
-        replyTextareaRefs.current[comment.id] = el
+        replyInputRefs.current[comment.id] = el
       } else {
-        delete replyTextareaRefs.current[comment.id]
+        delete replyInputRefs.current[comment.id]
       }
     }, [comment.id])
 
@@ -334,7 +335,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
-                  <textarea
+                  <Input
                     ref={setRef}
                     placeholder="Yanıtınızı yazın..."
                     value={replyContents[comment.id] || ""}
@@ -342,13 +343,16 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                       // Sadece state güncelle, cursor manipulation yok
                       updateReplyContent(comment.id, e.target.value)
                     }}
-                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                     autoFocus
                     onFocus={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                       e.stopPropagation()
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleSubmitReply(comment.id)
+                      }
                     }}
                   />
                   <div className="flex gap-2">
