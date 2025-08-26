@@ -19,6 +19,7 @@ import {
 import { BRAND_SLOGANS } from "@/lib/constants"
 import { useTasks } from "@/hooks/queries/use-tasks"
 import { useProjects } from "@/hooks/queries/use-projects"
+import { useTaskStore } from "@/store/taskStore"
 import { TaskCard } from "@/components/task/task-card"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
@@ -32,6 +33,18 @@ export function DashboardOverview() {
   // React Query hooks
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
+  
+  // TaskStore functions for mutations
+  const { 
+    toggleTaskComplete, 
+    updateTask, 
+    toggleTaskPin, 
+    updateTaskTags, 
+    cloneTask, 
+    moveTask, 
+    addSubTask, 
+    deleteTask: deleteTaskFromStore 
+  } = useTaskStore()
   
   // Rastgele slogan seç (hydration sorunu için client-side)
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
@@ -105,14 +118,12 @@ export function DashboardOverview() {
   }, [])
 
   useEffect(() => {
-    Promise.all([
-      fetchTasks(),
-      fetchProjects(),
-      fetchMotivationalQuote()
-    ]).catch(error => {
-      console.error('Failed to fetch dashboard data:', error)
+    // React Query hooks automatically handle data fetching
+    // Only fetch motivational quote manually
+    fetchMotivationalQuote().catch(error => {
+      console.error('Failed to fetch motivational quote:', error)
     })
-  }, [fetchTasks, fetchProjects, fetchMotivationalQuote])
+  }, [fetchMotivationalQuote])
 
   // Task handlers
   const handleDeleteTask = useCallback((taskId: string) => {
@@ -189,17 +200,15 @@ export function DashboardOverview() {
         cloneTask(taskId, targetProjectId, targetSectionId)
       ])
       
-      // Refresh only if clone was successful
-      if (cloneResult.status === 'fulfilled') {
-        await fetchTasks()
-      } else {
+      // React Query will automatically refetch after mutation
+      if (cloneResult.status === 'rejected') {
         console.error('Clone failed:', cloneResult.reason)
         // Revert optimistic updates if needed
       }
     } catch (error) {
       console.error('Failed to clone task:', error)
     }
-  }, [cloneTask, fetchTasks])
+  }, [cloneTask])
 
   const handleMoveTask = useCallback(async (taskId: string, targetProjectId: string, targetSectionId?: string) => {
     try {
@@ -212,17 +221,15 @@ export function DashboardOverview() {
         moveTask(taskId, targetProjectId, targetSectionId)
       ])
       
-      // Refresh only if move was successful
-      if (moveResult.status === 'fulfilled') {
-        await fetchTasks()
-      } else {
+      // React Query will automatically refetch after mutation
+      if (moveResult.status === 'rejected') {
         console.error('Move failed:', moveResult.reason)
         // Revert optimistic updates if needed
       }
     } catch (error) {
       console.error('Failed to move task:', error)
     }
-  }, [moveTask, fetchTasks])
+  }, [moveTask])
 
   // Canlı istatistikler hesaplama
   const stats = useMemo(() => {
@@ -715,7 +722,7 @@ export function DashboardOverview() {
             if (taskModalContext.parentTaskId) {
               await addSubTask(taskModalContext.parentTaskId, newTask)
             }
-            await fetchTasks()
+            // React Query will automatically refetch after task creation
             setIsTaskModalOpen(false)
             setTaskModalContext({})
           } catch (error) {
@@ -739,7 +746,7 @@ export function DashboardOverview() {
           if (taskToDelete) {
             try {
               await deleteTaskFromStore(taskToDelete.id)
-              await fetchTasks()
+              // React Query will automatically refetch after task deletion
               setIsTaskDeleteDialogOpen(false)
               setTaskToDelete(null)
             } catch (error) {
