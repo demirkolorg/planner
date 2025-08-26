@@ -264,7 +264,39 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   createTask: async (taskData: CreateTaskRequest) => {
     set({ error: null })
+    
+    // 1. Create temporary task for optimistic UI
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const tempTask: TaskWithRelations = {
+      id: tempId,
+      title: taskData.title,
+      description: taskData.description || '',
+      completed: false,
+      priority: taskData.priority || 'NONE',
+      dueDate: taskData.dueDate || undefined,
+      isPinned: false,
+      parentTaskId: taskData.parentTaskId,
+      projectId: taskData.projectId || '',
+      sectionId: taskData.sectionId || '',
+      userId: '', // Will be filled from server response
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      level: taskData.parentTaskId ? 1 : 0, // Simplified for now
+      taskType: taskData.taskType || 'PROJECT',
+      calendarSourceId: taskData.calendarSourceId,
+      quickNoteCategory: taskData.quickNoteCategory,
+      tags: [],
+      subTasks: [],
+      assignments: [],
+      approvalStatus: 'NOT_REQUIRED',
+      _count: { comments: 0 }
+    }
+    
+    // 2. Optimistic update - add temporary task instantly
+    set(state => ({ tasks: [tempTask, ...state.tasks] }))
+    
     try {
+      // 3. API call
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: {
@@ -274,15 +306,23 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       })
       
       if (!response.ok) {
+        // 4. API failed - remove temporary task
+        set(state => ({
+          tasks: state.tasks.filter(t => t.id !== tempId)
+        }))
+        
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to create task')
       }
       
+      // 5. API success - replace temporary task with real task
       const newTask = await response.json() as CreateTaskResponse
       
-      // Add new task to store and update parent task if this is a subtask
+      // 6. Replace temporary task with real task from server
       set(state => {
-        let updatedTasks = [newTask, ...state.tasks]
+        // Remove temporary task and add real task
+        const tasksWithoutTemp = state.tasks.filter(t => t.id !== tempId)
+        let updatedTasks = [newTask, ...tasksWithoutTemp]
         
         // Eğer bu bir alt görevse, parent task'ın subTasks array'ini güncelle
         if (newTask.parentTaskId) {
@@ -312,8 +352,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       
       return newTask
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
+      // 7. Error handling - ensure temporary task is removed
+      set(state => ({
+        tasks: state.tasks.filter(t => t.id !== tempId),
+        error: error instanceof Error ? error.message : 'An error occurred'
+      }))
       throw error
     }
   },
