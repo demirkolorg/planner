@@ -15,6 +15,7 @@ import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { useProjects, useCreateProject } from "@/hooks/queries/use-projects"
 import { useTagStore } from "@/store/tagStore"
 import { useTasks } from "@/hooks/queries/use-tasks"
+import { useTaskStore } from "@/store/taskStore"
 import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
 import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
@@ -148,6 +149,14 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const { data: projects = [] } = useProjects()
   const { data: tasks = [] } = useTasks()
   const { tags, fetchTags } = useTagStore()
+  
+  // TaskStore utility functions
+  const { 
+    getTasksDueToday, 
+    getOverdueTasks, 
+    getCurrentWeekTasksCount, 
+    getTotalCompletedTasksCount 
+  } = useTaskStore()
   const createProjectMutation = useCreateProject()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
