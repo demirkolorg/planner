@@ -12,7 +12,9 @@ import {
   CalendarClock,
   Home,
   Plus,
-  Info
+  Info,
+  BarChart3,
+  Target
 } from "lucide-react"
 import { BRAND_SLOGANS } from "@/lib/constants"
 import { useTasks } from "@/hooks/queries/use-tasks"
