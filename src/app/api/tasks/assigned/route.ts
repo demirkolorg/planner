@@ -101,41 +101,50 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    // Assignment bilgilerini ekle
-    const tasksWithAssignments = await Promise.all(
-      tasks.map(async (task) => {
-        const assignments = await db.assignment.findMany({
-          where: {
-            targetType: 'TASK',
-            targetId: task.id,
-            status: 'ACTIVE'
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            assigner: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
+    // N+1 Query sorunu çözümü: Tüm assignment'ları bir sorguda al
+    const taskIds = tasks.map(task => task.id)
+    
+    const allAssignments = await db.assignment.findMany({
+      where: {
+        targetType: 'TASK',
+        targetId: { in: taskIds },
+        status: 'ACTIVE'
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
           }
-        })
-
-        return {
-          ...task,
-          assignments
+        },
+        assigner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
         }
-      })
-    )
+      }
+    })
+
+    // Assignment'ları taskId'ye göre grupla
+    const assignmentMap = new Map<string, typeof allAssignments>()
+    allAssignments.forEach(assignment => {
+      const taskId = assignment.targetId
+      if (!assignmentMap.has(taskId)) {
+        assignmentMap.set(taskId, [])
+      }
+      assignmentMap.get(taskId)!.push(assignment)
+    })
+
+    // Task'lara assignment bilgilerini ekle
+    const tasksWithAssignments = tasks.map(task => ({
+      ...task,
+      assignments: assignmentMap.get(task.id) || []
+    }))
 
     // Görevleri formatla
     const formattedTasks = tasksWithAssignments.map(task => ({

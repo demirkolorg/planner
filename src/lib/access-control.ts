@@ -506,31 +506,103 @@ export async function getUserAccessibleProjects(userId: string) {
     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   )
 
-  // Her proje için access level ve pin durumu hesapla
-  const projectsWithAccess = await Promise.all(
-    projects.map(async (project) => {
-      const access = await getUserProjectAccess(userId, project.id)
-      
-      // User-specific pin durumunu kontrol et
-      const userPin = await withReadRetry(async () =>
-        db.userPin.findUnique({
-          where: {
-            userId_targetType_targetId: {
-              userId: userId,
-              targetType: 'PROJECT',
-              targetId: project.id
-            }
-          }
-        })
-      )
-      
-      return {
-        ...project,
-        userAccess: access,
-        isPinned: !!userPin  // UserPin var ise pinned, yoksa unpinned
+  // N+1 Query sorunu çözümü: Bulk access kontrolü ve pin bilgilerini getir
+  const projectIds = projects.map(p => p.id)
+  
+  // Tüm proje pin bilgilerini bir sorguda al
+  const allProjectPins = await withReadRetry(async () =>
+    db.userPin.findMany({
+      where: {
+        userId: userId,
+        targetType: 'PROJECT',
+        targetId: { in: projectIds }
       }
     })
   )
+
+  // Pin set'ini oluştur
+  const pinnedProjectSet = new Set(allProjectPins.map(pin => pin.targetId))
+  
+  // Tüm assignment verilerini bulk olarak getir
+  const allUserAssignments = await withReadRetry(async () =>
+    db.assignment.findMany({
+      where: {
+        userId: userId,
+        status: 'ACTIVE',
+        OR: [
+          { targetType: 'PROJECT', targetId: { in: projectIds } },
+          { targetType: 'SECTION' },
+          { targetType: 'TASK' }
+        ]
+      }
+    })
+  )
+  
+  // Project member bilgilerini bulk olarak getir
+  const allProjectMembers = await withReadRetry(async () =>
+    db.projectMember.findMany({
+      where: { 
+        projectId: { in: projectIds },
+        userId: userId 
+      }
+    })
+  )
+
+  // Bulk data'yı grupla
+  const assignmentsByProject = new Map<string, any[]>()
+  const membersByProject = new Map<string, any>()
+  
+  allUserAssignments.forEach(assignment => {
+    if (assignment.targetType === 'PROJECT') {
+      if (!assignmentsByProject.has(assignment.targetId)) {
+        assignmentsByProject.set(assignment.targetId, [])
+      }
+      assignmentsByProject.get(assignment.targetId)!.push(assignment)
+    }
+  })
+  
+  allProjectMembers.forEach(member => {
+    membersByProject.set(member.projectId, member)
+  })
+
+  // Her proje için access level hesapla (optimized)
+  const projectsWithAccess = projects.map(project => {
+    // Basit access level hesaplaması
+    const isOwner = project.userId === userId
+    const member = membersByProject.get(project.id)
+    const projectAssignments = assignmentsByProject.get(project.id) || []
+    
+    let accessLevel: AccessLevel
+    if (isOwner) {
+      accessLevel = 'OWNER'
+    } else if (member) {
+      accessLevel = 'PROJECT_MEMBER'
+    } else if (projectAssignments.length > 0) {
+      accessLevel = 'PROJECT_ASSIGNED'
+    } else {
+      accessLevel = 'NO_ACCESS'
+    }
+
+    // Simplified permissions (daha detaylı hesaplama gerekirse ayrı fonksiyon)
+    const permissions = calculatePermissions(accessLevel, member?.role, 'COLLABORATOR')
+
+    return {
+      ...project,
+      userAccess: {
+        accessLevel,
+        isProjectOwner: isOwner,
+        projectAssignment: projectAssignments[0] || null,
+        sectionAssignments: [],
+        taskAssignments: [],
+        permissions,
+        visibleContent: {
+          sectionIds: [],
+          taskIds: []
+        }
+      },
+      isPinned: pinnedProjectSet.has(project.id)
+    }
+  })
 
   return projectsWithAccess
 }

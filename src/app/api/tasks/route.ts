@@ -379,53 +379,68 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Assignment ve pin bilgilerini ayrı olarak ekle
-    const tasksWithAssignments = await Promise.all(
-      tasks.map(async (task) => {
-        const assignments = await db.assignment.findMany({
-          where: {
-            targetType: 'TASK',
-            targetId: task.id,
-            status: 'ACTIVE'
+    // N+1 Query sorunu çözümü: Tüm assignments ve pins'i bir sorguda al
+    const taskIds = tasks.map(task => task.id)
+    
+    const [allAssignments, allUserPins] = await Promise.all([
+      // Tüm task assignment'larını bir sorguda al
+      db.assignment.findMany({
+        where: {
+          targetType: 'TASK',
+          targetId: { in: taskIds },
+          status: 'ACTIVE'
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
           },
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            },
-            assigner: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
-              }
+          assigner: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
             }
           }
-        })
-
-        // User-specific pin durumunu kontrol et
-        const userPin = await db.userPin.findUnique({
-          where: {
-            userId_targetType_targetId: {
-              userId: decoded.userId,
-              targetType: 'TASK',
-              targetId: task.id
-            }
-          }
-        })
-
-        return {
-          ...task,
-          assignments,
-          isPinned: !!userPin  // UserPin var ise pinned, yoksa unpinned
+        }
+      }),
+      // Tüm user pin'lerini bir sorguda al
+      db.userPin.findMany({
+        where: {
+          userId: decoded.userId,
+          targetType: 'TASK',
+          targetId: { in: taskIds }
         }
       })
-    )
+    ])
+
+    // Assignment'ları ve pin'leri taskId'ye göre grupla
+    const assignmentMap = new Map<string, typeof allAssignments>()
+    const pinSet = new Set<string>()
+
+    allAssignments.forEach(assignment => {
+      const taskId = assignment.targetId
+      if (!assignmentMap.has(taskId)) {
+        assignmentMap.set(taskId, [])
+      }
+      assignmentMap.get(taskId)!.push(assignment)
+    })
+
+    allUserPins.forEach(pin => {
+      pinSet.add(pin.targetId)
+    })
+
+    // Task'lara assignment ve pin bilgilerini ekle
+    const tasksWithAssignments = tasks.map(task => ({
+      ...task,
+      assignments: assignmentMap.get(task.id) || [],
+      isPinned: pinSet.has(task.id)
+    }))
 
     return NextResponse.json(tasksWithAssignments)
   } catch (error) {
