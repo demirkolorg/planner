@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { VirtualTaskList } from '@/components/task/virtual-task-list'
 import { Users, CheckCircle, Clock, RefreshCw, Filter, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTaskStore } from '@/store/taskStore'
 import type { Task } from '@/types/task'
 
 interface AssignedTask extends Task {
@@ -48,6 +49,7 @@ export default function AssignedTasksPage() {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('pending')
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
+  const { deleteTask } = useTaskStore()
 
   // Atanan görevleri getir
   const fetchAssignedTasks = async () => {
@@ -136,7 +138,20 @@ export default function AssignedTasksPage() {
     }
   }
 
-
+  // Görev silme - optimistic UI with undo
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      // TaskStore deleteTask ile optimistic UI + undo
+      await deleteTask(taskId)
+      
+      // Local state'den de kaldır (TaskStore'dan sync için)
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId))
+      
+    } catch (error) {
+      console.error('Task deletion error:', error)
+      // TaskStore error handling zaten mevcut
+    }
+  }
 
   // Filtrelenmiş görevler
   const filteredTasks = tasks.filter(task => {
@@ -316,6 +331,7 @@ export default function AssignedTasksPage() {
           tasks={filteredTasks}
           height={Math.min(filteredTasks.length * 120 + 100, 800)} // Dynamic height with max
           onToggleComplete={handleToggleComplete}
+          onDeleteTask={handleDeleteTask}
           showProject={true}
           showSection={true}
           className="space-y-3"

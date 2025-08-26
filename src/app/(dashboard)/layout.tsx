@@ -18,6 +18,7 @@ const QuickTaskModal = lazy(() => import("@/components/modals/quick-task-modal")
 const QuickSearchModal = lazy(() => import("@/components/modals/quick-search-modal").then(mod => ({ default: mod.QuickSearchModal })))
 const NewTaskModal = lazy(() => import("@/components/modals/new-task-modal").then(mod => ({ default: mod.NewTaskModal })))
 import { ToastNotification } from "@/components/ui/toast-notification"
+import { UndoToast } from "@/components/ui/undo-toast"
 import { useAutoNotifications } from "@/hooks/use-notifications"
 import { useCtrlK, useCtrlS, useCtrlJ, useCtrlB } from "@/hooks/use-keyboard-shortcut"
 
@@ -225,6 +226,9 @@ export default function DashboardLayout({
       
       {/* Toast Notifications */}
       <ToastNotification />
+      
+      {/* Undo Toast */}
+      <UndoToast />
     </div>
   )
 }

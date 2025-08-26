@@ -432,42 +432,152 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     
     set({ tasks: updatedTasks })
     
+    // 2. Show undo toast notification
+    const showUndoToast = () => {
+      window.dispatchEvent(new CustomEvent('showUndoToast', {
+        detail: {
+          message: `"${taskToDelete.title}" görevi silindi`,
+          taskData: taskToDelete,
+          undoAction: () => get().undoDeleteTask(taskToDelete)
+        }
+      }))
+    }
+    
+    let isApiCallCompleted = false
+    
     try {
-      // 2. API call
+      // 3. API call
       const response = await fetch(`/api/tasks/${id}`, {
         method: 'DELETE',
       })
       
+      isApiCallCompleted = true
+      
       if (!response.ok) {
-        // 3. API failed - restore task
+        // 4. API failed - restore task
         set({ tasks: originalTasks })
         
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to delete task')
       }
       
-      // 4. API success - optimistic update is already applied
-      // Optionally show undo notification here
+      // 5. API success - show undo toast for 5 seconds
+      showUndoToast()
       
     } catch (error) {
-      // 5. Error handling - restore original state
-      set({
-        tasks: originalTasks,
-        error: error instanceof Error ? error.message : 'An error occurred'
-      })
+      // 6. Error handling - restore original state if API call completed
+      if (isApiCallCompleted) {
+        set({
+          tasks: originalTasks,
+          error: error instanceof Error ? error.message : 'An error occurred'
+        })
+      } else {
+        // If API call failed before completion, just set error
+        set({
+          error: error instanceof Error ? error.message : 'An error occurred'
+        })
+      }
       throw error
     }
   },
   
-  // Undo delete functionality (for future use)
+  // Undo delete functionality
   undoDeleteTask: async (taskData: TaskWithRelations) => {
-    // This would be called if user clicks "Undo" within 5 seconds
-    // For now, just restore to local state - API recreation could be complex
-    set(state => ({
-      tasks: [...state.tasks, taskData].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-    }))
+    set({ error: null })
+    
+    try {
+      // 1. Optimistic update - restore task instantly
+      set(state => {
+        // Check if task already exists (prevent duplicates)
+        const existingTask = state.tasks.find(t => t.id === taskData.id)
+        if (existingTask) return state
+        
+        // Add task back to the list
+        const restoredTasks = [...state.tasks, taskData].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        
+        // If this was a subtask, also restore it to parent's subTasks
+        if (taskData.parentTaskId) {
+          return {
+            tasks: restoredTasks.map(task => {
+              if (task.id === taskData.parentTaskId) {
+                return {
+                  ...task,
+                  subTasks: [...(task.subTasks || []), taskData].sort((a, b) => 
+                    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                  )
+                }
+              }
+              return task
+            })
+          }
+        }
+        
+        return { tasks: restoredTasks }
+      })
+      
+      // 2. API call to restore task (recreate it)
+      const createTaskData = {
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        dueDate: taskData.dueDate,
+        projectId: taskData.projectId,
+        sectionId: taskData.sectionId,
+        parentTaskId: taskData.parentTaskId,
+        level: taskData.level,
+        taskType: taskData.taskType,
+        calendarSourceId: taskData.calendarSourceId,
+        quickNoteCategory: taskData.quickNoteCategory,
+        isPinned: taskData.isPinned
+      }
+      
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createTaskData)
+      })
+      
+      if (!response.ok) {
+        // API failed - remove restored task from UI
+        set(state => ({
+          tasks: state.tasks.filter(t => t.id !== taskData.id),
+          error: 'Görev geri alınamadı'
+        }))
+        
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to restore task')
+      }
+      
+      const newTask = await response.json()
+      
+      // 3. Replace temporary restored task with API response
+      set(state => ({
+        tasks: state.tasks.map(task => 
+          task.id === taskData.id ? newTask : task
+        )
+      }))
+      
+      // 4. Show success notification
+      window.dispatchEvent(new CustomEvent('quickTaskSuccess', {
+        detail: { message: `"${taskData.title}" görevi geri alındı` }
+      }))
+      
+    } catch (error) {
+      // Error handling - remove restored task if API failed
+      set(state => ({
+        tasks: state.tasks.filter(t => t.id !== taskData.id),
+        error: error instanceof Error ? error.message : 'Görev geri alınamadı'
+      }))
+      
+      // Show error notification
+      window.dispatchEvent(new CustomEvent('quickTaskError', {
+        detail: { 
+          message: error instanceof Error ? error.message : 'Görev geri alınamadı' 
+        }
+      }))
+    }
   },
 
   cloneTask: async (id: string, targetProjectId?: string, targetSectionId?: string | null) => {
