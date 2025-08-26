@@ -99,48 +99,7 @@ export default function AssignedTasksPage() {
     }
   }
 
-  // DEPRECATED: Assignment methods - Use new unified assignment system
-  // These methods will be handled by SimpleAssignmentButton component
-  const handleAssignUser = async (taskId: string, userId: string) => {
-    console.warn('handleAssignUser is deprecated - use SimpleAssignmentButton component')
-    // Refresh the task list after assignment changes
-    await fetchAssignedTasks()
-  }
 
-  const handleUnassignUser = async (taskId: string, userId: string) => {
-    console.warn('handleUnassignUser is deprecated - use SimpleAssignmentButton component')
-    // Refresh the task list after assignment changes
-    await fetchAssignedTasks()
-  }
-
-  // Atama güncelleme fonksiyonu - TaskCard için gerekli
-  const handleUpdateAssignment = async (taskId: string, updates: any) => {
-    try {
-      // Optimistic update
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === taskId ? { ...task, ...updates } : task
-        )
-      )
-
-      // Görev güncellemesi
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      })
-
-      if (!response.ok) {
-        // Hata durumunda geri al
-        await fetchAssignedTasks()
-        throw new Error('Görev güncellenemedi')
-      }
-    } catch (error) {
-      console.error('Assignment update error:', error)
-      // Hata durumunda listeyi yenile
-      await fetchAssignedTasks()
-    }
-  }
 
   // Filtrelenmiş görevler
   const filteredTasks = tasks.filter(task => {

@@ -145,8 +145,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
   // React Query hooks
-  const { data: projects = [], isLoading: projectsLoading } = useProjects()
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: projects = [] } = useProjects()
+  const { data: tasks = [] } = useTasks()
   const { tags, fetchTags } = useTagStore()
   const createProjectMutation = useCreateProject()
   const { user, logout } = useAuthStore()
@@ -210,21 +210,6 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     setIsSyncing(false)
   }
 
-  // Proje tamamlanma kontrolü
-  const isProjectCompleted = useCallback((projectId: string) => {
-    const project = projects.find(p => p.id === projectId)
-    
-    // Korumalı projeler hiçbir zaman tamamlandı olarak işaretlenemez
-    if (project && isProtectedProject(project.name)) return false
-    
-    const projectTasks = tasks.filter(task => task.projectId === projectId)
-    
-    // Hiç görev yoksa tamamlandı sayılmaz
-    if (projectTasks.length === 0) return false
-    
-    // En az 1 görev var ve tüm görevler tamamlanmışsa proje tamamlandı
-    return projectTasks.every(task => task.completed)
-  }, [tasks, projects])
 
   // Sabitlenmiş projeleri filtrele ve sırala
   const pinnedProjects = useMemo(() => {

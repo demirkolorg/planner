@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, memo, useMemo } from "react"
+import React, { useState, memo } from "react"
 // Icon imports - TaskCard'da kullanılan tüm icon'lar
 import { 
   ChevronRight, 
@@ -31,7 +31,6 @@ import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
 import { getTaskDateStatus, getDueDateMessage, getDateStatusColor } from "@/lib/date-utils"
 
 interface TaskWithRelations {

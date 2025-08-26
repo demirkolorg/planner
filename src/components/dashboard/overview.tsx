@@ -1,29 +1,21 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
   FolderOpen, 
   CheckSquare, 
   Clock, 
-  TrendingUp, 
-  AlertTriangle, 
-  Calendar,
-  Target,
-  Activity,
-  BarChart3,
-  ArrowRight,
+  TrendingUp,
   CalendarX,
   CalendarCheck,
   CalendarClock,
   Home,
   Plus,
-  Lightbulb,
   Info
 } from "lucide-react"
 import { BRAND_SLOGANS } from "@/lib/constants"
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskComplete } from "@/hooks/queries/use-tasks"
+import { useTasks } from "@/hooks/queries/use-tasks"
 import { useProjects } from "@/hooks/queries/use-projects"
 import { TaskCard } from "@/components/task/task-card"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
@@ -32,17 +24,12 @@ import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { KeyboardShortcutsModal } from "@/components/modals/keyboard-shortcuts-modal"
 import { useEffect, useMemo, useState, useCallback, memo } from "react"
 import Link from "next/link"
-import { format, isToday, startOfWeek, endOfWeek, isWithinInterval, addWeeks } from "date-fns"
-import { tr } from "date-fns/locale"
+import { isToday, startOfWeek, endOfWeek, isWithinInterval, addWeeks } from "date-fns"
 
 export function DashboardOverview() {
   // React Query hooks
-  const { data: tasks = [], isLoading: tasksLoading, error: tasksError } = useTasks()
-  const { data: projects = [], isLoading: projectsLoading, error: projectsError } = useProjects()
-  const createTaskMutation = useCreateTask()
-  const updateTaskMutation = useUpdateTask()
-  const deleteTaskMutation = useDeleteTask()
-  const toggleTaskCompleteMutation = useToggleTaskComplete()
+  const { data: tasks = [] } = useTasks()
+  const { data: projects = [] } = useProjects()
   
   // Rastgele slogan seç (hydration sorunu için client-side)
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
