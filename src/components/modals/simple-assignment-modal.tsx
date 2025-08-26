@@ -158,10 +158,25 @@ export function SimpleAssignmentModal({
       if (response.ok) {
         // Başarı mesajları
         if (data.userAssignments?.length > 0) {
-          toast.success(`${data.userAssignments.length} kullanıcı atandı`)
+          const userCount = data.userAssignments.length
+          const subTaskCount = data.subTasksAssigned || 0
+          const message = subTaskCount > 0 
+            ? `${userCount} kullanıcı atandı (${subTaskCount} alt görev dahil)`
+            : `${userCount} kullanıcı atandı`
+          toast.success(message)
         }
         if (data.emailAssignments?.length > 0) {
-          toast.success(`${data.emailAssignments.length} email davetiyesi gönderildi`)
+          const emailCount = data.emailAssignments.length
+          const subTaskCount = data.subTasksAssigned || 0
+          const message = subTaskCount > 0 
+            ? `${emailCount} email davetiyesi gönderildi (${subTaskCount} alt görev dahil)`
+            : `${emailCount} email davetiyesi gönderildi`
+          toast.success(message)
+        }
+        
+        // Alt görev atama özel bilgisi
+        if (data.subTasksAssigned > 0 && targetType === 'TASK') {
+          toast.info(`Alt görevler de otomatik olarak atandı (${data.subTasksAssigned} alt görev)`)
         }
         
         // Hata mesajları
@@ -444,6 +459,24 @@ export function SimpleAssignmentModal({
         </DialogHeader>
         
         <div className="space-y-6">
+          {/* Alt Görev Uyarısı - Sadece TASK için */}
+          {targetType === 'TASK' && (
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="space-y-2">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                    Alt Görev Otomatik Atama
+                  </h4>
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    Bu göreve atama yaptığınızda, tüm alt görevleri de otomatik olarak aynı kullanıcıya atanacak. 
+                    Bu sayede görev hiyerarşisi korunur ve alt görevler için ayrı atama yapmanıza gerek kalmaz.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Hızlı Rehber */}
           <div>
             <h3 className="text-lg font-semibold mb-4">💡 Hızlı Rehber</h3>
@@ -580,23 +613,29 @@ export function SimpleAssignmentModal({
               <div className="flex items-start gap-2">
                 <Badge variant="outline" className="mt-0.5">1</Badge>
                 <div className="text-sm">
-                  <strong>Görev Atama Sınırı:</strong> Bir görev sadece 1 kullanıcıya atanabilir. Yeni atama yapmak için önce mevcut atamayı kaldırmalısınız.
+                  <strong>Alt Görev Otomatik Atama:</strong> Bir göreve atama yaptığınızda, o görevin tüm alt görevleri de otomatik olarak aynı kullanıcıya atanır. Bu sayede görev hiyerarşisi korunur.
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <Badge variant="outline" className="mt-0.5">2</Badge>
                 <div className="text-sm">
-                  <strong>Hiyerarşik Erişim:</strong> Üst seviye atama, alt seviye erişimi de içerir. Örneğin proje ataması olan kullanıcı tüm bölüm ve görevleri görebilir.
+                  <strong>Görev Atama Sınırı:</strong> Bir görev sadece 1 kullanıcıya atanabilir. Yeni atama yapmak için önce mevcut atamayı kaldırmalısınız.
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <Badge variant="outline" className="mt-0.5">3</Badge>
                 <div className="text-sm">
-                  <strong>Onay Sistemi:</strong> Atanmış kullanıcılar görevleri direkt tamamlayamaz, sadece onaya gönderebilir. Onay proje sahipleri tarafından verilir.
+                  <strong>Hiyerarşik Erişim:</strong> Üst seviye atama, alt seviye erişimi de içerir. Örneğin proje ataması olan kullanıcı tüm bölüm ve görevleri görebilir.
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <Badge variant="outline" className="mt-0.5">4</Badge>
+                <div className="text-sm">
+                  <strong>Onay Sistemi:</strong> Atanmış kullanıcılar görevleri direkt tamamlayamaz, sadece onaya gönderebilir. Onay proje sahipleri tarafından verilir.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Badge variant="outline" className="mt-0.5">5</Badge>
                 <div className="text-sm">
                   <strong>Email Ataması:</strong> Sisteme kayıtlı olmayan kullanıcılara email ile atama yapabilirsiniz. Kayıt olduktan sonra atama aktif olur.
                 </div>

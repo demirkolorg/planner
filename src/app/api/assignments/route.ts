@@ -123,7 +123,8 @@ export async function POST(request: NextRequest) {
     const results = {
       userAssignments: [] as any[],
       emailAssignments: [] as any[],
-      errors: [] as string[]
+      errors: [] as string[],
+      subTasksAssigned: 0 // Alt görev atama sayısı
     }
 
     // Kullanıcı atamaları
@@ -185,6 +186,77 @@ export async function POST(request: NextRequest) {
           })
 
           results.userAssignments.push(assignment)
+
+          // Eğer TASK ataması ise, alt görevleri de otomatik ata
+          if (targetType === 'TASK') {
+            try {
+              const subTasks = await db.task.findMany({
+                where: {
+                  parentTaskId: targetId,
+                },
+                select: {
+                  id: true,
+                  title: true
+                }
+              })
+
+              for (const subTask of subTasks) {
+                // Alt görev zaten atanmış mı kontrol et
+                const existingSubAssignment = await db.assignment.findFirst({
+                  where: {
+                    targetType: 'TASK',
+                    targetId: subTask.id,
+                    userId: assigneeId,
+                    status: 'ACTIVE'
+                  }
+                })
+
+                if (!existingSubAssignment) {
+                  // Alt görevi de ata
+                  const subTaskAssignment = await db.assignment.create({
+                    data: {
+                      targetType: 'TASK',
+                      targetId: subTask.id,
+                      userId: assigneeId,
+                      email: null,
+                      assignedBy: userId,
+                      status: 'ACTIVE',
+                      message: `Ana görev ataması ile otomatik atandı: ${targetName || 'Görev'}`
+                    },
+                    include: {
+                      user: {
+                        select: {
+                          id: true,
+                          firstName: true,
+                          lastName: true,
+                          email: true
+                        }
+                      }
+                    }
+                  })
+
+                  results.userAssignments.push(subTaskAssignment)
+                  results.subTasksAssigned++
+
+                  // Alt görev için bildirim gönder
+                  try {
+                    await createAssignmentNotification(
+                      'TASK',
+                      subTask.id,
+                      subTask.title,
+                      assigneeId,
+                      userId
+                    )
+                  } catch (notificationError) {
+                    console.error('Sub-task assignment notification error:', notificationError)
+                  }
+                }
+              }
+            } catch (subTaskError) {
+              console.error('Sub-task assignment error:', subTaskError)
+              // Alt görev atama hatası ana işlemi engellemez
+            }
+          }
 
           // Bildirim gönder
           try {
@@ -290,6 +362,80 @@ export async function POST(request: NextRequest) {
           })
 
           results.emailAssignments.push(assignment)
+
+          // Eğer TASK ataması ise, alt görevleri de otomatik email ile ata
+          if (targetType === 'TASK') {
+            try {
+              const subTasks = await db.task.findMany({
+                where: {
+                  parentTaskId: targetId,
+                },
+                select: {
+                  id: true,
+                  title: true
+                }
+              })
+
+              for (const subTask of subTasks) {
+                // Alt görev zaten email ile atanmış mı kontrol et
+                const existingSubAssignment = await db.assignment.findFirst({
+                  where: {
+                    targetType: 'TASK',
+                    targetId: subTask.id,
+                    email: email,
+                    status: 'PENDING'
+                  }
+                })
+
+                if (!existingSubAssignment) {
+                  // Alt görevi de email ile ata
+                  const subTaskAssignment = await db.assignment.create({
+                    data: {
+                      targetType: 'TASK',
+                      targetId: subTask.id,
+                      userId: null,
+                      email: email,
+                      assignedBy: userId,
+                      status: 'PENDING',
+                      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 gün
+                      message: `Ana görev email ataması ile otomatik davet: ${targetName || 'Görev'}`
+                    },
+                    include: {
+                      assigner: {
+                        select: {
+                          id: true,
+                          firstName: true,
+                          lastName: true,
+                          email: true
+                        }
+                      }
+                    }
+                  })
+
+                  results.emailAssignments.push(subTaskAssignment)
+                  results.subTasksAssigned++
+
+                  // Alt görev için email gönder
+                  try {
+                    await sendAssignmentInvitationEmail(email, {
+                      targetType: 'TASK',
+                      targetId: subTask.id,
+                      targetName: subTask.title,
+                      projectName: projectName,
+                      assignerName: `${assignment.assigner.firstName} ${assignment.assigner.lastName}`,
+                      assignmentId: subTaskAssignment.id,
+                      message: `Ana görev ataması ile beraber alt görev de atandı`
+                    })
+                  } catch (emailError) {
+                    console.error('Sub-task email sending error:', emailError)
+                  }
+                }
+              }
+            } catch (subTaskError) {
+              console.error('Sub-task email assignment error:', subTaskError)
+              // Alt görev email atama hatası ana işlemi engellemez
+            }
+          }
 
           // Email gönder
           try {
