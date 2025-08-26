@@ -217,13 +217,10 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
 
   // Reply content güncelleme fonksiyonu
   const updateReplyContent = useCallback((commentId: string, content: string) => {
-    setReplyContents(prev => {
-      if (prev[commentId] === content) return prev
-      return {
-        ...prev,
-        [commentId]: content
-      }
-    })
+    setReplyContents(prev => ({
+      ...prev,
+      [commentId]: content
+    }))
   }, [])
 
   // Kullanıcının baş harflerini al
@@ -342,7 +339,20 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                     ref={setRef}
                     placeholder="Yanıtınızı yazın..."
                     value={replyContents[comment.id] || ""}
-                    onChange={(e) => updateReplyContent(comment.id, e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      const selectionStart = e.target.selectionStart
+                      const selectionEnd = e.target.selectionEnd
+                      
+                      updateReplyContent(comment.id, value)
+                      
+                      // Cursor position'ı korumak için requestAnimationFrame kullan
+                      requestAnimationFrame(() => {
+                        if (e.target.setSelectionRange && typeof selectionStart === 'number') {
+                          e.target.setSelectionRange(selectionStart, selectionEnd)
+                        }
+                      })
+                    }}
                     className="min-h-[60px] resize-none"
                     autoFocus
                     onFocus={(e) => e.stopPropagation()}
@@ -423,7 +433,20 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                 <Textarea
                   placeholder="Yorumunuzu yazın..."
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    const selectionStart = e.target.selectionStart
+                    const selectionEnd = e.target.selectionEnd
+                    
+                    setNewComment(value)
+                    
+                    // Cursor position'ı korumak için requestAnimationFrame kullan
+                    requestAnimationFrame(() => {
+                      if (e.target.setSelectionRange && typeof selectionStart === 'number') {
+                        e.target.setSelectionRange(selectionStart, selectionEnd)
+                      }
+                    })
+                  }}
                   className="min-h-[80px] resize-none"
                   onFocus={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}

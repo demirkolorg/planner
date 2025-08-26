@@ -184,7 +184,20 @@ export function TaskContentPanel({ task, onTaskUpdate }: TaskContentPanelProps) 
           <div className="space-y-3">
             <Textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                const selectionStart = e.target.selectionStart
+                const selectionEnd = e.target.selectionEnd
+                
+                setDescription(value)
+                
+                // Cursor position'ı korumak için requestAnimationFrame kullan
+                requestAnimationFrame(() => {
+                  if (e.target.setSelectionRange && typeof selectionStart === 'number') {
+                    e.target.setSelectionRange(selectionStart, selectionEnd)
+                  }
+                })
+              }}
               placeholder="Görev açıklamasını yazın..."
               className="min-h-24 resize-none border-muted-foreground/20 bg-muted/20 focus:bg-background"
               onKeyDown={(e) => {

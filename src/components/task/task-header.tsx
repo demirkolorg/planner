@@ -162,7 +162,20 @@ export function TaskHeader({ task, onTaskUpdate, onBack }: TaskHeaderProps) {
                 <div className="flex items-center gap-2">
                   <Input
                     value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      const selectionStart = e.target.selectionStart
+                      const selectionEnd = e.target.selectionEnd
+                      
+                      setEditTitle(value)
+                      
+                      // Cursor position'ı korumak için requestAnimationFrame kullan
+                      requestAnimationFrame(() => {
+                        if (e.target.setSelectionRange && typeof selectionStart === 'number') {
+                          e.target.setSelectionRange(selectionStart, selectionEnd)
+                        }
+                      })
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleSaveTitle()
                       if (e.key === 'Escape') {
