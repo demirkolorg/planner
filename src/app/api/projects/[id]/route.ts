@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
 import { getUserProjectAccess } from "@/lib/access-control"
+import { withReadRetry, withTransactionRetry } from "@/lib/db-retry"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,46 +26,48 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
     }
 
-    // Proje bilgilerini getir
-    const project = await db.project.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true
-          }
-        },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true
+    // Proje bilgilerini getir (retry ile)
+    const project = await withReadRetry(async () =>
+      db.project.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true
+                }
               }
             }
-          }
-        },
-        sections: {
-          where: access.permissions.canViewAllSections 
-            ? {}
-            : { id: { in: access.visibleContent.sectionIds } },
-          include: {
           },
-          orderBy: { order: 'asc' }
-        },
-        _count: {
-          select: {
-            tasks: access.permissions.canViewAllTasks 
-              ? { where: {} }
-              : { where: { id: { in: access.visibleContent.taskIds } } }
+          sections: {
+            where: access.permissions.canViewAllSections 
+              ? {}
+              : { id: { in: access.visibleContent.sectionIds } },
+            include: {
+            },
+            orderBy: { order: 'asc' }
+          },
+          _count: {
+            select: {
+              tasks: access.permissions.canViewAllTasks 
+                ? { where: {} }
+                : { where: { id: { in: access.visibleContent.taskIds } } }
+            }
           }
         }
-      }
-    })
+      })
+    )
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })

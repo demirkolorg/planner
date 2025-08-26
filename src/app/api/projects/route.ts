@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 import { authenticateUser } from "@/lib/auth"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { getUserAccessibleProjects } from "@/lib/access-control"
-import { withRetry } from "@/lib/db-retry"
+import { withRetry, withTransactionRetry } from "@/lib/db-retry"
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,19 +48,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
-    // Check if project with same name already exists for this user
-    const existingProject = await db.project.findFirst({
-      where: {
-        name,
-        userId: userId
-      }
-    })
+    // Check if project with same name already exists for this user (retry ile)
+    const existingProject = await withRetry(async () =>
+      db.project.findFirst({
+        where: {
+          name,
+          userId: userId
+        }
+      })
+    )
 
     if (existingProject) {
       return NextResponse.json({ error: "Project with this name already exists" }, { status: 409 })
     }
 
-    const result = await db.$transaction(async (tx) => {
+    const result = await withTransactionRetry(async () =>
+      db.$transaction(async (tx) => {
       const project = await tx.project.create({
         data: {
           name,
@@ -120,6 +123,7 @@ export async function POST(request: NextRequest) {
 
       return project
     })
+    )
 
     return NextResponse.json(result, { status: 201 })
   } catch (error: any) {

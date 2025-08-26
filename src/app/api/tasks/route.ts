@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken"
 import { createTaskActivity, TaskActivityTypes, getActivityDescription } from "@/lib/task-activity"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { syncTaskToCalendar } from "@/lib/google-calendar"
+import { withReadRetry, withTransactionRetry } from "@/lib/db-retry"
 
 // Öncelik mapping - İngilizce değerler doğrudan kullanılabilir
 const VALID_PRIORITIES = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE"]
@@ -79,9 +80,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Permission denied - cannot create tasks" }, { status: 403 })
       }
 
-      project = await db.project.findUnique({
-        where: { id: projectId }
-      })
+      project = await withReadRetry(async () =>
+        db.project.findUnique({
+          where: { id: projectId }
+        })
+      )
 
       if (!project) {
         return NextResponse.json({ error: "Project not found" }, { status: 404 })
@@ -94,35 +97,41 @@ export async function POST(request: NextRequest) {
     if (taskType === 'PROJECT' && projectId && sectionId) {
       // Eğer 'default' section kullanılıyorsa, projenin ilk section'ını bul veya oluştur
       if (sectionId === 'default') {
-        let defaultSection = await db.section.findFirst({
-          where: {
-            projectId: projectId
-          },
-          orderBy: {
-            createdAt: 'asc'
-          }
-        })
+        let defaultSection = await withReadRetry(async () =>
+          db.section.findFirst({
+            where: {
+              projectId: projectId
+            },
+            orderBy: {
+              createdAt: 'asc'
+            }
+          })
+        )
         
         // Eğer proje hiç section'a sahip değilse, default section oluştur
         if (!defaultSection) {
-          defaultSection = await db.section.create({
-            data: {
-              name: 'Varsayılan',
-              projectId: projectId,
-              order: 0
-            }
-          })
+          defaultSection = await withReadRetry(async () =>
+            db.section.create({
+              data: {
+                name: 'Varsayılan',
+                projectId: projectId,
+                order: 0
+              }
+            })
+          )
         }
         
         finalSectionId = defaultSection.id
       } else {
         // Normal section kontrolü
-        const section = await db.section.findFirst({
-          where: {
-            id: sectionId,
-            projectId: projectId
-          }
-        })
+        const section = await withReadRetry(async () =>
+          db.section.findFirst({
+            where: {
+              id: sectionId,
+              projectId: projectId
+            }
+          })
+        )
 
         if (!section) {
           return NextResponse.json({ error: "Section not found" }, { status: 404 })
@@ -147,10 +156,12 @@ export async function POST(request: NextRequest) {
     // Parent task'ın level'ını hesapla
     let taskLevel = 0
     if (parentTaskId) {
-      const parentTask = await db.task.findUnique({
-        where: { id: parentTaskId },
-        select: { level: true }
-      })
+      const parentTask = await withReadRetry(async () =>
+        db.task.findUnique({
+          where: { id: parentTaskId },
+          select: { level: true }
+        })
+      )
       
       if (parentTask) {
         // Level 4 ve üzeri görevlerde alt görev oluşturulamaz
@@ -164,8 +175,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Transaction ile task ve tag ilişkilerini oluştur
-    const result = await db.$transaction(async (tx) => {
+    // Transaction ile task ve tag ilişkilerini oluştur (retry ile)
+    const result = await withTransactionRetry(async () =>
+      db.$transaction(async (tx) => {
       // Task oluştur
       const task = await tx.task.create({
         data: {
@@ -257,6 +269,7 @@ export async function POST(request: NextRequest) {
 
       return result
     })
+    )
 
     // Transaction başarılı olduktan sonra aktivite kaydet
     if (result) {
@@ -332,66 +345,28 @@ export async function GET(request: NextRequest) {
       whereClause.taskType = taskTypeFilter
     }
     
-    // Kullanıcının görevlerini getir
-    const tasks = await db.task.findMany({
-      where: whereClause,
-      include: {
-        project: true,
-        section: true,
-        tags: {
-          include: {
-            tag: true
-          }
-        },
-        subTasks: {
-          include: {
-            tags: {
-              include: {
-                tag: true
-              }
-            },
-          }
-        },
-        approvalRequester: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true
-          }
-        },
-        approver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true
-          }
-        },
-        _count: {
-          select: {
-            comments: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    // N+1 Query sorunu çözümü: Tüm assignments ve pins'i bir sorguda al
-    const taskIds = tasks.map(task => task.id)
-    
-    const [allAssignments, allUserPins] = await Promise.all([
-      // Tüm task assignment'larını bir sorguda al
-      db.assignment.findMany({
-        where: {
-          targetType: 'TASK',
-          targetId: { in: taskIds },
-          status: 'ACTIVE'
-        },
+    // Kullanıcının görevlerini getir (retry ile)
+    const tasks = await withReadRetry(async () => 
+      db.task.findMany({
+        where: whereClause,
         include: {
-          user: {
+          project: true,
+          section: true,
+          tags: {
+            include: {
+              tag: true
+            }
+          },
+          subTasks: {
+            include: {
+              tags: {
+                include: {
+                  tag: true
+                }
+              },
+            }
+          },
+          approvalRequester: {
             select: {
               id: true,
               firstName: true,
@@ -399,24 +374,68 @@ export async function GET(request: NextRequest) {
               email: true
             }
           },
-          assigner: {
+          approver: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               email: true
             }
+          },
+          _count: {
+            select: {
+              comments: true
+            }
           }
-        }
-      }),
-      // Tüm user pin'lerini bir sorguda al
-      db.userPin.findMany({
-        where: {
-          userId: decoded.userId,
-          targetType: 'TASK',
-          targetId: { in: taskIds }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
       })
+    )
+
+    // N+1 Query sorunu çözümü: Tüm assignments ve pins'i bir sorguda al
+    const taskIds = tasks.map(task => task.id)
+    
+    const [allAssignments, allUserPins] = await Promise.all([
+      // Tüm task assignment'larını bir sorguda al (retry ile)
+      withReadRetry(async () =>
+        db.assignment.findMany({
+          where: {
+            targetType: 'TASK',
+            targetId: { in: taskIds },
+            status: 'ACTIVE'
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            },
+            assigner: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        })
+      ),
+      // Tüm user pin'lerini bir sorguda al (retry ile)
+      withReadRetry(async () =>
+        db.userPin.findMany({
+          where: {
+            userId: decoded.userId,
+            targetType: 'TASK',
+            targetId: { in: taskIds }
+          }
+        })
+      )
     ])
 
     // Assignment'ları ve pin'leri taskId'ye göre grupla

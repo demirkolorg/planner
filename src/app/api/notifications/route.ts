@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyJWT } from "@/lib/auth"
 import { NotificationType } from "@prisma/client"
+import { withReadRetry } from "@/lib/db-retry"
 
 // Kullanıcının bildirimlerini getir
 export async function GET(request: NextRequest) {
@@ -25,30 +26,34 @@ export async function GET(request: NextRequest) {
       ...(unreadOnly ? { isRead: false } : {})
     }
 
-    const notifications = await db.notification.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      skip: offset,
-      include: {
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true
+    const notifications = await withReadRetry(async () =>
+      db.notification.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+        include: {
+          creator: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
           }
         }
-      }
-    })
+      })
+    )
 
-    // Okunmamış bildirim sayısı
-    const unreadCount = await db.notification.count({
-      where: {
-        userId,
-        isRead: false
-      }
-    })
+    // Okunmamış bildirim sayısı (retry ile)
+    const unreadCount = await withReadRetry(async () =>
+      db.notification.count({
+        where: {
+          userId,
+          isRead: false
+        }
+      })
+    )
 
     return NextResponse.json({
       notifications,
