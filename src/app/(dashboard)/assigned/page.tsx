@@ -47,6 +47,7 @@ export default function AssignedTasksPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('pending')
+  const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
 
   // Atanan görevleri getir
   const fetchAssignedTasks = async () => {
@@ -74,28 +75,64 @@ export default function AssignedTasksPage() {
     fetchAssignedTasks()
   }, [])
 
-  // Görev tamamlama durumunu değiştir
+  // Görev tamamlama durumunu değiştir (Improved Optimistic UI)
   const handleToggleComplete = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+    
+    // Prevent multiple simultaneous updates
+    if (updatingTasks.has(taskId)) return
+    
+    // Add to updating set
+    setUpdatingTasks(prev => new Set(prev).add(taskId))
+    
+    // 1. Optimistic update - UI'ı hemen güncelle
+    const originalCompleted = task.completed
+    setTasks(prevTasks => 
+      prevTasks.map(t => 
+        t.id === taskId ? { ...t, completed: !t.completed } : t
+      )
+    )
+    
     try {
-      const task = tasks.find(t => t.id === taskId)
-      if (!task) return
-
+      // 2. API call
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !task.completed })
+        body: JSON.stringify({ completed: !originalCompleted })
       })
 
-      if (response.ok) {
-        // Optimistic update
+      if (!response.ok) {
+        // 3. API failed - revert optimistic update
         setTasks(prevTasks => 
           prevTasks.map(t => 
-            t.id === taskId ? { ...t, completed: !t.completed } : t
+            t.id === taskId ? { ...t, completed: originalCompleted } : t
           )
         )
+        
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Görev durumu güncellenemedi')
       }
+      
+      // 4. Success - optimistic update is already applied
     } catch (error) {
+      // 5. Error handling - revert if not already reverted
+      setTasks(prevTasks => 
+        prevTasks.map(t => 
+          t.id === taskId ? { ...t, completed: originalCompleted } : t
+        )
+      )
+      
       console.error('Task toggle error:', error)
+      // TODO: Show user-friendly error message (toast notification)
+      alert(error instanceof Error ? error.message : 'Görev durumu güncellenemedi')
+    } finally {
+      // 6. Remove from updating set
+      setUpdatingTasks(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(taskId)
+        return newSet
+      })
     }
   }
 
@@ -282,6 +319,7 @@ export default function AssignedTasksPage() {
           showProject={true}
           showSection={true}
           className="space-y-3"
+          updatingTasks={updatingTasks}
         />
       )}
     </div>

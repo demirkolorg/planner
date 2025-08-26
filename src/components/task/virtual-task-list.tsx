@@ -98,6 +98,7 @@ interface VirtualTaskListProps {
   showProject?: boolean
   showSection?: boolean
   compactMode?: boolean
+  updatingTasks?: Set<string> // Tasks currently being updated
 }
 
 // Memoized TaskCard wrapper for virtual list
@@ -179,7 +180,8 @@ export const VirtualTaskList = memo<VirtualTaskListProps>(({
   onSubmitForApproval,
   showProject = true,
   showSection = true,
-  compactMode = false
+  compactMode = false,
+  updatingTasks
 }) => {
   // Only enable virtual scrolling for large lists (50+ items)
   const shouldUseVirtualScrolling = tasks.length >= 50
