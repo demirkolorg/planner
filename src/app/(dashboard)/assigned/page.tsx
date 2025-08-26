@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { TaskCard } from '@/components/task/task-card'
+import { VirtualTaskList } from '@/components/task/virtual-task-list'
 import { Users, CheckCircle, Clock, RefreshCw, Filter, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types/task'
@@ -316,18 +316,14 @@ export default function AssignedTasksPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onToggleComplete={handleToggleComplete}
-              onUpdateAssignment={handleUpdateAssignment}
-              onAssignUser={handleAssignUser}
-              onUnassignUser={handleUnassignUser}
-            />
-          ))}
-        </div>
+        <VirtualTaskList
+          tasks={filteredTasks}
+          height={Math.min(filteredTasks.length * 120 + 100, 800)} // Dynamic height with max
+          onToggleComplete={handleToggleComplete}
+          showProject={true}
+          showSection={true}
+          className="space-y-3"
+        />
       )}
     </div>
   )
