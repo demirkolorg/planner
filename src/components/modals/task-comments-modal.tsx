@@ -207,13 +207,13 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
         // Kısa bir gecikme ile focus ver
         setTimeout(() => {
           textarea.focus()
-          // Cursor'u en sona taşı
+          // Cursor'u en sona taşı - sadece ilk focus'ta
           const length = textarea.value.length
           textarea.setSelectionRange(length, length)
         }, 100)
       }
     }
-  }, [replyingTo, replyContents])
+  }, [replyingTo]) // replyContents dependency'yi kaldırdık!
 
   // Reply content güncelleme fonksiyonu
   const updateReplyContent = useCallback((commentId: string, content: string) => {
@@ -339,20 +339,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                     ref={setRef}
                     placeholder="Yanıtınızı yazın..."
                     value={replyContents[comment.id] || ""}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      const selectionStart = e.target.selectionStart
-                      const selectionEnd = e.target.selectionEnd
-                      
-                      updateReplyContent(comment.id, value)
-                      
-                      // Cursor position'ı korumak için requestAnimationFrame kullan
-                      requestAnimationFrame(() => {
-                        if (e.target.setSelectionRange && typeof selectionStart === 'number') {
-                          e.target.setSelectionRange(selectionStart, selectionEnd)
-                        }
-                      })
-                    }}
+                    onChange={(e) => updateReplyContent(comment.id, e.target.value)}
                     className="min-h-[60px] resize-none"
                     autoFocus
                     onFocus={(e) => e.stopPropagation()}
@@ -433,20 +420,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                 <Textarea
                   placeholder="Yorumunuzu yazın..."
                   value={newComment}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    const selectionStart = e.target.selectionStart
-                    const selectionEnd = e.target.selectionEnd
-                    
-                    setNewComment(value)
-                    
-                    // Cursor position'ı korumak için requestAnimationFrame kullan
-                    requestAnimationFrame(() => {
-                      if (e.target.setSelectionRange && typeof selectionStart === 'number') {
-                        e.target.setSelectionRange(selectionStart, selectionEnd)
-                      }
-                    })
-                  }}
+                  onChange={(e) => setNewComment(e.target.value)}
                   className="min-h-[80px] resize-none"
                   onFocus={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
