@@ -156,7 +156,9 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     getOverdueTasks, 
     getCurrentWeekTasksCount, 
     getTotalCompletedTasksCount,
-    getPinnedTasks
+    getPinnedTasks,
+    getPendingTasksCount,
+    getProjectCompletionPercentage
   } = useTaskStore()
   const createProjectMutation = useCreateProject()
   const { user, logout } = useAuthStore()
