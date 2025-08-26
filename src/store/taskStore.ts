@@ -83,6 +83,7 @@ interface TaskStore {
   createTask: (taskData: CreateTaskRequest) => Promise<CreateTaskResponse | null>
   updateTask: (id: string, updates: Partial<TaskWithRelations>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
+  undoDeleteTask: (taskData: TaskWithRelations) => Promise<void>
   cloneTask: (id: string, targetProjectId?: string, targetSectionId?: string | null) => Promise<void>
   moveTask: (id: string, targetProjectId: string, targetSectionId: string | null) => Promise<void>
   toggleTaskComplete: (id: string) => Promise<void>
@@ -92,6 +93,10 @@ interface TaskStore {
   addSubTask: (parentTaskId: string, taskData: CreateTaskRequest) => Promise<void>
   updateTaskTags: (taskId: string, tagIds: string[]) => Promise<void>
   refreshTaskCommentCount: (taskId: string) => Promise<void>
+  
+  // Optimistic UI helpers
+  optimisticTaskUpdate: (taskId: string, updates: Partial<TaskWithRelations>) => void
+  revertOptimisticUpdate: (taskId: string, originalTask: TaskWithRelations) => void
   
   // Assignment methods
   // DEPRECATED: Use /api/assignments endpoint instead
@@ -315,7 +320,19 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   updateTask: async (id: string, updates: Partial<TaskWithRelations>) => {
     set({ error: null })
+    
+    // Find current task state
+    const state = get()
+    const task = state.tasks.find(t => t.id === id)
+    if (!task) return
+    
+    const originalTask = { ...task }
+    
+    // 1. Optimistic update - instant UI change
+    get().optimisticTaskUpdate(id, updates)
+    
     try {
+      // 2. API call
       const response = await fetch(`/api/tasks/${id}`, {
         method: 'PUT',
         headers: {
@@ -325,64 +342,89 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       })
       
       if (!response.ok) {
+        // 3. API failed - revert optimistic update
+        get().revertOptimisticUpdate(id, originalTask)
+        
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to update task')
       }
       
+      // 4. API success - sync with server state
       const updatedTask = await response.json()
+      get().optimisticTaskUpdate(id, updatedTask)
       
-      // Update task in store
-      set(state => ({
-        tasks: state.tasks.map(task => 
-          task.id === id ? { ...task, ...updatedTask } : task
-        )
-      }))
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
+      // 5. Error handling - ensure state is reverted
+      get().revertOptimisticUpdate(id, originalTask)
+      set({ error: error instanceof Error ? error.message : 'An error occurred' })
       throw error
     }
   },
 
   deleteTask: async (id: string) => {
     set({ error: null })
+    
+    // Find current task state
+    const state = get()
+    const taskToDelete = state.tasks.find(t => t.id === id)
+    if (!taskToDelete) return
+    
+    const originalTasks = [...state.tasks]
+    
+    // 1. Optimistic update - instant removal
+    const filteredTasks = state.tasks.filter(task => task.id !== id)
+    
+    // Update parent task's subTasks if this was a subtask
+    const updatedTasks = taskToDelete.parentTaskId 
+      ? filteredTasks.map(task => {
+          if (task.id === taskToDelete.parentTaskId) {
+            return {
+              ...task,
+              subTasks: (task.subTasks || []).filter(subTask => subTask.id !== id)
+            }
+          }
+          return task
+        })
+      : filteredTasks
+    
+    set({ tasks: updatedTasks })
+    
     try {
+      // 2. API call
       const response = await fetch(`/api/tasks/${id}`, {
         method: 'DELETE',
       })
       
       if (!response.ok) {
+        // 3. API failed - restore task
+        set({ tasks: originalTasks })
+        
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to delete task')
       }
       
-      // Remove task from store and update parent task if this was a subtask
-      set(state => {
-        const taskToDelete = state.tasks.find(t => t.id === id)
-        const filteredTasks = state.tasks.filter(task => task.id !== id)
-        
-        // Eğer silinen görev bir alt görevse, parent task'ın subTasks array'ini güncelle
-        if (taskToDelete?.parentTaskId) {
-          return {
-            tasks: filteredTasks.map(task => {
-              if (task.id === taskToDelete.parentTaskId) {
-                return {
-                  ...task,
-                  subTasks: (task.subTasks || []).filter(subTask => subTask.id !== id)
-                }
-              }
-              return task
-            })
-          }
-        }
-        
-        return { tasks: filteredTasks }
-      })
+      // 4. API success - optimistic update is already applied
+      // Optionally show undo notification here
+      
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
+      // 5. Error handling - restore original state
+      set({
+        tasks: originalTasks,
+        error: error instanceof Error ? error.message : 'An error occurred'
+      })
       throw error
     }
+  },
+  
+  // Undo delete functionality (for future use)
+  undoDeleteTask: async (taskData: TaskWithRelations) => {
+    // This would be called if user clicks "Undo" within 5 seconds
+    // For now, just restore to local state - API recreation could be complex
+    set(state => ({
+      tasks: [...state.tasks, taskData].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+    }))
   },
 
   cloneTask: async (id: string, targetProjectId?: string, targetSectionId?: string | null) => {
@@ -934,27 +976,40 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   toggleTaskPin: async (taskId: string) => {
     set({ error: null })
+    
+    // Find current task state
+    const state = get()
+    const task = state.tasks.find(t => t.id === taskId)
+    if (!task) return
+    
+    const originalPinned = task.isPinned
+    const newPinned = !originalPinned
+    
+    // 1. Optimistic update - instant UI change
+    get().optimisticTaskUpdate(taskId, { isPinned: newPinned })
+    
     try {
+      // 2. API call
       const response = await fetch(`/api/tasks/${taskId}/pin`, {
         method: 'PATCH',
       })
       
       if (!response.ok) {
+        // 3. API failed - revert optimistic update
+        get().revertOptimisticUpdate(taskId, task)
+        
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to toggle pin')
       }
       
+      // 4. API success - verify server state (optional)
       const updatedTask = await response.json()
+      get().optimisticTaskUpdate(taskId, { isPinned: updatedTask.isPinned })
       
-      // Update task in store
-      set(state => ({
-        tasks: state.tasks.map(task => 
-          task.id === taskId ? { ...task, isPinned: updatedTask.isPinned } : task
-        )
-      }))
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-      set({ error: errorMessage })
+      // 5. Error handling - ensure state is reverted
+      get().revertOptimisticUpdate(taskId, task)
+      set({ error: error instanceof Error ? error.message : 'An error occurred' })
       throw error
     }
   },
@@ -1027,6 +1082,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
+  // Optimistic UI helpers - standardized pattern
+  optimisticTaskUpdate: (taskId: string, updates: Partial<TaskWithRelations>) => {
+    set(state => ({
+      tasks: state.tasks.map(t => 
+        t.id === taskId ? { ...t, ...updates } : t
+      )
+    }))
+  },
+  
+  revertOptimisticUpdate: (taskId: string, originalTask: TaskWithRelations) => {
+    set(state => ({
+      tasks: state.tasks.map(t => 
+        t.id === taskId ? originalTask : t
+      )
+    }))
+  },
 
   toggleShowCompletedTasks: () => {
     set(state => ({ showCompletedTasks: !state.showCompletedTasks }))
