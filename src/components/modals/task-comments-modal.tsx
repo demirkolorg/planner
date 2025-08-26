@@ -3,9 +3,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { 
   MessageCircle, 
@@ -64,6 +62,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
   
   const { user } = useAuthStore()
   const replyTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+  const mainTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Yorumları yükle
   const fetchComments = useCallback(async () => {
@@ -103,6 +102,10 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
         const comment = await response.json()
         setComments(prev => [comment, ...prev])
         setNewComment("")
+        // Uncontrolled input'u da temizle
+        if (mainTextareaRef.current) {
+          mainTextareaRef.current.value = ""
+        }
         // Parent component'e yorum eklendiğini bildir
         onCommentAdded?.()
       } else {
@@ -158,6 +161,10 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
           ...prev,
           [parentId]: ""
         }))
+        // Uncontrolled input'u da temizle
+        if (replyTextareaRefs.current[parentId]) {
+          replyTextareaRefs.current[parentId]!.value = ""
+        }
         setReplyingTo(null)
         // Parent component'e yorum eklendiğini bildir
         onCommentAdded?.()
@@ -335,12 +342,12 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
-                  <Textarea
+                  <textarea
                     ref={setRef}
                     placeholder="Yanıtınızı yazın..."
-                    value={replyContents[comment.id] || ""}
+                    defaultValue=""
                     onChange={(e) => updateReplyContent(comment.id, e.target.value)}
-                    className="min-h-[60px] resize-none"
+                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                     autoFocus
                     onFocus={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
@@ -353,7 +360,7 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                     <Button
                       size="sm"
                       onClick={() => handleSubmitReply(comment.id)}
-                      disabled={!(replyContents[comment.id] || "").trim() || isSubmitting}
+                      disabled={!replyContents[comment.id]?.trim() || isSubmitting}
                     >
                       <Send className="h-3 w-3 mr-1" />
                       Yanıtla
@@ -367,6 +374,10 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                           ...prev,
                           [comment.id]: ""
                         }))
+                        // Uncontrolled input'u da temizle
+                        if (replyTextareaRefs.current[comment.id]) {
+                          replyTextareaRefs.current[comment.id]!.value = ""
+                        }
                       }}
                     >
                       İptal
@@ -417,11 +428,12 @@ export function TaskCommentsModal({ isOpen, onClose, taskId, taskTitle, isTaskCo
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-2">
-                <Textarea
+                <textarea
+                  ref={mainTextareaRef}
                   placeholder="Yorumunuzu yazın..."
-                  value={newComment}
+                  defaultValue=""
                   onChange={(e) => setNewComment(e.target.value)}
-                  className="min-h-[80px] resize-none"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                   onFocus={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
