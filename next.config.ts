@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+// Bundle analyzer
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
 const nextConfig: NextConfig = {
   // Development ayarları
   ...(process.env.NODE_ENV === 'development' && {
@@ -9,6 +14,11 @@ const nextConfig: NextConfig = {
       pagesBufferLength: 2,
     },
   }),
+  
+  // Bundle splitting optimization
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', 'date-fns'],
+  },
   // Webpack ayarları
   webpack: (config) => {
     // Windows EPERM hatası için
@@ -45,4 +55,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

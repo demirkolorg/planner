@@ -74,6 +74,7 @@ interface TaskStore {
   isLoading: boolean
   error: string | null
   showCompletedTasks: boolean
+  lastFetchTime: number
   
   // Actions
   fetchTasks: () => Promise<void>
@@ -150,12 +151,22 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   isLoading: false,
   error: null,
   showCompletedTasks: false,
+  lastFetchTime: 0,
 
   fetchTasks: async () => {
-    set({ isLoading: true, error: null })
+    const state = get()
+    const now = Date.now()
+    
+    // Throttle: Aynı API'yi 2 saniye içinde tekrar çağırma
+    if (state.isLoading || (now - state.lastFetchTime) < 2000) {
+      console.log('TaskStore fetchTasks throttled - too soon or already loading')
+      return
+    }
+    
+    set({ isLoading: true, error: null, lastFetchTime: now })
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 saniye timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 saniye timeout - yavaş database için
 
       const response = await fetch('/api/tasks', {
         signal: controller.signal

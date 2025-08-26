@@ -29,7 +29,7 @@ import { TagSelector } from "./tag-selector"
 import { PrioritySelector } from "./priority-selector"
 import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
 import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
-import { useCurrentUser } from "@/hooks/use-current-user"
+import { useAuthStore } from "@/store/authStore"
 import type { Task } from "@/types/task"
 
 interface TaskCardActionsProps {
@@ -103,7 +103,7 @@ export function TaskCardActions({
   canEditTask = true,
   canSubmitForApproval = true
 }: TaskCardActionsProps) {
-  const { currentUser, isLoading: isUserLoading } = useCurrentUser()
+  const { user: currentUser } = useAuthStore()
   
   // Task validation - Safety check
   if (!task || !task.id) {
@@ -111,7 +111,7 @@ export function TaskCardActions({
   }
 
   // Permission loading durumu - dışarıdan gelen ve kendi loading'imizi birleştir
-  const isActualPermissionLoading = isPermissionLoading || isUserLoading
+  const isActualPermissionLoading = isPermissionLoading // authStore'dan user hemen mevcut
 
   // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
   const isAssignedUser = !isActualPermissionLoading && currentUser && task.assignments && 

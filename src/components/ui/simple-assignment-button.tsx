@@ -36,9 +36,22 @@ export function SimpleAssignmentButton({
   const [assignmentCount, setAssignmentCount] = useState(externalAssignmentCount || 0)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Atama sayısını getir
+  // Assignment cache (5 dakika)
+  const cacheKey = `assignment-count-${targetType}-${targetId}`
+  const cacheTimeout = 5 * 60 * 1000 // 5 dakika
+
+  // Atama sayısını getir (cache ile)
   const fetchAssignmentCount = useCallback(async () => {
     if (skipApiCall) return // API çağrısını skip et
+    
+    // Cache kontrol et
+    const cached = sessionStorage.getItem(cacheKey)
+    const cacheTime = sessionStorage.getItem(`${cacheKey}-time`)
+    
+    if (cached && cacheTime && Date.now() - parseInt(cacheTime) < cacheTimeout) {
+      setAssignmentCount(parseInt(cached))
+      return
+    }
     
     try {
       setIsLoading(true)
@@ -46,14 +59,19 @@ export function SimpleAssignmentButton({
       
       if (response.ok) {
         const data = await response.json()
-        setAssignmentCount(data.total || 0)
+        const count = data.total || 0
+        setAssignmentCount(count)
+        
+        // Cache'e kaydet
+        sessionStorage.setItem(cacheKey, count.toString())
+        sessionStorage.setItem(`${cacheKey}-time`, Date.now().toString())
       }
     } catch (error) {
       console.error('Error fetching assignment count:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [targetType, targetId, skipApiCall])
+  }, [targetType, targetId, skipApiCall, cacheKey, cacheTimeout])
 
   // Component mount edildiğinde sayıyı yükle (sadece external data yoksa)
   useEffect(() => {

@@ -76,7 +76,7 @@ export function DashboardOverview() {
   const [editingTask, setEditingTask] = useState<any | null>(null)
   const [isKeyboardShortcutsModalOpen, setIsKeyboardShortcutsModalOpen] = useState(false)
 
-  // AI'dan motivasyon sözü çekme
+  // AI'dan motivasyon sözü çekme (cache'lenmis)
   const [todaysQuote, setTodaysQuote] = useState({
     quote: "Başarı, günlük rutinlerde saklıdır. Her gün biraz ilerlemeniz, büyük değişimlere yol açar.",
     author: "AI İlham Kaynağı",
@@ -84,8 +84,23 @@ export function DashboardOverview() {
   })
   const [isQuoteLoading, setIsQuoteLoading] = useState(false)
 
-  // Sayfa yüklendiğinde AI'dan motivasyon sözü çek
-  const fetchMotivationalQuote = async () => {
+  // Günde bir kez motivasyon sözü çek (localStorage cache ile)
+  const fetchMotivationalQuote = useCallback(async () => {
+    const today = new Date().toDateString()
+    const cachedQuote = localStorage.getItem('dailyQuote')
+    const cachedDate = localStorage.getItem('dailyQuoteDate')
+    
+    // Eğer bugün için cache'lenmiş söz varsa, API'ye gitme
+    if (cachedQuote && cachedDate === today) {
+      try {
+        setTodaysQuote(JSON.parse(cachedQuote))
+        return
+      } catch (error) {
+        console.error('Cached quote parse error:', error)
+      }
+    }
+
+    // Sadece cache yoksa API'ye git
     setIsQuoteLoading(true)
     try {
       const response = await fetch('/api/motivational-quote')
@@ -93,6 +108,9 @@ export function DashboardOverview() {
         const result = await response.json()
         if (result.success && result.data) {
           setTodaysQuote(result.data)
+          // Yeni söz'ü cache'le
+          localStorage.setItem('dailyQuote', JSON.stringify(result.data))
+          localStorage.setItem('dailyQuoteDate', today)
         }
       }
     } catch (error) {
@@ -101,7 +119,7 @@ export function DashboardOverview() {
     } finally {
       setIsQuoteLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -111,7 +129,7 @@ export function DashboardOverview() {
     ]).catch(error => {
       console.error('Failed to fetch dashboard data:', error)
     })
-  }, [fetchTasks, fetchProjects])
+  }, [fetchTasks, fetchProjects, fetchMotivationalQuote])
 
   // Task handlers
   const handleDeleteTask = useCallback((taskId: string) => {

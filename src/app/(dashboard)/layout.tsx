@@ -11,9 +11,12 @@ import { useProjectStore } from "@/store/projectStore"
 import { ROUTES } from "@/lib/constants"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
-import { QuickTaskModal } from "@/components/modals/quick-task-modal"
-import { QuickSearchModal } from "@/components/modals/quick-search-modal"
-import { NewTaskModal } from "@/components/modals/new-task-modal"
+// Lazy load modals for better performance
+import { lazy, Suspense } from "react"
+
+const QuickTaskModal = lazy(() => import("@/components/modals/quick-task-modal").then(mod => ({ default: mod.QuickTaskModal })))
+const QuickSearchModal = lazy(() => import("@/components/modals/quick-search-modal").then(mod => ({ default: mod.QuickSearchModal })))
+const NewTaskModal = lazy(() => import("@/components/modals/new-task-modal").then(mod => ({ default: mod.NewTaskModal })))
 import { ToastNotification } from "@/components/ui/toast-notification"
 import { useAutoNotifications } from "@/hooks/use-notifications"
 import { useCtrlK, useCtrlS, useCtrlJ, useCtrlB } from "@/hooks/use-keyboard-shortcut"
@@ -104,13 +107,14 @@ export default function DashboardLayout({
           lastUserIdRef.current = currentUserId
         }
         
-        // Kullanıcı giriş yapmışsa ve store boşsa verileri yükle
-        if (tasks.length === 0) {
+        // Sadece kullanıcı değişti ise veya ilk kez yükleniyor ise data fetch et
+        const shouldFetchData = (lastUserIdRef.current !== currentUserId) || (tasks.length === 0)
+        if (shouldFetchData) {
           // Timeout ile API çağrılarını sınırla
           const loadingTimeout = setTimeout(() => {
             console.warn('Data loading taking too long, proceeding without data')
             setIsLoading(false)
-          }, 8000) // 8 saniye timeout
+          }, 25000) // 25 saniye timeout - tüm operasyonlar için yeterli
 
           try {
             await Promise.race([
@@ -125,7 +129,7 @@ export default function DashboardLayout({
                 })
               ]),
               new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout')), 7000)
+                setTimeout(() => reject(new Error('Timeout')), 20000) // 20 saniye - store timeout'larından uzun
               )
             ])
             clearTimeout(loadingTimeout)
@@ -142,7 +146,7 @@ export default function DashboardLayout({
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, user?.id, router, fetchTasks, fetchProjects, tasks.length])
+  }, [isAuthenticated, user?.id, router, fetchTasks, fetchProjects]) // tasks.length kaldırıldı - infinite loop'a neden oluyordu
 
   if (isLoading) {
     return <SplashScreen message="Dashboard yükleniyor..." />
@@ -165,26 +169,36 @@ export default function DashboardLayout({
         </main>
       </div>
       
-      {/* Quick Task Modal */}
-      <QuickTaskModal
-        isOpen={isQuickTaskModalOpen}
-        onClose={() => setIsQuickTaskModalOpen(false)}
-      />
+      {/* Lazy-loaded Modals with Suspense fallback */}
+      {isQuickTaskModalOpen && (
+        <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+          <QuickTaskModal
+            isOpen={isQuickTaskModalOpen}
+            onClose={() => setIsQuickTaskModalOpen(false)}
+          />
+        </Suspense>
+      )}
       
-      {/* Quick Search Modal */}
-      <QuickSearchModal
-        isOpen={isQuickSearchModalOpen}
-        onClose={() => setIsQuickSearchModalOpen(false)}
-      />
+      {isQuickSearchModalOpen && (
+        <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+          <QuickSearchModal
+            isOpen={isQuickSearchModalOpen}
+            onClose={() => setIsQuickSearchModalOpen(false)}
+          />
+        </Suspense>
+      )}
       
-      {/* New Task Modal */}
-      <NewTaskModal
-        isOpen={isNewTaskModalOpen}
-        onClose={() => setIsNewTaskModalOpen(false)}
-        onTaskCreated={() => {
-          setIsNewTaskModalOpen(false)
-        }}
-      />
+      {isNewTaskModalOpen && (
+        <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+          <NewTaskModal
+            isOpen={isNewTaskModalOpen}
+            onClose={() => setIsNewTaskModalOpen(false)}
+            onTaskCreated={() => {
+              setIsNewTaskModalOpen(false)
+            }}
+          />
+        </Suspense>
+      )}
       
       {/* Toast Notifications */}
       <ToastNotification />

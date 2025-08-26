@@ -31,6 +31,7 @@ interface ProjectStore {
   sections: Section[]
   isLoading: boolean
   error: string | null
+  lastFetchTime: number
   
   // Project Actions
   fetchProjects: () => Promise<void>
@@ -58,12 +59,22 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   sections: [],
   isLoading: false,
   error: null,
+  lastFetchTime: 0,
 
   fetchProjects: async () => {
-    set({ isLoading: true, error: null })
+    const state = get()
+    const now = Date.now()
+    
+    // Throttle: Aynı API'yi 2 saniye içinde tekrar çağırma
+    if (state.isLoading || (now - state.lastFetchTime) < 2000) {
+      console.log('ProjectStore fetchProjects throttled - too soon or already loading')
+      return
+    }
+    
+    set({ isLoading: true, error: null, lastFetchTime: now })
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 saniye timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 saniye timeout - yavaş database için
 
       const response = await fetch('/api/projects', {
         signal: controller.signal

@@ -1,9 +1,26 @@
 "use client"
 
-import React, { useState } from "react"
-import { ChevronRight, ChevronDown, Flag, Tag, List, Calendar, AlertTriangle, Folder, MessageCircle, ExternalLink, Users, Clock, CheckCircle, XCircle, AlertCircle, Eye } from "lucide-react"
+import React, { useState, memo, useMemo } from "react"
+// Icon imports - TaskCard'da kullanılan tüm icon'lar
+import { 
+  ChevronRight, 
+  ChevronDown, 
+  Flag, 
+  Tag, 
+  List,
+  Calendar, 
+  AlertTriangle, 
+  Folder,
+  MessageCircle, 
+  Users, 
+  Clock,
+  CheckCircle,
+  XCircle,
+  ExternalLink,
+  Eye 
+} from "lucide-react"
 import { usePathname } from "next/navigation"
-import { useCurrentUser } from "@/hooks/use-current-user"
+import { useAuthStore } from "@/store/authStore"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { TaskCardActions } from "./task-card-actions"
@@ -178,7 +195,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const [optimisticCompleted, setOptimisticCompleted] = useState(task?.completed || false)
   const [isHovered, setIsHovered] = useState(false)
   const pathname = usePathname()
-  const { currentUser, isLoading: isUserLoading } = useCurrentUser()
+  const { user: currentUser } = useAuthStore()
   
   // Task completed state'i task prop'undan gelen değer ile senkronize et
   React.useEffect(() => {
@@ -456,14 +473,14 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const isTaskCompleted = task.completed
   
   // Bu görevi atanmış kullanıcı mı görüntülüyor kontrol et
-  const isAssignedUser = !isUserLoading && currentUser && task.assignments && 
+  const isAssignedUser = currentUser && task.assignments && 
     task.assignments.some(assignment => assignment.userId === currentUser.id && assignment.status === 'ACTIVE')
   
   // Task sahibi mi kontrol et
-  const isTaskOwner = !isUserLoading && currentUser && task.userId === currentUser.id
+  const isTaskOwner = currentUser && task.userId === currentUser.id
   
-  // Permission kontrolü için loading durumu
-  const isPermissionLoading = isUserLoading
+  // Permission kontrolü için loading durumu (authStore'dan user hemen mevcut)
+  const isPermissionLoading = false
   
   // Permission kontrolü - userAccess prop'undan al, yoksa fallback mantık
   const canCompleteTask = userAccess?.permissions.canCompleteTask ?? 
@@ -1044,3 +1061,17 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 })
 
 TaskCard.displayName = "TaskCard"
+
+// Memoized version for performance
+export const MemoizedTaskCard = memo(TaskCard, (prevProps, nextProps) => {
+  // Custom equality check - sadece kritik prop'larda değişiklik varsa re-render
+  return (
+    prevProps.task?.id === nextProps.task?.id &&
+    prevProps.task?.completed === nextProps.task?.completed &&
+    prevProps.task?.title === nextProps.task?.title &&
+    prevProps.task?.priority === nextProps.task?.priority &&
+    prevProps.task?.dueDate === nextProps.task?.dueDate &&
+    prevProps.task?.updatedAt === nextProps.task?.updatedAt &&
+    prevProps.level === nextProps.level
+  )
+})

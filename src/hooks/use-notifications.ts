@@ -88,7 +88,7 @@ export function useNotifications() {
         // Yeniden bağlanma dene
         if (reconnectAttempts.current < maxReconnectAttempts) {
           reconnectAttempts.current++
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000)
+          const delay = Math.min(5000 * Math.pow(2, reconnectAttempts.current), 60000) // 5s, 10s, 20s, 40s, 60s
           
           console.log(`Notification stream reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})`)
           
@@ -230,7 +230,7 @@ export function useAutoNotifications() {
           
           if (reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
+            const delay = Math.min(5000 * Math.pow(2, reconnectAttempts), 60000) // 5s, 10s, 20s, 40s, 60s
             reconnectTimeout = setTimeout(connectToStream, delay)
           }
         }

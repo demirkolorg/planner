@@ -50,7 +50,8 @@
       "Bash(node scripts/update-task-levels.js:*)",
       "Bash(sed:*)",
       "WebFetch(domain:docs.convex.dev)",
-      "Bash(echo \"Console log''larını kontrol etmek için browser''dan F12 ile developer tools açın ve Console sekmesini inceleyin. Aşağıdaki hataları arayın:\n1. API fetch hataları (/api/tasks, /api/projects)\n2. Database bağlantı hataları\n3. Authentication sorunları\n4. Network timeout''ları\n\nBu logları paylaşırsanız daha detaylı yardım edebilirim.\")"
+      "Bash(echo \"Console log''larını kontrol etmek için browser''dan F12 ile developer tools açın ve Console sekmesini inceleyin. Aşağıdaki hataları arayın:\n1. API fetch hataları (/api/tasks, /api/projects)\n2. Database bağlantı hataları\n3. Authentication sorunları\n4. Network timeout''ları\n\nBu logları paylaşırsanız daha detaylı yardım edebilirim.\")",
+      "Bash(bun install:*)"
     ],
     "deny": []
   }

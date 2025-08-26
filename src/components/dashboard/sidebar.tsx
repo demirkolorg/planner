@@ -155,8 +155,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   useEffect(() => {
     Promise.all([
       fetchProjects(),
-      fetchTags(),
-      fetchTasks() // Tüm görevleri yükle
+      fetchTags()
+      // fetchTasks kaldırıldı - sadece layout'ta yüklenecek
     ]).catch(error => {
       console.error('Failed to fetch sidebar data:', error)
     })
