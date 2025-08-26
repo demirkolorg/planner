@@ -23,8 +23,8 @@ import {
   Info
 } from "lucide-react"
 import { BRAND_SLOGANS } from "@/lib/constants"
-import { useTaskStore } from "@/store/taskStore"
-import { useProjectStore } from "@/store/projectStore"
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useToggleTaskComplete } from "@/hooks/queries/use-tasks"
+import { useProjects } from "@/hooks/queries/use-projects"
 import { TaskCard } from "@/components/task/task-card"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
 import { MoveTaskModal } from "@/components/modals/move-task-modal"
@@ -36,19 +36,13 @@ import { format, isToday, startOfWeek, endOfWeek, isWithinInterval, addWeeks } f
 import { tr } from "date-fns/locale"
 
 export function DashboardOverview() {
-  const { 
-    tasks, 
-    fetchTasks, 
-    toggleTaskComplete,
-    updateTask,
-    deleteTask: deleteTaskFromStore,
-    toggleTaskPin,
-    updateTaskTags,
-    addSubTask,
-    cloneTask,
-    moveTask,
-  } = useTaskStore()
-  const { projects, fetchProjects } = useProjectStore()
+  // React Query hooks
+  const { data: tasks = [], isLoading: tasksLoading, error: tasksError } = useTasks()
+  const { data: projects = [], isLoading: projectsLoading, error: projectsError } = useProjects()
+  const createTaskMutation = useCreateTask()
+  const updateTaskMutation = useUpdateTask()
+  const deleteTaskMutation = useDeleteTask()
+  const toggleTaskCompleteMutation = useToggleTaskComplete()
   
   // Rastgele slogan seç (hydration sorunu için client-side)
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")

@@ -12,9 +12,9 @@ import { Logo } from "@/components/ui/logo"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect, useMemo, useCallback, memo } from "react"
-import { useProjectStore } from "@/store/projectStore"
+import { useProjects, useCreateProject } from "@/hooks/queries/use-projects"
 import { useTagStore } from "@/store/tagStore"
-import { useTaskStore } from "@/store/taskStore"
+import { useTasks } from "@/hooks/queries/use-tasks"
 import { useAuthStore } from "@/store/authStore"
 import { useThemeStore } from "@/store/themeStore"
 import { useGoogleCalendarStore } from "@/store/googleCalendarStore"
@@ -144,30 +144,29 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false)
-  const { projects, fetchProjects, createProject } = useProjectStore()
+  // React Query hooks
+  const { data: projects = [], isLoading: projectsLoading } = useProjects()
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { tags, fetchTags } = useTagStore()
-  const { getPinnedTasks, getPendingTasksCount, fetchTasks, tasks, getProjectCompletionPercentage, getTasksDueToday, getTotalCompletedTasksCount, getCurrentWeekTasksCount, getOverdueTasks } = useTaskStore()
+  const createProjectMutation = useCreateProject()
   const { user, logout } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
   const { isConnected: googleCalendarConnected, lastSyncAt, isSyncing, setLastSyncAt, setIsSyncing, updateSyncStatus } = useGoogleCalendarStore()
 
 
   useEffect(() => {
-    Promise.all([
-      fetchProjects(),
-      fetchTags()
-      // fetchTasks kaldırıldı - sadece layout'ta yüklenecek
-    ]).catch(error => {
-      console.error('Failed to fetch sidebar data:', error)
+    // React Query otomatik veri çeker, sadece tags manual fetch
+    fetchTags().catch(error => {
+      console.error('Failed to fetch tags:', error)
     })
 
     // Google Calendar durumunu kontrol et
     updateSyncStatus()
-  }, [fetchProjects, fetchTags, fetchTasks, updateSyncStatus])
+  }, [fetchTags, updateSyncStatus])
 
   const handleCreateProject = async (name: string, emoji: string) => {
     try {
-      const newProject = await createProject(name, emoji)
+      const newProject = await createProjectMutation.mutateAsync({ name, emoji })
       // Proje detay sayfasına yönlendir
       router.push(`/projects/${newProject.id}`)
     } catch (error) {
@@ -203,11 +202,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
         const newSyncTime = new Date().toISOString()
         setLastSyncAt(newSyncTime)
         
-        // Sidebar'daki verileri yenile
-        await Promise.all([
-          fetchTasks(),
-          fetchProjects()
-        ])
+        // React Query otomatik invalidate eder, manual refetch gerekmez
       }
     } catch (error) {
       console.error('Sync hatası:', error)
