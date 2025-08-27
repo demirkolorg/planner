@@ -295,8 +295,9 @@ export default function GuidePage() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Badge variant="outline" className="hidden sm:flex">
-                v1.5.0
+              <Badge variant="outline" className="hidden sm:flex bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                <Sparkles className="h-3 w-3 mr-1" />
+                v1.6.0 - YENİ!
               </Badge>
             </div>
           </div>
@@ -304,6 +305,56 @@ export default function GuidePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Yeni Sürüm Bildirimi */}
+        <Card className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200 dark:border-green-800">
+          <CardContent className="py-6">
+            <div className="flex items-start space-x-4">
+              <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/50">
+                <Sparkles className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-2">
+                  <h3 className="text-xl font-bold text-green-900 dark:text-green-100">
+                    v1.6.0 Yeni Özellikleri! 🚀
+                  </h3>
+                  <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700">
+                    YENİ
+                  </Badge>
+                </div>
+                <p className="text-green-700 dark:text-green-300 mb-4">
+                  Bu güncellemede performans iyileştirmeleri ve kullanıcı arayüzü geliştirmeleri yapıldı.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center">
+                      <Zap className="h-4 w-4 mr-2" />
+                      Performans İyileştirmeleri
+                    </h4>
+                    <ul className="text-sm text-green-700 dark:text-green-300 space-y-1 ml-6">
+                      <li>• React.memo ile bileşen optimizasyonu</li>
+                      <li>• Lazy loading ile daha hızlı yükleme</li>
+                      <li>• Bundle size %15 azaltıldı</li>
+                      <li>• Veritabanı sorguları hızlandı</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Arayüz Geliştirmeleri
+                    </h4>
+                    <ul className="text-sm text-green-700 dark:text-green-300 space-y-1 ml-6">
+                      <li>• Sidebar 4 sütunlu kart tasarımı</li>
+                      <li>• Karanlık tema renk optimizasyonu</li>
+                      <li>• Tooltip ile daha iyi UX</li>
+                      <li>• Minimal ve temiz görünüm</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
         <Tabs defaultValue="quickstart" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-8">
             <TabsTrigger value="quickstart" className="flex items-center space-x-2">
