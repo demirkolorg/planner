@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye, CalendarX, StickyNote, Folder } from "lucide-react"
+import { ArrowLeft, CheckCircle, FolderKanban, Plus, Settings, Clock, Sparkles, MessageCircle, Pin, Tag, Calendar, Star, BarChart3, Target, Zap, RefreshCw, Keyboard, Search, Brain, Eye, Folder } from "lucide-react"
 import { RiCalendarScheduleLine } from "react-icons/ri"
 import { PiTagSimpleBold } from "react-icons/pi"
 import { FaRegStar, FaRegCheckCircle } from "react-icons/fa"

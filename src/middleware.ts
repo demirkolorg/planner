@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import * as jose from 'jose'
+import { jwtVerify } from 'jose'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
     
     // JWT token doğrulama - Edge runtime uyumlu
     const secret = new TextEncoder().encode(process.env.JWT_SECRET)
-    await jose.jwtVerify(token, secret)
+    await jwtVerify(token, secret)
     
     // Token geçerliyse devam et
     return NextResponse.next()
