@@ -43,8 +43,8 @@ const cardItems = [
     count: 1, 
     icon: FaRegStar, 
     activeIcon: FaStar, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/70 dark:to-teal-900/70 text-emerald-800 dark:text-emerald-200 border-emerald-300/70 dark:border-emerald-700/70 shadow-lg shadow-emerald-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-950/50 dark:to-teal-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-300/70 dark:border-emerald-800/50 shadow-lg shadow-emerald-500/10", 
     href: ROUTES.TODAY 
   },
   { 
@@ -52,8 +52,8 @@ const cardItems = [
     count: 3, 
     icon: RiCalendarScheduleLine, 
     activeIcon: RiCalendarScheduleFill, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/70 dark:to-purple-900/70 text-violet-800 dark:text-violet-200 border-violet-300/70 dark:border-violet-700/70 shadow-lg shadow-violet-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-950/50 dark:to-purple-950/50 text-violet-800 dark:text-violet-300 border-violet-300/70 dark:border-violet-800/50 shadow-lg shadow-violet-500/10", 
     href: ROUTES.SCHEDULED 
   },
   { 
@@ -61,8 +61,8 @@ const cardItems = [
     count: null, 
     icon: FaRegCheckCircle, 
     activeIcon: FaCheckCircle, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-900/70 dark:to-lime-900/70 text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/70 shadow-lg shadow-green-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-green-100 to-lime-100 dark:from-green-950/50 dark:to-lime-950/50 text-green-800 dark:text-green-300 border-green-300/70 dark:border-green-800/50 shadow-lg shadow-green-500/10", 
     href: ROUTES.COMPLETED 
   },
   { 
@@ -70,8 +70,8 @@ const cardItems = [
     count: null, 
     icon: CalendarX, 
     activeIcon: CalendarX, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/70 dark:to-rose-900/70 text-red-800 dark:text-red-200 border-red-300/70 dark:border-red-700/70 shadow-lg shadow-red-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-950/50 dark:to-rose-950/50 text-red-800 dark:text-red-300 border-red-300/70 dark:border-red-800/50 shadow-lg shadow-red-500/10", 
     href: ROUTES.OVERDUE 
   },
   { 
@@ -79,8 +79,8 @@ const cardItems = [
     count: 2, 
     icon: PiTagSimpleBold, 
     activeIcon: PiTagSimpleFill, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/70 dark:to-yellow-900/70 text-amber-800 dark:text-amber-200 border-amber-300/70 dark:border-amber-700/70 shadow-lg shadow-amber-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-950/50 dark:to-yellow-950/50 text-amber-800 dark:text-amber-300 border-amber-300/70 dark:border-amber-800/50 shadow-lg shadow-amber-500/10", 
     href: ROUTES.TAGS 
   },
   { 
@@ -88,8 +88,8 @@ const cardItems = [
     count: 2, 
     icon: BsPin, 
     activeIcon: BsFillPinFill, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/70 dark:to-pink-900/70 text-rose-800 dark:text-rose-200 border-rose-300/70 dark:border-rose-700/70 shadow-lg shadow-rose-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-950/50 dark:to-pink-950/50 text-rose-800 dark:text-rose-300 border-rose-300/70 dark:border-rose-800/50 shadow-lg shadow-rose-500/10", 
     href: ROUTES.BOARD 
   },
   { 
@@ -97,8 +97,8 @@ const cardItems = [
     count: null, 
     icon: User, 
     activeIcon: User, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/70 dark:to-purple-900/70 text-indigo-800 dark:text-indigo-200 border-indigo-300/70 dark:border-indigo-700/70 shadow-lg shadow-indigo-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-950/50 dark:to-purple-950/50 text-indigo-800 dark:text-indigo-300 border-indigo-300/70 dark:border-indigo-800/50 shadow-lg shadow-indigo-500/10", 
     href: "/assigned" 
   },
   { 
@@ -106,8 +106,8 @@ const cardItems = [
     count: null, 
     icon: Calendar, 
     activeIcon: Calendar, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-900/70 dark:to-teal-900/70 text-cyan-800 dark:text-cyan-200 border-cyan-300/70 dark:border-cyan-700/70 shadow-lg shadow-cyan-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-950/50 dark:to-teal-950/50 text-cyan-800 dark:text-cyan-300 border-cyan-300/70 dark:border-cyan-800/50 shadow-lg shadow-cyan-500/10", 
     href: "/calendar-tasks", 
     taskType: 'CALENDAR'
   },
@@ -116,8 +116,8 @@ const cardItems = [
     count: null, 
     icon: FileText, 
     activeIcon: FileText, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/70 dark:to-red-900/70 text-orange-800 dark:text-orange-200 border-orange-300/70 dark:border-orange-700/70 shadow-lg shadow-orange-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-950/50 dark:to-red-950/50 text-orange-800 dark:text-orange-300 border-orange-300/70 dark:border-orange-800/50 shadow-lg shadow-orange-500/10", 
     href: "/quick-notes", 
     taskType: 'QUICK_NOTE'
   },
@@ -126,8 +126,8 @@ const cardItems = [
     count: null, 
     icon: Folder, 
     activeIcon: FolderKanban, 
-    color: "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700", 
-    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/70 dark:to-indigo-900/70 text-blue-800 dark:text-blue-200 border-blue-300/70 dark:border-blue-700/70 shadow-lg shadow-blue-500/10", 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-800 dark:text-blue-300 border-blue-300/70 dark:border-blue-800/50 shadow-lg shadow-blue-500/10", 
     href: "/projects" 
   },
 ]
