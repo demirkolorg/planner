@@ -111,6 +111,13 @@ model Task {
   tags              TaskTag[]
   approvalRequester User?              @relation("TaskApprovalRequester", fields: [approvalRequestedBy], references: [id])
   approver          User?              @relation("TaskApprover", fields: [approvedBy], references: [id])
+  
+  // Performance indexes
+  @@index([userId, createdAt])
+  @@index([userId, completed])
+  @@index([userId, dueDate])
+  @@index([projectId, completed])
+  @@index([parentTaskId])
 }
 
 model Section {
@@ -383,9 +390,10 @@ model Assignment {
   // Indexes
   @@unique([targetType, targetId, userId], name: "unique_user_assignment")
   @@unique([targetType, targetId, email], name: "unique_email_assignment")  
-  @@index([targetType, targetId])
-  @@index([userId])
+  @@index([targetType, targetId, status])
+  @@index([userId, status])
   @@index([email, status])
+  @@index([assignedBy, assignedAt])
 }
 
 // Kullanıcıya Özgü Pin Durumları
