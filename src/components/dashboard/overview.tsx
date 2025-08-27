@@ -20,6 +20,7 @@ import { BRAND_SLOGANS } from "@/lib/constants"
 import { useTasks } from "@/hooks/queries/use-tasks"
 import { useProjects } from "@/hooks/queries/use-projects"
 import { useTaskStore } from "@/store/taskStore"
+import { useProjectStore } from "@/store/projectStore"
 import { TaskCard } from "@/components/task/task-card"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { useEffect, useMemo, useState, useCallback, memo, lazy, Suspense } from "react"
@@ -35,6 +36,9 @@ export function DashboardOverview() {
   // React Query hooks
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
+  
+  // TaskStore ve ProjectStore functions for getting sections
+  const { getSectionsByProject } = useProjectStore()
   
   // TaskStore functions for mutations
   const { 
@@ -409,7 +413,28 @@ export function DashboardOverview() {
           
           {/* New Task Button */}
           <Button 
-            onClick={() => setIsTaskModalOpen(true)}
+            onClick={() => {
+              // Ana sayfadan görev eklerken default proje/bölüm set et - sabitlenmiş projelerin ilkini seç
+              const pinnedProjects = projects.filter(p => p.isPinned).sort((a, b) => a.name.localeCompare(b.name, 'tr'))
+              const defaultProject = pinnedProjects[0]
+              
+              if (defaultProject) {
+                const projectSections = getSectionsByProject ? getSectionsByProject(defaultProject.id) : []
+                // Önce "Genel" bölümünü ara, yoksa ilk bölümü seç
+                const generalSection = projectSections.find(s => s.name === "Genel")
+                const defaultSection = generalSection || projectSections[0]
+                
+                setTaskModalContext({
+                  project: { id: defaultProject.id, name: defaultProject.name, emoji: defaultProject.emoji },
+                  section: defaultSection ? { 
+                    id: defaultSection.id, 
+                    name: defaultSection.name, 
+                    projectId: defaultProject.id 
+                  } : undefined
+                })
+              }
+              setIsTaskModalOpen(true)
+            }}
             className="px-6 h-12 text-base"
           >
             <Plus className="h-5 w-5 mr-2" />
