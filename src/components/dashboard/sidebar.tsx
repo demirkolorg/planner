@@ -361,8 +361,74 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
 
           {/* Navigation Cards - Compact Design */}
           <div className="p-4 pb-2">
+            {/* İlk 2 kart - 2 sütunlu */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {cardItems.slice(0, 2).map((item) => {
+                const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
+                const displayCount = dynamicCount !== null ? dynamicCount : item.count
+                
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      "p-2 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01]",
+                      pathname === item.href ? item.activeColor : item.color
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      {pathname === item.href ? (
+                        <item.activeIcon className="h-4 w-4" />
+                      ) : (
+                        <item.icon className="h-4 w-4" />
+                      )}
+                      {displayCount !== null && (
+                        <span className="text-xs font-semibold">{displayCount}</span>
+                      )}
+                    </div>
+                    <div className="text-xs font-medium leading-tight">{item.name}</div>
+                  </Link>
+                )
+              })}
+            </div>
+            
+            {/* Tamamlandı, Etiketler, Pano, Hızlı Notlar - 4 sütunlu */}
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {[cardItems[2], cardItems[4], cardItems[5], cardItems[8]].map((item) => {
+                if (!item) return null
+                const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
+                const displayCount = dynamicCount !== null ? dynamicCount : item.count
+                
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      "p-2 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01]",
+                      pathname === item.href ? item.activeColor : item.color
+                    )}
+                  >
+                    <div className="flex flex-col items-center text-center relative">
+                      <div className="mb-1 relative">
+                        {pathname === item.href ? (
+                          <item.activeIcon className="h-3.5 w-3.5" />
+                        ) : (
+                          <item.icon className="h-3.5 w-3.5" />
+                        )}
+                        {displayCount !== null && (
+                          <span className="text-xs font-semibold absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full min-w-4 h-4 flex items-center justify-center px-1 text-[10px]">{displayCount}</span>
+                        )}
+                      </div>
+                      <div className="text-xs font-medium leading-tight text-center">{item.name}</div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+            
+            {/* Geri kalan kartlar - 2 sütunlu */}
             <div className="grid grid-cols-2 gap-2">
-              {cardItems.map((item) => {
+              {[cardItems[3], cardItems[6], cardItems[7], cardItems[9]].filter(Boolean).map((item) => {
                 const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
                 
