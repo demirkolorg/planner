@@ -392,45 +392,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
               })}
             </div>
             
-            {/* Tamamlandı, Etiketler, Pano, Hızlı Notlar - 4 sütunlu */}
-            <div className="grid grid-cols-4 gap-1.5 mb-2">
-              {[cardItems[2], cardItems[4], cardItems[5], cardItems[8]].map((item) => {
-                if (!item) return null
-                const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
-                const displayCount = dynamicCount !== null ? dynamicCount : item.count
-                
-                return (
-                  <Tooltip key={item.name}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "p-2 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01] flex items-center justify-center",
-                          pathname === item.href ? item.activeColor : item.color
-                        )}
-                      >
-                        <div className="relative">
-                          {pathname === item.href ? (
-                            <item.activeIcon className="h-4 w-4" />
-                          ) : (
-                            <item.icon className="h-4 w-4" />
-                          )}
-                          {displayCount !== null && (
-                            <span className="text-xs font-semibold absolute -top-2 -right-2 bg-red-500 text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 text-[10px] shadow-sm">{displayCount}</span>
-                          )}
-                        </div>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{item.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              })}
-            </div>
-            
-            {/* Geri kalan kartlar - 2 sütunlu */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Orta kartlar - 2 sütunlu */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
               {[cardItems[3], cardItems[6], cardItems[7], cardItems[9]].filter(Boolean).map((item) => {
                 const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
@@ -456,6 +419,41 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                     </div>
                     <div className="text-xs font-medium leading-tight">{item.name}</div>
                   </Link>
+                )
+              })}
+            </div>
+            
+            {/* Tamamlandı, Etiketler, Pano, Hızlı Notlar - 4 sütunlu */}
+            <div className="grid grid-cols-4 gap-1.5">
+              {[cardItems[2], cardItems[4], cardItems[5], cardItems[8]].map((item) => {
+                if (!item) return null
+                const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
+                const displayCount = dynamicCount !== null ? dynamicCount : item.count
+                
+                return (
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "p-3 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01] flex items-center justify-center relative",
+                          pathname === item.href ? item.activeColor : item.color
+                        )}
+                      >
+                        {pathname === item.href ? (
+                          <item.activeIcon className="h-5 w-5" />
+                        ) : (
+                          <item.icon className="h-5 w-5" />
+                        )}
+                        {displayCount !== null && displayCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{displayCount}</span>
+                        )}
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )
               })}
             </div>
