@@ -436,7 +436,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                       <Link
                         href={item.href}
                         className={cn(
-                          "p-3 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01] flex items-center justify-center relative",
+                          "p-3 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01] flex items-center justify-center",
                           pathname === item.href ? item.activeColor : item.color
                         )}
                       >
@@ -445,13 +445,10 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                         ) : (
                           <item.icon className="h-5 w-5" />
                         )}
-                        {displayCount !== null && displayCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{displayCount}</span>
-                        )}
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{item.name}</p>
+                      <p>{item.name}{displayCount !== null && displayCount > 0 && ` (${displayCount})`}</p>
                     </TooltipContent>
                   </Tooltip>
                 )
