@@ -400,28 +400,31 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
                 
                 return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      "p-2 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01]",
-                      pathname === item.href ? item.activeColor : item.color
-                    )}
-                  >
-                    <div className="flex flex-col items-center text-center relative">
-                      <div className="mb-1 relative">
-                        {pathname === item.href ? (
-                          <item.activeIcon className="h-3.5 w-3.5" />
-                        ) : (
-                          <item.icon className="h-3.5 w-3.5" />
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "p-2 rounded-lg border transition-all duration-200 hover:shadow-sm hover:scale-[1.01] flex items-center justify-center",
+                          pathname === item.href ? item.activeColor : item.color
                         )}
-                        {displayCount !== null && (
-                          <span className="text-xs font-semibold absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full min-w-4 h-4 flex items-center justify-center px-1 text-[10px]">{displayCount}</span>
-                        )}
-                      </div>
-                      <div className="text-xs font-medium leading-tight text-center">{item.name}</div>
-                    </div>
-                  </Link>
+                      >
+                        <div className="relative">
+                          {pathname === item.href ? (
+                            <item.activeIcon className="h-4 w-4" />
+                          ) : (
+                            <item.icon className="h-4 w-4" />
+                          )}
+                          {displayCount !== null && (
+                            <span className="text-xs font-semibold absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full min-w-4 h-4 flex items-center justify-center px-1 text-[10px]">{displayCount}</span>
+                          )}
+                        </div>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )
               })}
             </div>
