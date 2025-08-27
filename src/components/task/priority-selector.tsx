@@ -1,14 +1,16 @@
 "use client"
 
+import React, { memo } from "react"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 
 interface PrioritySelectorProps {
   currentPriority: string
   onUpdatePriority?: (priority: string) => void
   trigger?: React.ReactNode
+  disabled?: boolean
 }
 
-export function PrioritySelector({ currentPriority, onUpdatePriority, trigger }: PrioritySelectorProps) {
+const PrioritySelector = memo(function PrioritySelector({ currentPriority, onUpdatePriority, trigger, disabled }: PrioritySelectorProps) {
   // İngilizce priority değerlerini Türkçe'ye çevir
   const priorityMapping: Record<string, string> = {
     'HIGH': 'Yüksek',
@@ -40,6 +42,17 @@ export function PrioritySelector({ currentPriority, onUpdatePriority, trigger }:
       onPrioritySelect={handlePrioritySelect}
       trigger={trigger}
       dropdownPosition="top"
+      disabled={disabled}
     />
   )
-}
+}, (prevProps, nextProps) => {
+  // Sadece kritik prop değişikliklerinde re-render
+  return (
+    prevProps.currentPriority === nextProps.currentPriority &&
+    prevProps.disabled === nextProps.disabled
+  )
+})
+
+PrioritySelector.displayName = "PrioritySelector"
+
+export { PrioritySelector }

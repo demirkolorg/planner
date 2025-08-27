@@ -1,5 +1,6 @@
 "use client"
 
+import React, { memo } from "react"
 import { TagPicker } from "@/components/ui/tag-picker"
 
 interface TaskTag {
@@ -18,9 +19,10 @@ interface TagSelectorProps {
   onUpdateTags?: (tagIds: string[]) => void
   trigger?: React.ReactNode
   dropdownPosition?: 'top' | 'bottom'
+  disabled?: boolean
 }
 
-export function TagSelector({ taskTags = [], onUpdateTags, trigger, dropdownPosition = 'top' }: TagSelectorProps) {
+const TagSelector = memo(function TagSelector({ taskTags = [], onUpdateTags, trigger, dropdownPosition = 'top', disabled }: TagSelectorProps) {
   // Mevcut görevin tag isimlerini al
   const selectedTagNames = taskTags.map(taskTag => taskTag.tag.name)
 
@@ -48,9 +50,21 @@ export function TagSelector({ taskTags = [], onUpdateTags, trigger, dropdownPosi
   return (
     <TagPicker
       selectedTags={selectedTagNames}
-      onTagsChange={handleTagsChange}
+      onTagsChange={disabled ? undefined : handleTagsChange}
       trigger={trigger}
       dropdownPosition={dropdownPosition}
+      disabled={disabled}
     />
   )
-}
+}, (prevProps, nextProps) => {
+  // Sadece kritik prop değişikliklerinde re-render
+  return (
+    prevProps.taskTags?.length === nextProps.taskTags?.length &&
+    prevProps.taskTags?.every((tag, index) => tag.id === nextProps.taskTags?.[index]?.id) &&
+    prevProps.disabled === nextProps.disabled
+  )
+})
+
+TagSelector.displayName = "TagSelector"
+
+export { TagSelector }

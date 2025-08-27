@@ -1,5 +1,6 @@
 "use client"
 
+import React, { memo } from "react"
 import { 
   Plus, 
   Tag, 
@@ -84,7 +85,7 @@ interface TaskCardActionsProps {
   displayPriority?: string // Optimistic priority state
 }
 
-export function TaskCardActions({
+const TaskCardActions = memo(function TaskCardActions({
   task,
   onAddSubTask,
   onUpdateTags,
@@ -433,4 +434,21 @@ export function TaskCardActions({
       </div>
     </TooltipProvider>
   )
-}
+}, (prevProps, nextProps) => {
+  // Performans için memoization - kritik prop değişikliklerinde re-render
+  return (
+    prevProps.task?.id === nextProps.task?.id &&
+    prevProps.task?.completed === nextProps.task?.completed &&
+    prevProps.task?.priority === nextProps.task?.priority &&
+    prevProps.task?.isPinned === nextProps.task?.isPinned &&
+    prevProps.task?.tags?.length === nextProps.task?.tags?.length &&
+    prevProps.displayPinned === nextProps.displayPinned &&
+    prevProps.displayPriority === nextProps.displayPriority &&
+    prevProps.canEditTask === nextProps.canEditTask &&
+    prevProps.canSubmitForApproval === nextProps.canSubmitForApproval
+  )
+})
+
+TaskCardActions.displayName = "TaskCardActions"
+
+export { TaskCardActions }
