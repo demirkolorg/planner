@@ -14,11 +14,14 @@ import { SplashScreen } from "@/components/ui/splash-screen"
 // Lazy load modals for better performance
 import { lazy, Suspense } from "react"
 
+// Lazy load all modals and heavy components for better performance
 const QuickTaskModal = lazy(() => import("@/components/modals/quick-task-modal").then(mod => ({ default: mod.QuickTaskModal })))
 const QuickSearchModal = lazy(() => import("@/components/modals/quick-search-modal").then(mod => ({ default: mod.QuickSearchModal })))
 const NewTaskModal = lazy(() => import("@/components/modals/new-task-modal").then(mod => ({ default: mod.NewTaskModal })))
-import { ToastNotification } from "@/components/ui/toast-notification"
-import { UndoToast } from "@/components/ui/undo-toast"
+
+// Lazy load notification components
+const ToastNotification = lazy(() => import("@/components/ui/toast-notification").then(mod => ({ default: mod.ToastNotification })))
+const UndoToast = lazy(() => import("@/components/ui/undo-toast").then(mod => ({ default: mod.UndoToast })))
 import { useAutoNotifications } from "@/hooks/use-notifications"
 import { useCtrlK, useCtrlS, useCtrlJ, useCtrlB } from "@/hooks/use-keyboard-shortcut"
 
@@ -224,11 +227,15 @@ export default function DashboardLayout({
         </Suspense>
       )}
       
-      {/* Toast Notifications */}
-      <ToastNotification />
+      {/* Toast Notifications - Lazy loaded */}
+      <Suspense fallback={null}>
+        <ToastNotification />
+      </Suspense>
       
-      {/* Undo Toast */}
-      <UndoToast />
+      {/* Undo Toast - Lazy loaded */}
+      <Suspense fallback={null}>
+        <UndoToast />
+      </Suspense>
     </div>
   )
 }

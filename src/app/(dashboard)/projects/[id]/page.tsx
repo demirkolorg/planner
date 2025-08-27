@@ -1,19 +1,21 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Edit, Trash2, MoreVertical, Plus, Settings, Clock,TriangleAlert, Check, ChevronDown, ChevronRight, ArrowUpDown, Calendar, Zap, SortAsc, SortDesc, CalendarDays, FileText, Pin, PinOff, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
-import { NewProjectModal } from "@/components/modals/new-project-modal"
-import { NewSectionModal } from "@/components/modals/new-section-modal"
-import { NewTaskModal } from "@/components/modals/new-task-modal"
-import { MoveSectionModal } from "@/components/modals/move-section-modal"
-import { MoveTaskModal } from "@/components/modals/move-task-modal"
-import { TaskCommentsModal } from "@/components/modals/task-comments-modal"
-import { ProjectTimelineModal } from "@/components/modals/project-timeline-modal"
+
+// Lazy load heavy modals
+const NewProjectModal = lazy(() => import("@/components/modals/new-project-modal").then(mod => ({ default: mod.NewProjectModal })))
+const NewSectionModal = lazy(() => import("@/components/modals/new-section-modal").then(mod => ({ default: mod.NewSectionModal })))
+const NewTaskModal = lazy(() => import("@/components/modals/new-task-modal").then(mod => ({ default: mod.NewTaskModal })))
+const MoveSectionModal = lazy(() => import("@/components/modals/move-section-modal").then(mod => ({ default: mod.MoveSectionModal })))
+const MoveTaskModal = lazy(() => import("@/components/modals/move-task-modal").then(mod => ({ default: mod.MoveTaskModal })))
+const TaskCommentsModal = lazy(() => import("@/components/modals/task-comments-modal").then(mod => ({ default: mod.TaskCommentsModal })))
+const ProjectTimelineModal = lazy(() => import("@/components/modals/project-timeline-modal").then(mod => ({ default: mod.ProjectTimelineModal })))
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -1387,16 +1389,18 @@ export default function ProjectDetailPage() {
 
       {/* Düzenleme Modal'ı */}
       {project && (
-        <NewProjectModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleUpdateProject}
-          editingProject={{
-            id: project.id,
-            name: project.name,
-            emoji: project.emoji || "",
-          }}
-        />
+        <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+          <NewProjectModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSave={handleUpdateProject}
+            editingProject={{
+              id: project.id,
+              name: project.name,
+              emoji: project.emoji || "",
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Silme Onay Dialog'u */}

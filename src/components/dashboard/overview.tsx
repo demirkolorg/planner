@@ -21,11 +21,13 @@ import { useTasks } from "@/hooks/queries/use-tasks"
 import { useProjects } from "@/hooks/queries/use-projects"
 import { useTaskStore } from "@/store/taskStore"
 import { TaskCard } from "@/components/task/task-card"
-import { NewTaskModal } from "@/components/modals/new-task-modal"
-import { MoveTaskModal } from "@/components/modals/move-task-modal"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
-import { KeyboardShortcutsModal } from "@/components/modals/keyboard-shortcuts-modal"
-import { useEffect, useMemo, useState, useCallback, memo } from "react"
+import { useEffect, useMemo, useState, useCallback, memo, lazy, Suspense } from "react"
+
+// Lazy load modals for better performance
+const NewTaskModal = lazy(() => import("@/components/modals/new-task-modal").then(mod => ({ default: mod.NewTaskModal })))
+const MoveTaskModal = lazy(() => import("@/components/modals/move-task-modal").then(mod => ({ default: mod.MoveTaskModal })))
+const KeyboardShortcutsModal = lazy(() => import("@/components/modals/keyboard-shortcuts-modal").then(mod => ({ default: mod.KeyboardShortcutsModal })))
 import Link from "next/link"
 import { isToday, startOfWeek, endOfWeek, isWithinInterval, addWeeks } from "date-fns"
 
@@ -709,8 +711,9 @@ export function DashboardOverview() {
       </div>
 
 
-      {/* Modals */}
-      <NewTaskModal
+      {/* Modals - Lazy loaded */}
+      <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+        <NewTaskModal
         isOpen={isTaskModalOpen}
         onClose={() => {
           setIsTaskModalOpen(false)
@@ -735,6 +738,7 @@ export function DashboardOverview() {
         parentTaskTitle={taskModalContext.parentTaskTitle}
         editingTask={editingTask}
       />
+      </Suspense>
 
       <TaskDeleteDialog
         isOpen={isTaskDeleteDialogOpen}
@@ -757,8 +761,9 @@ export function DashboardOverview() {
         task={taskToDelete}
       />
 
-      <MoveTaskModal
-        isOpen={isTaskCloneModalOpen}
+      <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+        <MoveTaskModal
+          isOpen={isTaskCloneModalOpen}
         onClose={() => {
           setIsTaskCloneModalOpen(false)
           setTaskToClone(null)
@@ -766,22 +771,27 @@ export function DashboardOverview() {
         onMove={handleCloneTask}
         task={taskToClone}
         mode="clone"
-      />
+        />
+      </Suspense>
 
-      <MoveTaskModal
-        isOpen={isTaskMoveModalOpen}
+      <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+        <MoveTaskModal
+          isOpen={isTaskMoveModalOpen}
         onClose={() => {
           setIsTaskMoveModalOpen(false)
           setTaskToMove(null)
         }}
         onMove={handleMoveTask}
         task={taskToMove}
-      />
+        />
+      </Suspense>
 
-      <KeyboardShortcutsModal
+      <Suspense fallback={<div className="modal-loading">Loading...</div>}>
+        <KeyboardShortcutsModal
         isOpen={isKeyboardShortcutsModalOpen}
         onClose={() => setIsKeyboardShortcutsModalOpen(false)}
-      />
+        />
+      </Suspense>
     </div>
   )
 }
