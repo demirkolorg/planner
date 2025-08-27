@@ -651,16 +651,19 @@ export default function GuidePage() {
 
             <div className="space-y-6">
               {/* Current Version */}
-              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20 p-6">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border border-green-200 dark:border-green-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
-                    <h3 className="text-lg font-semibold text-foreground">Güncel Sürüm</h3>
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">Güncel Sürüm</h3>
                   </div>
-                  <Badge className="bg-primary/20 text-primary border-primary/30">v1.5.0</Badge>
+                  <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    v1.6.0
+                  </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  En son güncellemeyi kullanıyorsunuz. Tüm yeni özellikler ve iyileştirmeler aktif durumda.
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  En son güncellemeyi kullanıyorsunuz. Performans iyileştirmeleri ve UI geliştirmeleri aktif durumda.
                 </p>
               </div>
 
@@ -669,6 +672,51 @@ export default function GuidePage() {
                 <h3 className="text-lg font-semibold text-card-foreground mb-6">Sürüm Geçmişi</h3>
                 
                 <div className="space-y-6">
+                  {/* v1.6.0 */}
+                  <div className="relative">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-card-foreground">v1.6.0</h4>
+                          <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">27 Ağustos 2025</Badge>
+                          <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700 text-xs">
+                            <Sparkles className="h-3 w-3 mr-1" />YENİ!
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-2">
+                          <p className="font-medium text-green-700 dark:text-green-300">Performans İyileştirmeleri & UI Geliştirmeleri</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="font-medium mb-2 flex items-center">
+                                <Zap className="h-4 w-4 mr-2 text-yellow-500" />
+                                Performans
+                              </p>
+                              <ul className="space-y-1 text-xs">
+                                <li>• React.memo ile bileşen optimizasyonu</li>
+                                <li>• Lazy loading uygulaması</li>
+                                <li>• Bundle size %15 azalma</li>
+                                <li>• Database indexleri eklendi</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="font-medium mb-2 flex items-center">
+                                <Eye className="h-4 w-4 mr-2 text-blue-500" />
+                                Arayüz
+                              </p>
+                              <ul className="space-y-1 text-xs">
+                                <li>• 4 sütunlu sidebar kartları</li>
+                                <li>• Karanlık tema renk optimizasyonu</li>
+                                <li>• Tooltip ile daha iyi UX</li>
+                                <li>• Minimal kart tasarımı</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
                   {/* v1.5.0 */}
                   <div className="relative">
                     <div className="flex items-start space-x-4">
