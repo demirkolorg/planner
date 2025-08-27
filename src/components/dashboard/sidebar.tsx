@@ -416,7 +416,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                             <item.icon className="h-4 w-4" />
                           )}
                           {displayCount !== null && (
-                            <span className="text-xs font-semibold absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full min-w-4 h-4 flex items-center justify-center px-1 text-[10px]">{displayCount}</span>
+                            <span className="text-xs font-semibold absolute -top-2 -right-2 bg-red-500 text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 text-[10px] shadow-sm">{displayCount}</span>
                           )}
                         </div>
                       </Link>
