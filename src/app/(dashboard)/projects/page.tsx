@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, MoreVertical, Eye, EyeOff, FolderKanban, Search, Fi
 import { Button } from "@/components/ui/button"
 import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
+import { useToggleProjectPin, useProjects } from "@/hooks/queries/use-projects"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -50,8 +51,7 @@ interface Project {
 
 export default function ProjectsPage() {
   const router = useRouter()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: projects = [], isLoading: isProjectsLoading } = useProjects()
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -60,7 +60,8 @@ export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all")
   
-  const { deleteProject, createProject, updateProject, toggleProjectPin } = useProjectStore()
+  const { deleteProject, createProject, updateProject } = useProjectStore()
+  const toggleProjectPinMutation = useToggleProjectPin()
   const { 
     getProjectCompletionPercentage, 
     getPendingTasksCount, 
@@ -70,26 +71,8 @@ export default function ProjectsPage() {
   } = useTaskStore()
 
   useEffect(() => {
-    fetchProjectsData()
     fetchTasks()
   }, [fetchTasks])
-
-  const fetchProjectsData = async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch('/api/projects')
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects')
-      }
-      const data = await response.json()
-      setProjects(data)
-    } catch (error) {
-      console.error('Error fetching projects:', error)
-      toast.error('Projeler yüklenirken hata oluştu')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   // Proje tamamlanma kontrolü
   const isProjectCompleted = (projectId: string) => {
@@ -152,7 +135,6 @@ export default function ProjectsPage() {
     
     try {
       await updateProject(editingProject.id, name, emoji)
-      await fetchProjectsData()
       setEditingProject(null)
       toast.success('Proje başarıyla güncellendi')
     } catch (error) {
@@ -172,7 +154,6 @@ export default function ProjectsPage() {
     
     try {
       await deleteProject(projectToDelete.id)
-      await fetchProjectsData()
       setProjectToDelete(null)
       setIsDeleteDialogOpen(false)
       toast.success('Proje başarıyla silindi')
@@ -188,38 +169,12 @@ export default function ProjectsPage() {
 
   const handleTogglePin = async (project: Project) => {
     try {
-      await toggleProjectPin(project.id)
+      await toggleProjectPinMutation.mutateAsync(project.id)
       toast.success(project.isPinned ? 'Proje sabitleme kaldırıldı' : 'Proje sabitlendi')
     } catch (error) {
       console.error('Error toggling pin:', error)
       toast.error('Pin işlemi başarısız')
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        {/* Header Skeleton */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-muted rounded-lg animate-pulse" />
-            <div className="h-8 w-32 bg-muted rounded animate-pulse" />
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-20 h-8 bg-muted rounded animate-pulse" />
-            <div className="w-24 h-8 bg-muted rounded animate-pulse" />
-          </div>
-        </div>
-        
-        {/* Table Skeleton */}
-        <div className="rounded-lg border">
-          <div className="h-12 border-b bg-muted/50 animate-pulse" />
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 border-b bg-muted/20 animate-pulse" />
-          ))}
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -236,7 +191,7 @@ export default function ProjectsPage() {
                 Projeler
               </h1>
               <p className="text-muted-foreground font-medium">
-                Toplam {filteredProjects.length} proje
+                {isProjectsLoading ? "Projeler yükleniyor..." : `Toplam ${filteredProjects.length} proje`}
               </p>
             </div>
           </div>
@@ -301,7 +256,25 @@ export default function ProjectsPage() {
         </div>
 
         {/* Projeler Tablosu */}
-        {filteredProjects.length === 0 ? (
+        {isProjectsLoading ? (
+          <div className="rounded-lg border">
+            {/* Tablo Header */}
+            <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/50 border-b text-sm font-medium text-muted-foreground">
+              <div className="col-span-6">Proje</div>
+              <div className="col-span-2 text-center">Görevler</div>
+              <div className="col-span-2 text-center">İlerleme</div>
+              <div className="col-span-1 text-center">Durum</div>
+              <div className="col-span-1 text-center">İşlemler</div>
+            </div>
+            {/* Loading Spinner */}
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground text-sm">Projeler yükleniyor...</p>
+              </div>
+            </div>
+          </div>
+        ) : filteredProjects.length === 0 ? (
           <div className="text-center p-8 border-2 border-dashed border-muted rounded-lg">
             <div className="p-3 rounded-lg mx-auto mb-4 w-fit bg-primary/10">
               <FolderKanban className="h-12 w-12 text-primary" />

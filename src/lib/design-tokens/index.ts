@@ -10,6 +10,7 @@ export * from './typography'
 // Re-export commonly used tokens for convenience
 export { 
   PRIORITY_COLORS,
+  PRIORITY_HSL,
   STATUS_COLORS,
   BRAND_COLORS,
   PRIORITIES 

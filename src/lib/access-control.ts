@@ -198,7 +198,7 @@ function calculatePermissions(
         canEditSettings: true,
         canDeleteProject: true,
         canCompleteTask: true,              // ✅ Görevleri tamamlayabilir
-        canSubmitForApproval: true          // ✅ Onaya gönderebilir
+        canSubmitForApproval: false         // ❌ Owner kendi görevini onaya gönderemez
       }
 
     case 'PROJECT_MEMBER':

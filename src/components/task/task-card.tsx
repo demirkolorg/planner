@@ -27,7 +27,7 @@ import { TaskCardActions } from "./task-card-actions"
 import { TaskTimelineModal } from "../modals/task-timeline-modal"
 import { ApprovalActionDialog } from "../modals/approval-action-dialog"
 import { SubmitForApprovalDialog } from "../modals/submit-for-approval-dialog"
-import { PRIORITY_COLORS, PRIORITIES } from "@/lib/constants/priority"
+import { PRIORITY_COLORS, PRIORITIES, PRIORITY_HSL } from "@/lib/constants/priority"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "../shared/date-time-picker"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -505,18 +505,9 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 
 
   const getPriorityColorHex = () => {
-    // İngilizce priority değerlerini Türkçe'ye eşleştir
-    const priorityMapping: Record<string, string> = {
-      'HIGH': 'Yüksek',
-      'MEDIUM': 'Orta',
-      'LOW': 'Düşük',
-      'NONE': 'Yok',
-      'CRITICAL': 'Kritik'
-    }
-
-    const mappedPriority = priorityMapping[task.priority] || task.priority
-    const priority = PRIORITIES.find(p => p.name === mappedPriority)
-    return priority?.color || PRIORITY_COLORS.YOK
+    // Direkt olarak task.priority değerini kullan (İngilizce enum değeri)
+    const priority = PRIORITIES.find(p => p.value === task.priority)
+    return priority?.color || PRIORITY_HSL.NONE
   }
 
 
@@ -560,7 +551,7 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const canEditTask = userAccess?.permissions.canCompleteTask ?? 
     (!isAssignedUser && (isTaskOwner || currentUser))  
   const canSubmitForApproval = userAccess?.permissions.canSubmitForApproval ?? 
-    (isAssignedUser || isTaskOwner)
+    (isAssignedUser && !isTaskOwner)
 
   // Onay durumu göstergesi
   const getApprovalStatusBadge = () => {

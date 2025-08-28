@@ -70,11 +70,21 @@ export function AccessLevelBadge({
           borderColor: 'border-orange-200 dark:border-orange-800',
           tooltip: 'Belirli görevlere atanmışsınız'
         }
+      default:
+        return {
+          icon: Users,
+          text: 'Bilinmiyor',
+          variant: 'secondary' as const,
+          color: 'text-gray-600',
+          bgColor: 'bg-gray-50 dark:bg-gray-900/20',
+          borderColor: 'border-gray-200 dark:border-gray-800',
+          tooltip: 'Erişim seviyesi belirlenmemiş'
+        }
     }
   }
 
   const config = getAccessConfig()
-  const Icon = config.icon
+  const Icon = config?.icon
 
   const tooltipContent = () => {
     if (visibleTaskCount !== undefined && totalTaskCount !== undefined && visibleTaskCount < totalTaskCount) {
@@ -102,7 +112,7 @@ export function AccessLevelBadge({
             className
           )}
         >
-          <Icon className="h-3 w-3" />
+          {Icon && <Icon className="h-3 w-3" />}
           <span>{config.text}</span>
           {visibleTaskCount !== undefined && totalTaskCount !== undefined && 
            accessLevel !== 'OWNER' && visibleTaskCount < totalTaskCount && (

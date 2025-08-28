@@ -22,29 +22,27 @@ export async function PATCH(
     const { id: projectId } = await params
 
     // Check if user has access to this project
-    // Not: Access control check ekleyeceğiz - user projenin sahibi veya assigned olmalı
-    const hasAccess = await db.project.findFirst({
+    // First check if user is the owner
+    const project = await db.project.findFirst({
       where: {
         id: projectId,
-        OR: [
-          { userId: userId }, // Owner
-          { 
-            // Assigned project
-            id: {
-              in: (await db.assignment.findMany({
-                where: {
-                  targetType: 'PROJECT',
-                  targetId: projectId,
-                  userId: userId,
-                  status: 'ACTIVE'
-                },
-                select: { targetId: true }
-              })).map(a => a.targetId)
-            }
-          }
-        ]
+        userId: userId
       }
     })
+
+    // If not owner, check assignments
+    let hasAccess = !!project
+    if (!hasAccess) {
+      const assignment = await db.assignment.findFirst({
+        where: {
+          targetType: 'PROJECT',
+          targetId: projectId,
+          userId: userId,
+          status: 'ACTIVE'
+        }
+      })
+      hasAccess = !!assignment
+    }
 
     if (!hasAccess) {
       return NextResponse.json(

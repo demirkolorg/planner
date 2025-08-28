@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
+import { useToggleProjectPin } from "@/hooks/queries/use-projects"
 
 // Lazy load heavy modals
 const NewProjectModal = lazy(() => import("@/components/modals/new-project-modal").then(mod => ({ default: mod.NewProjectModal })))
@@ -185,7 +186,8 @@ export default function ProjectDetailPage() {
     setIsTaskModalOpen(true)
   }, [])
   
-  const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection, toggleProjectPin } = useProjectStore()
+  const { projects, updateProject, deleteProject, fetchSections, getSectionsByProject, createSection, updateSection, deleteSection, moveSection } = useProjectStore()
+  const toggleProjectPinMutation = useToggleProjectPin()
   const { 
     fetchTasksByProject, 
     getTasksByProject, 
@@ -494,9 +496,7 @@ export default function ProjectDetailPage() {
     if (!project) return
     
     try {
-      await toggleProjectPin(project.id)
-      // Projeyi yeniden fetch et (local state güncellenir)
-      await fetchProjectData()
+      await toggleProjectPinMutation.mutateAsync(project.id)
       toast.success(project.isPinned ? 'Proje sabitleme kaldırıldı' : 'Proje sabitlendi')
     } catch (error) {
       console.error('Error toggling pin:', error)

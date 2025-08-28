@@ -131,7 +131,34 @@ export function useToggleProjectPin() {
       }
       return response.json()
     },
-    onSuccess: () => {
+    onMutate: async (projectId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: projectKeys.all })
+
+      // Snapshot the previous value
+      const previousProjects = queryClient.getQueryData(projectKeys.lists())
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(projectKeys.lists(), (old: any) => {
+        if (!old || !Array.isArray(old)) return old
+        return old.map((project: any) => 
+          project.id === projectId 
+            ? { ...project, isPinned: !project.isPinned }
+            : project
+        )
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousProjects }
+    },
+    onError: (err, projectId, context) => {
+      // If the mutation fails, use the context to roll back
+      if (context?.previousProjects) {
+        queryClient.setQueryData(projectKeys.lists(), context.previousProjects)
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: projectKeys.all })
     },
   })
