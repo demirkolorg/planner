@@ -493,6 +493,29 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       return false
     }
     
+    // Parent-child kısıtlamaları
+    if (parentTaskId && parentTask) {
+      // Level kontrolü - Level 4+ görevlerde alt görev oluşturulamaz
+      if (parentTask.level >= 4) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Görev Seviye Kısıtlaması",
+          message: "Seviye 4 ve üzeri görevlerde alt görev oluşturulamaz. Alt görevlerin maksimum seviyesi 4'tür."
+        })
+        return false
+      }
+      
+      // Parent görev tamamlanmışsa alt görev oluşturulamaz
+      if (parentTask.completed) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Tamamlanmış Görev",
+          message: "Tamamlanmış görevlere alt görev eklenemez."
+        })
+        return false
+      }
+    }
+    
     return true
   }
 
@@ -837,7 +860,21 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           <div className="flex items-start justify-between gap-4 mb-6">
             <DialogTitle className="text-lg font-semibold leading-relaxed pr-2 flex-1 min-w-0 mb-2">
               {editingTask ? '✏️ Görevi Düzenle' : 
-               parentTaskId ? `🔗 Alt Görev Ekle${parentTaskTitle ? `: ${parentTaskTitle}` : ''}` : 
+               parentTaskId ? (
+                 <div className="flex items-center gap-2">
+                   <span>🔗 Alt Görev Ekle</span>
+                   {parentTask && (
+                     <span className="text-sm text-muted-foreground font-normal">
+                       (Seviye {(parentTask.level || 0) + 1})
+                     </span>
+                   )}
+                   {parentTaskTitle && (
+                     <span className="text-sm text-muted-foreground font-normal truncate">
+                       : {parentTaskTitle}
+                     </span>
+                   )}
+                 </div>
+               ) : 
                '🎯 Görev Ekle'}
             </DialogTitle>
             <div className="flex items-center space-x-2 flex-shrink-0">
@@ -1553,6 +1590,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                       <li>• Alt görev, üst görevden daha geç bitirilemez</li>
                       {parentTask.dueDate && <li>• Tarih seçmezseniz, üst görevin tarihi otomatik atanır</li>}
                       <li>• Üst görev tamamlanmadan tamamlanamaz</li>
+                      <li>• Maksimum seviye 4'tür (seviye {(parentTask.level || 0) + 1} oluşturulacak)</li>
+                      {(parentTask.level || 0) >= 3 && (
+                        <li className="text-yellow-600">⚠️ Bu seviye 4 alt görev olacak - daha fazla alt seviye oluşturulamaz</li>
+                      )}
                     </ul>
                   </div>
                 </div>
