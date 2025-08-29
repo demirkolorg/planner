@@ -100,10 +100,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const { createTask, updateTask, getTaskById } = useTaskStore()
   const { projects, fetchProjects, getSectionsByProject, fetchSections } = useProjectStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isAILoading, setIsAILoading] = useState(false)
-  const [isTitleAILoading, setIsTitleAILoading] = useState(false)
-  const [isDescriptionAILoading, setIsDescriptionAILoading] = useState(false)
-  const [isTagAILoading, setIsTagAILoading] = useState(false)
+  const [loadingStates, setLoadingStates] = useState({
+    aiSuggestion: false,
+    titleImprovement: false,
+    descriptionImprovement: false,
+    tagSuggestion: false
+  })
   const [aiPrompt, setAiPrompt] = useState("yap")
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const [alertConfig, setAlertConfig] = useState<{
@@ -172,7 +174,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       setShowDatePicker(false)
       setShowTimePicker(false)
       setIsSubmitting(false)
-      setIsAILoading(false)
+      setLoadingStates({
+        aiSuggestion: false,
+        titleImprovement: false,
+        descriptionImprovement: false,
+        tagSuggestion: false
+      })
       setAiPrompt("yap")
     }
   }, [isOpen, editingTask]) // tags.length, projects.length kaldırıldı
@@ -491,7 +498,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const handleAIGenerate = async () => {
     if (!aiPrompt.trim()) return
     
-    setIsAILoading(true)
+    setLoadingStates(prev => ({ ...prev, aiSuggestion: true }))
     try {
       // Mevcut etiket isimlerini al
       const availableTagNames = tags.map(tag => tag.name)
@@ -551,35 +558,45 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         message: "AI önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
       })
     } finally {
-      setIsAILoading(false)
+      setLoadingStates(prev => ({ ...prev, aiSuggestion: false }))
     }
   }
 
   const handleImproveBrief = async () => {
     if (!description.trim()) return
     
-    setIsDescriptionAILoading(true)
+    setLoadingStates(prev => ({ ...prev, descriptionImprovement: true }))
     try {
       const improvedDescription = await improveBrief(description)
       setDescription(improvedDescription)
     } catch (error) {
       console.error('Description improvement error:', error)
+      setAlertConfig({
+        isOpen: true,
+        title: "Açıklama İyileştirme Hatası",
+        message: "Açıklama iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
+      })
     } finally {
-      setIsDescriptionAILoading(false)
+      setLoadingStates(prev => ({ ...prev, descriptionImprovement: false }))
     }
   }
 
   const handleImproveTitle = async () => {
     if (!title.trim()) return
     
-    setIsTitleAILoading(true)
+    setLoadingStates(prev => ({ ...prev, titleImprovement: true }))
     try {
       const improvedTitle = await improveTitle(title)
       setTitle(improvedTitle)
     } catch (error) {
       console.error('Title improvement error:', error)
+      setAlertConfig({
+        isOpen: true,
+        title: "Başlık İyileştirme Hatası",
+        message: "Başlık iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
+      })
     } finally {
-      setIsTitleAILoading(false)
+      setLoadingStates(prev => ({ ...prev, titleImprovement: false }))
     }
   }
 
@@ -593,7 +610,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       return
     }
     
-    setIsTagAILoading(true)
+    setLoadingStates(prev => ({ ...prev, tagSuggestion: true }))
     try {
       const response = await fetch('/api/ai/suggest-tags', {
         method: 'POST',
@@ -631,12 +648,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         message: "AI etiket önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
       })
     } finally {
-      setIsTagAILoading(false)
+      setLoadingStates(prev => ({ ...prev, tagSuggestion: false }))
     }
   }
 
   const handleQuickAIGenerate = async () => {
-    setIsAILoading(true)
+    setLoadingStates(prev => ({ ...prev, aiSuggestion: true }))
     try {
       // Mevcut context bilgilerini topla
       const contextPrompt = [
@@ -700,7 +717,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         message: "AI önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
       })
     } finally {
-      setIsAILoading(false)
+      setLoadingStates(prev => ({ ...prev, aiSuggestion: false }))
     }
   }
 
@@ -723,33 +740,33 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 variant="ghost"
                 size="sm"
                 onClick={handleQuickAIGenerate}
-                disabled={isAILoading}
+                disabled={loadingStates.aiSuggestion}
                 className={`h-8 px-3 bg-primary/10 hover:bg-primary/20 transition-all duration-200 ${
-                  isAILoading ? 'animate-pulse bg-primary/20' : ''
+                  loadingStates.aiSuggestion ? 'animate-pulse bg-primary/20' : ''
                 }`}
-                title={isAILoading ? "AI görev üretiyor..." : "AI ile görev öner"}
+                title={loadingStates.aiSuggestion ? "AI görev üretiyor..." : "AI ile görev öner"}
               >
                 <div className="relative flex items-center">
                   <Sparkles 
                     className={`h-4 w-4 text-primary mr-1 transition-all duration-300 ${
-                      isAILoading 
+                      loadingStates.aiSuggestion 
                         ? 'animate-pulse scale-110 drop-shadow-sm' 
                         : 'hover:scale-105'
                     }`}
                     style={{
-                      animation: isAILoading 
+                      animation: loadingStates.aiSuggestion 
                         ? 'sparkle 1.5s ease-in-out infinite, pulse 1.5s ease-in-out infinite' 
                         : undefined
                     }}
                   />
                   <span className={`text-xs text-primary transition-all duration-300 ${
-                    isAILoading ? 'animate-pulse' : ''
+                    loadingStates.aiSuggestion ? 'animate-pulse' : ''
                   }`}>
-                    {isAILoading ? 'Üretiyor...' : 'ai'}
+                    {loadingStates.aiSuggestion ? 'Üretiyor...' : 'ai'}
                   </span>
                   
                   {/* Sparkle effect overlay */}
-                  {isAILoading && (
+                  {loadingStates.aiSuggestion && (
                     <>
                       <div className="absolute -inset-2 opacity-75 pointer-events-none">
                         <div 
@@ -860,24 +877,24 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     variant="ghost"
                     size="sm"
                     onClick={handleImproveBrief}
-                    disabled={isDescriptionAILoading}
+                    disabled={loadingStates.descriptionImprovement}
                     className="absolute top-2 right-2 h-6 w-6 p-0"
                   >
                     <div className="relative">
                       <Sparkles 
                         className={`h-3 w-3 transition-all duration-300 ${
-                          isDescriptionAILoading 
+                          loadingStates.descriptionImprovement 
                             ? 'text-primary animate-pulse scale-110' 
                             : 'text-primary hover:scale-110'
                         }`}
                         style={{
-                          animation: isDescriptionAILoading 
+                          animation: loadingStates.descriptionImprovement 
                             ? 'sparkle 1.5s ease-in-out infinite' 
                             : undefined
                         }}
                       />
                       {/* Sparkle effect for description */}
-                      {isDescriptionAILoading && (
+                      {loadingStates.descriptionImprovement && (
                         <div className="absolute -inset-2 opacity-75 pointer-events-none">
                           <div 
                             className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
@@ -906,7 +923,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{isDescriptionAILoading ? 'AI açıklamayı geliştiriyor...' : 'AI ile açıklamayı geliştir'}</p>
+                  <p>{loadingStates.descriptionImprovement ? 'AI açıklamayı geliştiriyor...' : 'AI ile açıklamayı geliştir'}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -939,24 +956,24 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     variant="ghost"
                     size="sm"
                     onClick={handleAISuggestTags}
-                    disabled={isTagAILoading || !title.trim()}
+                    disabled={loadingStates.tagSuggestion || !title.trim()}
                     className="h-6 w-6 p-0 ml-1"
                   >
                     <div className="relative">
                       <Sparkles 
                         className={`h-3 w-3 transition-all duration-300 ${
-                          isTagAILoading 
+                          loadingStates.tagSuggestion 
                             ? 'text-primary animate-pulse scale-110' 
                             : 'text-muted-foreground hover:text-primary hover:scale-110'
                         }`}
                         style={{
-                          animation: isTagAILoading 
+                          animation: loadingStates.tagSuggestion 
                             ? 'sparkle 1.5s ease-in-out infinite' 
                             : undefined
                         }}
                       />
                       {/* Sparkle effect for tag suggestion */}
-                      {isTagAILoading && (
+                      {loadingStates.tagSuggestion && (
                         <div className="absolute -inset-2 opacity-75 pointer-events-none">
                           <div 
                             className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
@@ -985,7 +1002,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{isTagAILoading ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
+                  <p>{loadingStates.tagSuggestion ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -1001,24 +1018,24 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     variant="ghost"
                     size="sm"
                     onClick={handleAISuggestTags}
-                    disabled={isTagAILoading || !title.trim()}
+                    disabled={loadingStates.tagSuggestion || !title.trim()}
                     className="h-6 w-6 p-0"
                   >
                     <div className="relative">
                       <Sparkles 
                         className={`h-3 w-3 transition-all duration-300 ${
-                          isTagAILoading 
+                          loadingStates.tagSuggestion 
                             ? 'text-primary animate-pulse scale-110' 
                             : 'text-muted-foreground hover:text-primary hover:scale-110'
                         }`}
                         style={{
-                          animation: isTagAILoading 
+                          animation: loadingStates.tagSuggestion 
                             ? 'sparkle 1.5s ease-in-out infinite' 
                             : undefined
                         }}
                       />
                       {/* Sparkle effect for tag suggestion */}
-                      {isTagAILoading && (
+                      {loadingStates.tagSuggestion && (
                         <div className="absolute -inset-2 opacity-75 pointer-events-none">
                           <div 
                             className="absolute -top-1 -left-1 w-0.5 h-0.5 bg-primary/60 rounded-full"
@@ -1047,7 +1064,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{isTagAILoading ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
+                  <p>{loadingStates.tagSuggestion ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
