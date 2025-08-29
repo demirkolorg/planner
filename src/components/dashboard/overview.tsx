@@ -444,10 +444,10 @@ export function DashboardOverview() {
       </div>
 
       {/* Modern Stats Cards - Single Row */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      <div className="-my-4 mb-2 -mx-4 grid gap-0 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {/* Ana İstatistik Kartları */}
         {mainStats.map((stat) => (
-          <Card key={stat.title} className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
+          <Card key={stat.title} className=" m-4 p-1 relative overflow-hidden border border-border transition-all duration-300 group hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
             {/* Gradient Background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor} opacity-10 group-hover:opacity-15 transition-opacity duration-300`} />
             
@@ -493,7 +493,7 @@ export function DashboardOverview() {
         ))}
 
         {/* Yüksek Öncelik Kartı */}
-        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1">
+        <Card className="m-4 p-1 relative overflow-hidden border border-border transition-all duration-300 group hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1">
           {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 group-hover:from-purple-500/15 group-hover:to-indigo-500/15 transition-all duration-300" />
           
@@ -543,7 +543,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* İlerleme Kartı */}
-        <Card className="relative overflow-hidden border border-border transition-all duration-300 group hover:border-green-500/30 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-1">
+        <Card className="m-4 p-1 relative overflow-hidden border border-border transition-all duration-300 group hover:border-green-500/30 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-1">
           {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 group-hover:from-green-500/15 group-hover:to-emerald-500/15 transition-all duration-300" />
           
@@ -593,8 +593,10 @@ export function DashboardOverview() {
 
       </div>
 
-      {/* Task Lists - Horizontal Layout */}
-      <div className="space-y-6">
+      {/* Main Content - Two Columns Layout */}
+      <div className="grid grid-cols-4 gap-6">
+        {/* Left Column - Task Lists (75% - 3 columns) */}
+        <div className="col-span-3 space-y-6">
         {/* Overdue Tasks */}
         {stats.overdueTasks.length > 0 && (
           <div className="space-y-3">
@@ -733,6 +735,239 @@ export function DashboardOverview() {
             </div>
           </div>
         )}
+        </div>
+        
+        {/* Right Column - Sidebar Cards (25% - 1 column) */}
+        <div className="col-span-1 space-y-6">
+          {/* Projects Card */}
+          <Card className="relative overflow-hidden border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 group p-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Header Section */}
+            <div className="relative bg-gradient-to-r from-blue-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:to-indigo-500/10 border-b border-blue-200/20 dark:border-blue-800/20 px-3 py-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                    <FolderOpen className="h-4 w-4 text-white" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Projeler
+                  </h3>
+                </div>
+                <Link href="/projects">
+                  <Button variant="ghost" size="sm" className="h-7 px-3 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
+                    Tümü →
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Content Section */}
+            <div className="relative px-2 -mt-3 pt-0 pb-2">
+              <div className="space-y-1.5">
+                {projects
+                  .sort((a, b) => {
+                    if (a.isPinned && !b.isPinned) return -1
+                    if (!a.isPinned && b.isPinned) return 1
+                    return a.name.localeCompare(b.name, 'tr')
+                  })
+                  .slice(0, 5)
+                  .map((project) => {
+                    const completedTasks = tasks.filter(task => 
+                      task.projectId === project.id && task.completed
+                    ).length
+                    const totalProjectTasks = tasks.filter(task => 
+                      task.projectId === project.id
+                    ).length
+                    const progressPercentage = totalProjectTasks > 0 
+                      ? Math.round((completedTasks / totalProjectTasks) * 100) 
+                      : 0
+
+                    return (
+                      <Link
+                        key={project.id}
+                        href={`/projects/${project.id}`}
+                        className="block"
+                      >
+                        <div className="group/item p-2 rounded-lg border border-border/30 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200">
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0">
+                              {project.emoji ? (
+                                <div className="w-6 h-6 rounded-md bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center">
+                                  <span className="text-sm">{project.emoji}</span>
+                                </div>
+                              ) : (
+                                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                                  <FolderOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1 mb-1">
+                                <h4 className="text-sm font-medium text-foreground group-hover/item:text-blue-700 dark:group-hover/item:text-blue-300 transition-colors truncate">
+                                  {project.name}
+                                </h4>
+                                {project.isPinned && (
+                                  <div className="flex-shrink-0 w-3 h-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                                    <span className="text-xs">📌</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">
+                                  {completedTasks}/{totalProjectTasks} görev
+                                </span>
+                                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                  %{progressPercentage}
+                                </span>
+                              </div>
+                              
+                              <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                                  style={{ width: `${progressPercentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                
+                {projects.length === 0 && (
+                  <div className="text-center py-4 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center mx-auto mb-2">
+                      <FolderOpen className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">Henüz proje yok</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Quick Notes Card */}
+          <Card className="relative overflow-hidden border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 group p-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Header Section */}
+            <div className="relative bg-gradient-to-r from-purple-500/5 to-pink-500/5 dark:from-purple-500/10 dark:to-pink-500/10 border-b border-purple-200/20 dark:border-purple-800/20 px-3 py-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                    <CheckSquare className="h-4 w-4 text-white" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Hızlı Notlar
+                  </h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-3 text-xs hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium"
+                  onClick={() => {
+                    const event = new KeyboardEvent('keydown', {
+                      key: 'k',
+                      ctrlKey: true,
+                      bubbles: true
+                    })
+                    document.dispatchEvent(event)
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Ekle
+                </Button>
+              </div>
+            </div>
+            
+            {/* Content Section */}
+            <div className="relative px-2 -mt-3 pt-0 pb-2">
+              <div className="space-y-1.5">
+                {tasks
+                  .filter(task => task.taskType === 'QUICK_NOTE')
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .slice(0, 5)
+                  .map((note) => (
+                    <div
+                      key={note.id}
+                      className="group/item p-2 rounded-lg border border-border/30 hover:border-purple-200 dark:hover:border-purple-800 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-all duration-200 cursor-pointer"
+                      onClick={() => handleEditTask(note)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div className="flex-shrink-0">
+                          <div className={`w-4 h-4 rounded-md flex items-center justify-center ${
+                            note.completed 
+                              ? 'bg-green-100 dark:bg-green-900/30' 
+                              : 'bg-orange-100 dark:bg-orange-900/30'
+                          }`}>
+                            {note.completed ? (
+                              <CheckSquare className="h-3 w-3 text-green-600 dark:text-green-400" />
+                            ) : (
+                              <Clock className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <h4 className="text-sm font-medium text-foreground group-hover/item:text-purple-700 dark:group-hover/item:text-purple-300 transition-colors truncate">
+                              {note.title}
+                            </h4>
+                            <span className="text-xs text-muted-foreground flex-shrink-0 ml-1">
+                              {new Date(note.createdAt).toLocaleDateString('tr-TR', { 
+                                day: 'numeric',
+                                month: 'short'
+                              })}
+                            </span>
+                          </div>
+                          
+                          {note.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {note.description}
+                            </p>
+                          )}
+                          
+                          {note.quickNoteCategory && (
+                            <span className="inline-block text-xs px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 mt-1">
+                              {note.quickNoteCategory}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                
+                {tasks.filter(task => task.taskType === 'QUICK_NOTE').length === 0 && (
+                  <div className="text-center py-4 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center mx-auto mb-2">
+                      <CheckSquare className="h-4 w-4 text-purple-500 dark:text-purple-400" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium mb-1">Henüz not yok</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7 px-3 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                      onClick={() => {
+                        const event = new KeyboardEvent('keydown', {
+                          key: 'k',
+                          ctrlKey: true,
+                          bubbles: true
+                        })
+                        document.dispatchEvent(event)
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      İlk Notu Ekle
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
 
 
