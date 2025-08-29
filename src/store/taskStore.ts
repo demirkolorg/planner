@@ -311,8 +311,35 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           tasks: state.tasks.filter(t => t.id !== tempId)
         }))
         
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create task')
+        const errorData = await response.json().catch(() => ({}))
+        
+        // Enhanced error handling based on API response
+        let userFriendlyError = 'Failed to create task'
+        
+        if (errorData.error) {
+          switch (errorData.error) {
+            case 'Duplicate entry detected':
+              userFriendlyError = 'Bu görev zaten mevcut'
+              break
+            case 'Referenced data not found':
+              userFriendlyError = 'Seçilen proje veya bölüm bulunamadı'
+              break
+            case 'Transaction failed':
+              userFriendlyError = 'İşlem tamamlanamadı, lütfen tekrar deneyin'
+              break
+            case 'Operation timeout':
+              userFriendlyError = 'İşlem zaman aşımına uğradı, lütfen tekrar deneyin'
+              break
+            default:
+              userFriendlyError = errorData.details || errorData.error
+          }
+        } else if (response.status >= 500) {
+          userFriendlyError = 'Sunucu hatası, lütfen daha sonra tekrar deneyin'
+        } else if (response.status === 408) {
+          userFriendlyError = 'İşlem zaman aşımına uğradı, lütfen tekrar deneyin'
+        }
+        
+        throw new Error(userFriendlyError)
       }
       
       // 5. API success - replace temporary task with real task

@@ -313,9 +313,51 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
     console.error('Task creation error:', error)
+    
+    // Enhanced error handling for better user feedback
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as any
+      
+      switch (prismaError.code) {
+        case 'P2002': // Unique constraint violation
+          return NextResponse.json({ 
+            error: "Duplicate entry detected",
+            details: "Bu görev zaten mevcut olabilir"
+          }, { status: 409 })
+          
+        case 'P2003': // Foreign key constraint failure
+          return NextResponse.json({ 
+            error: "Referenced data not found",
+            details: "Seçilen proje veya bölüm bulunamadı"
+          }, { status: 400 })
+          
+        case 'P2025': // Record not found
+          return NextResponse.json({ 
+            error: "Record not found",
+            details: "İstenen kayıt bulunamadı"
+          }, { status: 404 })
+          
+        case 'P2034': // Transaction failed
+          return NextResponse.json({ 
+            error: "Transaction failed",
+            details: "İşlem tamamlanamadı, lütfen tekrar deneyin"
+          }, { status: 500 })
+      }
+    }
+    
+    // Check for transaction timeout
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    if (errorMessage.includes('timeout') || errorMessage.includes('Transaction')) {
+      return NextResponse.json({ 
+        error: "Operation timeout",
+        details: "İşlem zaman aşımına uğradı, lütfen tekrar deneyin"
+      }, { status: 408 })
+    }
+    
+    // Generic server error
     return NextResponse.json({ 
       error: "Internal server error", 
-      details: error instanceof Error ? error.message : String(error)
+      details: process.env.NODE_ENV === 'development' ? errorMessage : "Bir hata oluştu"
     }, { status: 500 })
   }
 }
