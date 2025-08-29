@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { X, Calendar, Clock, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain } from "lucide-react"
+import { X, Calendar, Clock, Search, ChevronDown, Sparkles, Wand2, Tag, Flag, Info, Brain, Loader2 } from "lucide-react"
 import { generateTaskSuggestion, improveBrief, improveTitle } from "@/lib/ai"
 import { ValidationAlert } from "@/components/ui/validation-alert"
 import { DatePicker } from "../shared/date-picker"
@@ -1238,6 +1238,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 size="icon"
                 onClick={onClose}
                 className="h-8 w-8"
+                disabled={isSubmitting}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -1799,6 +1800,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                        (defaultTaskType !== 'QUICK_NOTE' && defaultTaskType !== 'CALENDAR' && (!selectedProject || !selectedSection)) || 
                        isSubmitting}
             >
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               {isSubmitting ? (editingTask ? "Güncelleniyor..." : "Ekleniyor...") : 
                editingTask ? "Görevi Güncelle" :
                parentTaskId ? "Alt Görev Ekle" : "Görev Ekle"}
@@ -1813,6 +1817,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 onClick={handleSave}
                 disabled={!title.trim() || isSubmitting}
               >
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 {isSubmitting ? "Ekleniyor..." : "Hızlı Not Ekle"}
               </Button>
             </div>
