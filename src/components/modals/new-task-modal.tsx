@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -108,6 +108,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   })
   const [aiPrompt, setAiPrompt] = useState("yap")
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean
     title: string
@@ -118,12 +119,32 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     message: ""
   })
 
-  // Modal açıldığında sadece bir kez data fetch et
+  // Modal açıldığında sadece bir kez data fetch et - paralel olarak
   useEffect(() => {
     if (isOpen) {
-      // Sadece store boşsa fetch et
-      if (tags.length === 0) fetchTags()
-      if (projects.length === 0) fetchProjects()
+      // Paralel fetch işlemleri - async/await kullanmadan Promise.all ile
+      const fetchPromises = []
+      
+      if (tags.length === 0) {
+        fetchPromises.push(fetchTags())
+      }
+      if (projects.length === 0) {
+        fetchPromises.push(fetchProjects())
+      }
+      
+      // Tüm fetch işlemlerini paralel başlat
+      if (fetchPromises.length > 0) {
+        Promise.allSettled(fetchPromises).then(() => {
+          console.log('📡 Initial data fetch completed')
+        })
+      }
+    }
+    
+    // Cleanup timeout on unmount or modal close
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
     }
   }, [isOpen, tags.length, projects.length, fetchTags, fetchProjects])
 
@@ -184,8 +205,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }
   }, [isOpen, editingTask]) // tags.length, projects.length kaldırıldı
 
-  // Store'dan sections al
-  const sections = selectedProject ? getSectionsByProject(selectedProject.id) : []
+  // Store'dan sections al - memoized
+  const sections = useMemo(() => {
+    return selectedProject ? getSectionsByProject(selectedProject.id) : []
+  }, [selectedProject, getSectionsByProject])
 
   // Auto-resize description textarea
   useEffect(() => {
@@ -374,18 +397,29 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     setSectionSearchInput("")
   }
 
-  const getFilteredProjects = () => {
+  const getFilteredProjects = useMemo(() => {
     return projects.filter(project => 
       project.name.toLowerCase().includes(projectSearchInput.toLowerCase())
     )
-  }
+  }, [projects, projectSearchInput])
 
-  const getFilteredSections = () => {
+  const getFilteredSections = useMemo(() => {
     return sections.filter(section => 
       section.name.toLowerCase().includes(sectionSearchInput.toLowerCase())
     )
-  }
+  }, [sections, sectionSearchInput])
 
+
+  // AI çağrıları için throttling/debouncing
+  const debouncedAICall = (fn: () => Promise<void>, delay: number = 1000) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      fn()
+    }, delay)
+  }
 
   const validateForm = () => {
     // Başlık validasyonu
@@ -709,26 +743,29 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }
   }
 
-  const handleImproveTitle = async () => {
+  const handleImproveTitle = () => {
     if (!title.trim()) return
     
-    setLoadingStates(prev => ({ ...prev, titleImprovement: true }))
-    try {
-      const improvedTitle = await improveTitle(title)
-      setTitle(improvedTitle)
-    } catch (error) {
-      console.error('Title improvement error:', error)
-      setAlertConfig({
-        isOpen: true,
-        title: "Başlık İyileştirme Hatası",
-        message: "Başlık iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
-      })
-    } finally {
-      setLoadingStates(prev => ({ ...prev, titleImprovement: false }))
-    }
+    // Debounced AI call
+    debouncedAICall(async () => {
+      setLoadingStates(prev => ({ ...prev, titleImprovement: true }))
+      try {
+        const improvedTitle = await improveTitle(title)
+        setTitle(improvedTitle)
+      } catch (error) {
+        console.error('Title improvement error:', error)
+        setAlertConfig({
+          isOpen: true,
+          title: "Başlık İyileştirme Hatası",
+          message: "Başlık iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
+        })
+      } finally {
+        setLoadingStates(prev => ({ ...prev, titleImprovement: false }))
+      }
+    }, 800)
   }
 
-  const handleAISuggestTags = async () => {
+  const handleAISuggestTags = () => {
     if (!title.trim()) {
       setAlertConfig({
         isOpen: true,
@@ -738,7 +775,9 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       return
     }
     
-    setLoadingStates(prev => ({ ...prev, tagSuggestion: true }))
+    // Debounced AI call for tag suggestions
+    debouncedAICall(async () => {
+      setLoadingStates(prev => ({ ...prev, tagSuggestion: true }))
     try {
       const response = await fetch('/api/ai/suggest-tags', {
         method: 'POST',
@@ -775,9 +814,10 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         title: "Hata",
         message: "AI etiket önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
       })
-    } finally {
-      setLoadingStates(prev => ({ ...prev, tagSuggestion: false }))
-    }
+      } finally {
+        setLoadingStates(prev => ({ ...prev, tagSuggestion: false }))
+      }
+    }, 600)
   }
 
   const handleQuickAIGenerate = async () => {
