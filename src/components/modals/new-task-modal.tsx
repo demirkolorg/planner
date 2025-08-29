@@ -109,6 +109,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [aiPrompt, setAiPrompt] = useState("yap")
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean
     title: string
@@ -147,6 +148,18 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       }
     }
   }, [isOpen, tags.length, projects.length, fetchTags, fetchProjects])
+
+  // Focus management for accessibility
+  useEffect(() => {
+    if (isOpen) {
+      // Focus title input when modal opens
+      const timer = setTimeout(() => {
+        titleInputRef.current?.focus()
+      }, 100) // Small delay to ensure modal is fully rendered
+      
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
 
 
   // Modal açıldığında form state'ini initialize et
@@ -652,7 +665,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
       handleSave()
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      onClose()
     }
   }
 
@@ -956,7 +973,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   return (
     <TooltipProvider>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0">
+        <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0" role="dialog" aria-modal="true">
           <DialogDescription className="sr-only">
             Yeni görev oluşturmak veya mevcut görevi düzenlemek için form
           </DialogDescription>
@@ -990,6 +1007,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 className={`h-8 px-3 bg-primary/10 hover:bg-primary/20 transition-all duration-200 ${
                   loadingStates.aiSuggestion ? 'animate-pulse bg-primary/20' : ''
                 }`}
+                aria-label={loadingStates.aiSuggestion ? "AI görev üretiyor" : "AI ile görev öner"}
+                aria-busy={loadingStates.aiSuggestion}
                 title={loadingStates.aiSuggestion ? "AI görev üretiyor..." : "AI ile görev öner"}
               >
                 <div className="relative flex items-center">
@@ -1089,17 +1108,28 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           {/* Title Input */}
           <div className="relative">
             <Input
+              ref={titleInputRef}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Yapılacak adı"
               onKeyDown={handleKeyDown}
-              autoFocus
               className={title.length > 255 ? "border-destructive" : ""}
+              aria-label="Görev başlığı"
+              aria-required="true"
+              aria-invalid={title.length > 255}
+              aria-describedby="title-counter title-help"
             />
             <div className="flex justify-end mt-1">
-              <span className={`text-xs ${title.length > 255 ? 'text-destructive' : title.length > 200 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
+              <span 
+                id="title-counter"
+                className={`text-xs ${title.length > 255 ? 'text-destructive' : title.length > 200 ? 'text-yellow-600' : 'text-muted-foreground'}`}
+                aria-live="polite"
+              >
                 {title.length}/255
               </span>
+            </div>
+            <div id="title-help" className="sr-only">
+              Görev başlığı maksimum 255 karakter olabilir. Gerekli alan.
             </div>
           </div>
 
@@ -1121,11 +1151,21 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 target.style.height = 'auto'
                 target.style.height = `${Math.min(target.scrollHeight, 240)}px`
               }}
+              aria-label="Görev açıklaması"
+              aria-describedby="description-counter description-help"
+              aria-invalid={description.length > 5000}
             />
             <div className="flex justify-end mt-1">
-              <span className={`text-xs ${description.length > 5000 ? 'text-destructive' : description.length > 4500 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
+              <span 
+                id="description-counter"
+                className={`text-xs ${description.length > 5000 ? 'text-destructive' : description.length > 4500 ? 'text-yellow-600' : 'text-muted-foreground'}`}
+                aria-live="polite"
+              >
                 {description.length}/5000
               </span>
+            </div>
+            <div id="description-help" className="sr-only">
+              Görev açıklaması maksimum 5000 karakter olabilir. İsteğe bağlı alan.
             </div>
             {description.trim() && (
               <Tooltip>
@@ -1136,6 +1176,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     onClick={handleImproveBrief}
                     disabled={loadingStates.descriptionImprovement}
                     className="absolute top-2 right-2 h-6 w-6 p-0"
+                    aria-label={loadingStates.descriptionImprovement ? "AI açıklamayı iyileştiriyor" : "AI ile açıklamayı iyileştir"}
+                    aria-busy={loadingStates.descriptionImprovement}
                   >
                     <div className="relative">
                       <Sparkles 
@@ -1215,6 +1257,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                     onClick={handleAISuggestTags}
                     disabled={loadingStates.tagSuggestion || !title.trim()}
                     className="h-6 w-6 p-0 ml-1"
+                    aria-label={loadingStates.tagSuggestion ? "AI etiket önerileri oluşturuyor" : "AI etiket önerileri"}
+                    aria-busy={loadingStates.tagSuggestion}
                   >
                     <div className="relative">
                       <Sparkles 
