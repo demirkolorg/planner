@@ -434,6 +434,42 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }, delay)
   }
 
+  // Smart random date generation considering parent task constraints
+  const generateRandomDate = () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    let maxDate = new Date(today)
+    maxDate.setDate(today.getDate() + 14) // Default 14 days
+    
+    // Parent task kısıtlaması varsa onu dikkate al
+    if (parentTaskId && parentTask?.dueDate) {
+      const parentDueDate = new Date(parentTask.dueDate)
+      parentDueDate.setHours(23, 59, 59, 999) // Parent task'ın gün sonuna kadar
+      
+      // Parent task tarihinden önceki bir tarihi max olarak kullan
+      if (parentDueDate > today) {
+        maxDate = new Date(Math.min(maxDate.getTime(), parentDueDate.getTime()))
+      }
+    }
+    
+    // Bugün ile max date arasında rastgele tarih seç
+    const diffTime = maxDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays <= 0) {
+      // Eğer uygun tarih yoksa, bugünü kullan
+      return { dateStr: `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`, maxDiffDays: 0 }
+    }
+    
+    const randomDays = Math.floor(Math.random() * diffDays) + 1
+    const randomDate = new Date(today)
+    randomDate.setDate(today.getDate() + randomDays)
+    
+    const dateStr = `${randomDate.getDate().toString().padStart(2, '0')}.${(randomDate.getMonth() + 1).toString().padStart(2, '0')}.${randomDate.getFullYear()}`
+    return { dateStr, maxDiffDays: diffDays }
+  }
+
   const validateForm = () => {
     // Başlık validasyonu
     if (!title.trim()) {
@@ -724,37 +760,56 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         try {
           // Suggestion'dan gelen ISO string'i tarih ve saat olarak ayır
           const date = new Date(suggestion.dueDate)
-          const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
-          setSelectedDate(dateStr)
           
-          // All-day event değilse saati de set et
-          const isAllDayEvent = suggestion.dueDate.includes('T00:00:00.000Z')
-          if (!isAllDayEvent) {
-            const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-            setSelectedTime(timeStr)
+          // Parent task kısıtlaması kontrolü
+          let isValidDate = true
+          if (parentTaskId && parentTask?.dueDate) {
+            const parentDueDate = new Date(parentTask.dueDate)
+            parentDueDate.setHours(23, 59, 59, 999)
+            if (date > parentDueDate) {
+              isValidDate = false
+            }
+          }
+          
+          if (isValidDate && date >= new Date()) {
+            const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
+            setSelectedDate(dateStr)
+            
+            // All-day event değilse saati de set et
+            const isAllDayEvent = suggestion.dueDate.includes('T00:00:00.000Z')
+            if (!isAllDayEvent) {
+              const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+              setSelectedTime(timeStr)
+            }
+          } else {
+            // AI tarihi uygun değilse smart rastgele tarih ata
+            const { dateStr, maxDiffDays } = generateRandomDate()
+            setSelectedDate(dateStr)
+            if (maxDiffDays > 0) {
+              const randomHour = Math.floor(Math.random() * 10) + 9
+              const randomMinute = Math.floor(Math.random() * 4) * 15
+              const timeStr = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`
+              setSelectedTime(timeStr)
+            }
           }
         } catch (dateError) {
           console.error('AI tarih parse hatası:', dateError)
-          // Hatalı AI tarihi durumunda rastgele tarih ata
-          const randomDays = Math.floor(Math.random() * 14) + 1
-          const randomDate = new Date()
-          randomDate.setDate(randomDate.getDate() + randomDays)
-          const dateStr = `${randomDate.getDate().toString().padStart(2, '0')}.${(randomDate.getMonth() + 1).toString().padStart(2, '0')}.${randomDate.getFullYear()}`
+          // Hatalı AI tarihi durumunda smart rastgele tarih ata
+          const { dateStr } = generateRandomDate()
           setSelectedDate(dateStr)
         }
       } else {
-        // AI tarih önermediyse rastgele gelecek tarih ata
-        const randomDays = Math.floor(Math.random() * 14) + 1
-        const randomDate = new Date()
-        randomDate.setDate(randomDate.getDate() + randomDays)
-        const dateStr = `${randomDate.getDate().toString().padStart(2, '0')}.${(randomDate.getMonth() + 1).toString().padStart(2, '0')}.${randomDate.getFullYear()}`
+        // AI tarih önermediyse smart rastgele gelecek tarih ata
+        const { dateStr, maxDiffDays } = generateRandomDate()
         setSelectedDate(dateStr)
         
-        // Rastgele saat de ata (9-18 arası)
-        const randomHour = Math.floor(Math.random() * 10) + 9
-        const randomMinute = Math.floor(Math.random() * 4) * 15
-        const timeStr = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`
-        setSelectedTime(timeStr)
+        // Rastgele saat de ata (9-18 arası) - sadece birden fazla gün varsa
+        if (maxDiffDays > 0) {
+          const randomHour = Math.floor(Math.random() * 10) + 9
+          const randomMinute = Math.floor(Math.random() * 4) * 15
+          const timeStr = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`
+          setSelectedTime(timeStr)
+        }
       }
       
       
@@ -988,37 +1043,56 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       if (suggestion.dueDate) {
         try {
           const date = new Date(suggestion.dueDate)
-          const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
-          setSelectedDate(dateStr)
           
-          // All-day event değilse saati de set et
-          const isAllDayEvent = suggestion.dueDate.includes('T00:00:00.000Z')
-          if (!isAllDayEvent) {
-            const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-            setSelectedTime(timeStr)
+          // Parent task kısıtlaması kontrolü
+          let isValidDate = true
+          if (parentTaskId && parentTask?.dueDate) {
+            const parentDueDate = new Date(parentTask.dueDate)
+            parentDueDate.setHours(23, 59, 59, 999)
+            if (date > parentDueDate) {
+              isValidDate = false
+            }
+          }
+          
+          if (isValidDate && date >= new Date()) {
+            const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`
+            setSelectedDate(dateStr)
+            
+            // All-day event değilse saati de set et
+            const isAllDayEvent = suggestion.dueDate.includes('T00:00:00.000Z')
+            if (!isAllDayEvent) {
+              const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+              setSelectedTime(timeStr)
+            }
+          } else {
+            // AI tarihi uygun değilse smart rastgele tarih ata
+            const { dateStr, maxDiffDays } = generateRandomDate()
+            setSelectedDate(dateStr)
+            if (maxDiffDays > 0) {
+              const randomHour = Math.floor(Math.random() * 10) + 9
+              const randomMinute = Math.floor(Math.random() * 4) * 15
+              const timeStr = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`
+              setSelectedTime(timeStr)
+            }
           }
         } catch (dateError) {
           console.error('AI tarih parse hatası:', dateError)
-          // Hatalı AI tarihi durumunda rastgele tarih ata
-          const randomDays = Math.floor(Math.random() * 14) + 1 // 1-14 gün arası
-          const randomDate = new Date()
-          randomDate.setDate(randomDate.getDate() + randomDays)
-          const dateStr = `${randomDate.getDate().toString().padStart(2, '0')}.${(randomDate.getMonth() + 1).toString().padStart(2, '0')}.${randomDate.getFullYear()}`
+          // Hatalı AI tarihi durumunda smart rastgele tarih ata
+          const { dateStr } = generateRandomDate()
           setSelectedDate(dateStr)
         }
       } else {
-        // AI tarih önermediyse rastgele gelecek tarih ata
-        const randomDays = Math.floor(Math.random() * 14) + 1 // 1-14 gün arası
-        const randomDate = new Date()
-        randomDate.setDate(randomDate.getDate() + randomDays)
-        const dateStr = `${randomDate.getDate().toString().padStart(2, '0')}.${(randomDate.getMonth() + 1).toString().padStart(2, '0')}.${randomDate.getFullYear()}`
+        // AI tarih önermediyse smart rastgele gelecek tarih ata
+        const { dateStr, maxDiffDays } = generateRandomDate()
         setSelectedDate(dateStr)
         
-        // Rastgele saat de ata (9-18 arası)
-        const randomHour = Math.floor(Math.random() * 10) + 9 // 9-18 saat arası
-        const randomMinute = Math.floor(Math.random() * 4) * 15 // 0, 15, 30, 45
-        const timeStr = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`
-        setSelectedTime(timeStr)
+        // Rastgele saat de ata (9-18 arası) - sadece birden fazla gün varsa
+        if (maxDiffDays > 0) {
+          const randomHour = Math.floor(Math.random() * 10) + 9 // 9-18 saat arası
+          const randomMinute = Math.floor(Math.random() * 4) * 15 // 0, 15, 30, 45
+          const timeStr = `${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}`
+          setSelectedTime(timeStr)
+        }
       }
       
     } catch (error) {
