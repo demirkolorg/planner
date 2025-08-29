@@ -387,6 +387,115 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }
 
 
+  const validateForm = () => {
+    // Başlık validasyonu
+    if (!title.trim()) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Geçersiz Başlık",
+        message: "Görev başlığı boş olamaz."
+      })
+      return false
+    }
+    
+    if (title.trim().length > 255) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Başlık Çok Uzun",
+        message: "Görev başlığı 255 karakterden fazla olamaz."
+      })
+      return false
+    }
+    
+    // Açıklama validasyonu
+    if (description && description.length > 5000) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Açıklama Çok Uzun",
+        message: "Görev açıklaması 5000 karakterden fazla olamaz."
+      })
+      return false
+    }
+    
+    // Proje ve bölüm validasyonu (QUICK_NOTE ve CALENDAR hariç)
+    if (defaultTaskType !== 'QUICK_NOTE' && defaultTaskType !== 'CALENDAR') {
+      if (!selectedProject) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Proje Seçilmedi",
+          message: "Lütfen bir proje seçin."
+        })
+        return false
+      }
+      
+      if (!selectedSection) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Bölüm Seçilmedi",
+          message: "Lütfen bir bölüm seçin."
+        })
+        return false
+      }
+    }
+    
+    // Tarih validasyonu
+    if (selectedDate) {
+      try {
+        const [day, month, year] = selectedDate.split('.')
+        const selectedDateTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+        
+        // Geçmiş tarih kontrolü (bugünden önceki tarihler)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (selectedDateTime < today) {
+          setAlertConfig({
+            isOpen: true,
+            title: "Geçersiz Tarih",
+            message: "Görev tarihi bugünden önce olamaz."
+          })
+          return false
+        }
+        
+        // Parent task tarih kısıtlaması
+        if (parentTaskId && parentTask?.dueDate) {
+          const parentDueDate = new Date(parentTask.dueDate)
+          parentDueDate.setHours(23, 59, 59, 999) // Parent task'ın gün sonuna kadar izin ver
+          
+          if (combineDateTime()) {
+            const childDueDate = new Date(combineDateTime()!)
+            if (childDueDate > parentDueDate) {
+              setAlertConfig({
+                isOpen: true,
+                title: "Tarih Kısıtlaması",
+                message: "Alt görev, üst görevden daha geç bitirilemez."
+              })
+              return false
+            }
+          }
+        }
+      } catch (error) {
+        setAlertConfig({
+          isOpen: true,
+          title: "Geçersiz Tarih",
+          message: "Lütfen geçerli bir tarih girin."
+        })
+        return false
+      }
+    }
+    
+    // Etiket sayısı validasyonu
+    if (selectedTags.length > 10) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Çok Fazla Etiket",
+        message: "En fazla 10 etiket seçebilirsiniz."
+      })
+      return false
+    }
+    
+    return true
+  }
+
   const handleSave = async () => {
     console.log('💾 Task kaydetme işlemi başladı:', { 
       title: title.trim(), 
@@ -395,12 +504,8 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       parentTaskId 
     })
     
-    if (!title.trim() || !selectedProject || !selectedSection) {
-      console.log('❌ Gerekli alanlar eksik:', { 
-        hasTitle: !!title.trim(), 
-        hasProject: !!selectedProject, 
-        hasSection: !!selectedSection 
-      })
+    // Form validasyonu
+    if (!validateForm()) {
       return
     }
 
@@ -848,7 +953,13 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
               placeholder="Yapılacak adı"
               onKeyDown={handleKeyDown}
               autoFocus
+              className={title.length > 255 ? "border-destructive" : ""}
             />
+            <div className="flex justify-end mt-1">
+              <span className={`text-xs ${title.length > 255 ? 'text-destructive' : title.length > 200 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
+                {title.length}/255
+              </span>
+            </div>
           </div>
 
           {/* Description Input */}
@@ -859,7 +970,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Açıklama ekle..."
               onKeyDown={handleKeyDown}
-              className="min-h-[80px] max-h-[240px] resize-none overflow-y-auto pr-10"
+              className={`min-h-[80px] max-h-[240px] resize-none overflow-y-auto pr-10 ${description.length > 5000 ? 'border-destructive' : ''}`}
               style={{
                 height: description ? 'auto' : undefined,
                 minHeight: '80px'
@@ -870,6 +981,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                 target.style.height = `${Math.min(target.scrollHeight, 240)}px`
               }}
             />
+            <div className="flex justify-end mt-1">
+              <span className={`text-xs ${description.length > 5000 ? 'text-destructive' : description.length > 4500 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
+                {description.length}/5000
+              </span>
+            </div>
             {description.trim() && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1005,6 +1121,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   <p>{loadingStates.tagSuggestion ? 'AI etiket önerileri oluşturuyor...' : 'AI etiket önerileri'}</p>
                 </TooltipContent>
               </Tooltip>
+              {selectedTags.length > 8 && (
+                <span className={`text-xs ml-2 ${selectedTags.length >= 10 ? 'text-destructive' : 'text-yellow-600'}`}>
+                  {selectedTags.length}/10 etiket
+                </span>
+              )}
             </div>
           )}
           
