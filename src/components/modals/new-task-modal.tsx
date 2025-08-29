@@ -470,7 +470,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         onSave(title.trim(), description.trim(), selectedProject.id, selectedSection.id)
       }
     } catch (error) {
-      // TODO: Kullanıcıya hata mesajı göster
+      console.error('Task save error:', error)
+      setAlertConfig({
+        isOpen: true,
+        title: "Görev Kaydetme Hatası",
+        message: error instanceof Error ? error.message : "Görev kaydedilirken bir hata oluştu. Lütfen tekrar deneyin."
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -539,6 +544,12 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       
       setAiPrompt("yap")
     } catch (error) {
+      console.error('AI generation error:', error)
+      setAlertConfig({
+        isOpen: true,
+        title: "AI Önerisi Hatası",
+        message: "AI önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
+      })
     } finally {
       setIsAILoading(false)
     }
@@ -683,6 +694,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       
     } catch (error) {
       console.error('AI öneri hatası:', error)
+      setAlertConfig({
+        isOpen: true,
+        title: "AI Önerisi Hatası",
+        message: "AI önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
+      })
     } finally {
       setIsAILoading(false)
     }
