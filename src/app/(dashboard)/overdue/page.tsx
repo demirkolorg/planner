@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, CalendarX, Folder, Tag, Flag, ArrowRight, 
 import Link from "next/link"
 import { HierarchicalTaskList } from "@/components/task/hierarchical-task-list"
 import { useTaskStore } from "@/store/taskStore"
+import { useAuthStore } from "@/store/authStore"
 
 interface TaskWithRelations {
   id: string
@@ -90,10 +91,12 @@ export default function OverduePage() {
     addSubTask,
     cloneTask,
     moveTask,
+    getOverdueTasks,
   } = useTaskStore()
   
   const { projects, fetchProjects } = useProjectStore()
   const { fetchTags } = useTagStore()
+  const { user } = useAuthStore()
 
   // Bugünün tarihi (local timezone)
   const today = new Date()
@@ -115,13 +118,8 @@ export default function OverduePage() {
     return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
   }
 
-  // Gecikmiş görevleri filtrele
-  const overdueTasks = tasks.filter(task => {
-    if (!task.dueDate || task.completed) return false
-    const dueDate = new Date(task.dueDate)
-    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-    return dueDate < todayMidnight
-  })
+  // Store'dan gecikmiş görevleri al (atanan görevler dahil)
+  const overdueTasks = user?.id ? getOverdueTasks(user.id) : getOverdueTasks()
 
   // İstatistikler
   const totalOverdue = overdueTasks.length

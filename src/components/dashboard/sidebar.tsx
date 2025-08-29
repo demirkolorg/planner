@@ -158,7 +158,8 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
     getTotalCompletedTasksCount,
     getPinnedTasks,
     getPendingTasksCount,
-    getProjectCompletionPercentage
+    getProjectCompletionPercentage,
+    getAssignedTasks
   } = useTaskStore()
   const createProjectMutation = useCreateProject()
   const { user, logout } = useAuthStore()
@@ -242,7 +243,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       case "Bugün":
         return getTasksDueToday().length
       case "Gecikmiş":
-        return getOverdueTasks().length
+        return user?.id ? getOverdueTasks(user.id).length : getOverdueTasks().length
       case "Bu Hafta":
         return getCurrentWeekTasksCount()
       case "Tamamlandı":
@@ -259,6 +260,9 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
       case "Hızlı Notlar":
         // Quick Note task'ları say
         return tasks.filter(task => task.taskType === 'QUICK_NOTE' && !task.completed).length
+      case "Atanan Görevler":
+        // Atanan task'ları say
+        return user?.id ? getAssignedTasks(user.id).filter(task => !task.completed).length : 0
       default:
         return taskType ? tasks.filter(task => task.taskType === taskType && !task.completed).length : null
     }

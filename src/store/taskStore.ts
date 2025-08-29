@@ -129,7 +129,7 @@ interface TaskStore {
   getQuickNoteTasksByCategory: (category: string) => TaskWithRelations[]
   
   // Overdue and date-based filtering
-  getOverdueTasks: () => TaskWithRelations[]
+  getOverdueTasks: (userId?: string) => TaskWithRelations[]
   getOverdueTasksByProject: (projectId: string) => TaskWithRelations[]
   getTasksDueToday: () => TaskWithRelations[]
   getTasksDueTomorrow: () => TaskWithRelations[]
@@ -1259,13 +1259,35 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   clearError: () => set({ error: null }),
 
   // Overdue and date-based filtering methods
-  getOverdueTasks: () => {
-    const { tasks } = get()
-    return tasks.filter(task => {
+  getOverdueTasks: (userId?: string) => {
+    const { tasks, getAssignedTasks } = get()
+    // Kendi görevlerin gecikmiş olanları
+    const myTasks = tasks.filter(task => {
       if (task.completed || !task.dueDate) return false
       const dateStatus = getTaskDateStatus(task.dueDate)
       return dateStatus.isOverdue
     })
+    
+    // Eğer userId verilmişse, atanan görevlerin gecikmiş olanlarını da dahil et
+    if (userId) {
+      const assignedTasks = getAssignedTasks(userId).filter(task => {
+        if (task.completed || !task.dueDate) return false
+        const dateStatus = getTaskDateStatus(task.dueDate)
+        return dateStatus.isOverdue
+      })
+      
+      // Duplicate'leri önlemek için id bazında birleştir
+      const combinedTasks = [...myTasks]
+      assignedTasks.forEach(assignedTask => {
+        if (!myTasks.find(task => task.id === assignedTask.id)) {
+          combinedTasks.push(assignedTask)
+        }
+      })
+      
+      return combinedTasks
+    }
+    
+    return myTasks
   },
 
   getOverdueTasksByProject: (projectId: string) => {

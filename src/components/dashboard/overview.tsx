@@ -21,6 +21,7 @@ import { useTasks } from "@/hooks/queries/use-tasks"
 import { useProjects } from "@/hooks/queries/use-projects"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
+import { useAuthStore } from "@/store/authStore"
 import { TaskCard } from "@/components/task/task-card"
 import { TaskDeleteDialog } from "@/components/ui/task-delete-dialog"
 import { useEffect, useMemo, useState, useCallback, memo, lazy, Suspense } from "react"
@@ -47,10 +48,14 @@ export function DashboardOverview() {
     toggleTaskPin, 
     updateTaskTags, 
     cloneTask, 
-    moveTask, 
+    moveTask,
+    getOverdueTasks, 
     addSubTask, 
     deleteTask: deleteTaskFromStore 
   } = useTaskStore()
+
+  // Auth store
+  const { user } = useAuthStore()
   
   // Rastgele slogan seç (hydration sorunu için client-side)
   const [randomSlogan, setRandomSlogan] = useState("Hedefe Tık Tık.")
@@ -289,13 +294,8 @@ export function DashboardOverview() {
       return taskDateStr === todayStr
     })
 
-    // Tarihi geçmiş görevler
-    const overdueTasks = tasks.filter(task => {
-      if (!task.dueDate || task.completed) return false
-      const dueDate = new Date(task.dueDate)
-      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      return dueDate < todayMidnight
-    })
+    // Store'dan gecikmiş görevleri al (atanan görevler dahil)
+    const overdueTasks = user?.id ? getOverdueTasks(user.id) : getOverdueTasks()
 
     // Yaklaşan görevler (bu hafta ve sonraki hafta)
     const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 }) // Pazartesi başlangıç

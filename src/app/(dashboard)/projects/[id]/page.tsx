@@ -1054,6 +1054,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   expandTaskId={null} // Gecikmiş bölümünde expand etme
+                  hideProjectIcon={true} // Proje sayfasında proje ikonunu gizle
                   userAccess={project?.userAccess}
                 />
               </AccordionContent>
@@ -1155,6 +1156,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   expandTaskId={null} // Bölümsüz görevlerde expand etme
+                  hideProjectIcon={true} // Proje sayfasında proje ikonunu gizle
                   userAccess={project?.userAccess}
                 />
               </AccordionContent>
@@ -1377,6 +1379,7 @@ export default function ProjectDetailPage() {
                         }
                       }}
                       expandTaskId={expandTaskId}
+                      hideProjectIcon={true} // Proje sayfasında proje ikonunu gizle
                       userAccess={project?.userAccess}
                     />
                   )}

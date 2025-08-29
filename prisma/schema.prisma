@@ -112,6 +112,9 @@ model Task {
   approvalRequester User?              @relation("TaskApprovalRequester", fields: [approvalRequestedBy], references: [id])
   approver          User?              @relation("TaskApprover", fields: [approvedBy], references: [id])
   
+  // Task assignments relation
+  assignments       Assignment[]       @relation("TaskAssignments")
+  
   // Performance indexes
   @@index([userId, createdAt])
   @@index([userId, completed])
@@ -386,6 +389,7 @@ model Assignment {
   // Relations
   user     User? @relation("AssignmentUser", fields: [userId], references: [id], onDelete: Cascade)
   assigner User  @relation("AssignmentAssigner", fields: [assignedBy], references: [id], onDelete: Cascade)
+  task     Task? @relation("TaskAssignments", fields: [targetId], references: [id], onDelete: Cascade)
   
   // Indexes
   @@unique([targetType, targetId, userId], name: "unique_user_assignment")

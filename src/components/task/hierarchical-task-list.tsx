@@ -25,6 +25,7 @@ interface HierarchicalTaskListProps {
   showTreeConnectors?: boolean
   highlightTaskId?: string | null
   expandTaskId?: string | null
+  hideProjectIcon?: boolean
   userAccess?: {
     accessLevel: string
     permissions: {
@@ -54,6 +55,7 @@ export function HierarchicalTaskList({
   showTreeConnectors = true,
   highlightTaskId,
   expandTaskId,
+  hideProjectIcon = false,
   userAccess
 }: HierarchicalTaskListProps) {
   // Expand/collapse state management
@@ -166,6 +168,7 @@ export function HierarchicalTaskList({
             onComment={onComment}
             isHighlighted={highlightTaskId === task.id}
             forceExpand={expandTaskId === task.id}
+            hideProjectIcon={hideProjectIcon}
             userAccess={userAccess}
           />
         )

@@ -141,6 +141,8 @@ interface TaskCardProps {
   isHighlighted?: boolean
   // Force expand için prop
   forceExpand?: boolean
+  // Hide project icon/name (useful in project pages)
+  hideProjectIcon?: boolean
   // User access information
   userAccess?: {
     accessLevel: string
@@ -180,6 +182,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   isHighlighted = false,
   // Force expand prop
   forceExpand = false,
+  // Hide project icon prop
+  hideProjectIcon = false,
   // User access prop
   userAccess
 }, ref) => {
@@ -911,8 +915,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           </div>
 
           <div className="flex items-center ml-2 space-x-2 pointer-events-auto">
-            {/* Project and Section Info */}
-            {(task.project || task.section) && (
+            {/* Project and Section Info - Hide completely on project pages */}
+            {!hideProjectIcon && (task.project || task.section) && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1 text-muted-foreground">
@@ -1028,8 +1032,8 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
                 </div>
 
                 
-                {/* Project and Section Info */}
-                {(task.project || task.section) && (
+                {/* Project and Section Info - Hide completely on project pages */}
+                {!hideProjectIcon && (task.project || task.section) && (
                   <div className={`flex items-center space-x-2 ${isTaskCompleted ? 'opacity-50' : ''}`}>
                     <Tooltip>
                       <TooltipTrigger asChild>

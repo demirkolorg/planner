@@ -335,14 +335,32 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const taskTypeFilter = searchParams.get('taskType')
     
-    // Where koşulunu oluştur
+    // Where koşulunu oluştur - kullanıcının kendi görevleri VE atanan görevler
     const whereClause: any = {
-      userId: decoded.userId
+      AND: [
+        // Kullanıcı koşulu (kendi görevleri VEYA atananlar)
+        {
+          OR: [
+            // Kendi görevleri
+            { userId: decoded.userId },
+            // Atanan görevler (sadece TASK tipindekiler)
+            {
+              assignments: {
+                some: {
+                  userId: decoded.userId,
+                  status: 'ACTIVE',
+                  targetType: 'TASK'
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
     
     // TaskType filtresi varsa ekle
     if (taskTypeFilter && ['PROJECT', 'CALENDAR', 'QUICK_NOTE'].includes(taskTypeFilter)) {
-      whereClause.taskType = taskTypeFilter
+      whereClause.AND.push({ taskType: taskTypeFilter })
     }
     
     // Kullanıcının görevlerini getir (retry ile)
@@ -385,6 +403,18 @@ export async function GET(request: NextRequest) {
           _count: {
             select: {
               comments: true
+            }
+          },
+          assignments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true
+                }
+              }
             }
           }
         },
