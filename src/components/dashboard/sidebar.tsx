@@ -137,9 +137,10 @@ interface DashboardSidebarProps {
   isOpen: boolean
   onToggle: () => void
   onOpenSearch?: () => void
+  isNewTaskModalOpen?: boolean
 }
 
-export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSidebarProps) {
+export function DashboardSidebar({ isOpen, onToggle, onOpenSearch, isNewTaskModalOpen = false }: DashboardSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
@@ -317,6 +318,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                     size="sm"
                     className="flex-1 px-2 py-1.5 text-xs font-medium h-8"
                     onClick={() => setIsTaskModalOpen(true)}
+                    disabled={isNewTaskModalOpen}
                   >
                     <Plus className="h-3.5 w-3.5 mr-1.5" />
                     Görev Ekle
@@ -334,6 +336,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                     variant="outline"
                     className="px-1.5 h-8 w-8"
                     onClick={() => setIsQuickTaskModalOpen(true)}
+                    disabled={isNewTaskModalOpen}
                   >
                     <Zap className="h-3.5 w-3.5" />
                   </Button>
@@ -350,6 +353,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                     variant="outline"
                     className="px-1.5 h-8 w-8"
                     onClick={() => onOpenSearch?.()}
+                    disabled={isNewTaskModalOpen}
                   >
                     <Search className="h-3.5 w-3.5" />
                   </Button>
@@ -738,7 +742,13 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   
                   {/* Ayarlar */}
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center gap-2">
+                    <Link 
+                      href="/settings" 
+                      className={cn(
+                        "flex items-center gap-2",
+                        isNewTaskModalOpen && "pointer-events-none opacity-50"
+                      )}
+                    >
                       <Settings className="h-4 w-4" />
                       Ayarlar
                     </Link>
@@ -752,7 +762,14 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   </div>
                   
                   {/* Çıkış */}
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                  <DropdownMenuItem 
+                    onClick={handleLogout} 
+                    className={cn(
+                      "flex items-center gap-2 text-red-600 dark:text-red-400",
+                      isNewTaskModalOpen && "pointer-events-none opacity-50"
+                    )}
+                    disabled={isNewTaskModalOpen}
+                  >
                     <LogOut className="h-4 w-4" />
                     Çıkış Yap
                   </DropdownMenuItem>

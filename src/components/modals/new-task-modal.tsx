@@ -1109,8 +1109,14 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
 
   return (
     <TooltipProvider>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl top-[10%] translate-y-0" role="dialog" aria-modal="true">
+      <Dialog open={isOpen} onOpenChange={() => {}}>
+        <DialogContent 
+          className="sm:max-w-2xl top-[10%] translate-y-0" 
+          role="dialog" 
+          aria-modal="true"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogDescription className="sr-only">
             Yeni görev oluşturmak veya mevcut görevi düzenlemek için form
           </DialogDescription>

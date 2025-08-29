@@ -72,21 +72,21 @@ export default function DashboardLayout({
 
   // Ctrl+K shortcut
   useCtrlK(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isNewTaskModalOpen) {
       setIsQuickTaskModalOpen(true)
     }
   })
 
   // Ctrl+S shortcut
   useCtrlS(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isNewTaskModalOpen) {
       setIsQuickSearchModalOpen(true)
     }
   })
 
   // Ctrl+J shortcut
   useCtrlJ(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isNewTaskModalOpen) {
       console.log('Ctrl+J pressed, opening new task modal')
       setIsNewTaskModalOpen(true)
     }
@@ -94,7 +94,7 @@ export default function DashboardLayout({
 
   // Ctrl+B shortcut
   useCtrlB(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isNewTaskModalOpen) {
       setSidebarOpen(!sidebarOpen)
     }
   })
@@ -191,6 +191,7 @@ export default function DashboardLayout({
         isOpen={sidebarOpen} 
         onToggle={handleSidebarToggle} 
         onOpenSearch={handleOpenSearch}
+        isNewTaskModalOpen={isNewTaskModalOpen}
       />
       <div className={`flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-80' : 'ml-16'} w-full`}>
         <main className="flex-1 overflow-y-auto p-6">
