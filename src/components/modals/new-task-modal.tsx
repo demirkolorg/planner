@@ -725,18 +725,39 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }
 
   const handleImproveBrief = async () => {
-    if (!description.trim()) return
+    if (!description.trim()) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Açıklama Gerekli",
+        message: "AI açıklama iyileştirmesi için önce bir açıklama yazmalısınız."
+      })
+      return
+    }
     
     setLoadingStates(prev => ({ ...prev, descriptionImprovement: true }))
     try {
       const improvedDescription = await improveBrief(description)
-      setDescription(improvedDescription)
+      if (!improvedDescription || improvedDescription.trim() === description.trim()) {
+        setAlertConfig({
+          isOpen: true,
+          title: "İyileştirme Bulunamadı",
+          message: "AI açıklamanızda herhangi bir iyileştirme önerisi bulamadı. Mevcut açıklama zaten yeterince iyi görünüyor."
+        })
+      } else {
+        setDescription(improvedDescription)
+        // Success feedback
+        window.dispatchEvent(new CustomEvent('quickTaskSuccess', {
+          detail: { message: "Açıklama AI tarafından iyileştirildi!" }
+        }))
+      }
     } catch (error) {
       console.error('Description improvement error:', error)
       setAlertConfig({
         isOpen: true,
         title: "Açıklama İyileştirme Hatası",
-        message: "Açıklama iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
+        message: error instanceof Error && error.message.includes('network') 
+          ? "İnternet bağlantınızı kontrol edip tekrar deneyin."
+          : "Açıklama iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
       })
     } finally {
       setLoadingStates(prev => ({ ...prev, descriptionImprovement: false }))
@@ -744,20 +765,41 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }
 
   const handleImproveTitle = () => {
-    if (!title.trim()) return
+    if (!title.trim()) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Başlık Gerekli",
+        message: "AI başlık iyileştirmesi için önce bir başlık yazmalısınız."
+      })
+      return
+    }
     
     // Debounced AI call
     debouncedAICall(async () => {
       setLoadingStates(prev => ({ ...prev, titleImprovement: true }))
       try {
         const improvedTitle = await improveTitle(title)
-        setTitle(improvedTitle)
+        if (!improvedTitle || improvedTitle.trim() === title.trim()) {
+          setAlertConfig({
+            isOpen: true,
+            title: "İyileştirme Bulunamadı",
+            message: "AI başlığınızda herhangi bir iyileştirme önerisi bulamadı. Mevcut başlık zaten yeterince iyi görünüyor."
+          })
+        } else {
+          setTitle(improvedTitle)
+          // Success feedback
+          window.dispatchEvent(new CustomEvent('quickTaskSuccess', {
+            detail: { message: "Başlık AI tarafından iyileştirildi!" }
+          }))
+        }
       } catch (error) {
         console.error('Title improvement error:', error)
         setAlertConfig({
           isOpen: true,
           title: "Başlık İyileştirme Hatası",
-          message: "Başlık iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
+          message: error instanceof Error && error.message.includes('network')
+            ? "İnternet bağlantınızı kontrol edip tekrar deneyin."
+            : "Başlık iyileştirme sırasında bir hata oluştu. Lütfen tekrar deneyin."
         })
       } finally {
         setLoadingStates(prev => ({ ...prev, titleImprovement: false }))
@@ -800,19 +842,41 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         // Önerilen etiketleri mevcut etiketlerle birleştir
         const newTagNames = data.tags.map((tag: { name: string }) => tag.name)
         const uniqueTags = [...new Set([...selectedTags, ...newTagNames])]
-        setSelectedTags(uniqueTags)
+        
+        // 10 etiket limitini kontrol et
+        if (uniqueTags.length > 10) {
+          setAlertConfig({
+            isOpen: true,
+            title: "Etiket Limiti",
+            message: `AI ${data.tags.length} etiket önerdi, ancak maksimum 10 etiket seçilebilir. İlk ${10 - selectedTags.length} etiket eklendi.`
+          })
+          setSelectedTags([...selectedTags, ...newTagNames.slice(0, 10 - selectedTags.length)])
+        } else {
+          setSelectedTags(uniqueTags)
+        }
         
         // TagStore'u güncelle (yeni etiketler eklenmişse)
         await fetchTags()
         
-        // Başarı mesajı gösterme
+        // Success feedback
+        window.dispatchEvent(new CustomEvent('quickTaskSuccess', {
+          detail: { message: `${Math.min(newTagNames.length, 10 - selectedTags.length)} AI etiket önerisi eklendi!` }
+        }))
+      } else {
+        setAlertConfig({
+          isOpen: true,
+          title: "Öneri Bulunamadı",
+          message: "AI bu başlık için uygun etiket önerisi bulamadı. Farklı bir başlık deneyin veya etiketleri manuel olarak ekleyin."
+        })
       }
     } catch (error) {
       console.error('Tag suggestion error:', error)
       setAlertConfig({
         isOpen: true,
-        title: "Hata",
-        message: "AI etiket önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
+        title: "Etiket Önerisi Hatası",
+        message: error instanceof Error && error.message.includes('network')
+          ? "İnternet bağlantınızı kontrol edip tekrar deneyin."
+          : "AI etiket önerisi alınırken bir hata oluştu. Lütfen tekrar deneyin."
       })
       } finally {
         setLoadingStates(prev => ({ ...prev, tagSuggestion: false }))
