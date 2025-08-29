@@ -90,22 +90,36 @@ export async function generateTaskSuggestion(
     
     const contextStr = context.length > 0 ? `${context.join(', ')} için ` : ''
     
-    const aiPrompt = `Sen bir görev yönetimi uzmanısın. ${contextStr}Verilen talep için profesyonel bir görev oluştur.
+    const aiPrompt = `Sen bir görev yönetimi uzmanısın. ${contextStr}Verilen talep için yaratıcı ve çeşitli görev önerileri oluştur.
 
 TALEP: "${prompt}"
 
-KURALLLAR:
-- Görev başlığı: Net, somut ve aksiyona yönelik (maksimum 60 karakter)
-- Açıklama: Detaylı ama kısa, ne yapılacağını açıkla (maksimum 150 karakter)  
-- Türkçe kullan
-- JSON formatında döndür
+YARATICI BAŞLIK KURALLARI:
+- Farklı başlık stilleri kullan: eylem odaklı, sonuç odaklı, proses odaklı
+- İş dünyası terminolojisini zengin şekilde kullan
+- Bağlama uygun profesyonel ifadeler seç
+- Motive edici ve net başlıklar oluştur
+- Maksimum 70 karakter
+
+ÇEŞİTLİ BAŞLIK ÖRNEKLERİ:
+Eylem odaklı: "Tasarla", "Geliştir", "Analiz et", "Optimize et", "Uygula"
+Sonuç odaklı: "...ı tamamla", "...nin finalini yap", "...i başarıyla bitir"
+Proses odaklı: "...için strateji oluştur", "...nin planını hazırla", "...i detaylandır"
+Profesyonel: "...audit'ini gerçekleştir", "...framework'ünü kur", "...roadmap'ini çiz"
+
+ACIKLAMA KURALLARI:
+- Detaylı ama özlü açıklama (maksimum 180 karakter)
+- Süreç adımlarını belirt
+- Değer yaratma odaklı yaklaş
+- Türkçe kullan ve JSON formatında döndür
 
 YANIT FORMATI:
 {"title": "Görev başlığı", "description": "Görev açıklaması"}
 
-ÖRNEKİER:
-Talep: "web sitesi tasarımı" → {"title": "Web sitesi tasarımını tamamla", "description": "Modern ve responsive bir web sitesi tasarımı oluştur, kullanıcı deneyimini optimize et"}
-Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "description": "Geçen ayın satış ve performans verilerini analiz ederek detaylı rapor oluştur"}`
+ZENGİN ÖRNEKLER:
+Talep: "web sitesi tasarımı" → {"title": "Modern web sitesi tasarımını optimize et", "description": "Kullanıcı deneyimini merkeze alan responsive tasarım geliştir, UI/UX prensiplerini uygula ve performansı artır"}
+Talep: "rapor yaz" → {"title": "Kapsamlı performans audit'ini tamamla", "description": "Veri analizi ile detaylı performans raporu hazırla, trend analizi yap ve aksiyon önerileri sun"}
+Talep: "toplantı planla" → {"title": "Stratejik ekip toplantısının roadmap'ini çiz", "description": "Agenda oluştur, katılımcıları belirle, materyal hazırla ve follow-up planını detaylandır"}`
 
     const content = await makeCerebrasRequest(aiPrompt, 200)
 
@@ -144,16 +158,32 @@ Talep: "rapor yaz" → {"title": "Aylık performans raporunu hazırla", "descrip
     const fallbackTags = getRandomTags(availableTags)
     const fallbackDueDate = getRandomDueDate(parentTaskDueDate)
     
-    // Daha akıllı fallback title oluştur
-    const smartTitle = prompt.includes(' ') 
-      ? `${prompt.charAt(0).toUpperCase() + prompt.slice(1)}ı tamamla`
-      : `${prompt.charAt(0).toUpperCase() + prompt.slice(1)} görevini yap`
+    // Daha zengin ve çeşitli fallback title oluştur
+    const titleStyles = [
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)}ı optimize et`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)} sürecini tamamla`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)} için strateji geliştir`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)}nin audit'ini yap`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)} roadmap'ini hazırla`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)}i başarıyla finalize et`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)} framework'ünü kur`,
+      `${prompt.charAt(0).toUpperCase() + prompt.slice(1)}nin analizini gerçekleştir`
+    ]
     
-    const smartDescription = `${projectName ? `${projectName} projesi kapsamında ` : ''}${prompt} ile ilgili detaylı planlama yap ve gerekli adımları belirle`
+    const randomTitleStyle = titleStyles[Math.floor(Math.random() * titleStyles.length)]
+    
+    const descriptionStyles = [
+      `${projectName ? `${projectName} projesi kapsamında ` : ''}${prompt} için kapsamlı planlama yap, detaylı analiz gerçekleştir ve optimize edilmiş çözüm sun`,
+      `${projectName ? `${projectName} projesi çerçevesinde ` : ''}${prompt} sürecini iyileştir, best practice'leri uygula ve verimlilik artır`,
+      `${projectName ? `${projectName} projesi dahilinde ` : ''}${prompt} için stratejik yaklaşım benimse, riskleri değerlendir ve başarı metriklerini belirle`,
+      `${projectName ? `${projectName} projesi bünyesinde ` : ''}${prompt} konusunda derinlemesine araştırma yap, bulgularını raporla ve aksiyon planı oluştur`
+    ]
+    
+    const randomDescriptionStyle = descriptionStyles[Math.floor(Math.random() * descriptionStyles.length)]
     
     return {
-      title: smartTitle,
-      description: smartDescription,
+      title: randomTitleStyle,
+      description: randomDescriptionStyle,
       priority: fallbackPriority,
       tags: fallbackTags,
       dueDate: fallbackDueDate,
@@ -192,27 +222,47 @@ export async function improveTitle(title: string): Promise<string> {
   }
 
   try {
-    const aiPrompt = `Sen bir görev yönetimi uzmanısın. Verilen görev başlığını iyileştir.
+    const aiPrompt = `Sen bir görev yönetimi uzmanısın. Verilen görev başlığını yaratıcı ve profesyonel şekilde iyileştir.
 
 MEVCUT BAŞLIK: "${title}"
 
-KURALLLAR:
-- Aksiyona yönelik başlık oluştur (fiil ile başla)
-- Net, somut ve profesyonel ol
-- Türkçe kullan
-- Maksimum 50 karakter  
+ZENGİN İYİLEŞTİRME KURALLARI:
+- Farklı başlık stilleri kullan: eylem odaklı, sonuç odaklı, proses odaklı
+- İş dünyası terminolojisini kullanarak zenginleştir
+- Motive edici ve profesyonel yaklaş
+- Net ve somut ol, belirsizlik bırakma
+- Maksimum 60 karakter
 - Sadece iyileştirilmiş başlığı döndür
 
-ÖRNEKLER:
-Girdi: "rapor" → Çıktı: "Aylık raporunu tamamla"
-Girdi: "toplantı" → Çıktı: "Ekip toplantısını düzenle"  
-Girdi: "web sitesi" → Çıktı: "Web sitesi tasarımını bitir"
-Girdi: "alışveriş" → Çıktı: "Haftalık alışverişi yap"`
+ÇEŞİTLİ İYİLEŞTİRME STİLLERİ:
+Eylem odaklı: "...ı optimize et", "...i geliştir", "...nin analizini yap"
+Sonuç odaklı: "...ı başarıyla tamamla", "...nin finalini gerçekleştir"
+Proses odaklı: "...için strateji oluştur", "...roadmap'ini hazırla"
+Profesyonel: "...audit'ini yap", "...framework'ünü kur"
 
-    const content = await makeCerebrasRequest(aiPrompt, 50)
+ZENGİN ÖRNEKLER:
+Girdi: "rapor" → Çıktı: "Kapsamlı performans audit'ini tamamla"
+Girdi: "toplantı" → Çıktı: "Stratejik ekip toplantısının roadmap'ini çiz"
+Girdi: "web sitesi" → Çıktı: "Modern web sitesi tasarımını optimize et"
+Girdi: "alışveriş" → Çıktı: "Tedarik sürecinin analizini gerçekleştir"
+Girdi: "araştır" → Çıktı: "Pazar araştırması framework'ünü kur"`
+
+    const content = await makeCerebrasRequest(aiPrompt, 80)
     return content || title
   } catch (error) {
     console.error('Cerebras AI error:', error)
-    return title
+    
+    // Zenginleştirilmiş fallback seçenekleri
+    const enrichedFallbacks = [
+      `${title.charAt(0).toUpperCase() + title.slice(1)}ın audit'ini gerçekleştir`,
+      `${title.charAt(0).toUpperCase() + title.slice(1)} sürecini optimize et`,
+      `${title.charAt(0).toUpperCase() + title.slice(1)} için strateji geliştir`,
+      `${title.charAt(0).toUpperCase() + title.slice(1)}nin analizini tamamla`,
+      `${title.charAt(0).toUpperCase() + title.slice(1)} roadmap'ini hazırla`,
+      `${title.charAt(0).toUpperCase() + title.slice(1)}i başarıyla finalize et`
+    ]
+    
+    const randomFallback = enrichedFallbacks[Math.floor(Math.random() * enrichedFallbacks.length)]
+    return randomFallback
   }
 }
