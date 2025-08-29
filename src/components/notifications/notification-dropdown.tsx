@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, Check, CheckCheck, Trash2, Settings, X } from "lucide-react"
+import { Bell, Check, CheckCheck, Trash2, Settings, X, Eye } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { tr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -16,13 +16,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useNotificationStore, Notification } from "@/store/notificationStore"
 
 interface NotificationDropdownProps {
   className?: string
+  align?: "start" | "center" | "end"
+  side?: "top" | "right" | "bottom" | "left"
 }
 
-export function NotificationDropdown({ className }: NotificationDropdownProps) {
+export function NotificationDropdown({ className, align = "end", side = "bottom" }: NotificationDropdownProps) {
   const router = useRouter()
   const {
     notifications,
@@ -110,7 +113,8 @@ export function NotificationDropdown({ className }: NotificationDropdownProps) {
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <TooltipProvider>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className={`relative ${className}`}>
           <Bell className="h-5 w-5" />
@@ -125,32 +129,82 @@ export function NotificationDropdown({ className }: NotificationDropdownProps) {
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-96 max-h-96 p-0">
+      <DropdownMenuContent align={align} side={side} className="w-96 max-h-96 p-0">
         <div className="flex items-center justify-between p-4 border-b">
           <h4 className="font-semibold">Bildirimler</h4>
-          <div className="flex gap-2">
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="h-6 px-2 text-xs"
-              >
-                <CheckCheck className="h-3 w-3 mr-1" />
-                Tümünü Okundu İşaretle
-              </Button>
+          <div className="flex gap-1">
+            {notifications.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      router.push("/notifications")
+                      setIsOpen(false)
+                    }}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Tümünü Görüntüle</p>
+                </TooltipContent>
+              </Tooltip>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                router.push("/notifications/settings")
-                setIsOpen(false)
-              }}
-              className="h-6 w-6 p-0"
-            >
-              <Settings className="h-3 w-3" />
-            </Button>
+            {notifications.some(n => n.isRead) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={deleteAllRead}
+                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Okunmuşları Sil</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {unreadCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="h-6 w-6 p-0"
+                  >
+                    <CheckCheck className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Tümünü Okundu İşaretle</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    router.push("/notifications/settings")
+                    setIsOpen(false)
+                  }}
+                  className="h-6 w-6 p-0"
+                >
+                  <Settings className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Bildirim Ayarları</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -239,35 +293,8 @@ export function NotificationDropdown({ className }: NotificationDropdownProps) {
           )}
         </ScrollArea>
 
-        {notifications.length > 0 && (
-          <>
-            <Separator />
-            <div className="p-2 flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  router.push("/notifications")
-                  setIsOpen(false)
-                }}
-                className="flex-1 h-7 text-xs"
-              >
-                Tümünü Görüntüle
-              </Button>
-              {notifications.some(n => n.isRead) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={deleteAllRead}
-                  className="h-7 text-xs text-red-600 hover:text-red-700"
-                >
-                  Okunmuşları Sil
-                </Button>
-              )}
-            </div>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
+    </TooltipProvider>
   )
 }

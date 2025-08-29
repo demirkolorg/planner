@@ -25,9 +25,11 @@ import { toast } from 'sonner'
 
 interface AccountSwitcherProps {
   className?: string
+  align?: "start" | "center" | "end"
+  side?: "top" | "right" | "bottom" | "left"
 }
 
-export function AccountSwitcher({ className }: AccountSwitcherProps) {
+export function AccountSwitcher({ className, align = "end", side = "bottom" }: AccountSwitcherProps) {
   const router = useRouter()
   const { 
     user: currentUser, 
@@ -132,7 +134,7 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align={align} side={side} className="w-80">
         <div className="px-2 py-1.5">
           <p className="text-sm font-medium">Hesaplar</p>
           <p className="text-xs text-muted-foreground">

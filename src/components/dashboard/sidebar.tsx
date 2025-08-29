@@ -359,7 +359,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   <p className="text-xs text-muted-foreground">Ctrl+S</p>
                 </TooltipContent>
               </Tooltip>
-              <NotificationDropdown className="px-1.5 h-8 w-8" />
+              <NotificationDropdown className="px-1.5 h-8 w-8" align="start" side="right" />
             </div>
           </div>
 
@@ -580,7 +580,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 <p className="text-xs text-muted-foreground">Ctrl+S</p>
               </TooltipContent>
             </Tooltip>
-            <NotificationDropdown className="w-full h-9" />
+            <NotificationDropdown className="w-full h-9" align="start" side="right" />
           </div>
 
           {/* Divider */}
@@ -688,7 +688,11 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 <DropdownMenuContent align={isOpen ? "center" : "end"} side={isOpen ? "top" : "right"} className="w-56">
                   {/* Account Switcher */}
                   <div className="p-2 border-b">
-                    <AccountSwitcher className="w-full justify-start h-auto p-2" />
+                    <AccountSwitcher 
+                      className="w-full justify-start h-auto p-2" 
+                      align="start" 
+                      side="right" 
+                    />
                   </div>
                   
                   {/* Kılavuz */}
