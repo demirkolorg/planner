@@ -14,7 +14,7 @@ interface EmailAssignment {
   email: string
   targetType: 'PROJECT' | 'SECTION' | 'TASK'
   targetId: string
-  role: string
+  targetName: string
   assignedBy: string
   status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
   message?: string
@@ -160,13 +160,12 @@ export default function AssignmentAcceptPage() {
     }
   }
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'COLLABORATOR': return 'İş Ortağı'
-      case 'VIEWER': return 'İzleyici'
-      case 'OWNER': return 'Sorumlu'
-      case 'MEMBER': return 'Üye'
-      default: return role
+  const getRoleLabel = (targetType: string) => {
+    switch (targetType) {
+      case 'PROJECT': return 'Proje Üyesi'
+      case 'SECTION': return 'Bölüm Üyesi'
+      case 'TASK': return 'Görev Sorumlusu'
+      default: return 'Üye'
     }
   }
 
@@ -287,12 +286,12 @@ export default function AssignmentAcceptPage() {
             <div className="bg-muted/30 rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">{targetInfo.label}:</span>
-                <span className="font-medium">Loading...</span> {/* TODO: Get target name */}
+                <span className="font-medium">{assignment.targetName}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Rol:</span>
-                <Badge variant="secondary">{getRoleLabel(assignment.role)}</Badge>
+                <Badge variant="secondary">{getRoleLabel(assignment.targetType)}</Badge>
               </div>
               
               <div className="flex items-center justify-between">
