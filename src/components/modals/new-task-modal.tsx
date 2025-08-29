@@ -236,12 +236,15 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
           return () => clearTimeout(timer)
         }
       } else if (projects.length > 0 && !selectedProject) {
-        // Fallback: varsayılan seçimler - "Gelen Kutusu" projesini default olarak seç
+        // Fallback: varsayılan seçimler - önce sabitlenmiş projeleri, sonra "Gelen Kutusu" projesini kontrol et
+        const pinnedProjects = projects.filter((p: Project) => p.isPinned).sort((a, b) => a.name.localeCompare(b.name, 'tr'))
         const inboxProject = projects.find((p: Project) => p.name === "Gelen Kutusu")
-        if (inboxProject) {
-          setSelectedProject(inboxProject)
-          fetchSections(inboxProject.id).then(() => {
-            const projectSections = getSectionsByProject(inboxProject.id)
+        
+        const defaultProject = pinnedProjects[0] || inboxProject
+        if (defaultProject) {
+          setSelectedProject(defaultProject)
+          fetchSections(defaultProject.id).then(() => {
+            const projectSections = getSectionsByProject(defaultProject.id)
             // "Genel" bölümünü default olarak seç
             const generalSection = projectSections.find((s: Section) => s.name === "Genel")
             if (generalSection) {
@@ -508,6 +511,11 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       // Rastgele seçilen özellikleri uygula
       if (suggestion.priority) {
         setSelectedPriority(suggestion.priority)
+      } else {
+        // Eğer AI öncelik önermediyse, rastgele bir öncelik seç
+        const priorityValues = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        const randomPriority = priorityValues[Math.floor(Math.random() * priorityValues.length)]
+        setSelectedPriority(randomPriority)
       }
       
       if (suggestion.tags && suggestion.tags.length > 0) {

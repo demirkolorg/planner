@@ -746,14 +746,14 @@ export function DashboardOverview() {
             {/* Header Section */}
             <div className="relative bg-gradient-to-r from-blue-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:to-indigo-500/10 border-b border-blue-200/20 dark:border-blue-800/20 px-3 py-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <Link href="/projects" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
                     <FolderOpen className="h-4 w-4 text-white" />
                   </div>
                   <h3 className="text-sm font-semibold text-foreground">
                     Projeler
                   </h3>
-                </div>
+                </Link>
                 <Link href="/projects">
                   <Button variant="ghost" size="sm" className="h-7 px-3 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
                     Tümü →
@@ -856,14 +856,14 @@ export function DashboardOverview() {
             {/* Header Section */}
             <div className="relative bg-gradient-to-r from-purple-500/5 to-pink-500/5 dark:from-purple-500/10 dark:to-pink-500/10 border-b border-purple-200/20 dark:border-purple-800/20 px-3 py-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <Link href="/quick-notes" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
                     <CheckSquare className="h-4 w-4 text-white" />
                   </div>
                   <h3 className="text-sm font-semibold text-foreground">
                     Hızlı Notlar
                   </h3>
-                </div>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -930,7 +930,7 @@ export function DashboardOverview() {
                             </p>
                           )}
                           
-                          {note.quickNoteCategory && (
+                          {note.quickNoteCategory && note.quickNoteCategory.toLowerCase() !== 'genel' && (
                             <span className="inline-block text-xs px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 mt-1">
                               {note.quickNoteCategory}
                             </span>

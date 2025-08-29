@@ -58,7 +58,27 @@ export function DbStatusIndicator() {
     return () => clearInterval(interval)
   }, [])
 
-  if (!status) return null
+  if (!status) {
+    // Loading state ile menü boyutunu sabit tut
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              disabled
+              className="flex items-center space-x-1 px-2 py-1 rounded-md text-xs transition-colors text-gray-400"
+            >
+              <Database className="h-4 w-4 animate-pulse" />
+              <span className="hidden sm:inline">Kontrol...</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Database durumu yükleniyor...
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
 
   const getStatusIcon = () => {
     if (isChecking) {

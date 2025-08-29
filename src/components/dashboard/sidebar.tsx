@@ -102,14 +102,13 @@ const cardItems = [
     href: "/assigned" 
   },
   { 
-    name: "Google Takvim", 
+    name: "Projeler", 
     count: null, 
-    icon: Calendar, 
-    activeIcon: Calendar, 
+    icon: Folder, 
+    activeIcon: FolderKanban, 
     color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
-    activeColor: "bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-950/50 dark:to-teal-950/50 text-cyan-800 dark:text-cyan-300 border-cyan-300/70 dark:border-cyan-800/50 shadow-lg shadow-cyan-500/10", 
-    href: "/calendar-tasks", 
-    taskType: 'CALENDAR'
+    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-800 dark:text-blue-300 border-blue-300/70 dark:border-blue-800/50 shadow-lg shadow-blue-500/10", 
+    href: "/projects" 
   },
   { 
     name: "Hızlı Notlar", 
@@ -122,13 +121,14 @@ const cardItems = [
     taskType: 'QUICK_NOTE'
   },
   { 
-    name: "Projeler", 
+    name: "Google Takvim", 
     count: null, 
-    icon: Folder, 
-    activeIcon: FolderKanban, 
+    icon: Calendar, 
+    activeIcon: Calendar, 
     color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
-    activeColor: "bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950/50 dark:to-indigo-950/50 text-blue-800 dark:text-blue-300 border-blue-300/70 dark:border-blue-800/50 shadow-lg shadow-blue-500/10", 
-    href: "/projects" 
+    activeColor: "bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-950/50 dark:to-teal-950/50 text-cyan-800 dark:text-cyan-300 border-cyan-300/70 dark:border-cyan-800/50 shadow-lg shadow-cyan-500/10", 
+    href: "/calendar-tasks", 
+    taskType: 'CALENDAR'
   },
 ]
 
