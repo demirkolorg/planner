@@ -208,90 +208,131 @@ export function NotificationDropdown({ className, align = "end", side = "bottom"
           </div>
         </div>
 
-        <ScrollArea className="max-h-80">
+        {/* Notification List */}
+        <div className="flex flex-col h-80 overflow-hidden">
           {isLoading && notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Bildirimler yükleniyor...
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                <p className="text-sm text-muted-foreground">Bildirimler yükleniyor...</p>
+              </div>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Henüz bildiriminiz yok
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                  <Bell className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Henüz bildiriminiz yok</p>
+                  <p className="text-xs text-muted-foreground mt-1">Yeni bildirimleri burada göreceksiniz</p>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="space-y-1 p-1">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`group p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent ${
-                    !notification.isRead ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 text-lg">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {getNotificationTypeText(notification.type)}
-                        </span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                          {formatDistanceToNow(new Date(notification.createdAt), {
-                            addSuffix: true,
-                            locale: tr
-                          })}
-                        </span>
+            <ScrollArea className="flex-1 px-1">
+              <div className="space-y-1 py-2">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`relative group p-3 mx-2 rounded-lg cursor-pointer transition-all duration-200 border ${
+                      !notification.isRead 
+                        ? "bg-blue-50/80 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-800/50 hover:bg-blue-100/80 dark:hover:bg-blue-950/30" 
+                        : "bg-white dark:bg-gray-900/50 border-gray-200/50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    }`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    {/* Unread Indicator */}
+                    {!notification.isRead && (
+                      <div className="absolute top-3 left-3 w-2 h-2 bg-blue-500 rounded-full"></div>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      {/* Icon */}
+                      <div className="flex-shrink-0 text-base mt-0.5">
+                        {getNotificationIcon(notification.type)}
                       </div>
                       
-                      <h5 className="font-medium text-sm leading-none">
-                        {notification.title}
-                      </h5>
-                      
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {notification.message}
-                      </p>
-                      
-                      {notification.creator && (
-                        <p className="text-xs text-muted-foreground">
-                          {notification.creator.firstName} {notification.creator.lastName}
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                            {getNotificationTypeText(notification.type)}
+                          </span>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                            {formatDistanceToNow(new Date(notification.createdAt), {
+                              addSuffix: true,
+                              locale: tr
+                            })}
+                          </span>
+                        </div>
+                        
+                        {/* Title */}
+                        <h5 className="font-semibold text-sm leading-tight text-gray-900 dark:text-gray-100">
+                          {notification.title}
+                        </h5>
+                        
+                        {/* Message */}
+                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                          {notification.message}
                         </p>
-                      )}
-                    </div>
+                        
+                        {/* Creator */}
+                        {notification.creator && (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                              {notification.creator.firstName?.[0]}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {notification.creator.firstName} {notification.creator.lastName}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleMarkAsRead(e, notification.id)}
-                          className="h-6 w-6 p-0 hover:bg-green-100"
-                          title="Okundu olarak işaretle"
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => handleDelete(e, notification.id)}
-                        className="h-6 w-6 p-0 hover:bg-red-100"
-                        title="Sil"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {!notification.isRead && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleMarkAsRead(e, notification.id)}
+                                className="h-7 w-7 p-0 hover:bg-green-100 dark:hover:bg-green-900/30"
+                              >
+                                <Check className="h-3.5 w-3.5 text-green-600" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Okundu işaretle</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => handleDelete(e, notification.id)}
+                              className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/30"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Bildirimi sil</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                   </div>
-                  
-                  {!notification.isRead && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full absolute top-2 left-2" />
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
           )}
-        </ScrollArea>
+        </div>
 
       </DropdownMenuContent>
     </DropdownMenu>

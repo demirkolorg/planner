@@ -68,7 +68,7 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
         'NONE': 'Yok'
       }
       
-      // Görevi oluştur - Başlık kullanıcının yazdığı, açıklama AI'dan
+      // Notu oluştur - Başlık kullanıcının yazdığı, açıklama AI'dan
       const taskData = {
         title: title, // Kullanıcının yazdığı direkt başlık
         description: analysis.description, // AI'dan genişletilmiş açıklama
@@ -130,9 +130,9 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg top-[20%] translate-y-0">
-        <DialogTitle className="sr-only">Hızlı Görev Ekle</DialogTitle>
+        <DialogTitle className="sr-only">Hızlı Not Ekle</DialogTitle>
         <DialogDescription className="sr-only">
-          Hızlı bir şekilde yeni görev oluşturmak için bu formu kullanın
+          Hızlı bir şekilde yeni not oluşturmak için bu formu kullanın
         </DialogDescription>
         <div className="space-y-4">
           {/* Header */}
@@ -141,10 +141,10 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
               <div className="p-2 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20">
                 <Zap className="h-5 w-5 text-purple-600" />
               </div>
-              <h2 className="text-lg font-semibold">Hızlı Görev Ekle</h2>
+              <h2 className="text-lg font-semibold">Hızlı Not Ekle</h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              Ne yapmak istiyorsun? AI yardımıyla hızlıca görev oluştur
+              Ne not almak istiyorsun? AI yardımıyla hızlıca not oluştur
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               <kbd className="px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 rounded">Ctrl+K</kbd> ile her yerden erişebilirsin
@@ -158,7 +158,7 @@ export function QuickTaskModal({ isOpen, onClose, onTaskCreated }: QuickTaskModa
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Örn: acil toplantı hazırlığı yap yarın"
+              placeholder="Örn: toplantı notları, fikir, hatırlatma..."
               className="pr-12 h-12 text-base transition-all duration-200 focus:border-purple-400"
             />
             

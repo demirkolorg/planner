@@ -339,7 +339,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Hızlı Görev Ekleme</p>
+                  <p>Hızlı Not Ekleme</p>
                   <p className="text-xs text-muted-foreground">Ctrl+K</p>
                 </TooltipContent>
               </Tooltip>
@@ -560,7 +560,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch }: DashboardSi
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Hızlı Görev Ekleme</p>
+                <p>Hızlı Not Ekleme</p>
                 <p className="text-xs text-muted-foreground">Ctrl+K</p>
               </TooltipContent>
             </Tooltip>
