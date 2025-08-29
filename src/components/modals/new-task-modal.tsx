@@ -13,10 +13,12 @@ import { DatePicker } from "../shared/date-picker"
 import { TimePicker } from "../shared/time-picker"
 import { PriorityPicker } from "@/components/ui/priority-picker"
 import { TagPicker } from "@/components/ui/tag-picker"
+import { SimpleAssignmentButton } from "@/components/ui/simple-assignment-button"
 import { useTagStore } from "@/store/tagStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
 import { PRIORITIES } from "@/lib/constants/priority"
+import { withTransactionRetry } from "@/lib/db-retry"
 
 import type { Project, Section, CreateTaskRequest } from "@/types/task"
 
@@ -95,6 +97,22 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedPriority, setSelectedPriority] = useState<string>("NONE")
+  const [assignmentIds, setAssignmentIds] = useState<string[]>([]) // Kullanıcı ID'leri
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
+  
+  // Auto-save trigger effect
+  useEffect(() => {
+    triggerAutoSave()
+  }, [title, description, selectedPriority, selectedDate, selectedTime])
+  
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout)
+      }
+    }
+  }, [autoSaveTimeout])
   const { tags, fetchTags, createTag } = useTagStore()
   const { updateTaskTags } = useTaskStore()
   const { createTask, updateTask, getTaskById } = useTaskStore()
@@ -188,7 +206,13 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         }
         setSelectedTags(editingTask.tags?.map(t => t.tag.name) || [])
         
-        // Not: Atama bilgileri artık SimpleAssignmentButton ile yönetiliyor
+        // Assignment bilgilerini yükle
+        if (editingTask.assignments && editingTask.assignments.length > 0) {
+          const activeAssignments = editingTask.assignments.filter(a => a.status === 'ACTIVE')
+          setAssignmentIds(activeAssignments.map(a => a.assigneeId))
+        } else {
+          setAssignmentIds([])
+        }
       } else {
         // Yeni görev modunda temiz başla
         setTitle("")
@@ -197,7 +221,7 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
         setSelectedPriority("NONE")
         setSelectedDate(null)
         setSelectedTime(null)
-        // Atamalar artık SimpleAssignmentButton ile yönetiliyor
+        setAssignmentIds([]) // Yeni görevde atama temizle
       }
       
       // UI state'leri reset et
@@ -434,6 +458,42 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     }, delay)
   }
 
+  // Auto-save functionality for editing tasks
+  const triggerAutoSave = () => {
+    // Only auto-save for editing tasks, not new ones
+    if (!editingTask || isSubmitting || !title.trim()) return
+    
+    // Clear existing timeout
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+    
+    // Set new timeout for 30 seconds
+    const timeout = setTimeout(async () => {
+      try {
+        console.log('🔄 Auto-saving task...')
+        
+        const updateData = {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          projectId: selectedProject?.id,
+          sectionId: selectedSection?.id,
+          priority: selectedPriority,
+          dueDate: combineDateTime() || undefined,
+        }
+        
+        // Only save basic fields in auto-save (no tags, assignments)
+        await updateTask(editingTask.id, updateData)
+        console.log('✅ Auto-save completed')
+      } catch (error) {
+        console.warn('⚠️ Auto-save failed:', error)
+        // Don't show error to user for auto-save failures
+      }
+    }, 30000) // 30 seconds
+    
+    setAutoSaveTimeout(timeout)
+  }
+
   // Smart random date generation considering parent task constraints
   const generateRandomDate = () => {
     const today = new Date()
@@ -620,60 +680,65 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
     try {
 
       if (editingTask) {
-        // Düzenleme modu: mevcut görevi güncelle
-        const updateData = {
-          title: title.trim(),
-          description: description.trim() || undefined,
-          projectId: selectedProject.id,
-          sectionId: selectedSection.id,
-          priority: selectedPriority,
-          dueDate: combineDateTime() || undefined,
-        }
+        // Düzenleme modu: mevcut görevi güncelle (retry ile)
+        await withTransactionRetry(async () => {
+          const updateData = {
+            title: title.trim(),
+            description: description.trim() || undefined,
+            projectId: selectedProject.id,
+            sectionId: selectedSection.id,
+            priority: selectedPriority,
+            dueDate: combineDateTime() || undefined,
+          }
 
-        // Tüm update işlemlerini paralel yap
-        const updatePromises = [updateTask(editingTask.id, updateData)]
-        
-        // Etiketleri güncelle
-        if (selectedTags.length > 0) {
-          const tagIds = selectedTags.map(tagName => {
-            const tag = tags.find(t => t.name === tagName)
-            return tag?.id
-          }).filter(Boolean) as string[]
-          updatePromises.push(updateTaskTags(editingTask.id, tagIds))
-        }
-        
-        // Tüm işlemleri paralel bekle
-        await Promise.all(updatePromises)
+          // Tüm update işlemlerini paralel yap
+          const updatePromises = [updateTask(editingTask.id, updateData)]
+          
+          // Etiketleri güncelle
+          if (selectedTags.length > 0) {
+            const tagIds = selectedTags.map(tagName => {
+              const tag = tags.find(t => t.name === tagName)
+              return tag?.id
+            }).filter(Boolean) as string[]
+            updatePromises.push(updateTaskTags(editingTask.id, tagIds))
+          }
+          
+          // Tüm işlemleri paralel bekle
+          await Promise.all(updatePromises)
+        })
         
         // Assignment güncellemesi artık SimpleAssignmentModal ile yapılıyor
       } else {
-        // Yeni görev modu: yeni görev oluştur  
-        console.log('🆕 Yeni görev oluşturma modu:', { parentTaskId, parentTask })
-        
-        // Eğer parent task'ın due date'i var ve kullanıcı tarih seçmemişse, otomatik ata
-        let finalDueDate = combineDateTime()
-        if (!finalDueDate && parentTask?.dueDate) {
-          finalDueDate = parentTask.dueDate
-          console.log('📅 Parent task due date otomatik atandı:', finalDueDate)
-        }
-        
-        const taskData: CreateTaskRequest = {
-          title: title.trim(),
-          description: description.trim() || undefined,
-          projectId: defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR' ? undefined : selectedProject.id,
-          sectionId: defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR' ? undefined : selectedSection.id,
-          priority: selectedPriority,
-          dueDate: finalDueDate || undefined,
-          tags: selectedTags,
-          taskType: defaultTaskType || 'PROJECT',
-          ...(defaultTaskType === 'QUICK_NOTE' && defaultQuickNoteCategory && { quickNoteCategory: defaultQuickNoteCategory }),
-          ...(parentTaskId && { parentTaskId })
-        }
-        console.log('📋 Oluşturulacak task data:', taskData)
+        // Yeni görev modu: yeni görev oluştur (retry ile)
+        const newTask = await withTransactionRetry(async () => {
+          console.log('🆕 Yeni görev oluşturma modu:', { parentTaskId, parentTask })
+          
+          // Eğer parent task'ın due date'i var ve kullanıcı tarih seçmemişse, otomatik ata
+          let finalDueDate = combineDateTime()
+          if (!finalDueDate && parentTask?.dueDate) {
+            finalDueDate = parentTask.dueDate
+            console.log('📅 Parent task due date otomatik atandı:', finalDueDate)
+          }
+          
+          const taskData: CreateTaskRequest = {
+            title: title.trim(),
+            description: description.trim() || undefined,
+            projectId: defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR' ? undefined : selectedProject.id,
+            sectionId: defaultTaskType === 'QUICK_NOTE' || defaultTaskType === 'CALENDAR' ? undefined : selectedSection.id,
+            priority: selectedPriority,
+            dueDate: finalDueDate || undefined,
+            tags: selectedTags,
+            taskType: defaultTaskType || 'PROJECT',
+            ...(defaultTaskType === 'QUICK_NOTE' && defaultQuickNoteCategory && { quickNoteCategory: defaultQuickNoteCategory }),
+            ...(parentTaskId && { parentTaskId })
+          }
+          console.log('📋 Oluşturulacak task data:', taskData)
 
-        const newTask = await createTask(taskData)
-        console.log('✅ Yeni task oluşturuldu:', newTask)
-        
+          const createdTask = await createTask(taskData)
+          console.log('✅ Yeni task oluşturuldu:', createdTask)
+          
+          return createdTask
+        })
         
         if (onTaskCreated) {
           onTaskCreated(newTask)
@@ -689,10 +754,41 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
       }
     } catch (error) {
       console.error('Task save error:', error)
+      
+      // Detailed error handling
+      let errorTitle = "Görev Kaydetme Hatası"
+      let errorMessage = "Görev kaydedilirken bir hata oluştu. Lütfen tekrar deneyin."
+      
+      if (error instanceof Error) {
+        // Network error
+        if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorTitle = "Bağlantı Hatası"
+          errorMessage = "İnternet bağlantınızı kontrol edip tekrar deneyin."
+        }
+        // Timeout error
+        else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+          errorTitle = "Zaman Aşımı"
+          errorMessage = "İşlem zaman aşımına uğradı. Lütfen tekrar deneyin."
+        }
+        // Permission error
+        else if (error.message.includes('permission') || error.message.includes('Permission')) {
+          errorTitle = "Yetki Hatası"
+          errorMessage = "Bu işlem için gerekli yetkiniz bulunmuyor."
+        }
+        // Validation error
+        else if (error.message.includes('validation') || error.message.includes('Validation')) {
+          errorTitle = "Doğrulama Hatası"
+          errorMessage = error.message
+        }
+        else {
+          errorMessage = error.message
+        }
+      }
+      
       setAlertConfig({
         isOpen: true,
-        title: "Görev Kaydetme Hatası",
-        message: error instanceof Error ? error.message : "Görev kaydedilirken bir hata oluştu. Lütfen tekrar deneyin."
+        title: errorTitle,
+        message: errorMessage
       })
     } finally {
       setIsSubmitting(false)
@@ -700,12 +796,42 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Ctrl/Cmd + Enter: Save
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
       handleSave()
-    } else if (e.key === "Escape") {
+    } 
+    // Escape: Close (only if not submitting)
+    else if (e.key === "Escape" && !isSubmitting) {
       e.preventDefault()
       onClose()
+    }
+    // Ctrl/Cmd + S: Save (prevent browser save dialog)
+    else if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      handleSave()
+    }
+    // Ctrl/Cmd + I: Improve title
+    else if (e.key === "i" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      handleImproveTitle()
+    }
+    // Ctrl/Cmd + Shift + I: Improve description  
+    else if (e.key === "I" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+      e.preventDefault()
+      handleImproveBrief()
+    }
+    // Ctrl/Cmd + T: Focus tags
+    else if (e.key === "t" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      // TagPicker will handle this internally
+    }
+    // Ctrl/Cmd + D: Set due date to today
+    else if (e.key === "d" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      const today = new Date()
+      const dateStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`
+      setSelectedDate(dateStr)
     }
   }
 
@@ -1673,6 +1799,31 @@ export function NewTaskModal({ isOpen, onClose, onSave, onTaskCreated, defaultPr
                   <p>Öncelik</p>
                 </TooltipContent>
               </Tooltip>
+
+              {/* Assignment Button - Only show for editing or after project selection */}
+              {(editingTask || selectedProject) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SimpleAssignmentButton
+                      targetType="TASK"
+                      targetId={editingTask?.id || "new-task"}
+                      targetName={title || "Yeni Görev"}
+                      variant="ghost"
+                      size="sm"
+                      showCounts={!!editingTask}
+                      skipApiCall={!editingTask}
+                      disabled={isSubmitting}
+                      onRefresh={() => {
+                        // Refresh işlemi SimpleAssignmentModal tarafından handle ediliyor
+                        // Eğer editingTask varsa, assignment güncellemeleri otomatik yansıyacak
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Atama Yönetimi</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               
             </div>
           </div>
