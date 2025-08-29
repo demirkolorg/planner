@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
+import { ERROR_MESSAGES } from '@/lib/error-messages'
 
 // Project query keys
 export const projectKeys = {
@@ -20,14 +21,37 @@ export function useProjects() {
   return useQuery({
     queryKey: projectKeys.lists(),
     queryFn: async () => {
-      const response = await fetch('/api/projects')
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 saniye timeout
+      
+      try {
+        const response = await fetch('/api/projects', {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error(ERROR_MESSAGES.AUTH_ERROR)
+          }
+          if (response.status >= 500) {
+            throw new Error(ERROR_MESSAGES.SERVER_ERROR)
+          }
+          throw new Error(ERROR_MESSAGES.PROJECT.FETCH_FAILED)
+        }
+        return response.json()
+      } catch (error) {
+        clearTimeout(timeoutId)
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error(ERROR_MESSAGES.TIMEOUT_ERROR)
+        }
+        throw error
       }
-      return response.json()
     },
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 dakika - projeler sık değişmez
+    retry: 2, // 2 kez tekrar dene
+    retryDelay: 1000, // 1 saniye bekle
   })
 }
 
@@ -38,14 +62,37 @@ export function useProjectSections(projectId: string) {
   return useQuery({
     queryKey: projectKeys.sections(projectId),
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/sections`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch project sections')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 6000) // 6 saniye timeout
+      
+      try {
+        const response = await fetch(`/api/projects/${projectId}/sections`, {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error(ERROR_MESSAGES.AUTH_ERROR)
+          }
+          if (response.status >= 500) {
+            throw new Error(ERROR_MESSAGES.SERVER_ERROR)
+          }
+          throw new Error(ERROR_MESSAGES.SECTION.FETCH_FAILED)
+        }
+        return response.json()
+      } catch (error) {
+        clearTimeout(timeoutId)
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error(ERROR_MESSAGES.TIMEOUT_ERROR)
+        }
+        throw error
       }
-      return response.json()
     },
     enabled: isAuthenticated && !!projectId,
     staleTime: 5 * 60 * 1000, // 5 dakika - sections sık değişmez
+    retry: 2, // 2 kez tekrar dene
+    retryDelay: 1000, // 1 saniye bekle
   })
 }
 
@@ -62,7 +109,13 @@ export function useCreateProject() {
       })
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to create project')
+        if (response.status === 401) {
+          throw new Error(ERROR_MESSAGES.AUTH_ERROR)
+        }
+        if (response.status === 403) {
+          throw new Error(ERROR_MESSAGES.PERMISSION_ERROR)
+        }
+        throw new Error(error.error || ERROR_MESSAGES.PROJECT.CREATE_FAILED)
       }
       return response.json()
     },
@@ -85,7 +138,13 @@ export function useUpdateProject() {
       })
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to update project')
+        if (response.status === 401) {
+          throw new Error(ERROR_MESSAGES.AUTH_ERROR)
+        }
+        if (response.status === 403) {
+          throw new Error(ERROR_MESSAGES.PERMISSION_ERROR)
+        }
+        throw new Error(error.error || ERROR_MESSAGES.PROJECT.UPDATE_FAILED)
       }
       return response.json()
     },
@@ -107,7 +166,13 @@ export function useDeleteProject() {
       })
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to delete project')
+        if (response.status === 401) {
+          throw new Error(ERROR_MESSAGES.AUTH_ERROR)
+        }
+        if (response.status === 403) {
+          throw new Error(ERROR_MESSAGES.PERMISSION_ERROR)
+        }
+        throw new Error(error.error || ERROR_MESSAGES.PROJECT.DELETE_FAILED)
       }
     },
     onSuccess: () => {
@@ -127,7 +192,13 @@ export function useToggleProjectPin() {
       })
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to toggle project pin')
+        if (response.status === 401) {
+          throw new Error(ERROR_MESSAGES.AUTH_ERROR)
+        }
+        if (response.status === 403) {
+          throw new Error(ERROR_MESSAGES.PERMISSION_ERROR)
+        }
+        throw new Error(error.error || ERROR_MESSAGES.PROJECT.PIN_FAILED)
       }
       return response.json()
     },

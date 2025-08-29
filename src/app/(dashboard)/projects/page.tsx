@@ -4,9 +4,8 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Edit, Trash2, MoreVertical, Eye, EyeOff, FolderKanban, Search, Filter, Pin, PinOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useProjectStore } from "@/store/projectStore"
 import { useTaskStore } from "@/store/taskStore"
-import { useToggleProjectPin, useProjects } from "@/hooks/queries/use-projects"
+import { useToggleProjectPin, useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/queries/use-projects"
 import { NewProjectModal } from "@/components/modals/new-project-modal"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -17,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
 import { AccessLevelBadge } from "@/components/ui/access-level-badge"
 import { toast } from "sonner"
+import { getErrorMessage, SUCCESS_MESSAGES } from "@/lib/error-messages"
 import { cn } from "@/lib/utils"
 
 interface Project {
@@ -60,8 +60,10 @@ export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all")
   
-  const { deleteProject, createProject, updateProject } = useProjectStore()
   const toggleProjectPinMutation = useToggleProjectPin()
+  const createProjectMutation = useCreateProject()
+  const updateProjectMutation = useUpdateProject()
+  const deleteProjectMutation = useDeleteProject()
   const { 
     getProjectCompletionPercentage, 
     getPendingTasksCount, 
@@ -117,31 +119,6 @@ export default function ProjectsPage() {
     return true
   })
 
-  const handleCreateProject = async (name: string, emoji: string) => {
-    try {
-      const newProject = await createProject(name, emoji)
-      await fetchProjectsData()
-      toast.success('Proje başarıyla oluşturuldu')
-      // Yeni projeye yönlendir
-      router.push(`/projects/${newProject.id}`)
-    } catch (error) {
-      console.error('Error creating project:', error)
-      toast.error('Proje oluşturulurken hata oluştu')
-    }
-  }
-
-  const handleUpdateProject = async (name: string, emoji: string) => {
-    if (!editingProject) return
-    
-    try {
-      await updateProject(editingProject.id, name, emoji)
-      setEditingProject(null)
-      toast.success('Proje başarıyla güncellendi')
-    } catch (error) {
-      console.error('Error updating project:', error)
-      toast.error('Proje güncellenirken hata oluştu')
-    }
-  }
 
   const handleDeleteProject = async () => {
     if (!projectToDelete) return
@@ -153,13 +130,13 @@ export default function ProjectsPage() {
     }
     
     try {
-      await deleteProject(projectToDelete.id)
+      await deleteProjectMutation.mutateAsync(projectToDelete.id)
       setProjectToDelete(null)
       setIsDeleteDialogOpen(false)
-      toast.success('Proje başarıyla silindi')
+      toast.success(SUCCESS_MESSAGES.PROJECT.DELETED)
     } catch (error) {
       console.error('Error deleting project:', error)
-      toast.error('Proje silinirken hata oluştu')
+      toast.error(getErrorMessage(error, 'PROJECT'))
     }
   }
 
@@ -170,10 +147,10 @@ export default function ProjectsPage() {
   const handleTogglePin = async (project: Project) => {
     try {
       await toggleProjectPinMutation.mutateAsync(project.id)
-      toast.success(project.isPinned ? 'Proje sabitleme kaldırıldı' : 'Proje sabitlendi')
+      toast.success(project.isPinned ? SUCCESS_MESSAGES.PROJECT.UNPINNED : SUCCESS_MESSAGES.PROJECT.PINNED)
     } catch (error) {
       console.error('Error toggling pin:', error)
-      toast.error('Pin işlemi başarısız')
+      toast.error(getErrorMessage(error, 'PROJECT'))
     }
   }
 
@@ -403,27 +380,39 @@ export default function ProjectsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            handleTogglePin(project)
-                          }}>
-                            {project.isPinned ? (
-                              <PinOff className="h-4 w-4 mr-2" />
-                            ) : (
-                              <Pin className="h-4 w-4 mr-2" />
-                            )}
-                            {project.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            setEditingProject(project)
-                            setIsProjectModalOpen(true)
-                          }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Düzenle
-                          </DropdownMenuItem>
-                          {!isProtectedProject(project.name) && (
+                          {/* Pin/Unpin - Sadece sahipler ve düzenleme yetkisi olanlar */}
+                          {(!project.userAccess || project.userAccess.permissions.canEditProject) && (
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              handleTogglePin(project)
+                            }}>
+                              {project.isPinned ? (
+                                <PinOff className="h-4 w-4 mr-2" />
+                              ) : (
+                                <Pin className="h-4 w-4 mr-2" />
+                              )}
+                              {project.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {/* Edit - Sadece düzenleme yetkisi olanlar */}
+                          {(!project.userAccess || project.userAccess.permissions.canEditProject) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingProject(project)
+                                setIsProjectModalOpen(true)
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Düzenle
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          
+                          {/* Delete - Sadece sahipler ve korumalı olmayan projeler */}
+                          {(!project.userAccess || project.userAccess.accessLevel === 'OWNER') && 
+                           !isProtectedProject(project.name) && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
@@ -438,6 +427,16 @@ export default function ProjectsPage() {
                                 Sil
                               </DropdownMenuItem>
                             </>
+                          )}
+                          
+                          {/* Eğer hiç yetki yoksa, sadece görüntüleme mesajı */}
+                          {project.userAccess && 
+                           !project.userAccess.permissions.canEditProject && 
+                           project.userAccess.accessLevel !== 'OWNER' && (
+                            <DropdownMenuItem disabled>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Sadece Görüntüleme
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -456,7 +455,6 @@ export default function ProjectsPage() {
             setIsProjectModalOpen(false)
             setEditingProject(null)
           }}
-          onSave={editingProject ? handleUpdateProject : handleCreateProject}
           editingProject={editingProject ? {
             id: editingProject.id,
             name: editingProject.name,

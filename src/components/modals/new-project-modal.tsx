@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useCreateProject, useUpdateProject } from "@/hooks/queries/use-projects"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +10,8 @@ import { Switch } from "@/components/ui/switch"
 import { X, Sparkles, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { isProtectedProject, PROTECTED_PROJECT_MESSAGES } from "@/lib/project-utils"
+import { getErrorMessage, SUCCESS_MESSAGES } from "@/lib/error-messages"
+import { toast } from "sonner"
 
 // Emoji kategorileri
 const emojiCategories = {
@@ -118,7 +121,7 @@ const projectTypes = {
 interface NewProjectModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (name: string, emoji: string) => void
+  onSave?: (name: string, emoji: string) => void
   editingProject?: { id: string, name: string, emoji: string } | null
 }
 
@@ -128,6 +131,10 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof emojiCategories>("Favoriler")
   const [isGeneratingName, setIsGeneratingName] = useState(false)
   const [selectedProjectType, setSelectedProjectType] = useState<keyof typeof projectTypes>("Kamu Yönetimi")
+  
+  // React Query mutations
+  const createProjectMutation = useCreateProject()
+  const updateProjectMutation = useUpdateProject()
   
   // Korumalı proje kontrolü
   const isEditingProtectedProject = editingProject && isProtectedProject(editingProject.name)
@@ -143,10 +150,45 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
     setSelectedCategory("Favoriler")
   }, [editingProject, isOpen])
 
-  const handleSave = () => {
-    if (name.trim()) {
-      onSave(name.trim(), selectedEmoji)
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error("Proje adı gerekli")
+      return
+    }
+    
+    if (name.trim().length > 100) {
+      toast.error("Proje adı çok uzun (maksimum 100 karakter)")
+      return
+    }
+    
+    try {
+      if (editingProject) {
+        // Proje güncelleme
+        await updateProjectMutation.mutateAsync({
+          id: editingProject.id,
+          updates: { name: name.trim(), emoji: selectedEmoji }
+        })
+        toast.success(SUCCESS_MESSAGES.PROJECT.UPDATED)
+      } else {
+        // Yeni proje oluşturma
+        await createProjectMutation.mutateAsync({
+          name: name.trim(),
+          emoji: selectedEmoji
+        })
+        toast.success(SUCCESS_MESSAGES.PROJECT.CREATED)
+      }
+      
+      // Callback varsa çağır (backward compatibility)
+      if (onSave) {
+        onSave(name.trim(), selectedEmoji)
+      }
+      
       onClose()
+    } catch (error) {
+      // User-friendly error message
+      const errorMessage = getErrorMessage(error, 'PROJECT')
+      toast.error(errorMessage)
+      console.error('Modal proje kaydetme hatası:', error)
     }
   }
 
@@ -317,9 +359,21 @@ export function NewProjectModal({ isOpen, onClose, onSave, editingProject }: New
           <Button
             onClick={handleSave}
             className="w-full"
-            disabled={!name.trim() || (isEditingProtectedProject && (name !== editingProject?.name || selectedEmoji !== editingProject?.emoji))}
+            disabled={
+              !name.trim() || 
+              createProjectMutation.isPending || 
+              updateProjectMutation.isPending ||
+              (isEditingProtectedProject && (name !== editingProject?.name || selectedEmoji !== editingProject?.emoji))
+            }
           >
-            {editingProject ? "Proje Güncelle" : "Proje Ekle"}
+            {(createProjectMutation.isPending || updateProjectMutation.isPending) ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {editingProject ? "Güncelleniyor..." : "Ekleniyor..."}
+              </>
+            ) : (
+              editingProject ? "Proje Güncelle" : "Proje Ekle"
+            )}
           </Button>
         </div>
       </DialogContent>

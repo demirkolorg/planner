@@ -977,9 +977,16 @@ export default function ProjectDetailPage() {
           <p className="text-muted-foreground mb-4">
             İlk bölümünü oluşturarak başlayabilirsin
           </p>
-          <Button onClick={() => setIsSectionModalOpen(true)}>
-            Bölüm Ekle
-          </Button>
+          {project.userAccess?.permissions.canCreateSection && (
+            <Button onClick={() => setIsSectionModalOpen(true)}>
+              Bölüm Ekle
+            </Button>
+          )}
+          {project.userAccess && !project.userAccess.permissions.canCreateSection && (
+            <p className="text-sm text-muted-foreground">
+              Bölüm ekleme yetkiniz bulunmuyor
+            </p>
+          )}
         </div>
       ) : (
         <Accordion type="multiple" className="w-full space-y-2 overflow-visible" value={openSections} onValueChange={setOpenSections}>

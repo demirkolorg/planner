@@ -171,7 +171,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set({ isLoading: true, error: null, lastFetchTime: now })
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 saniye timeout - yavaş database için
+      const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 saniye timeout - daha iyi UX için
 
       const response = await fetch('/api/tasks', {
         signal: controller.signal

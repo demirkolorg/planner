@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
+import { getUserProjectAccess } from "@/lib/access-control"
 
 // Bölümü başka projeye taşı
 export async function PATCH(
@@ -53,6 +54,42 @@ export async function PATCH(
       return NextResponse.json(
         { error: 'Target project not found' },
         { status: 404 }
+      )
+    }
+
+    // Kaynak proje üzerinde access control kontrolü
+    const sourceAccess = await getUserProjectAccess(decoded.userId, existingSection.project.id)
+    
+    if (sourceAccess.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json(
+        { error: 'Source project not found or access denied' },
+        { status: 404 }
+      )
+    }
+
+    // Section taşıma izni kontrolü (sadece sahipler ve create section yetkisi olanlar)
+    if (sourceAccess.accessLevel !== 'OWNER' && !sourceAccess.permissions.canCreateSection) {
+      return NextResponse.json(
+        { error: 'Permission denied - insufficient permissions to move sections' },
+        { status: 403 }
+      )
+    }
+
+    // Hedef proje üzerinde access control kontrolü
+    const targetAccess = await getUserProjectAccess(decoded.userId, targetProjectId)
+    
+    if (targetAccess.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json(
+        { error: 'Target project not found or access denied' },
+        { status: 404 }
+      )
+    }
+
+    // Hedef projede section oluşturma izni kontrolü
+    if (!targetAccess.permissions.canCreateSection) {
+      return NextResponse.json(
+        { error: 'Permission denied - cannot create sections in target project' },
+        { status: 403 }
       )
     }
 

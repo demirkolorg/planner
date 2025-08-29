@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { cookies } from "next/headers"
 import jwt from "jsonwebtoken"
 import { createProjectActivity, ProjectActivityTypes } from "@/lib/project-activity"
+import { getUserProjectAccess } from "@/lib/access-control"
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,7 +23,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
-    // Önce section'ın var olduğunu ve kullanıcının erişim hakkı olduğunu kontrol et
+    // Önce section'ı bul
     const section = await db.section.findFirst({
       where: {
         id
@@ -30,7 +31,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       include: {
         project: {
           select: {
-            userId: true
+            userId: true,
+            id: true
           }
         }
       }
@@ -40,8 +42,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Section not found" }, { status: 404 })
     }
 
-    if (section.project.userId !== decoded.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    // Access control kontrolü yap
+    const access = await getUserProjectAccess(decoded.userId, section.project.id)
+    
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
+    }
+
+    // Section düzenleme izni kontrolü (sahip veya düzenleme yetkisi)
+    if (!access.permissions.canCreateSection && access.accessLevel !== 'OWNER') {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 })
     }
 
     // Section'ı güncelle
@@ -80,7 +90,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
     const { id } = await params
 
-    // Önce section'ın var olduğunu ve kullanıcının erişim hakkı olduğunu kontrol et
+    // Önce section'ı bul
     const section = await db.section.findFirst({
       where: {
         id
@@ -104,8 +114,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Section not found" }, { status: 404 })
     }
 
-    if (section.project.userId !== decoded.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    // Access control kontrolü yap
+    const access = await getUserProjectAccess(decoded.userId, section.project.id)
+    
+    if (access.accessLevel === 'NO_ACCESS') {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
+    }
+
+    // Section silme izni kontrolü (sadece sahipler)
+    if (access.accessLevel !== 'OWNER') {
+      return NextResponse.json({ error: "Permission denied - only project owners can delete sections" }, { status: 403 })
     }
 
     // Transaction kullanarak önce tüm görevleri sil, sonra section'ı sil
