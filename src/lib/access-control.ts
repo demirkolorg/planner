@@ -580,7 +580,26 @@ export async function getUserAccessibleProjects(userId: string) {
     } else if (projectAssignments.length > 0) {
       accessLevel = 'PROJECT_ASSIGNED'
     } else {
-      accessLevel = 'NO_ACCESS'
+      // Bu proje assignment'lardan gelmiş olmalı (section veya task üzerinden)
+      // En spesifik erişimi belirleyelim - task assignment varsa TASK, yoksa SECTION
+      const hasTaskAssignmentInProject = allUserAssignments.some(a => 
+        a.targetType === 'TASK' && 
+        assignedProjectIds.has(project.id)
+      )
+      const hasSectionAssignmentInProject = allUserAssignments.some(a => 
+        a.targetType === 'SECTION' && 
+        assignedProjectIds.has(project.id)
+      )
+      
+      if (hasTaskAssignmentInProject) {
+        accessLevel = 'TASK_ASSIGNED'
+      } else if (hasSectionAssignmentInProject) {
+        accessLevel = 'SECTION_ASSIGNED'
+      } else {
+        // Bu durumda bu projeye erişim yoksa neden burada? Log'layayım
+        console.warn(`Project ${project.id} has NO_ACCESS but is in accessible projects list`)
+        accessLevel = 'NO_ACCESS'
+      }
     }
 
     // Simplified permissions (daha detaylı hesaplama gerekirse ayrı fonksiyon)
@@ -602,7 +621,7 @@ export async function getUserAccessibleProjects(userId: string) {
       },
       isPinned: pinnedProjectSet.has(project.id)
     }
-  })
+  }).filter(project => project.userAccess.accessLevel !== 'NO_ACCESS') // NO_ACCESS olanları filtrele
 
   return projectsWithAccess
 }

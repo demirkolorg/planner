@@ -71,20 +71,19 @@ export function AccessLevelBadge({
           tooltip: 'Belirli görevlere atanmışsınız'
         }
       default:
-        return {
-          icon: Users,
-          text: 'Bilinmiyor',
-          variant: 'secondary' as const,
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-50 dark:bg-gray-900/20',
-          borderColor: 'border-gray-200 dark:border-gray-800',
-          tooltip: 'Erişim seviyesi belirlenmemiş'
-        }
+        // Bu durumda badge göstermeyelim, null döndürelim
+        return null
     }
   }
 
   const config = getAccessConfig()
-  const Icon = config?.icon
+  
+  // Eğer config null ise badge gösterme
+  if (!config) {
+    return null
+  }
+  
+  const Icon = config.icon
 
   const tooltipContent = () => {
     if (visibleTaskCount !== undefined && totalTaskCount !== undefined && visibleTaskCount < totalTaskCount) {
