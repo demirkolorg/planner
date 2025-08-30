@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/authStore"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectStore } from "@/store/projectStore"
+import { useProjects } from "@/hooks/use-projects-migration"
 import { ROUTES } from "@/lib/constants"
 import { MemoizedDashboardSidebar as DashboardSidebar } from "@/components/dashboard/sidebar"
 import { SplashScreen } from "@/components/ui/splash-screen"
@@ -32,7 +33,7 @@ export default function DashboardLayout({
 }) {
   const { isAuthenticated, user } = useAuthStore()
   const { fetchTasks, tasks } = useTaskStore()
-  const { fetchProjects } = useProjectStore()
+  const { refetch: refetchProjects } = useProjects() // Migration hook
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -152,7 +153,7 @@ export default function DashboardLayout({
                   console.error('Failed to fetch tasks:', error)
                   return [] // Silent fail, dashboard'u engellemez
                 }),
-                fetchProjects().catch(error => {
+                refetchProjects().catch(error => {
                   console.error('Failed to fetch projects:', error)
                   return [] // Silent fail, dashboard'u engellemez
                 })
@@ -175,7 +176,7 @@ export default function DashboardLayout({
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, user?.id, router, fetchTasks, fetchProjects]) // tasks.length kaldırıldı - infinite loop'a neden oluyordu
+  }, [isAuthenticated, user?.id, router, fetchTasks, refetchProjects]) // tasks.length kaldırıldı - infinite loop'a neden oluyordu
 
   if (isLoading) {
     return <SplashScreen message="Dashboard yükleniyor..." />

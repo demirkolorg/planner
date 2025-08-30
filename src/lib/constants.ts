@@ -30,6 +30,7 @@ export const ROUTES = {
   OVERDUE: '/overdue',
   PROJECTS: '/projects',
   TASKS: '/tasks',
+  ANALYTICS: '/analytics',
   PROFILE: '/profile',
   SETTINGS: '/settings',
 } as const;

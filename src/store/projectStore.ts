@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { subscribeWithSelector, devtools } from 'zustand/middleware'
+import { shallow } from 'zustand/shallow'
 
 interface Project {
   id: string
@@ -27,20 +29,26 @@ interface Section {
 }
 
 interface ProjectStore {
+  // Legacy state - gradually migrating to React Query
   projects: Project[]
   sections: Section[]
   isLoading: boolean
   error: string | null
   lastFetchTime: number
   
-  // Project Actions
+  // Deprecated - use React Query hooks instead
+  // @deprecated Use useProjects() from queries/use-projects
   fetchProjects: () => Promise<void>
+  // @deprecated Use useCreateProject() from queries/use-projects
   createProject: (name: string, emoji: string) => Promise<Project>
+  // @deprecated Use useUpdateProject() from queries/use-projects
   updateProject: (id: string, name: string, emoji: string) => Promise<void>
+  // @deprecated Use useDeleteProject() from queries/use-projects
   deleteProject: (id: string) => Promise<void>
+  // @deprecated Use useToggleProjectPin() from queries/use-projects
   toggleProjectPin: (id: string) => Promise<void>
   
-  // Section Actions  
+  // Section Actions - still needed for local state management
   fetchSections: (projectId: string) => Promise<Section[]>
   createSection: (projectId: string, name: string) => Promise<void>
   updateSection: (id: string, name: string) => Promise<void>
@@ -48,13 +56,15 @@ interface ProjectStore {
   moveSection: (sectionId: string, targetProjectId: string) => Promise<void>
   getSectionsByProject: (projectId: string) => Section[]
   
-  // Utility
+  // Utility functions - still needed
   incrementProjectTaskCount: (projectId: string) => void
   decrementProjectTaskCount: (projectId: string) => void
   clearError: () => void
 }
 
-export const useProjectStore = create<ProjectStore>((set, get) => ({
+export const useProjectStore = create<ProjectStore>()(  
+  devtools(
+    subscribeWithSelector((set, get) => ({
   projects: [],
   sections: [],
   isLoading: false,
@@ -393,4 +403,36 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   clearError: () => set({ error: null })
-}))
+    })),
+    { name: 'project-store' }
+  )
+)
+
+// Optimized selectors to prevent unnecessary re-renders
+export const useProjectList = () => 
+  useProjectStore((state) => state.projects, shallow)
+
+export const useSectionsByProject = (projectId: string) => 
+  useProjectStore(
+    (state) => state.sections.filter(section => section.projectId === projectId),
+    shallow
+  )
+
+export const useProjectLoading = () => 
+  useProjectStore((state) => ({ isLoading: state.isLoading, error: state.error }))
+
+export const useProjectError = () => 
+  useProjectStore((state) => state.error)
+
+// Utility selectors
+export const useGetProjectById = (projectId: string) =>
+  useProjectStore(
+    (state) => state.projects.find(project => project.id === projectId),
+    shallow
+  )
+
+export const useGetSectionById = (sectionId: string) =>
+  useProjectStore(
+    (state) => state.sections.find(section => section.id === sectionId),
+    shallow
+  )

@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SimpleDatePicker } from "@/components/ui/simple-date-picker"
 import { useTaskStore } from "@/store/taskStore"
-import { useProjectStore } from "@/store/projectStore"
+import { useProjectsArray } from "@/hooks/use-projects-migration"
 import { useTagStore } from "@/store/tagStore"
 import { TaskCard } from "@/components/task/task-card"
 import { NewTaskModal } from "@/components/modals/new-task-modal"
@@ -71,7 +71,7 @@ export default function SearchPage() {
     refreshTaskCommentCount,
   } = useTaskStore()
   
-  const { projects } = useProjectStore()
+  const projects = useProjectsArray()
   const { tags } = useTagStore()
 
   // URL'den query parametresini al ve başlangıçta set et

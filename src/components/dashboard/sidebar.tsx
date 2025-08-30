@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { ROUTES, THEME } from "@/lib/constants"
-import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Settings, RefreshCw, Zap, Folder, Calendar, FileText } from "lucide-react"
+import { Plus, FolderKanban, Search, Moon, Sun, User, LogOut, PanelLeftClose, PanelLeft, CalendarX, Info, Settings, RefreshCw, Zap, Folder, Calendar, FileText, BarChart3 } from "lucide-react"
 import { BsPin, BsFillPinFill } from "react-icons/bs"
 import { RiCalendarScheduleLine, RiCalendarScheduleFill } from "react-icons/ri"
 import { PiTagSimpleBold, PiTagSimpleFill } from "react-icons/pi"
@@ -119,6 +119,15 @@ const cardItems = [
     activeColor: "bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-950/50 dark:to-red-950/50 text-orange-800 dark:text-orange-300 border-orange-300/70 dark:border-orange-800/50 shadow-lg shadow-orange-500/10", 
     href: "/quick-notes", 
     taskType: 'QUICK_NOTE'
+  },
+  { 
+    name: "Analytics", 
+    count: null, 
+    icon: BarChart3, 
+    activeIcon: BarChart3, 
+    color: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800/50", 
+    activeColor: "bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-950/50 dark:to-pink-950/50 text-purple-800 dark:text-purple-300 border-purple-300/70 dark:border-purple-800/50 shadow-lg shadow-purple-500/10", 
+    href: ROUTES.ANALYTICS 
   },
   { 
     name: "Google Takvim", 
@@ -369,9 +378,13 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch, isNewTaskModa
 
           {/* Navigation Cards - Compact Design */}
           <div className="p-4 pb-2">
-            {/* İlk 2 kart - 2 sütunlu */}
+            {/* İlk 6 kart - 2 sütunlu, 3 satır */}
             <div className="grid grid-cols-2 gap-2 mb-2">
-              {cardItems.slice(0, 2).map((item) => {
+              {(() => {
+                const selectedCards = [cardItems[0], cardItems[1], cardItems[3], cardItems[6], cardItems[7], cardItems[10]];
+                console.log('Selected cards:', selectedCards.map(c => c?.name));
+                return selectedCards.filter(item => item !== undefined);
+              })().map((item) => {
                 const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
                 
@@ -400,9 +413,9 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch, isNewTaskModa
               })}
             </div>
             
-            {/* Orta kartlar - 2 sütunlu */}
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              {[cardItems[3], cardItems[6], cardItems[7], cardItems[9]].filter(Boolean).map((item) => {
+            {/* Orta kartlar - Bu bölüm artık kullanılmıyor */}
+            {/* <div className="grid grid-cols-2 gap-2 mb-2">
+              {[].filter(Boolean).map((item) => {
                 const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count
                 
@@ -433,7 +446,7 @@ export function DashboardSidebar({ isOpen, onToggle, onOpenSearch, isNewTaskModa
             
             {/* Tamamlandı, Etiketler, Pano, Hızlı Notlar - 4 sütunlu */}
             <div className="grid grid-cols-4 gap-1.5">
-              {[cardItems[2], cardItems[4], cardItems[5], cardItems[8]].map((item) => {
+              {[cardItems[2], cardItems[8], cardItems[4], cardItems[5], cardItems[9]].map((item) => {
                 if (!item) return null
                 const dynamicCount = getDynamicCount(item.name, (item as any).taskType)
                 const displayCount = dynamicCount !== null ? dynamicCount : item.count

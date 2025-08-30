@@ -3,23 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
 import { ERROR_MESSAGES } from '@/lib/error-messages'
-
-// Project query keys
-export const projectKeys = {
-  all: ['projects'] as const,
-  lists: () => [...projectKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...projectKeys.lists(), { filters }] as const,
-  details: () => [...projectKeys.all, 'detail'] as const,
-  detail: (id: string) => [...projectKeys.details(), id] as const,
-  sections: (projectId: string) => [...projectKeys.all, 'sections', projectId] as const,
-}
+import { QUERY_KEYS, invalidationStrategies } from '@/lib/query-keys'
 
 // Fetch all projects
 export function useProjects() {
   const { isAuthenticated } = useAuthStore()
 
   return useQuery({
-    queryKey: projectKeys.lists(),
+    queryKey: QUERY_KEYS.projects.lists(),
     queryFn: async () => {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 saniye timeout
@@ -60,7 +51,7 @@ export function useProjectSections(projectId: string) {
   const { isAuthenticated } = useAuthStore()
 
   return useQuery({
-    queryKey: projectKeys.sections(projectId),
+    queryKey: QUERY_KEYS.projects.sections(projectId),
     queryFn: async () => {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 6000) // 6 saniye timeout
@@ -119,8 +110,17 @@ export function useCreateProject() {
       }
       return response.json()
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.all })
+    onSuccess: (newProject) => {
+      // Optimize edilmiş invalidation strategy
+      const keysToInvalidate = invalidationStrategies.onProjectChange()
+      keysToInvalidate.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: key })
+      })
+      
+      // Optimistic update: yeni projeyi cache'e ekle
+      queryClient.setQueryData(QUERY_KEYS.projects.lists(), (oldData: any) => {
+        return oldData ? [...oldData, newProject] : [newProject]
+      })
     },
   })
 }
@@ -148,9 +148,20 @@ export function useUpdateProject() {
       }
       return response.json()
     },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.all })
-      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) })
+    onSuccess: (updatedProject, { id }) => {
+      // Targeted invalidation
+      const keysToInvalidate = invalidationStrategies.onProjectChange(id)
+      keysToInvalidate.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: key })
+      })
+      
+      // Optimistic update: projeyi cache'de güncelle
+      queryClient.setQueryData(QUERY_KEYS.projects.detail(id), updatedProject)
+      queryClient.setQueryData(QUERY_KEYS.projects.lists(), (oldData: any) => {
+        return oldData?.map((project: any) => 
+          project.id === id ? { ...project, ...updatedProject } : project
+        )
+      })
     },
   })
 }
@@ -175,8 +186,20 @@ export function useDeleteProject() {
         throw new Error(error.error || ERROR_MESSAGES.PROJECT.DELETE_FAILED)
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.all })
+    onSuccess: (_, deletedProjectId) => {
+      // Project silindiğinde sadece gerekli cache'leri temizle
+      const keysToInvalidate = invalidationStrategies.onProjectChange(deletedProjectId)
+      keysToInvalidate.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: key })
+      })
+      
+      // Optimistic update: projeyi cache'den kaldır
+      queryClient.setQueryData(QUERY_KEYS.projects.lists(), (oldData: any) => {
+        return oldData?.filter((project: any) => project.id !== deletedProjectId)
+      })
+      
+      // Detail cache'ini temizle
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.projects.detail(deletedProjectId) })
     },
   })
 }
@@ -204,13 +227,13 @@ export function useToggleProjectPin() {
     },
     onMutate: async (projectId: string) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: projectKeys.all })
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.projects.lists() })
 
       // Snapshot the previous value
-      const previousProjects = queryClient.getQueryData(projectKeys.lists())
+      const previousProjects = queryClient.getQueryData(QUERY_KEYS.projects.lists())
 
       // Optimistically update to the new value
-      queryClient.setQueryData(projectKeys.lists(), (old: any) => {
+      queryClient.setQueryData(QUERY_KEYS.projects.lists(), (old: any) => {
         if (!old || !Array.isArray(old)) return old
         return old.map((project: any) => 
           project.id === projectId 
@@ -225,12 +248,17 @@ export function useToggleProjectPin() {
     onError: (err, projectId, context) => {
       // If the mutation fails, use the context to roll back
       if (context?.previousProjects) {
-        queryClient.setQueryData(projectKeys.lists(), context.previousProjects)
+        queryClient.setQueryData(QUERY_KEYS.projects.lists(), context.previousProjects)
       }
     },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: projectKeys.all })
+    onSettled: (data, error, projectId) => {
+      // Sadece gerektiğinde invalidate et
+      if (error) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects.lists() })
+      } else {
+        // Başarılı durumda sadece ilgili project detail'i güncelle
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects.detail(projectId) })
+      }
     },
   })
 }
