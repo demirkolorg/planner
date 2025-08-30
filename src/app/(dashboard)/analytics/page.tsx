@@ -1,16 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SectionAnalyticsDashboard } from "@/components/analytics/section-analytics-dashboard"
+import { ProjectAnalyticsDashboard } from "@/components/analytics/project-analytics-dashboard"
+import { TeamAnalyticsDashboard } from "@/components/analytics/team-analytics-dashboard"
+import { TimelineAnalyticsDashboard } from "@/components/analytics/timeline-analytics-dashboard"
 import { BarChart3, TrendingUp, Users, Target, Calendar } from "lucide-react"
 import { useProjectsArray } from "@/hooks/use-projects-migration"
+import { useProjectStore } from "@/store/projectStore"
 
 export default function AnalyticsPage() {
   const [selectedProject, setSelectedProject] = useState<string | undefined>(undefined)
   const projects = useProjectsArray()
+  const { fetchSections } = useProjectStore()
+  
+  // Projects'lar yüklendiğinde sections'ları da yükle
+  useEffect(() => {
+    if (projects && projects.length > 0) {
+      // Her proje için sections'ları fetch et
+      projects.forEach(project => {
+        fetchSections(project.id).catch(console.error)
+      })
+    }
+  }, [projects, fetchSections])
 
   return (
     <div className="space-y-6">
@@ -57,67 +72,19 @@ export default function AnalyticsPage() {
           <SectionAnalyticsDashboard />
         </TabsContent>
 
-        {/* Project Analytics - Placeholder */}
+        {/* Project Analytics */}
         <TabsContent value="projects" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Proje Analytics</CardTitle>
-              <CardDescription>
-                Proje bazında performans analizi (Yakında)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-lg mb-2">Proje Analytics</h3>
-                <p className="text-muted-foreground">
-                  Bu özellik yakında eklenecek
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <ProjectAnalyticsDashboard />
         </TabsContent>
 
-        {/* Team Analytics - Placeholder */}
+        {/* Team Analytics */}
         <TabsContent value="teams" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Takım Analytics</CardTitle>
-              <CardDescription>
-                Takım performansı ve iş birliği analizi (Yakında)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-lg mb-2">Takım Analytics</h3>
-                <p className="text-muted-foreground">
-                  Bu özellik yakında eklenecek
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <TeamAnalyticsDashboard />
         </TabsContent>
 
-        {/* Timeline Analytics - Placeholder */}
+        {/* Timeline Analytics */}
         <TabsContent value="timeline" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Zaman Çizelgesi Analytics</CardTitle>
-              <CardDescription>
-                Zaman bazında performans trendi (Yakında)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-lg mb-2">Zaman Çizelgesi</h3>
-                <p className="text-muted-foreground">
-                  Bu özellik yakında eklenecek
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <TimelineAnalyticsDashboard />
         </TabsContent>
       </Tabs>
     </div>

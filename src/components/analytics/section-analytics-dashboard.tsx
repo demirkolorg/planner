@@ -36,6 +36,7 @@ import {
 } from "lucide-react"
 import { useTaskStore } from "@/store/taskStore"
 import { useProjectsArray } from "@/hooks/use-projects-migration"
+import { useProjectStore } from "@/store/projectStore"
 import { cn } from "@/lib/utils"
 
 // Analytics hesaplama fonksiyonları
@@ -72,7 +73,8 @@ export function SectionAnalyticsDashboard({
   projectId, 
   className 
 }: SectionAnalyticsDashboardProps) {
-  const { tasks, sections: storeSections } = useTaskStore()
+  const { tasks } = useTaskStore()
+  const { sections: storeSections } = useProjectStore()
   const projects = useProjectsArray()
   
   // Prop'tan gelen sections'ı öncelikle kullan, yoksa store'dan al
@@ -80,6 +82,7 @@ export function SectionAnalyticsDashboard({
   
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d')
   const [selectedProject, setSelectedProject] = useState<string>(projectId || 'all')
+
 
   // Section metrics hesaplama
   const sectionMetrics = useMemo(() => {

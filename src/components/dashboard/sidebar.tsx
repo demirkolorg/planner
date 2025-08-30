@@ -121,7 +121,7 @@ const cardItems = [
     taskType: 'QUICK_NOTE'
   },
   { 
-    name: "Analytics", 
+    name: "Analitik", 
     count: null, 
     icon: BarChart3, 
     activeIcon: BarChart3, 
